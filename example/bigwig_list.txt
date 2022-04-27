@@ -1,0 +1,5 @@
+example/bws/0.bw	KIRP
+example/bws/1.bw	KIRP
+example/bws/2.bw	KIRP
+example/bws/3.bw	KIRP
+example/bws/4.bw	KIRP
