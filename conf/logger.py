@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 u"""
-This file contains the configuration for loggin
+This file contains the configuration for logging
 """
 
 import logging
