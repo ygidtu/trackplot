@@ -2,7 +2,12 @@
 # -*- coding:utf-8 -*-
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
+
+changelog:
+    1. add library parameter for determining of read strand at 2022.4.28.
+
 """
+
 from typing import Optional, List
 
 import numpy as np
@@ -16,20 +21,51 @@ from src.Junction import Junction
 from src.Transcript import Transcript
 
 
-def __get_strand__(read: pysam.AlignedSegment) -> str:
+def __opposite_strand__(strand: str) -> str:
     u"""
-    determine the reads strand
+    replace to opposite of current strand information.
+
+    :param strand: strand, one of ['+', '-', '*']
+    :return: an opposite of strand
     """
-
-    if read.is_paired:
-        if read.is_read1 and read.is_reverse:
-            return "-"
-        elif read.is_read2 and not read.is_reverse:
-            return "-"
-
+    assert strand in ["+", "-", "*"], "Unknown strand information was found."
+    if strand == "*":
+        return "*"
+    elif strand == "+":
+        return "-"
+    else:
         return "+"
 
-    return "-" if read.is_reverse else "+"
+
+def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
+    u"""
+    Determine the strand of for each read.
+    :param read: a pysam.AlignedSegment from the bam file.
+    :param library: the method for preparing of the library,
+    value should be one of ["fr-firststrand", "fr-secondstrand", "fr-unstrand"]
+    :return:
+    """
+    assert library in ["fr-firststrand", "fr-secondstrand", "fr-unstrand"], "Can't recognize the definition of library."
+
+    # return '+' strand for all unstrand library.
+    if library == "fr-unstrand":
+        return "+"
+
+    # Only guessing the strand based on fr-secondstrand rule.
+    if read.is_paired:
+        if read.is_read1 and read.is_reverse:
+            current_strand = "+"
+        elif read.is_read2 and not read.is_reverse:
+            current_strand = "+"
+        else:
+            current_strand = "-"
+    else:
+        current_strand = "+" if read.is_reverse else "-"
+
+    if library == "fr-secondstrand":
+        return current_strand
+    else:
+        return __opposite_strand__(current_strand)
 
 
 class ReadDepth(GenomicLoci):
@@ -39,14 +75,28 @@ class ReadDepth(GenomicLoci):
     add a parent class to handle all the position comparison
     """
 
-    def __init__(self, chromosome, start, end, wiggle, junctions_dict, reads=None, plus=None, minus=None):
+    def __init__(self,
+                 chromosome,
+                 start,
+                 end,
+                 wiggle,
+                 junctions_dict,
+                 reads=None,
+                 plus=None,
+                 minus=None,
+                 library="fr-unstrand"):
         u"""
         init this class
-        :param chromosome: str
-        :param start: int
-        :param end: int
-        :param wiggle: do not know what it is
-        :param junctions_dict:
+
+        :param chromosome: the chromosome id of interesting region.
+        :param start: the left site of genomic coordinate.
+        :param end: the right site of genomic coordinate.
+        :param wiggle: a numpy.ndarray object represented the whole read coverage.
+        :param junctions_dict: a dict represented the coordinate of each intron as well as frequency.
+        :param reads:
+        :param plus:
+        :param minus:
+        :param library: the method for preparing of the library.
         """
         super().__init__(chromosome, start, end, "+")
 
@@ -62,6 +112,7 @@ class ReadDepth(GenomicLoci):
         self.__reads__ = reads if reads is not None else []
         self.plus = plus
         self.minus = minus * -1 if minus is not None else minus
+        self.library = library
 
     @classmethod
     def determine_depth(
@@ -75,8 +126,10 @@ class ReadDepth(GenomicLoci):
         log,
         reads1: Optional[bool] = None,
         barcode_tag: str = "CB",
+        umi_tag: Optional[str] = None,
         required_strand: Optional[str] = None,
         stack: bool = False,
+        library: str = "fr-unstrand",
     ):
         """
             determine_depth determines the coverage at each base between start_coord and end_coord, inclusive.
@@ -103,6 +156,7 @@ class ReadDepth(GenomicLoci):
         :param reads1: None -> all reads, True -> only R1 kept; False -> only R2 kept
         :param required_strand: None -> all reads, else reads on specific strand
         :param stack: whether to kept reads info for stack plot
+        :param library: the method for preparing of the library.
         """
         reads = {}
         filtered_reads = set()
@@ -110,7 +164,7 @@ class ReadDepth(GenomicLoci):
         depth_vector = np.zeros(end_coord - start_coord + 1, dtype='f')
         spanned_junctions = {}
         plus, minus = np.zeros(end_coord - start_coord + 1, dtype="f"), np.zeros(end_coord - start_coord + 1, dtype="f")
-        
+
         for bam_file_path in bam.path:
             try:
                 with pysam.AlignmentFile(bam_file_path, 'rb') as bam_file:
@@ -132,7 +186,7 @@ class ReadDepth(GenomicLoci):
                                 logger.info("try with chr")
                                 chrom = "chr{}".format(chrom)
                             relevant_reads = bam_file.fetch(reference=chrom, start=start_coord, end=end_coord)
-                    
+
                     # tqdm()
                     for read in relevant_reads:
                         # make sure that the read can be used
@@ -141,21 +195,21 @@ class ReadDepth(GenomicLoci):
                         # each read must have a cigar string
                         if cigar_string is None:
                             continue
-                        
+
                         # select R1 or R2
                         if reads1 is True and not read.is_read1:
                             continue
 
                         if reads1 is False and not read.is_read2:
                             continue
-                        
+
                         # filter reads by 10x barcodes
                         if not bam.empty_barcode():
                             if not read.has_tag(barcode_tag) or not bam.has_barcode(read.get_tag(barcode_tag)):
                                 continue
 
                         start = read.reference_start
-                        strand = __get_strand__(read)
+                        strand = __get_strand__(read=read, library=library)
 
                         if required_strand and strand != required_strand:
                             continue
@@ -210,7 +264,7 @@ class ReadDepth(GenomicLoci):
                                 except ValueError as err:
                                     logger.warning(err)
                                     continue
-                        
+
                         t = Transcript(
                             chromosome=read.reference_name,
                             start=read.reference_start + 1 if read.reference_start + 1 > start_coord else start_coord,
@@ -227,7 +281,7 @@ class ReadDepth(GenomicLoci):
                             plus[t.start - start_coord] += 1
                         elif strand == "-" and read.reference_end <= end_coord:
                             minus[t.end - start_coord] += 1
-                        
+
                 for k, v in spanned_junctions.items():
                     if v >= threshold:
                         filtered_junctions[k] = v
@@ -303,7 +357,7 @@ class ReadDepth(GenomicLoci):
                     if not bam.empty_barcode():
                         if not bam.has_barcode(barcode):
                             continue
-                    
+
                     start, end, count = int(start),  int(end), int(count)
                     for i in range(max(start, start_coord), min(end, end_coord)):
                         depth_vector[i - start_coord] += count
@@ -317,7 +371,7 @@ class ReadDepth(GenomicLoci):
             depth_vector = np.log2(depth_vector + 1)
         elif log == "zscore":
             depth_vector = zscore(depth_vector)
-        
+
         return cls(
             chromosome=chrom,
             start=start_coord,

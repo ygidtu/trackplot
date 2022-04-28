@@ -21,7 +21,7 @@ class Stroke(object):
 
     @property
     def center(self) -> float:
-        return (self.end +  self.start) /  2
+        return (self.end + self.start) / 2
 
 
 class SpliceRegion(GenomicLoci):
