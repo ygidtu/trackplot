@@ -34,7 +34,7 @@ class Transcript(GenomicLoci):
         gene: str = "",
         gene_id: str = "", 
         transcript: str = "",
-        transcript_id: str = "", 
+        transcript_id: str = "",
         is_reads: bool = False,
         show_id: bool = False
     ):
@@ -46,7 +46,7 @@ class Transcript(GenomicLoci):
         :param strand: str
         :param gene_id: str
         :param exons: list of pysam.GTFProxy
-        :param is_reads: is flag used by transcript  plot draw
+        :param is_reads: is flag used by transcript plot draw
         """
 
         super().__init__(

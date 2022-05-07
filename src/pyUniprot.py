@@ -8,10 +8,7 @@ import requests as rq
 import xmltodict
 from xml.parsers.expat import ExpatError
 from conf.logger import logger
-
-
-class ErrorCrawl(Exception):
-    pass
+from src.GenomicLoci import GenomicLoci
 
 
 class Uniprot(object):
@@ -24,14 +21,14 @@ class Uniprot(object):
         self.fmt = fmt
         self.database = database
 
-        self.__valid_fmt = set(['txt', 'XML', 'rdf', 'gff', 'fasta'])
-        self.__url = 'https://www.uniprot.org'
+        self.__valid_fmt = {'txt', 'XML', 'rdf', 'gff', 'fasta'}
+        self.__url = "https://www.uniprot.org"
         self.info = self.__info__()
 
     def __request_url__(self):
         """
-        request the uniprot url and return a xml object
-        :return:
+        Request the uniprot url and return
+        :return: a Response object from requests
         """
         assert self.fmt in self.__valid_fmt, f"Nonlegal format was found, {self.fmt}"
 
@@ -44,11 +41,14 @@ class Uniprot(object):
         return url_response
 
     def __info__(self):
+        u"""
+        Use xml to parser the response contents and return a dict
+        :return: a dict which contained the response results from the given url.
+        """
         try:
             xml_dic = xmltodict.parse(
-                self.__request_url__().text, attr_prefix='', cdata_key=''
-            )['uniprot']['entry']
-
+                self.__request_url__().text, attr_prefix="", cdata_key=""
+            )["uniprot"]["entry"]
             return xml_dic
         except ExpatError:
             logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
@@ -56,22 +56,31 @@ class Uniprot(object):
 
     @property
     def feature(self):
+        u"""
+        Check the attribution of "feature" in the response results.
+        :return: a list which contained feature's attribution
+        """
         try:
-            f = self.info['feature']
+            feature_info = self.info['feature']
             res = []
-            if not isinstance(f, list):
-                res.append(f)
+            if not isinstance(feature_info, list):
+                res.append(feature_info)
                 return res
             return self.info['feature']
         except KeyError:
             return None
 
     @property
-    def domain(self):
+    def __domain_info__(self):
+        u"""
+        Fetch the domain information
+        :return:
+        """
         if not self.feature:
             return None
         domain_info = namedtuple('domain_info', ['name', 'type', 'start', 'end'])
         domain_res = []
+
         for sub_feature in self.feature:
             if 'description' in sub_feature:
                 description = 'description'
@@ -83,15 +92,14 @@ class Uniprot(object):
             if 'position' in sub_feature['location']:
                 domain_res.append(domain_info._make([sub_feature[description],
                                                      sub_feature[current_type],
-                                                     (int(sub_feature['location']['position']['position']) - 1) * 3 + 1,
-                                                     int(sub_feature['location']['position']['position']) * 3]))
+                                                     int(sub_feature['location']['position']['position']),
+                                                     int(sub_feature['location']['position']['position'])]))
             else:
                 try:
                     domain_res.append(domain_info._make([sub_feature[description],
                                                          sub_feature[current_type],
-                                                         (int(
-                                                             sub_feature['location']['begin']['position']) - 1) * 3 + 1,
-                                                         int(sub_feature['location']['end']['position']) * 3]))
+                                                         int(sub_feature['location']['begin']['position']),
+                                                         int(sub_feature['location']['end']['position'])]))
                 except KeyError:
                     '''
                     1.24 there was a location error, because the location status was unknown!!
@@ -109,7 +117,7 @@ class Uniprot(object):
         ('id', 'PS50095'), ('property',
         [OrderedDict([('type', 'entry name'),('value', 'PLAT')]),
         OrderedDict([('type', 'match status'), ('value', '6')])])])
-        :return: dict in list
+        :return: a nested dict of list
         """
         return self.info['dbReference']
 
@@ -129,11 +137,11 @@ class Uniprot(object):
 
 
 def main():
-    id = 'ENST00000486161'
-    b = Uniprot(id)
-    print(b.feature)
+    trans_id = 'ENST00000486161'
+    trans_id_pep = Uniprot(trans_id)
+    print(trans_id_pep.feature)
     print('done')
-    print(b.ensembl_info, b.domain)
+    print(trans_id_pep.ensembl_info, trans_id_pep.__domain_info__)
 
 
 if __name__ == '__main__':

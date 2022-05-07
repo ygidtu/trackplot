@@ -11,6 +11,7 @@ Refactoring the code based on pyranges.
 from itertools import islice
 from typing import Optional
 import numpy as np
+from src.pyUniprot import Uniprot
 
 
 class Coordinate(object):
@@ -18,7 +19,7 @@ class Coordinate(object):
     A Coordinate object for genomic regions.
     """
 
-    def __init__(self, coordinate_list: list, strand: str):
+    def __init__(self, coordinate_list: list, strand: str = "*"):
         u"""
         Set genomic coordinates
         :param coordinate_list: a nested tuple of list
@@ -33,8 +34,8 @@ class Coordinate(object):
     def __fmt_exons__(coordinate_list: list) -> list:
         u"""
         Format and sort exon list
-        :param coordinate_list: 
-        :return: 
+        :param coordinate_list: a nested tuple of list. like [('5','6'),('1','4')]
+        :return: a nested tuple of list. like [(1,4), (5,6)]
         """
         # sorting coordinate based on first of location.
         formatted_coordinate_list = list(map(lambda x: tuple(map(int, x)), coordinate_list))
@@ -45,9 +46,9 @@ class Coordinate(object):
     def __get_s_or_e__(coordinate_list: list, index: int) -> list:
         u"""
         Get start or end site for each given coordinates
-        :param coordinate_list:
-        :param index:
-        :return:
+        :param coordinate_list: a nested tuple of list, like [(1,3),(5,6)]
+        :param index: the index of tuple, 0 for the left site and 1 for the right end site.
+        :return: a list which contained the start or end sites.
         """
         return list(map(lambda x: x[index], coordinate_list))
 
@@ -63,7 +64,7 @@ class Coordinate(object):
     def introns(self):
         u"""
         Set intronic regions for each coordinate object
-        :return:
+        :return: a nested tuple of list which contained intronic coordinates.
         """
         if len(self.se) == 1:
             return None
@@ -80,8 +81,8 @@ class Coordinate(object):
     def __slide_window__(nested_list: list, num_of_chunk: int):
         u"""
         A sliding window to slice the given list
-        :param nested_list:
-        :param num_of_chunk: 
+        :param nested_list: a nested tuple of list, like [(1,3),(5,6)]
+        :param num_of_chunk:  num of element for each chunk.
         :return: 
         """
         nested_list = iter(nested_list)
@@ -96,7 +97,7 @@ class Coordinate(object):
     def __flatten__(cls, nested_list: list):
         u"""
         Flatten the nested list
-        :param nested_list:
+        :param nested_list: a nested tuple of list, like [(1,3),(5,6)]
         :return:
         """
         for sub_list in nested_list:
@@ -116,7 +117,7 @@ class Coordinate(object):
         """
         # Add 1 offset because of 0-based coordinate
         position_list = list(self.__flatten__(list(map(
-            lambda x: range(x[0], x[1]+1), self.se
+            lambda x: range(x[0], x[1] + 1), self.se
         ))))
 
         if self.strand == '-':
@@ -176,13 +177,13 @@ class CoordinateMapper(Coordinate):
     TODO: Add cds to pep coordinate?
     """
 
-    def __init__(self, coordinates_list: list, strand: str):
+    def __init__(self, coordinates_list, strand: str):
         u"""
         Set genomic coordinates to be used for mapping
         :param coordinates_list: a nested tuple of list
         :param strand: a strands of given coordinate object
         """
-        Coordinate.__init__(self, coordinates_list, strand)
+        super().__init__(coordinate_list=coordinates_list, strand=strand)
 
     def pep_to_cds(self, pep_start: int, pep_end: Optional[int] = None):
         u"""
@@ -205,14 +206,19 @@ class CoordinateMapper(Coordinate):
             self.strand)
 
 
-if __name__ == '__main__':
-    cds = [(3216025, 3216968),
-             (3421702, 3421901),
-             (3670552, 3671348)]
+def __map_ensembl_id_to_pep_coord__(transcript_id):
+    trans_map_info = Uniprot(transcript_id)
+    return trans_map_info
 
-    coord = CoordinateMapper(cds, '+')
-    domain_info = [(1, 1941, '1XK-related protein 4;chain')]
-    domain_coord = coord.pep_to_cds(1, 1941)
-    print(domain_coord.se)
-    # In [25]: domain_coord.se
-    # Out[25]: [(3216853, 3216861)]
+
+if __name__ == '__main__':
+    # cds = [(3216025, 3216968),
+    #        (3421702, 3421901),
+    #        (3670552, 3671348)]
+    #
+    # coord = CoordinateMapper(cds, '+')
+    # domain_info = [(1, 3, '1XK-related protein 4;chain')]
+    # domain_coord = coord.pep_to_cds(1, 3)
+    # print(domain_coord.se)
+    # [(3216025, 3216033)]
+    print(__map_ensembl_id_to_pep_coord__("ENST00000486161").info)
