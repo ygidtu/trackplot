@@ -25,7 +25,7 @@ __PPI__ = {"WD", "ANK", "TPR", "LRR", "HEAT", "Sushi", "EF-hand", "ARM", "PDZ", 
        "LIM zinc-binding", "WW", "SH2", "BTB", "FERM", "CH", "Rod", "Coil 1A", "MH2", "WD40-like repeat",
        "t-SNARE coiled-coil homology", "Coil 1B", "Cbl-PTB", "Coil", "CARD", "SH2-like", "DED", "IRS-type PTB",
        "SP-RING-type", "EF-hand-like", "RING-CHtype", "v-SNARE coiled-coil homology", "Arm domain",
-       "LIM protein-binding", "GYF", "PDZ domain-binding", "and PDZD11-binding"}
+       "LIM protein-binding", "GYF", "PDZ domain-binding", "PDZD11-binding"}
 
 __RNABIND__ = {"RRM", "SAM", "KH", "DRBM", "RBD", "Piwi", "PAZ", "S1 motif", "Pumilio", "THUMP"}
 

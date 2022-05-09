@@ -234,6 +234,7 @@ class SpliceRegion(GenomicLoci):
                     self.__transcripts__[gtf_line.transcript_id] = Transcript(
                         chromosome=gtf_line.contig,
                         start=gtf_line.start + 1 if gtf_line.start + 1 > self.start else self.start,
+                        # end 是不是不用 + 1？
                         end=gtf_line.end + 1 if gtf_line.end + 1 < self.end else self.end,
                         strand=gtf_line.strand,
                         transcript_id=gtf_line.transcript_id,

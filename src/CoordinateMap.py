@@ -11,7 +11,6 @@ Refactoring the code based on pyranges.
 from itertools import islice
 from typing import Optional
 import numpy as np
-from src.pyUniprot import Uniprot
 
 
 class Coordinate(object):
@@ -206,12 +205,8 @@ class CoordinateMapper(Coordinate):
             self.strand)
 
 
-def __map_ensembl_id_to_pep_coord__(transcript_id):
-    trans_map_info = Uniprot(transcript_id)
-    return trans_map_info
-
-
 if __name__ == '__main__':
+    pass
     # cds = [(3216025, 3216968),
     #        (3421702, 3421901),
     #        (3670552, 3671348)]
@@ -221,4 +216,4 @@ if __name__ == '__main__':
     # domain_coord = coord.pep_to_cds(1, 3)
     # print(domain_coord.se)
     # [(3216025, 3216033)]
-    print(__map_ensembl_id_to_pep_coord__("ENST00000486161").info)
+    # print(__map_ensembl_id_to_pep_coord__("ENST00000486161").info)

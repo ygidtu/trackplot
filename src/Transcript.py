@@ -11,7 +11,10 @@ class Transcript(GenomicLoci):
     u"""
     Created by ygidtu at 2018.12.21
 
-    A class inherit from GenomicLoci, to collect transcript information
+    A class inherit from GenomicLoci, to collect transcript information.
+
+    Add extending for domain region. Ran
+
     """
 
     __slots__ = [
@@ -21,32 +24,42 @@ class Transcript(GenomicLoci):
         "transcript_id",
         "exons",
         "is_reads",
-        "show_id"
+        "show_id",
+        "category",
+        "domain"
     ]
 
     def __init__(
-        self, 
-        chromosome: str, 
-        start: int, 
-        end: int,
-        strand: str,
-        exons: list, 
-        gene: str = "",
-        gene_id: str = "", 
-        transcript: str = "",
-        transcript_id: str = "",
-        is_reads: bool = False,
-        show_id: bool = False
+            self,
+            chromosome: str,
+            start: int,
+            end: int,
+            strand: str,
+            exons: list,
+            gene: str = "",
+            gene_id: str = "",
+            transcript: str = "",
+            transcript_id: str = "",
+            category: str = "exon",
+            domain: str = "",
+            is_reads: bool = False,
+            show_id: bool = False
     ):
         u"""
-        init this class
-        :param chromosome: str
-        :param start: int
-        :param end: int
-        :param strand: str
-        :param gene_id: str
-        :param exons: list of pysam.GTFProxy
-        :param is_reads: is flag used by transcript plot draw
+
+        :param chromosome:
+        :param start:
+        :param end:
+        :param strand:
+        :param exons: A list of pysam.GTFProxy if category was exon, A nested tuple of list if category was protein
+        :param gene: gene name when category is exon,such as "SAMD11"; domain's description when category is domain such as "Disordered"
+        :param gene_id: gene id, such as "ENSG00000187634"
+        :param transcript: transcript name, such as "SAMD11-011"
+        :param transcript_id: transcript id, such as "ENST00000420190"
+        :param category: exon or protein
+        :param domain: if category is protein, the type information of the given domain
+        :param is_reads:
+        :param show_id:
         """
 
         super().__init__(
@@ -62,6 +75,21 @@ class Transcript(GenomicLoci):
         self.exons = exons
         self.is_reads = is_reads
         self.show_id = show_id
+        self.category = category
+        self.domain = domain
+
+    @property
+    def exon_list(self):
+
+        exon_nested_lst = []
+        for i in self.exons:
+            exon_nested_lst.append(
+                tuple(
+                    [i.start + 1,
+                     i.end]
+                )
+            )
+        return exon_nested_lst
 
     def __str__(self):
         exons_str = []

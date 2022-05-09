@@ -45,6 +45,10 @@ class Uniprot(object):
         Use xml to parser the response contents and return a dict
         :return: a dict which contained the response results from the given url.
         """
+        # No Domain information
+        if self.__request_url__().text == "":
+            return {}
+
         try:
             xml_dic = xmltodict.parse(
                 self.__request_url__().text, attr_prefix="", cdata_key=""
@@ -52,7 +56,7 @@ class Uniprot(object):
             return xml_dic
         except ExpatError:
             logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
-            return None
+            return {}
 
     @property
     def feature(self):
