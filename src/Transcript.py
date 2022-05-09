@@ -23,8 +23,6 @@ class Transcript(GenomicLoci):
         "transcript",
         "transcript_id",
         "exons",
-        "is_reads",
-        "show_id",
         "category",
         "domain"
     ]
@@ -41,9 +39,7 @@ class Transcript(GenomicLoci):
             transcript: str = "",
             transcript_id: str = "",
             category: str = "exon",
-            domain: str = "",
-            is_reads: bool = False,
-            show_id: bool = False
+            domain: str = ""
     ):
         u"""
 
@@ -58,8 +54,6 @@ class Transcript(GenomicLoci):
         :param transcript_id: transcript id, such as "ENST00000420190"
         :param category: exon or protein
         :param domain: if category is protein, the type information of the given domain
-        :param is_reads:
-        :param show_id:
         """
 
         super().__init__(
@@ -73,8 +67,6 @@ class Transcript(GenomicLoci):
         self.gene = gene
         self.gene_id = gene_id
         self.exons = exons
-        self.is_reads = is_reads
-        self.show_id = show_id
         self.category = category
         self.domain = domain
 
