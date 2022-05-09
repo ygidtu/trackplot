@@ -15,10 +15,10 @@ import pysam
 from scipy.stats import zscore
 
 from conf.logger import logger
-from src.BamInfo import BamInfo
-from src.GenomicLoci import GenomicLoci
-from src.Junction import Junction
-from src.Transcript import Transcript
+from sashimi.file.BamInfo import BamInfo
+from sashimi.base.GenomicLoci import GenomicLoci
+from sashimi.base.Junction import Junction
+from sashimi.base.Transcript import Transcript
 
 
 def __opposite_strand__(strand: str) -> str:

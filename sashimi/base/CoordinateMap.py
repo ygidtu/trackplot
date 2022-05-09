@@ -11,7 +11,7 @@ Refactoring the code based on pyranges.
 from itertools import islice
 from typing import Optional
 import numpy as np
-from src.pyUniprot import Uniprot
+from sashimi.base.pyUniprot import Uniprot
 
 
 class Coordinate(object):

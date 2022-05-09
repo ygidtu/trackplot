@@ -99,9 +99,7 @@ class GenomicLoci(object):
         :param other:
         :return:
         """
-        return self.chromosome == other.chromosome and \
-               self.start == other.start and \
-               self.end == other.end
+        return hash(self) == hash(other)
 
     def __add__(self, other):
         u"""
@@ -123,12 +121,8 @@ class GenomicLoci(object):
         """
         return hash((self.chromosome, self.start, self.end))
 
-    @property
-    def length(self):
-        u"""
-        :return: int, the length of this loci
-        """
-        return self.end - self.start
+    def __len__(self) -> int:
+        return self.end - self.start + 1
 
     def is_overlap(self, other):
         u"""

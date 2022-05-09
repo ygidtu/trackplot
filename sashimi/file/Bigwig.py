@@ -13,8 +13,8 @@ import pyBigWig
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import zscore
 
-from src.SpliceRegion import SpliceRegion
-from src.logger import logger
+from obj.SpliceRegion import SpliceRegion
+from sashimi.logger import logger
 
 __DISTANCE_METRIC__ = [
     "braycurtis", "canberra", "chebyshev",

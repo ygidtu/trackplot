@@ -8,7 +8,7 @@ import requests as rq
 import xmltodict
 from xml.parsers.expat import ExpatError
 from conf.logger import logger
-from src.GenomicLoci import GenomicLoci
+from sashimi.base.GenomicLoci import GenomicLoci
 
 
 class Uniprot(object):
