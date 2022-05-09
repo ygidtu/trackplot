@@ -100,8 +100,8 @@ class GenomicLoci(object):
         :return:
         """
         return self.chromosome == other.chromosome and \
-            self.start == other.start and \
-            self.end == other.end
+               self.start == other.start and \
+               self.end == other.end
 
     def __add__(self, other):
         u"""
@@ -137,8 +137,8 @@ class GenomicLoci(object):
         :return: Boolean
         """
         return self.chromosome == other.chromosome and \
-            self.start <= other.end and \
-            self.end >= other.start
+               self.start <= other.end and \
+               self.end >= other.start
 
     @classmethod
     def create_loci(cls, string):

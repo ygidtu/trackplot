@@ -11,6 +11,9 @@ matplotlib = "*"
 filetype = "*"
 click = "*"
 numpy = "*"
+biothings_client = "*"
+requests = "*"
+xmltodict = "*"
 
 [dev-packages]
 
