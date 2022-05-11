@@ -136,7 +136,6 @@ class Plot(object):
             self.sequence = fa.fetch(self.chromosome, self.start - 1, self.end + 1)
         self.sequence = fasta
 
-
     def set_reference(self, gtf: str):
         u"""
         add transcripts to this region

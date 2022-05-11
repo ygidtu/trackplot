@@ -5,13 +5,10 @@
 u"""
 Convert aa position into genomic coordinate, Ran zhou.
 
-Refactoring the code based on pyranges.
-
 """
 from itertools import islice
 from typing import Optional
 import numpy as np
-from sashimi.base.pyUniprot import Uniprot
 
 
 class Coordinate(object):
@@ -142,8 +139,9 @@ class Coordinate(object):
         return np.array(list(range(len(self.location_list))))
 
     @staticmethod
-    def __group_consecutive_value__(location_list: np.ndarray) -> list:
-        group_ids = np.concatenate(([0], (np.diff(location_list) != 1).cumsum()))
+    def __group_consecutive_value__(location_list: np.ndarray, strand: str) -> list:
+        offset = -1 if strand == "-" else 1
+        group_ids = np.concatenate(([0], (np.diff(location_list) != offset).cumsum()))
 
         grouped_truncated_location_array = \
             np.split(
@@ -156,7 +154,7 @@ class Coordinate(object):
     @classmethod
     def init_from_location_list(cls, truncated_location_array: np.ndarray, strand: str):
         __coordinate_list = []
-        for sub_array in cls.__group_consecutive_value__(truncated_location_array):
+        for sub_array in cls.__group_consecutive_value__(truncated_location_array, strand):
             if len(sub_array) == 0:
                 continue
 
@@ -206,19 +204,17 @@ class CoordinateMapper(Coordinate):
             self.strand)
 
 
-def __map_ensembl_id_to_pep_coord__(transcript_id):
-    trans_map_info = Uniprot(transcript_id)
-    return trans_map_info
+def main():
+    cds = [(3216025, 3216968),
+           (3421702, 3421901),
+           (3670552, 3671348)]
+
+    coord = CoordinateMapper(cds, "+")
+    domain_info = [(1, 3, "1XK-related protein 4;chain")]
+    domain_coord = coord.pep_to_cds(1, 3)
+    print(domain_coord.se)
+    # [(3216025, 3216033)]
 
 
 if __name__ == '__main__':
-    # cds = [(3216025, 3216968),
-    #        (3421702, 3421901),
-    #        (3670552, 3671348)]
-    #
-    # coord = CoordinateMapper(cds, '+')
-    # domain_info = [(1, 3, '1XK-related protein 4;chain')]
-    # domain_coord = coord.pep_to_cds(1, 3)
-    # print(domain_coord.se)
-    # [(3216025, 3216033)]
-    print(__map_ensembl_id_to_pep_coord__("ENST00000486161").info)
+    pass

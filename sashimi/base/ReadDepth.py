@@ -28,7 +28,7 @@ def __opposite_strand__(strand: str) -> str:
     :param strand: strand, one of ['+', '-', '*']
     :return: an opposite of strand
     """
-    assert strand in ["+", "-", "*"], "Unknown strand information was found."
+    assert strand in {"+", "-", "*"}, "Unknown strand information was found."
     if strand == "*":
         return "*"
     elif strand == "+":
@@ -45,7 +45,7 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
     value should be one of ["fr-firststrand", "fr-secondstrand", "fr-unstrand"]
     :return:
     """
-    assert library in ["fr-firststrand", "fr-secondstrand", "fr-unstrand"], "Can't recognize the definition of library."
+    assert library in {"fr-firststrand", "fr-secondstrand", "fr-unstrand"}, "Can't recognize the definition of library."
 
     # return '+' strand for all unstrand library.
     if library == "fr-unstrand":
@@ -155,6 +155,7 @@ class ReadDepth(GenomicLoci):
         :param log: whether to use log transformed number of reads in sashimi
         :param reads1: None -> all reads, True -> only R1 kept; False -> only R2 kept
         :param required_strand: None -> all reads, else reads on specific strand
+        :param umi_tag: umi tag
         :param stack: whether to kept reads info for stack plot
         :param library: the method for preparing of the library.
         """

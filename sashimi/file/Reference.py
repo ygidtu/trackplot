@@ -20,7 +20,12 @@ from matplotlib import pyplot as plt
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Transcript import Transcript
+from sashimi.base.Protein import CdsProtein
 from sashimi.anno.theme import Theme
+
+# Put here to avoid outline stroke of font for this moment
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams["font.family"] = 'Arial'
 
 
 class Reference(object):
@@ -35,12 +40,15 @@ class Reference(object):
         """
         self.path = path
         self.transcripts = []
+        self.domain = None
 
     def __add__(self, other):
         assert isinstance(other, Reference), "only Reference and Reference could be added"
 
         self.transcripts += other.transcripts
         self.transcripts = sorted(set(self.transcripts))
+        if self.domain:
+            self.__add_domain__()
 
     @classmethod
     def create(cls, path: str):
@@ -51,6 +59,30 @@ class Reference(object):
         """
         assert os.path.exists(path), f"{path} not exists"
         return cls(path=cls.index_gtf(path))
+
+    def __add_domain__(self):
+        gene_id = set(map(lambda x: x.gene_id, self.transcripts))
+        transcript_id = set(map(lambda x: x.transcript_id, self.transcripts))
+        chromosome_id = self.transcripts[0].chromosome
+
+        # if domain is not None, then add it.
+        if self.domain:
+            gene_id = gene_id.difference(self.domain.gene_id)
+            transcript_id = transcript_id.difference(self.domain.transcript_id)
+
+        if len(transcript_id) != 0 and len(gene_id) != 0:
+            with pysam.Tabixfile(self.path) as gtf_tabix:
+                domain_info = CdsProtein.__re_iter_gtf__(
+                    gtf_tabix=gtf_tabix,
+                    chromosome=chromosome_id,
+                    transcript_id=transcript_id,
+                    gene_id=chromosome_id
+                )
+            # add pep information to cdsProtein.
+            if self.domain:
+                self.domain.add(domain_info)
+            else:
+                self.domain = domain_info
 
     @staticmethod
     def is_gtf(infile):
@@ -101,7 +133,7 @@ class Reference(object):
             with open(input_gtf) as r:
                 for line in r:
                     if line.startswith("#"):
-                        fh.write(line)
+                        w.write(line)
                         continue
 
                     lines = line.split()
@@ -145,7 +177,7 @@ class Reference(object):
             output_gtf = input_gtf + ".gz"
 
         sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
-        if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf_gtf + ".tbi"):
+        if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
             return sorted_gtf
 
         if not os.path.exists(output_gtf) or not os.path.exists(output_gtf + ".tbi"):
@@ -182,10 +214,11 @@ class Reference(object):
 
         return output_gtf
 
-    def load(self, region: GenomicLoci):
+    def load(self, region: GenomicLoci, domain: Optional[bool] = False):
         u"""
         Load transcripts inside of region
         :param region: target region
+        :param domain: init with domain, default: False
         :return:
         """
         assert isinstance(region, GenomicLoci), "region should be a GenomicLoci object"
@@ -247,11 +280,13 @@ class Reference(object):
         self.transcripts = sorted(transcripts.values())
         r.close()
 
+        if domain:
+            self.__add_domain__()
+
     def plot(self,
              ax: mpl.axes.Axes,
              graph_coords: Optional[dict] = None,
              font_size: int = 5,
-             distance_ratio: float = .3,
              show_gene: bool = False,
              show_id: bool = False,
              transcripts: Optional[List[str]] = None,
@@ -270,7 +305,6 @@ class Reference(object):
         :param font_size: the font size of transcript label
         :param show_gene: Boolean value to decide whether to show gene id in this plot
         :param show_id: Boolean value to decide whether to show the id or name of transcript/gene in this plot
-        :param distance_ratio: distance between transcript label and transcript line
         :param transcripts: list of transcript id/name or gene id/name to specify which transcripts to show
         :param remove_empty_transcripts: do not show transcripts without any exons
         :param color: the color of transcripts
@@ -284,19 +318,24 @@ class Reference(object):
         Theme.set_theme(ax, theme)
 
         self.transcripts = sorted(self.transcripts)
+        # choose the most right site as the lower boundary
+        most_right_site = max(map(lambda _x: _x.end, self.transcripts))
+
         if not self.transcripts:
             return
 
         if not graph_coords:
-            graph_coords = np.zeros(self.transcripts[-1].end - self.transcripts[0].start + 1, dtype=np.int)
-            for i, j in enumerate(range(self.transcripts[0].start, self.transcripts[-1].end + 1)):
+            graph_coords = np.zeros(most_right_site - self.transcripts[0].start + 1, dtype=np.int32)
+            for i, j in enumerate(range(self.transcripts[0].start, most_right_site + 1)):
                 graph_coords[j] = i
 
         """
         @2018.12.26
         Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
+        
+        Yes, remove distance ratio using `ha="right"` 
         """
-        distance = distance_ratio * (max(graph_coords) - min(graph_coords))
+        # distance = distance_ratio * (max(graph_coords) - min(graph_coords))
 
         for transcript in self.transcripts:
             # ignore the unwanted transcript
@@ -309,27 +348,32 @@ class Reference(object):
 
             strand = transcript.strand
             # @2018.12.20 add transcript id, based on fixed coordinates
+            # @2022.05.10 add ha to adjust the offset of label of yaxis.
             if transcript.transcript:
                 if show_gene and transcript.gene:
                     if show_id:
                         ax.text(
-                            x=-1 * distance, y=y_loc + 0.25, s=transcript.gene_id,
-                            fontsize=font_size
+                            x=-1, y=y_loc + 0.25, s=transcript.gene_id,
+                            fontsize=font_size,
+                            ha="right"
                         )
 
                         ax.text(
-                            x=-1 * distance, y=y_loc - 0.25, s=transcript.transcript_id,
-                            fontsize=font_size
+                            x=-1, y=y_loc - 0.25, s=transcript.transcript_id,
+                            fontsize=font_size,
+                            ha="right"
                         )
                     else:
                         ax.text(
-                            x=-1 * distance, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
-                            fontsize=font_size
+                            x=-1, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
+                            fontsize=font_size,
+                            ha="right"
                         )
                 else:
                     ax.text(
-                        x=-1 * distance, y=y_loc - 0.1, s=transcript.transcript,
-                        fontsize=font_size
+                        x=-1, y=y_loc - 0.1, s=transcript.transcript,
+                        fontsize=font_size,
+                        ha="right"
                     )
 
             # @2018.12.19
@@ -373,12 +417,27 @@ class Reference(object):
                     x = [loc + spread, loc, loc + spread]
                 y = [y_loc - exon_width / 5, y_loc, y_loc + exon_width / 5]
                 ax.plot(x, y, lw=.5, color='k')
-
             y_loc += 1  # if transcript.transcript else .5
-
-        # ax.set_xlim(-2, max(graph_coords))
         ax.set_ylim(-.5, len(self.transcripts) + .5)
 
 
+def main():
+    loc = GenomicLoci(chromosome="chr1",
+                      start=1017198,
+                      end=1051741,
+                      strand="-")
+
+    gtf_ref = Reference("../../example/example.sorted.gtf.gz")
+    gtf_ref.load(loc, domain=True)
+    print(gtf_ref.domain)
+    # gene_id = set(map(lambda x: x.gene_id, gtf_ref.transcripts))
+    # transcript_id = set(map(lambda x: x.transcript_id, gtf_ref.transcripts))
+    # print(gene_id)
+    # print(transcript_id)
+    fig, ax = plt.subplots(figsize=(14, 7))
+    gtf_ref.plot(ax, show_gene=True, show_id=True)
+    fig.savefig('test.pdf')
+
+
 if __name__ == "__main__":
-    pass
+    main()
