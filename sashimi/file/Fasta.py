@@ -7,16 +7,25 @@ import os
 import pysam
 from sashimi.base.GenomicLoci import GenomicLoci
 from conf.logger import logger
+from sashimi.file.File import File
 
 
-class Fasta(object):
+class Fasta(File):
 
     def __init__(self, path: str):
+        super().__init__(path)
         assert os.path.exists(path),  f"{path} not exists"
 
-        self.path = path
+    @classmethod
+    def create(cls, path: str):
+        if not os.path.exists(path + ".fai"):
+            logger.warning(f"{path}.fai not exists, try to create it")
 
-    def load(self, region: GenomicLoci) -> str:
+            pysam.faidx(path)
+
+        return cls(path)
+
+    def load(self, region: GenomicLoci):
         u"""
         load sequence from a fasta file
         :param region:
@@ -29,7 +38,7 @@ class Fasta(object):
             pysam.faidx(self.path)
 
         with pysam.FastaFile(self.path) as r:
-            return r.fetch(region.chromosome, region.start, region.end+1)
+            self.data = r.fetch(region.chromosome, region.start, region.end+1)
 
 
 if __name__ == '__main__':

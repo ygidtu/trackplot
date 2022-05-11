@@ -6,6 +6,9 @@ Created by ygidtu@gmail.com at 2019.01.04
 This script contains all the basic data types used by this suite of scripts
 
 For better organization
+
+Changelog:
+    1. add relative to convert sites to relative coord
 """
 
 
@@ -130,9 +133,7 @@ class GenomicLoci(object):
         :param other: another GenomicLoci and it's children class
         :return: Boolean
         """
-        return self.chromosome == other.chromosome and \
-               self.start <= other.end and \
-               self.end >= other.start
+        return self.chromosome == other.chromosome and self.start <= other.end and self.end >= other.start
 
     @classmethod
     def create_loci(cls, string):
@@ -154,6 +155,9 @@ class GenomicLoci(object):
         start, end = sites.split("-")
 
         return cls(chromosome, start, end, strand)
+
+    def relative(self, site: int) -> int:
+        return site - self.start
 
 
 if __name__ == "__main__":

@@ -3,14 +3,18 @@
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
-from typing import List, Optional
+from typing import List, Optional, Set
 from copy import deepcopy
 
 import numpy as np
 
 from conf.logger import logger
+from sashimi.anno.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.file.reference import Reference
+from sashimi.file.Reference import Reference
+from sashimi.file.Fasta import Fasta
+from sashimi.file.Bam import Bam
+from sashimi.file.Bigwig import Bigwig
 
 
 class Plot(object):
@@ -31,6 +35,7 @@ class Plot(object):
         self.sequence = None
         self.reference = None
         self.graph_coords = None
+        self.plots = []
 
     @property
     def chrom(self) -> Optional[str]:
@@ -132,10 +137,7 @@ class Plot(object):
         :return:
         """
         logger.info(f"fetch sequence from {fasta}")
-        with pysam.AlignmentFile(fasta) as fa:
-            self.sequence = fa.fetch(self.chromosome, self.start - 1, self.end + 1)
-        self.sequence = fasta
-
+        self.sequence = Fasta.create(fasta)
 
     def set_reference(self, gtf: str):
         u"""
@@ -144,40 +146,49 @@ class Plot(object):
         :return:
         """
         logger.info(f"fetch transcripts from {gtf}")
-        self.reference = Reference.create(gtf, region=self)
+        self.reference = Reference.create(gtf)
 
-    def __str__(self):
-        return '{0}:{1}-{2},{3}'.format(
-            self.chromosome,
-            self.start,
-            self.end,
-            self.__transcripts__
-        )
-
-    def __add__(self, other):
+    def add_density(self,
+                    path: str,
+                    category: str = "bam",
+                    label: str = "",
+                    title: str = "",
+                    barcodes: Optional[Set[str]] = None,
+                    cell_barcode: str = "BC",
+                    umi_barcode: str = "UB",
+                    library: str = "fr-unstrand"
+                    ):
         u"""
-        override add of genomic loci
-        :param other: SpliceRegion
+        add density object to plot
+        :param label: the density y-axis label
+        :param title: the density title
+        :param barcodes: set of target barcodes, used by bam file of single cell sequencing
+        :param cell_barcode: used by bam file of single cell sequencing
+        :param umi_barcode: used by bam file of single cell sequencing
+        :param library: the bam file library type
+        :param path: the path to input file
+        :param category: the input file type
         :return:
         """
-        if self.is_overlap(other):
-            return SpliceRegion(
-                chromosome=self.chromosome,
-                start=min(self.start, other.start),
-                end=max(self.end, other.end),
-                strand=self.strand,
-                sites=self.sites | other.sites
+
+        if category == "bam":
+            obj = Bam.create(
+                path,
+                label=label,
+                title=title,
+                barcodes=barcodes,
+                cell_barcode=cell_barcode,
+                umi_barcode=umi_barcode,
+                library=library
             )
+        elif category == "bigwig" or category == "bw":
+            obj = Bigwig.create(path, label=label)
+        else:
+            raise ValueError(f"the category should be one of [bam, bigwig, bw], instead of {category}")
+        self.plots.append({"obj": obj, "type": "density"})
 
     def __len__(self) -> int:
         return self.end - self.start + 1
-
-    def x_label(self, logtrans=None) -> str:
-        label = f'Genomic coordinate ({self.chromosome}), "{self.strand}" strand'
-
-        if logtrans is not None:
-            label = f"{label}, y axis is log{logtrans} transformed"
-        return label
 
     def copy(self):
         return deepcopy(self)
