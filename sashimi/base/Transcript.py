@@ -2,8 +2,11 @@
 # -*- coding:utf-8 -*-
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
+
+Changelog:
+    1. remove attributes
 """
-from typing import List, Optional
+from typing import List
 from sashimi.base.GenomicLoci import GenomicLoci
 
 
@@ -78,30 +81,6 @@ class Transcript(GenomicLoci):
         self.domain_description = domain_description
 
     @property
-    def exon_starts(self):
-        u"""
-        API for extract all exon starts
-        :return:
-        """
-        starts = []
-        for i in self.transcripts:
-            for j in i.exons:
-                starts.append(j.start)
-        return sorted(starts)
-
-    @property
-    def exon_ends(self):
-        u"""
-        API for extract all exon ends
-        :return:
-        """
-        ends = []
-        for i in self.transcripts:
-            for j in i.exons:
-                ends.append(j.end)
-        return sorted(ends)
-
-    @property
     def exon_list(self):
 
         exon_nested_lst = []
@@ -131,10 +110,7 @@ class Transcript(GenomicLoci):
         return sum(map(lambda x: x[1] - x[0] + 1, self.exon_list))
 
     def ids(self) -> List[str]:
-        u"""
-        这里有问题，返回的set
-        """
-        return set(self.transcript_id, self.transcript_name, self.gene, self.gene_id)
+        return [self.transcript, self.transcript_id, self.gene, self.gene_id]
 
 
 if __name__ == "__main__":

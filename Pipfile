@@ -14,6 +14,7 @@ numpy = "*"
 biothings_client = "*"
 requests = "*"
 xmltodict = "*"
+pybigwig = "*"
 
 [dev-packages]
 
