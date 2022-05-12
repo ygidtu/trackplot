@@ -7,6 +7,7 @@ Changelog:
     1. remove attributes
 """
 from typing import List
+
 from sashimi.base.GenomicLoci import GenomicLoci
 
 
@@ -24,7 +25,9 @@ class Transcript(GenomicLoci):
         "transcript_id",
         "exons",
         "category",
-        "domain"
+        "domain_category",
+        "domain_type",
+        "domain_description"
     ]
 
     def __init__(
@@ -39,7 +42,9 @@ class Transcript(GenomicLoci):
             transcript: str = "",
             transcript_id: str = "",
             category: str = "exon",
-            domain: str = ""
+            domain_category: str = "",
+            domain_type: str = "",
+            domain_description: str = ""
     ):
         u"""
         :param chromosome:
@@ -52,7 +57,9 @@ class Transcript(GenomicLoci):
         :param transcript: transcript name, such as "SAMD11-011"
         :param transcript_id: transcript id, such as "ENST00000420190"
         :param category: exon or protein
-        :param domain: if category is protein, the type information of the given domain
+        :param domain_category: exon or protein
+        :param domain_description: description of domain
+        :param domain_type: if category is protein, the type information of the given domain
         """
 
         super().__init__(
@@ -67,7 +74,9 @@ class Transcript(GenomicLoci):
         self.gene_id = gene_id
         self.exons = sorted(exons)
         self.category = category
-        self.domain = domain
+        self.domain_category = domain_category
+        self.domain_type = domain_type
+        self.domain_description = domain_description
 
     @property
     def exon_list(self):

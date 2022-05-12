@@ -6,23 +6,25 @@ Created by ygidtu@gmail.com at 2020.05.07
 This scripts contains the class handle the reference file
 """
 import gzip
-import math
 import os
 import re
 from typing import List, Optional
 
 import filetype
 import matplotlib as mpl
-import numpy as np
 import pysam
 from matplotlib import pyplot as plt
 
 from conf.logger import logger
-from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.base.Transcript import Transcript
+from sashimi.base.Protein import CdsProtein
 from sashimi.file.File import File
+
+# Put here to avoid outline stroke of font for this moment
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams["font.family"] = 'Arial'
 
 
 class Reference(File):
@@ -41,14 +43,16 @@ class Reference(File):
         super().__init__(path=self.index_gtf(path) if category == "gtf" else path)
         self.category = category
         self.data = []
+        self.domain = None
 
     def __add__(self, other):
         assert isinstance(other, Reference), "only Reference and Reference could be added"
-
         new_ref = Reference(self.path, category=self.category)
         new_ref.data += self.data
         new_ref.data += other.data
         new_ref.data = sorted(new_ref.data)
+        if self.domain:
+            new_ref.__add_domain__(self)
         return new_ref
 
     @classmethod
@@ -61,6 +65,30 @@ class Reference(File):
         """
         assert os.path.exists(path), f"{path} not exists"
         return cls(path=path, category=category)
+
+    def __add_domain__(self):
+        gene_id = set(map(lambda x: x.gene_id, self.data))
+        transcript_id = set(map(lambda x: x.transcript_id, self.data))
+        chromosome_id = self.data[0].chromosome
+
+        # if domain is not None, then add it.
+        if self.domain:
+            gene_id = gene_id.difference(self.domain.gene_id)
+            transcript_id = transcript_id.difference(self.domain.transcript_id)
+
+        if len(transcript_id) != 0 and len(gene_id) != 0:
+            with pysam.Tabixfile(self.path) as gtf_tabix:
+                domain_info = CdsProtein.__re_iter_gtf__(
+                    gtf_tabix=gtf_tabix,
+                    chromosome=chromosome_id,
+                    transcript_id=transcript_id,
+                    gene_id=chromosome_id
+                )
+            # add pep information to cdsProtein.
+            if self.domain:
+                self.domain.add(domain_info)
+            else:
+                self.domain = domain_info
 
     @staticmethod
     def is_gtf(infile):
@@ -193,6 +221,7 @@ class Reference(File):
         return output_gtf
 
     def __load_gtf__(self, region: GenomicLoci) -> List[Transcript]:
+
         u"""
         Load transcripts inside of region from gtf file
         :param region: target region
@@ -285,10 +314,11 @@ class Reference(File):
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
-    def load(self, region: GenomicLoci, threshold_of_reads: int = 0):
+    def load(self, region: GenomicLoci, domain: Optional[bool] = False, threshold_of_reads: int = 0):
         u"""
         Load transcripts inside of region
         :param region: target region
+        :param domain: init with domain, default: False
         :param threshold_of_reads: used for bam file, only kept reads with minimum frequency
         :return:
         """
@@ -296,23 +326,33 @@ class Reference(File):
         self.region = region
         if self.category == "gtf":
             self.data = self.__load_gtf__(region)
+
+            if domain:
+                self.__add_domain__()
         else:
             self.data = self.__load_bam__(region, threshold_of_reads)
 
 
 if __name__ == "__main__":
-    region = GenomicLoci("chr1", 1270656, 1284730, "+")
-    print(len(region))
-    ref = Reference.create("../../example/example.gtf")
-    ref.load(region)
-    print(len(ref.data))
+    # region = GenomicLoci("chr1", 1270656, 1284730, "+")
+    # print(len(region))
+    # ref = Reference.create("../../example/example.gtf")
+    # ref.load(region)
+    # print(len(ref.data))
+    #
+    # ref1 = Reference.create("../../example/bams/1.bam", category="bam")
+    # ref1.load(region, 10)
+    # print(len(ref1.data))
 
-    ref1 = Reference.create("../../example/bams/1.bam", category="bam")
-    ref1.load(region, 10)
-    print(len(ref1.data))
+    loc = GenomicLoci(chromosome="chr1",
+                      start=1017198,
+                      end=1051741,
+                      strand="-")
 
-    ref = ref + ref1
-
-    for i in ref.data:
-        print(i.transcript_id)
-    pass
+    gtf_ref = Reference("../../example/example.sorted.gtf.gz")
+    gtf_ref.load(loc, domain=True)
+    print(gtf_ref.domain)
+    # gene_id = set(map(lambda x: x.gene_id, gtf_ref.transcripts))
+    # transcript_id = set(map(lambda x: x.transcript_id, gtf_ref.transcripts))
+    # print(gene_id)
+    # print(transcript_id)
