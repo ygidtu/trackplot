@@ -142,7 +142,7 @@ def plot_reference(
         obj: File,
         graph_coords: Optional[dict] = None,
         font_size: int = 5,
-        distance_ratio: float = .3,
+        # distance_ratio: float = .3,
         show_gene: bool = False,
         show_id: bool = False,
         transcripts: Optional[List[str]] = None,
@@ -151,8 +151,26 @@ def plot_reference(
         reverse_minus: bool = False,
         theme: str = "blank",
         y_loc: int = 0,
-        exon_width: float = .3
+        exon_width: float = .3,
+        plot_domain: bool = False
 ):
+    u"""
+    Plot the structure of reference
+    :param ax:
+    :param obj:
+    :param graph_coords:
+    :param font_size:
+    :param show_gene:
+    :param show_id:
+    :param transcripts:
+    :param remove_empty_transcripts:
+    :param color:
+    :param reverse_minus:
+    :param theme:
+    :param y_loc:
+    :param exon_width:
+    :return:
+    """
     Theme.set_theme(ax, theme)
     region = obj.region
 
@@ -167,7 +185,7 @@ def plot_reference(
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
     """
-    distance = distance_ratio * (max(graph_coords) - min(graph_coords))
+    # distance = distance_ratio * (max(graph_coords) - min(graph_coords))
 
     for transcript in obj.data:
         # ignore the unwanted transcript
@@ -184,21 +202,29 @@ def plot_reference(
             if show_gene and transcript.gene:
                 if show_id:
                     ax.text(
-                        x=-1 * distance, y=y_loc + 0.25, s=transcript.gene_id,
-                        fontsize=font_size
+                        x=-1, y=y_loc + 0.25, s=transcript.gene_id,
+                        fontsize=font_size,
+                        ha="right"
                     )
 
                     ax.text(
-                        x=-1 * distance, y=y_loc - 0.25, s=transcript.transcript_id,
-                        fontsize=font_size
+                        x=-1, y=y_loc - 0.25,
+                        s=transcript.transcript_id,
+                        fontsize=font_size,
+                        ha="right"
                     )
                 else:
                     ax.text(
-                        x=-1 * distance, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
-                        fontsize=font_size
+                        x=-1, y=y_loc,
+                        s=transcript.gene + " | " + transcript.transcript,
+                        fontsize=font_size,
+                        ha="right"
                     )
             else:
-                ax.text(x=-1 * distance, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size)
+                ax.text(x=-1, y=y_loc - 0.1,
+                        s=transcript.transcript,
+                        fontsize=font_size,
+                        ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -244,7 +270,66 @@ def plot_reference(
 
         y_loc += 1  # if transcript.transcript else .5
 
-    ax.set_ylim(-.5, len(data) + .5)
+        # here is plot domain
+        if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
+            current_domains = obj.domain.pep[transcript.transcript_id]
+
+            for sub_current_domain in current_domains:
+                if not (sub_current_domain.start <= region.end and
+                        sub_current_domain.end >= region.start):
+                    continue
+
+                for sub_exon in sub_current_domain.exons:
+
+                    for exon in sub_exon:
+                        s, e = region.relative(exon.start), region.relative(exon.end)
+                        if e < 0 or s > len(region):
+                            continue
+                        s = 0 if s < 0 else s
+                        e = len(region) if e >= len(region) else e
+
+                        x = [
+                            graph_coords[s], graph_coords[e],
+                            graph_coords[e], graph_coords[s]
+                        ]
+                        y = [
+                            y_loc - exon_width / 4, y_loc - exon_width / 4,
+                            y_loc + exon_width / 4, y_loc + exon_width / 4
+                        ]
+                        ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
+
+                    # print(sub_exon)
+                    intron_relative_s = region.relative(
+                        min(map(lambda x: x.start, sub_exon))
+                    )
+                    intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
+
+                    intron_relative_e = region.relative(
+                        max(map(lambda x: x.end, sub_exon))
+                    )
+                    intron_relative_e = len(region) if intron_relative_e >= len(region) else intron_relative_e
+
+                    intron_sites = [
+                        graph_coords[intron_relative_s],
+                        graph_coords[intron_relative_e]
+                    ]
+                    if len(sub_exon) != 1:
+                        ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.5)
+
+                ax.text(
+                    x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}\n{transcript.transcript_id}",
+                    fontsize=font_size,
+                    ha="right"
+                )
+
+                y_loc += 0.25
+        # offset for next term.
+        y_loc += 0.75
+
+    if obj.domain:
+        ax.set_ylim(-.5, len(data) + len(obj.domain) + .5)
+    else:
+        ax.set_ylim(-.5, len(data) + .5)
 
 
 def plot_density(
@@ -262,8 +347,7 @@ def plot_density(
     u"""
     draw density plot
     :param ax: mpl.axes.Axes
-    :param show_y_label: whether to show y-axis label
-    :param region:
+    :param obj: Reference object
     :param graph_coords:
     :param font_size: the font size for ticks, y-axis label and title
     :param show_junction_number: whether to show the number of junctions
@@ -272,6 +356,7 @@ def plot_density(
     :param junction_number_font_size:
     :param obj: Bam or Bigwig object
     :param color: color for this density plot
+    :param show_y_label: whether to show y-axis label
     :return:
     """
     region = obj.region
@@ -439,7 +524,8 @@ if __name__ == '__main__':
     plt.savefig("plot_density.png")
 
     fig, ax = plt.subplots()
-    ref = Reference.create("../example/example.gtf")
-    ref.load(region)
-    plot_reference(ax, ref)
-    plt.savefig("plot_reference.png")
+    ref = Reference.create("../example/example.sorted.gtf.gz")
+    ref.load(region, domain=True)
+
+    plot_reference(ax, ref, show_gene=True, show_id=True)
+    plt.savefig("plot_reference.pdf")

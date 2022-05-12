@@ -49,12 +49,26 @@ class CdsProtein(GenomicLoci):
         self.gene_id = gene_id
         self.transcript_id = transcript_id
 
+    def __len__(self):
+        return len(self.pep)
+
     def __add__(self, other):
         assert isinstance(other, CdsProtein), "only CdsProtein and CdsProtein could be added"
         self.gene_id.update(other.gene_id)
         self.transcript_id.update(other.transcript_id)
         self.cds.update(other.cds)
         self.pep.update(other.pep)
+        self.region = GenomicLoci(
+            chromosome=self.chromosome,
+            start=min(self.start, other.start),
+            end=max(self.end, other.start),
+            strand="."
+        )
+
+    # @property
+    # def truncated_pep(self):
+    #
+    #     return
 
     @classmethod
     def __re_iter_gtf__(
@@ -149,10 +163,15 @@ class CdsProtein(GenomicLoci):
         Initiate the CdsProtein object
         :return:
         """
+
         protein_info = defaultdict(list)
-        Domain_region = namedtuple('DomainGenomicRegion', ['category', 'type', 'start', 'end'])
+        Domain_region = namedtuple(
+            "DomainGenomicRegion",
+            ["category", "type", "description", "unique_id", "start", "end"]
+        )
+
         for current_transcript_id in self.cds.keys():
-            print(current_transcript_id, len(self.cds[current_transcript_id]))
+
             current_pep = Uniprot(
                 uniprot_id=current_transcript_id,
                 cds_len=len(self.cds[current_transcript_id])
@@ -167,41 +186,50 @@ class CdsProtein(GenomicLoci):
                 strand=self.cds[current_transcript_id].strand
             )
 
+            domain_res = defaultdict(list)
             for domain in current_pep.domain:
-
+                current_unique_id = domain.unique_id
                 pep_genomic_coord = coord_mapper.pep_to_cds(
                     int(domain.begin),
                     int(domain.end)
                 )
 
                 # keep the protein genomic coordinate into a list
-                domain_list = []
+                current_domain_res = []
                 for sub_domain_start, sub_domain_end in pep_genomic_coord.se:
-                    domain_list.append(
+                    current_domain_res.append(
                         Domain_region._make(
                             [domain.category,
                              domain.type,
+                             domain.description,
+                             current_unique_id,
                              sub_domain_start,
                              sub_domain_end
                              ]
                         )
                     )
-                try:
-                    description_inf = domain.description
-                except AttributeError:
-                    description_inf = ""
+                domain_res[current_unique_id].extend([current_domain_res])
+
+            for domain_unique_id, domain_list in domain_res.items():
+                start_site = min([
+                    min(map(lambda x: x.start, i)) for i in domain_list
+                ])
+
+                end_site = max([
+                    max(map(lambda x: x.start, i)) for i in domain_list
+                ])
 
                 protein_info[current_transcript_id].append(
                     Transcript(
                         chromosome=self.chromosome,
-                        start=min(map(lambda x: x[0], pep_genomic_coord.se)),
-                        end=max(map(lambda x: x[1], pep_genomic_coord.se)),
+                        start=start_site,
+                        end=end_site,
                         strand=self.cds[current_transcript_id].strand,
                         exons=domain_list,
-                        gene=domain.category,
-                        domain_type=domain.type,
-                        domain_description=description_inf,
-                        domain_category=domain.category,
+                        gene=domain_list[0][0].unique_id,
+                        domain_type=domain_list[0][0].type,
+                        domain_description=domain_list[0][0].description,
+                        domain_category=domain_list[0][0].category,
                         category="protein"
                     )
                 )

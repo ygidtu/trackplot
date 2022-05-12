@@ -52,7 +52,7 @@ class Reference(File):
         new_ref.data += other.data
         new_ref.data = sorted(new_ref.data)
         if self.domain:
-            new_ref.__add_domain__(self)
+            new_ref.__add_domain__()
         return new_ref
 
     @classmethod
@@ -66,7 +66,7 @@ class Reference(File):
         assert os.path.exists(path), f"{path} not exists"
         return cls(path=path, category=category)
 
-    def __add_domain__(self):
+    def __add_domain__(self, region: GenomicLoci):
         gene_id = set(map(lambda x: x.gene_id, self.data))
         transcript_id = set(map(lambda x: x.transcript_id, self.data))
         chromosome_id = self.data[0].chromosome
@@ -328,7 +328,7 @@ class Reference(File):
             self.data = self.__load_gtf__(region)
 
             if domain:
-                self.__add_domain__()
+                self.__add_domain__(region)
         else:
             self.data = self.__load_bam__(region, threshold_of_reads)
 
@@ -352,6 +352,7 @@ if __name__ == "__main__":
     gtf_ref = Reference("../../example/example.sorted.gtf.gz")
     gtf_ref.load(loc, domain=True)
     print(gtf_ref.domain)
+
     # gene_id = set(map(lambda x: x.gene_id, gtf_ref.transcripts))
     # transcript_id = set(map(lambda x: x.transcript_id, gtf_ref.transcripts))
     # print(gene_id)

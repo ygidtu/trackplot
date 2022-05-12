@@ -100,6 +100,9 @@ class Transcript(GenomicLoci):
             "|".join(exons_str)
         )
 
+    def __len__(self):
+        return sum(map(lambda x: x[1] - x[0] + 1, self.exon_list))
+
     def __hash__(self):
         exons = sorted([str(x.__hash__()) for x in self.exons])
         return hash((self.chromosome, self.start, self.end, self.strand, " ".join(exons)))
