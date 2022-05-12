@@ -14,7 +14,10 @@ class Transcript(GenomicLoci):
     u"""
     Created by ygidtu at 2018.12.21
 
-    A class inherit from GenomicLoci, to collect transcript information
+    A class inherit from GenomicLoci, to collect transcript information.
+
+    Add extending for domain region. Ran
+
     """
 
     __slots__ = [
@@ -24,7 +27,9 @@ class Transcript(GenomicLoci):
         "transcript_id",
         "exons",
         "category",
-        "domain"
+        "domain_category",
+        "domain_type",
+        "domain_description"
     ]
 
     def __init__(
@@ -39,20 +44,24 @@ class Transcript(GenomicLoci):
             transcript: str = "",
             transcript_id: str = "",
             category: str = "exon",
-            domain: str = ""
+            domain_category: str = "",
+            domain_type: str = "",
+            domain_description: str = ""
     ):
         u"""
-        :param chromosome:
-        :param start:
-        :param end:
-        :param strand:
+
+        :param chromosome: chromosome id
+        :param start: start site
+        :param end: end site
+        :param strand: strand information
         :param exons: A list of pysam.GTFProxy if category was exon, A nested tuple of list if category was protein
-        :param gene: gene name when category is exon,such as "SAMD11"; domain's description when category is domain such as "Disordered"
+        :param gene: gene name when category is exon,such as "SAMD11";\ domain's description when category is domain such as "Disordered"
         :param gene_id: gene id, such as "ENSG00000187634"
         :param transcript: transcript name, such as "SAMD11-011"
         :param transcript_id: transcript id, such as "ENST00000420190"
-        :param category: exon or protein
-        :param domain: if category is protein, the type information of the given domain
+        :param domain_category: exon or protein
+        :param domain_description: description of domain
+        :param domain_domain: if category is protein, the type information of the given domain
         """
 
         super().__init__(
@@ -65,9 +74,11 @@ class Transcript(GenomicLoci):
         self.transcript_id = transcript_id
         self.gene = gene
         self.gene_id = gene_id
-        self.exons = sorted(exons)
+        self.exons = exons
         self.category = category
-        self.domain = domain
+        self.domain_category = domain_category
+        self.domain_type = domain_type
+        self.domain_description = domain_description
 
     @property
     def exon_list(self):
@@ -94,6 +105,9 @@ class Transcript(GenomicLoci):
     def __hash__(self):
         exons = sorted([str(x.__hash__()) for x in self.exons])
         return hash((self.chromosome, self.start, self.end, self.strand, " ".join(exons)))
+
+    def __len__(self):
+        return sum(map(lambda x: x[1] - x[0] + 1, self.exon_list))
 
     def ids(self) -> List[str]:
         return [self.transcript, self.transcript_id, self.gene, self.gene_id]
