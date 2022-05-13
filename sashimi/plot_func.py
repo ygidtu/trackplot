@@ -142,7 +142,6 @@ def plot_reference(
         obj: File,
         graph_coords: Optional[dict] = None,
         font_size: int = 5,
-        # distance_ratio: float = .3,
         show_gene: bool = False,
         show_id: bool = False,
         transcripts: Optional[List[str]] = None,
@@ -169,6 +168,7 @@ def plot_reference(
     :param theme:
     :param y_loc:
     :param exon_width:
+    :param  plot_domain:
     :return:
     """
     Theme.set_theme(ax, theme)
@@ -185,7 +185,6 @@ def plot_reference(
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
     """
-    # distance = distance_ratio * (max(graph_coords) - min(graph_coords))
 
     for transcript in obj.data:
         # ignore the unwanted transcript
@@ -527,5 +526,5 @@ if __name__ == '__main__':
     ref = Reference.create("../example/example.sorted.gtf.gz")
     ref.load(region, domain=True)
 
-    plot_reference(ax, ref, show_gene=True, show_id=True)
-    plt.savefig("plot_reference.pdf")
+    plot_reference(ax, ref, show_gene=True, show_id=True, plot_domain=True)
+    plt.savefig("plot_reference.png")
