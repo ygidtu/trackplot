@@ -151,7 +151,8 @@ def plot_reference(
         theme: str = "blank",
         y_loc: int = 0,
         exon_width: float = .3,
-        plot_domain: bool = False
+        plot_domain: bool = False,
+        show_exon_id: bool=False
 ):
     u"""
     Plot the structure of reference
@@ -238,6 +239,13 @@ def plot_reference(
                 y_loc + exon_width / 2, y_loc + exon_width / 2
             ]
             ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
+            if show_exon_id:
+                ax.text(x=(graph_coords[s] + graph_coords[s]) / 2,
+                        y=y_loc + 0.1,
+                        s=exon.name,
+                        fontsize=font_size / 2,
+                        ha="right")
+
 
         # @2018.12.21
         # change the intron range
@@ -526,5 +534,15 @@ if __name__ == '__main__':
     ref = Reference.create("../example/example.sorted.gtf.gz")
     ref.load(region, domain=True)
 
-    plot_reference(ax, ref, show_gene=True, show_id=True, plot_domain=True)
+    ref.add_interval(
+        interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
+        interval_label="PolyASite"
+    )
+
+    plot_reference(ax, ref,
+                   show_gene=True,
+                   show_id=True,
+                   plot_domain=True,
+                   show_exon_id=True
+                   )
     plt.savefig("plot_reference.png")
