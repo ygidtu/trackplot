@@ -13,6 +13,7 @@ import xmltodict
 import json
 from xml.parsers.expat import ExpatError
 from conf.logger import logger
+from conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):
@@ -35,8 +36,9 @@ class Uniprot(object):
 
         self.__valid_fmt = {'txt', 'xml', 'rdf', 'gff', 'fasta'}
         self.__url = "https://www.uniprot.org"
-        self.domain = self.__domain_info__()
+        self.request_res = self.__request_url__()
         self.guessed_id = self.__guess_protein_id__()
+        self.domain = self.__domain_info__()
 
     def __request_url__(self):
         """
@@ -50,7 +52,10 @@ class Uniprot(object):
         try:
             url_response = rq.get(request_url, timeout=10)
         except ConnectionError:
+            raise f"Failed connect to for {request_url}."
+        except rq.exceptions.Timeout:
             raise f"Timeout for {request_url}."
+
         return url_response
 
     def __guess_protein_id__(self):
@@ -61,11 +66,11 @@ class Uniprot(object):
 
         try:
             # No Domain information
-            if self.__request_url__().text == "":
-                return {}
+            if self.request_res.text == "":
+                return None
 
             xml_dic = xmltodict.parse(
-                self.__request_url__().text, attr_prefix="", cdata_key=""
+                self.request_res.text, attr_prefix="", cdata_key=""
             )["uniprot"]["entry"]
             current_uniprot_id = set()
 
@@ -88,10 +93,14 @@ class Uniprot(object):
                     except KeyError:
                         continue
 
-                features_length = np.array(features_length)
-                length_match_index = np.where(
-                    features_length == int(self.cds_len / 3)
-                )[0]
+                if len(all_alternative_uniprot_id) != 0:
+                    features_length = np.array(features_length)
+                    length_match_index = np.where(
+                        features_length == int(self.cds_len / 3)
+                    )[0]
+                else:
+                    length_match_index = []
+
                 u"""
                 Some protein's length was not equal to uniprot, the transcript maybe a non-canonical isoform.  
                 """
@@ -152,30 +161,42 @@ class Uniprot(object):
         Check the attribution of "feature" in the response results.
         :return: a list which contained feature's attribution
         """
-        feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.__guess_protein_id__()}", timeout=10)
+        feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}", timeout=10)
 
         try:
             feature_info = json.loads(feature_info.text)['features']
             res = []
             if not isinstance(feature_info, list):
-                feature_info = [SimpleNamespace(**feature_info)]
+                feature_info = [feature_info]
 
             for sub_feature in feature_info:
+                if "description" not in sub_feature.keys():
+                    sub_feature["description"] = ""
+                else:
+                    # Helical; Name=4
+                    sub_feature["description"] = sub_feature["description"].split("; ")[0]
+
+                sub_feature["unique_id"] = ",".join(
+                    [sub_feature["category"],
+                     sub_feature["type"],
+                     sub_feature["description"]]
+                )
+
                 sub_feature = SimpleNamespace(**sub_feature)
-                if sub_feature.type != "VAR_SEQ":
+                if sub_feature.category in __VALID_DOMAIN_CATEGORY__:
                     res.append(sub_feature)
 
             if len(res) == 0:
                 return None
-
+            res = sorted(res, key=lambda x: x.unique_id)
             return res
         except KeyError:
             return None
 
 
 def main():
-    trans_id = 'ENST00000477196'
-    trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=294)
+    trans_id = 'ENST00000339381'
+    trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
 
     # trans_id = 'ENST00000379319'
     # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
