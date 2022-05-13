@@ -384,7 +384,8 @@ class Reference(File):
                     transcript_id=interval_label,
                     gene_id=interval_label,
                     gene=interval_label,
-                    transcript=interval_label
+                    transcript=interval_label,
+                    category="interval"
                 ))
 
         except NameError:
