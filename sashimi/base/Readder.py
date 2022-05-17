@@ -88,26 +88,36 @@ class Reader(object):
                 yield read, __get_strand__(read, library=library)
 
     @classmethod
-    def read_gtf(cls, path: str, region: GenomicLoci):
+    def read_gtf(cls, path: str, region: GenomicLoci, bed: bool = False):
         with pysam.TabixFile(path) as r:
             try:
-                iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asGTF())
+                iter_ = r.fetch(
+                    region.chromosome,
+                    region.start,
+                    region.end,
+                    parser=pysam.asGTF() if not bed else pysam.asBed())
+
             except ValueError:
                 try:
                     if not region.chromosome.startswith("chr"):
                         logger.info("Guess need 'chr'")
                         iter_ = r.fetch(
                             "chr" + region.chromosome,
-                            region.start, region.end, parser=pysam.asGTF()
+                            region.start, region.end,
+                            parser=pysam.asGTF() if not bed else pysam.asBed()
                         )
                     else:
                         logger.info("Guess 'chr' is redundant")
                         iter_ = r.fetch(
                             region.chromosome.replace("chr", ""),
-                            region.start, region.end, parser=pysam.asGTF()
+                            region.start,
+                            region.end,
+                            parser=pysam.asGTF() if not bed else pysam.asBed()
                         )
                 except ValueError as err:
-                    logger.warn("please check the input region and gtf files")
+                    logger.warn(
+                        "please check the input region and {} files".format("gtf" if not bed else "bed")
+                    )
                     logger.error(err)
                     raise err
 

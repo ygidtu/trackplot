@@ -27,7 +27,8 @@ class Transcript(GenomicLoci):
         "category",
         "domain_category",
         "domain_type",
-        "domain_description"
+        "domain_description",
+        "plot_intron"
     ]
 
     def __init__(
@@ -56,8 +57,8 @@ class Transcript(GenomicLoci):
         :param gene_id: gene id, such as "ENSG00000187634"
         :param transcript: transcript name, such as "SAMD11-011"
         :param transcript_id: transcript id, such as "ENST00000420190"
-        :param category: exon or protein
-        :param domain_category: exon or protein
+        :param category: exon or protein or interval
+        :param domain_category: category of domain
         :param domain_description: description of domain
         :param domain_type: if category is protein, the type information of the given domain
         """
