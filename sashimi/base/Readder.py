@@ -64,18 +64,18 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
 class Reader(object):
 
     @classmethod
-    def __modify_chrom__(cls, region: GenomicLoci, reader):
+    def __modify_chrom__(cls, region: GenomicLoci, reader, parser):
         if not region.chromosome.startswith("chr"):
             logger.info("Guess need 'chr'")
             iter_ = reader.fetch(
                 "chr" + region.chromosome,
-                region.start, region.end, parser=pysam.asGTF()
+                region.start, region.end, parser=parser
             )
         else:
             logger.info("Guess 'chr' is redundant")
             iter_ = reader.fetch(
                 region.chromosome.replace("chr", ""),
-                region.start, region.end, parser=pysam.asGTF()
+                region.start, region.end, parser=parser
             )
 
         return iter_
@@ -98,13 +98,17 @@ class Reader(object):
                 yield read, __get_strand__(read, library=library)
 
     @classmethod
-    def read_gtf(cls, path: str, region: GenomicLoci):
+    def read_gtf(cls, path: str, region: GenomicLoci, bed: bool = False):
         with pysam.TabixFile(path) as r:
             try:
-                iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asGTF())
+                iter_ = r.fetch(
+                    region.chromosome,
+                    region.start,
+                    region.end,
+                    parser=pysam.asGTF() if not bed else pysam.asBed())
             except ValueError:
                 try:
-                    iter_ = cls.__modify_chrom__(region, r)
+                    iter_ = cls.__modify_chrom__(region, r, parser=pysam.asGTF() if not bed else pysam.asBed())
                 except ValueError as err:
                     logger.warn("please check the input region and gtf files")
                     logger.error(err)
@@ -142,7 +146,7 @@ class Reader(object):
                 iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asTuple())
             except ValueError:
                 try:
-                    iter_ = cls.__modify_chrom__(region, r)
+                    iter_ = cls.__modify_chrom__(region, r, parser=pysam.asTuple())
                 except ValueError as err:
                     logger.warn("please check the input region and gtf files")
                     logger.error(err)

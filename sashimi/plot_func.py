@@ -16,7 +16,6 @@ from matplotlib.path import Path
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
-from sashimi.file.Depth import Depth
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 
@@ -153,7 +152,8 @@ def plot_reference(
         theme: str = "blank",
         y_loc: int = 0,
         exon_width: float = .3,
-        plot_domain: bool = False
+        plot_domain: bool = False,
+        show_exon_id: bool = False
 ):
     u"""
     Plot the structure of reference
@@ -171,6 +171,7 @@ def plot_reference(
     :param y_loc:
     :param exon_width:
     :param  plot_domain:
+    :param show_exon_id:
     :return:
     """
     Theme.set_theme(ax, theme)
@@ -200,7 +201,7 @@ def plot_reference(
         strand = transcript.strand
         # @2018.12.20 add transcript id, based on fixed coordinates
         if transcript.transcript:
-            if show_gene and transcript.gene:
+            if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
                     ax.text(
                         x=-1, y=y_loc + 0.25, s=transcript.gene_id,
@@ -229,7 +230,9 @@ def plot_reference(
 
         # @2018.12.19
         # s and e is the start and end site of single exon
-        for exon in transcript.exons:
+        # @2022.05.13
+        # add index to avoid label overlapping of neighbor exon
+        for ind, exon in enumerate(transcript.exons):
             s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
             x = [
                 graph_coords[s], graph_coords[e],
@@ -241,33 +244,43 @@ def plot_reference(
             ]
             ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
 
+            if show_exon_id:
+                y_loc_offset = 0.1 if ind % 2 == 0 else - 0.2
+                ax.text(x=(graph_coords[s] + graph_coords[s]) / 2,
+                        y=y_loc + y_loc_offset,
+                        s=exon.name,
+                        fontsize=font_size / 2,
+                        ha="right")
+
         # @2018.12.21
         # change the intron range
         # Draw intron.
-        intron_sites = [
-            graph_coords[region.relative(transcript.start)],
-            graph_coords[region.relative(transcript.end)]
-        ]
-        ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.5)
+        # if transcript's category is interval, then don't plot the intron.
+        if transcript.category != "interval":
+            intron_sites = [
+                graph_coords[region.relative(transcript.start)],
+                graph_coords[region.relative(transcript.end)]
+            ]
+            ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.5)
 
-        # @2018.12.23 fix intron arrows issues
-        # Draw intron arrows.
-        max_ = graph_coords[region.relative(transcript.end)]
-        min_ = graph_coords[region.relative(transcript.start)]
-        length = max_ - min_
-        narrows = math.ceil(length / max(graph_coords) * 50)
+            # @2018.12.23 fix intron arrows issues
+            # Draw intron arrows.
+            max_ = graph_coords[region.relative(transcript.end)]
+            min_ = graph_coords[region.relative(transcript.start)]
+            length = max_ - min_
+            narrows = math.ceil(length / max(graph_coords) * 50)
 
-        if narrows > 0:
-            spread = .2 * length / narrows
-            # print(f"{spread} = .2 * {length} / {narrows}")
-            for i in range(narrows):
-                loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
-                if strand == '+' or reverse_minus:
-                    x = [loc - spread, loc, loc - spread]
-                else:
-                    x = [loc + spread, loc, loc + spread]
-                y = [y_loc - exon_width / 5, y_loc, y_loc + exon_width / 5]
-                ax.plot(x, y, lw=.5, color='k')
+            if narrows > 0:
+                spread = .2 * length / narrows
+                # print(f"{spread} = .2 * {length} / {narrows}")
+                for i in range(narrows):
+                    loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
+                    if strand == '+' or reverse_minus:
+                        x = [loc - spread, loc, loc - spread]
+                    else:
+                        x = [loc + spread, loc, loc + spread]
+                    y = [y_loc - exon_width / 5, y_loc, y_loc + exon_width / 5]
+                    ax.plot(x, y, lw=.5, color='k')
 
         y_loc += 1  # if transcript.transcript else .5
 
@@ -300,13 +313,15 @@ def plot_reference(
                         ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
 
                     # print(sub_exon)
+                    # @2022.05.13
+                    #
                     intron_relative_s = region.relative(
-                        min(map(lambda x: x.start, sub_exon))
+                        min(map(lambda x: x.end, sub_exon))
                     )
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
 
                     intron_relative_e = region.relative(
-                        max(map(lambda x: x.end, sub_exon))
+                        max(map(lambda x: x.start, sub_exon))
                     )
                     intron_relative_e = len(region) if intron_relative_e >= len(region) else intron_relative_e
 
@@ -315,11 +330,11 @@ def plot_reference(
                         graph_coords[intron_relative_e]
                     ]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.5)
+                        ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.2)
 
                 ax.text(
                     x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}\n{transcript.transcript_id}",
-                    fontsize=font_size,
+                    fontsize=font_size/2,
                     ha="right"
                 )
 
@@ -327,10 +342,9 @@ def plot_reference(
         # offset for next term.
         y_loc += 0.75
 
-    if obj.domain:
-        ax.set_ylim(-.5, len(data) + len(obj.domain) + .5)
-    else:
-        ax.set_ylim(-.5, len(data) + .5)
+    # @2022.05.13
+    # Set ylim using y_loc value.
+    ax.set_ylim(-.5, y_loc + .5)
 
 
 def plot_density(
@@ -369,7 +383,7 @@ def plot_density(
     :return:
     """
     if obj:
-        assert obj.region is None, "please load data first"
+        assert obj.region is not None, "please load data first"
         region = obj.region
         if not graph_coords:
             graph_coords = init_graph_coords(region)
@@ -401,7 +415,7 @@ def plot_density(
     If there is no bam file, use half of y axis as the upper bound of exon 
     And draw a white point to maintain the height of the y axis
     """
-    if not graph_coords:
+    if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
     for i in range(len(graph_coords)):
@@ -524,26 +538,46 @@ def plot_density(
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
 
+    from sashimi.file.Bam import Bam
     from sashimi.file.Bigwig import Bigwig
+    from sashimi.file.Depth import Depth
 
     fig, ax = plt.subplots()
 
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
-    # bam = Bam.create("../example/bams/1.bam")
-    # bam.load(region, log_trans="2")
+    bam = Bam.create("../example/bams/1.bam")
+    bam.load(region, log_trans="2")
+    plot_density(ax, bam)
+    plt.savefig("plot_density_bam.png")
 
-    # bw = Bigwig.create("../example/bws/1.bw", title="test")
-    # bw.load(region)
-    #
-    # plot_density(ax, bw)
-    # plt.savefig("plot_density.png")
-    #
-    # fig, ax = plt.subplots()
-    # ref = Reference.create("../example/example.sorted.gtf.gz")
-    # ref.load(region, domain=True)
-    #
-    # plot_reference(ax, ref, show_gene=True, show_id=True, plot_domain=True)
-    # plt.savefig("plot_reference.png")
+    bw = Bigwig.create("../example/bws/1.bw", title="test")
+    bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
+
+    plot_density(ax, bw)
+    plt.savefig("plot_density_bw.png")
+
+    fig, ax = plt.subplots()
+    ref = Reference.create("../example/example.sorted.gtf.gz")
+    ref.load(region, domain=True)
+
+    ref.add_interval(
+        interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
+        interval_label="PolyASite"
+    )
+
+    ref.add_interval(
+        interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
+        interval_label="PolyASite_simple"
+    )
+
+    plot_reference(ax, ref,
+                   show_gene=True,
+                   show_id=True,
+                   plot_domain=True,
+                   show_exon_id=True
+                   )
+
+    plt.savefig("plot_reference.pdf")
 
     depth = Depth.create("../example/depth.bgz")
     depth.load(region)
@@ -553,4 +587,4 @@ if __name__ == '__main__':
         plot_density(ax[idx], region=region, data=y, y_label=x, theme="ticks_blank" if idx < len(depth) - 1 else "ticks")
         idx += 1
 
-    plt.savefig("plot_depth.png")
+    plt.savefig("plot_density_depth.png")

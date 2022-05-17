@@ -24,15 +24,18 @@ class GenomicLoci(object):
         "start",
         "end",
         "strand",
-        "gtf_line"
+        "gtf_line",
+        "name"
     ]
 
-    def __init__(self, chromosome, start, end, strand, gtf_line=None):
+    def __init__(self, chromosome, start, end, strand, name="", gtf_line=None):
         u"""
         init this class
         :param chromosome: str
         :param start: int
         :param end: int
+        :param strand: strand information
+        :param name: name of given feature
         :param strand: str
         """
 
@@ -41,6 +44,7 @@ class GenomicLoci(object):
         self.start = int(start)
         self.end = int(end)
         self.gtf_line = gtf_line
+        self.name = name
 
         if self.end < self.start:
             raise ValueError(f"End site should bigger than start site, not {self.start} -> {self.end}")

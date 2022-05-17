@@ -28,6 +28,14 @@ class Theme(object):
         ax.tick_params(bottom=True, top=False, left=True, right=False)
 
     @classmethod
+    def ticks_blank(cls, ax: axes.Axes):
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.set_xticklabels([])
+        ax.tick_params(bottom=False, top=False, left=True, right=False)
+
+    @classmethod
     def set_theme(cls, ax: axes.Axes, name: str = "blank"):
         for i, func in cls.__dict__.items():
             if isinstance(func, classmethod) and i != "get" and i == name:
