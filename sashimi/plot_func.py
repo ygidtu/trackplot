@@ -15,6 +15,8 @@ from matplotlib.path import Path
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
+from sashimi.base.ReadDepth import ReadDepth
+from sashimi.file.Depth import Depth
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 
@@ -333,7 +335,9 @@ def plot_reference(
 
 def plot_density(
         ax: mpl.axes.Axes,
-        obj: File,
+        obj: Optional[File] = None,
+        data: Optional[ReadDepth] = None,
+        region: Optional[GenomicLoci] = None,
         graph_coords: Optional[dict] = None,
         color="blue",
         font_size: int = 8,
@@ -341,12 +345,16 @@ def plot_density(
         junction_number_font_size: int = 5,
         ny_ticks: int = 4,
         distance_between_label_axis: float = .3,
-        show_y_label: bool = True
+        show_y_label: bool = True,
+        y_label: str = "",
+        theme: str = "ticks"
 ):
     u"""
     draw density plot
     :param ax: mpl.axes.Axes
-    :param obj: Reference object
+    :param data: File
+    :param data: ReadDepth
+    :param region: GenomicLoci
     :param graph_coords:
     :param font_size: the font size for ticks, y-axis label and title
     :param show_junction_number: whether to show the number of junctions
@@ -356,21 +364,30 @@ def plot_density(
     :param obj: Bam or Bigwig object
     :param color: color for this density plot
     :param show_y_label: whether to show y-axis label
+    :param y_label: the text of y-axis title
+    :param theme: the theme name
     :return:
     """
-    region = obj.region
-    if not graph_coords:
-        graph_coords = init_graph_coords(region)
+    if obj:
+        assert obj.region is None, "please load data first"
+        region = obj.region
+        if not graph_coords:
+            graph_coords = init_graph_coords(region)
 
-    data = deepcopy(obj.data)
-    data.transform(obj.log_trans)
+        data = deepcopy(obj.data)
+        data.transform(obj.log_trans)
+
+        if not y_label:
+            y_label = obj.label
+    elif not (region and data):
+        raise ValueError("please input obj or region and data")
     wiggle = data.wiggle
 
     max_used_y_val = max(wiggle)
     if max_used_y_val % 2 == 1:
         max_used_y_val += 1
 
-    jxns = obj.data.junctions_dict
+    jxns = data.junctions_dict
 
     y_max = max_used_y_val
     y_min = -.5 * y_max
@@ -381,12 +398,12 @@ def plot_density(
 
     u"""
     @2019.01.04
-
     If there is no bam file, use half of y axis as the upper bound of exon 
-
     And draw a white point to maintain the height of the y axis
-
     """
+    if not graph_coords:
+        graph_coords = init_graph_coords(region)
+
     for i in range(len(graph_coords)):
         compressed_wiggle.append(wiggle[i])
         compressed_x.append(graph_coords[i])
@@ -478,7 +495,7 @@ def plot_density(
 
             ax.add_patch(PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
 
-    if obj.title:
+    if obj and obj.title:
         ax.text(
             max(graph_coords) - len(obj.title),
             max_used_y_val,
@@ -488,7 +505,7 @@ def plot_density(
         )
 
     # set y ticks, y label and label
-    Theme.set_theme(ax, "ticks")
+    Theme.set_theme(ax, theme)
     ax.set_xbound(0, max(graph_coords))
     ax.set_ybound(lower=- 0.5 * max_used_y_val, upper=1.2 * max_used_y_val)
     ax.spines["left"].set_bounds(0, max_used_y_val)
@@ -496,13 +513,12 @@ def plot_density(
     universal_y_ticks = pylab.linspace(0, max_used_y_val, ny_ticks + 1)
     set_y_ticks(
         ax,
-        label=obj.label,
+        label=y_label,
         universal_y_ticks=universal_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
     )
-    # Format plot
 
 
 if __name__ == '__main__':
@@ -516,15 +532,25 @@ if __name__ == '__main__':
     # bam = Bam.create("../example/bams/1.bam")
     # bam.load(region, log_trans="2")
 
-    bw = Bigwig.create("../example/bws/1.bw", title="test")
-    bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
+    # bw = Bigwig.create("../example/bws/1.bw", title="test")
+    # bw.load(region)
+    #
+    # plot_density(ax, bw)
+    # plt.savefig("plot_density.png")
+    #
+    # fig, ax = plt.subplots()
+    # ref = Reference.create("../example/example.sorted.gtf.gz")
+    # ref.load(region, domain=True)
+    #
+    # plot_reference(ax, ref, show_gene=True, show_id=True, plot_domain=True)
+    # plt.savefig("plot_reference.png")
 
-    plot_density(ax, bw)
-    plt.savefig("plot_density.png")
+    depth = Depth.create("../example/depth.bgz")
+    depth.load(region)
+    fig, ax = plt.subplots(nrows=len(depth))
+    idx = 0
+    for x, y in depth.items():
+        plot_density(ax[idx], region=region, data=y, y_label=x, theme="ticks_blank" if idx < len(depth) - 1 else "ticks")
+        idx += 1
 
-    fig, ax = plt.subplots()
-    ref = Reference.create("../example/example.sorted.gtf.gz")
-    ref.load(region, domain=True)
-
-    plot_reference(ax, ref, show_gene=True, show_id=True, plot_domain=True)
-    plt.savefig("plot_reference.png")
+    plt.savefig("plot_depth.png")

@@ -12,6 +12,7 @@ class File(object):
         self.label = ""
         self.region = None
         self.log_trans = "0"
+        self.title = ""
 
     @property
     def chrom(self) -> str:

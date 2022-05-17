@@ -64,6 +64,23 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
 class Reader(object):
 
     @classmethod
+    def __modify_chrom__(cls, region: GenomicLoci, reader):
+        if not region.chromosome.startswith("chr"):
+            logger.info("Guess need 'chr'")
+            iter_ = reader.fetch(
+                "chr" + region.chromosome,
+                region.start, region.end, parser=pysam.asGTF()
+            )
+        else:
+            logger.info("Guess 'chr' is redundant")
+            iter_ = reader.fetch(
+                region.chromosome.replace("chr", ""),
+                region.start, region.end, parser=pysam.asGTF()
+            )
+
+        return iter_
+
+    @classmethod
     def read_bam(cls, path: str, region: GenomicLoci, library: str = "fr-unstrand"):
         chrom = region.chromosome
         if not os.path.exists(path + ".bai"):
@@ -75,14 +92,7 @@ class Reader(object):
                 relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
             except ValueError as err:
                 logger.warning(err)
-
-                if chrom.startswith("chr"):
-                    logger.info("try without chr")
-                    chrom = chrom.replace("chr", "")
-                else:
-                    logger.info("try with chr")
-                    chrom = "chr{}".format(chrom)
-                relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
+                relevant_reads = cls.__modify_chrom__( region, bam_file)
 
             for read in relevant_reads:
                 yield read, __get_strand__(read, library=library)
@@ -94,18 +104,7 @@ class Reader(object):
                 iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asGTF())
             except ValueError:
                 try:
-                    if not region.chromosome.startswith("chr"):
-                        logger.info("Guess need 'chr'")
-                        iter_ = r.fetch(
-                            "chr" + region.chromosome,
-                            region.start, region.end, parser=pysam.asGTF()
-                        )
-                    else:
-                        logger.info("Guess 'chr' is redundant")
-                        iter_ = r.fetch(
-                            region.chromosome.replace("chr", ""),
-                            region.start, region.end, parser=pysam.asGTF()
-                        )
+                    iter_ = cls.__modify_chrom__(region, r)
                 except ValueError as err:
                     logger.warn("please check the input region and gtf files")
                     logger.error(err)
@@ -127,6 +126,30 @@ class Reader(object):
                     return r.values(region.chromosome.replace("chr", ""), region.start, region.end + 1)
                 else:
                     return r.values("chr" + region.chromosome, region.start, region.end + 1)
+
+    @classmethod
+    def read_depth(cls, path: str, region: GenomicLoci):
+        if not os.path.exists(path + ".tbi"):
+            logger.info(f"create tbi index for {path}")
+            pysam.tabix_index(
+                path, seq_col=0,
+                start_col=1, end_col=1,
+                force=True, keep_original=True
+            )
+
+        with pysam.TabixFile(path) as r:
+            try:
+                iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asTuple())
+            except ValueError:
+                try:
+                    iter_ = cls.__modify_chrom__(region, r)
+                except ValueError as err:
+                    logger.warn("please check the input region and gtf files")
+                    logger.error(err)
+                    raise err
+
+            for record in iter_:
+                yield record
 
 
 if __name__ == '__main__':
