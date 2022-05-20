@@ -5,19 +5,25 @@ This script contains the functions to draw different images
 """
 import math
 from copy import deepcopy
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 import matplotlib as mpl
 import numpy as np
+import seaborn as sns
+
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.stats import zscore
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
+
+from conf.heatmap import DISTANCE_METRIC, CLUSTERING_METHOD
 
 
 def get_limited_index(num, length):
@@ -361,7 +367,7 @@ def plot_density(
         distance_between_label_axis: float = .3,
         show_y_label: bool = True,
         y_label: str = "",
-        theme: str = "ticks"
+        theme: str = "ticks_blank"
 ):
     u"""
     draw density plot
@@ -415,9 +421,6 @@ def plot_density(
     If there is no bam file, use half of y axis as the upper bound of exon 
     And draw a white point to maintain the height of the y axis
     """
-    if graph_coords is None:
-        graph_coords = init_graph_coords(region)
-
     for i in range(len(graph_coords)):
         compressed_wiggle.append(wiggle[i])
         compressed_x.append(graph_coords[i])
@@ -535,6 +538,163 @@ def plot_density(
     )
 
 
+def plot_heatmap(
+        ax: mpl.axes.Axes,
+        cbar_ax: mpl.axes.Axes,
+        data: Dict[str, ReadDepth],
+        color="viridis",
+        font_size: int = 8,
+        distance_between_label_axis: float = .3,
+        show_y_label: bool = True,
+        y_label: str = "",
+        do_scale: bool = False,
+        clustering: bool = False,
+        clustering_method: str = "ward",
+        distance_metric: str = "euclidean",
+        raster: bool = True
+):
+    u"""
+
+    :param ax: whether to scale the matrix
+    :param cbar_ax: whether to scale the matrix
+    :param font_size:
+    :param data:
+    :param distance_between_label_axis:
+    :param show_y_label:
+    :param y_label:
+    :param do_scale: whether to scale the matrix
+    :param clustering: whether reorder matrix by clustering
+    :param clustering_method: same as  scipy.cluster.hierarchy.linkage
+    :param distance_metric: same as scipy.spatial.distance.pdist
+    :param color: used for seaborn.heatmap, see: https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html
+                'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
+                'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
+                'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+    :param raster: whether to draw image in raster mode
+    """
+    labels = list(data.keys())
+    mtx = np.array([x.wiggle for x in data.values()])
+
+    if clustering and len(mtx) > 1:
+        assert clustering_method in CLUSTERING_METHOD, f"clustering_method {clustering_method} is not supported."
+        assert distance_metric in DISTANCE_METRIC, f"distance_metric {distance_metric} is not supported"
+
+        order = dendrogram(
+            linkage(mtx, method=clustering_method, metric=distance_metric),
+            orientation='right'
+        )
+
+        mtx = mtx[order["leaves"], :]
+        labels = [labels[x] for x in order["leaves"]]
+
+    if do_scale:
+        """
+        y = (x – mean) / standard_deviation
+        """
+        mtx = zscore(mtx, axis=1)
+
+    if not show_y_label:
+        labels = False
+
+    sns.heatmap(
+        mtx,
+        ax=ax, cmap=color,
+        cbar_ax=cbar_ax,
+        xticklabels=False,
+        yticklabels=labels,
+        center=True,
+        rasterized=raster
+    )
+
+    ax.tick_params(axis='both', which='major', labelsize=font_size)
+    cbar_ax.tick_params(labelsize=font_size)
+
+    if y_label:
+        ax.set_ylabel(
+            y_label,
+            fontsize=font_size,
+            va="center",
+            labelpad=distance_between_label_axis,  # the distance between y label with axis
+            rotation="horizontal"
+        )
+
+    if raster:
+        ax.set_rasterization_zorder(0)
+
+
+def plot_line(
+        ax: mpl.axes.Axes,
+        data: Dict[str, ReadDepth],
+        font_size: int = 8,
+        distance_between_label_axis: float = .3,
+        show_y_label: bool = True,
+        y_label: str = "",
+        line_attrs: Optional[Dict[str, Dict]] = None,
+        theme: str = "ticks_blank",
+        ny_ticks: int = 4,
+        show_legend: bool = False
+):
+    u"""
+
+    :param ax: whether to scale the matrix
+    :param cbar_ax: whether to scale the matrix
+    :param font_size:
+    :param data:
+    :param distance_between_label_axis:
+    :param show_y_label:
+    :param y_label:
+    :param do_scale: whether to scale the matrix
+    :param clustering: whether reorder matrix by clustering
+    :param clustering_method: same as  scipy.cluster.hierarchy.linkage
+    :param distance_metric: same as scipy.spatial.distance.pdist
+    :param color: used for seaborn.heatmap, see: https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html
+                'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
+                'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
+                'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+    :param line_attrs: dict contains attributes like color and type for each line
+    :param theme: the theme name
+    :param ny_ticks: the number of y ticks
+    :param show_legend: whether to show legend
+    """
+    max_used_y_val = 0
+    max_used_x_val = 0
+    for ylab, val in data.items():
+        attr = line_attrs.get(ylab, {}) if line_attrs else {}
+        ax.plot(range(len(val.wiggle)), val.wiggle, label=ylab if show_y_label else "", **attr)
+        max_used_y_val = max(max_used_y_val, max(val.wiggle))
+        max_used_x_val = max(max_used_x_val, len(val.wiggle))
+
+    ax.tick_params(axis='both', which='major', labelsize=font_size)
+    ax.tick_params(labelsize=font_size)
+
+    if show_legend:
+        ax.legend()
+
+    if y_label:
+        ax.set_ylabel(
+            y_label,
+            fontsize=font_size,
+            va="center",
+            labelpad=distance_between_label_axis,  # the distance between y label with axis
+            rotation="horizontal"
+        )
+
+    Theme.set_theme(ax, theme)
+
+    ax.set_xbound(0, max_used_x_val)
+    ax.set_ybound(lower=- 0.5 * max_used_y_val, upper=1.2 * max_used_y_val)
+    ax.spines["left"].set_bounds(0, max_used_y_val)
+    universal_y_ticks = pylab.linspace(0, max_used_y_val, ny_ticks + 1)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        universal_y_ticks=universal_y_ticks,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+    )
+
+
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
 
@@ -542,49 +702,70 @@ if __name__ == '__main__':
     from sashimi.file.Bigwig import Bigwig
     from sashimi.file.Depth import Depth
 
-    fig, ax = plt.subplots()
-
+    # fig, ax = plt.subplots()
+    #
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
-    bam = Bam.create("../example/bams/1.bam")
-    bam.load(region, log_trans="2")
-    plot_density(ax, bam)
-    plt.savefig("plot_density_bam.png")
+    # bam = Bam.create("../example/bams/1.bam")
+    # bam.load(region, log_trans="2")
+    # plot_density(ax, bam)
+    # plt.savefig("plot_density_bam.png")
+    #
+    # bw = Bigwig.create("../example/bws/1.bw", title="test")
+    # bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
+    #
+    # plot_density(ax, bw)
+    # plt.savefig("plot_density_bw.png")
+    #
+    # fig, ax = plt.subplots()
+    # ref = Reference.create("../example/example.sorted.gtf.gz")
+    # ref.load(region, domain=True)
+    #
+    # ref.add_interval(
+    #     interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
+    #     interval_label="PolyASite"
+    # )
+    #
+    # ref.add_interval(
+    #     interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
+    #     interval_label="PolyASite_simple"
+    # )
+    #
+    # plot_reference(ax, ref,
+    #                show_gene=True,
+    #                show_id=True,
+    #                plot_domain=True,
+    #                show_exon_id=True
+    #                )
+    #
+    # plt.savefig("plot_reference.pdf")
 
-    bw = Bigwig.create("../example/bws/1.bw", title="test")
-    bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
+    # depth = Depth.create("../example/depth.bgz")
+    # depth.load(region)
+    # fig, ax = plt.subplots(nrows=len(depth))
+    # idx = 0
+    # for x, y in depth.items():
+    #     plot_density(ax[idx], region=region, data=y, y_label=x, theme="ticks_blank" if idx < len(depth) - 1 else "ticks")
+    #     idx += 1
+    #
+    # plt.savefig("plot_density_depth.png")
 
-    plot_density(ax, bw)
-    plt.savefig("plot_density_bw.png")
+    data = {}
+    attrs = {}
+    colors = ["red", "blue", "yellow", "green", "grey"]
+    for i in range(1, 5):
+        bam = Bam.create(f"../example/bams/{i}.bam")
+        bam.load(region)
+        data[str(i)] = bam.data
+        attrs[str(i)] = {"color": colors[i]}
+
+    from matplotlib import gridspec
+    # gs = gridspec.GridSpec(1, 2, width_ratios=(.99, .01), wspace=0.01, hspace=.15)
+    # ax_var = plt.subplot(gs[:, 0]),
+    # cbar_ax = plt.subplot(gs[:, 1])
+    #
+    # plot_heatmap(ax_var[0], cbar_ax, data, do_scale=True, clustering=True)
+    # plt.savefig("plot_heatmap.png")
 
     fig, ax = plt.subplots()
-    ref = Reference.create("../example/example.sorted.gtf.gz")
-    ref.load(region, domain=True)
-
-    ref.add_interval(
-        interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
-        interval_label="PolyASite"
-    )
-
-    ref.add_interval(
-        interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
-        interval_label="PolyASite_simple"
-    )
-
-    plot_reference(ax, ref,
-                   show_gene=True,
-                   show_id=True,
-                   plot_domain=True,
-                   show_exon_id=True
-                   )
-
-    plt.savefig("plot_reference.pdf")
-
-    depth = Depth.create("../example/depth.bgz")
-    depth.load(region)
-    fig, ax = plt.subplots(nrows=len(depth))
-    idx = 0
-    for x, y in depth.items():
-        plot_density(ax[idx], region=region, data=y, y_label=x, theme="ticks_blank" if idx < len(depth) - 1 else "ticks")
-        idx += 1
-
-    plt.savefig("plot_density_depth.png")
+    plot_line(ax, data, line_attrs=attrs)
+    plt.savefig("plot_line.png")
