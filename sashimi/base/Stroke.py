@@ -3,7 +3,7 @@
 u"""
 
 """
-from typing import List
+from sashimi.base.GenomicLoci import GenomicLoci
 
 
 class Stroke(object):
@@ -18,16 +18,16 @@ class Stroke(object):
         return (self.end + self.start) / 2
 
     @classmethod
-    def create_from_string(cls, stroke: str):
+    def create(cls, stroke: str, region: GenomicLoci):
         res = []
         for i in stroke.split(":"):
             i = i.split("@")
-            sites = sorted([int(x) - self.start for x in i[0].split("-")])
+            sites = sorted([int(x) - region.start for x in i[0].split("-")])
             if sites[0] < 0:
                 sites[0] = 0
 
-            if sites[-1] > len(self):
-                sites[-1] = len(self)
+            if sites[-1] > len(region):
+                sites[-1] = len(region)
 
             color = "red"
             label = ""

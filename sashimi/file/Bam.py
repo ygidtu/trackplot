@@ -303,6 +303,7 @@ class Bam(File):
             logger.error(err)
 
         self.data = ReadDepth(depth_vector, junctions_dict=filtered_junctions, plus=plus, minus=minus)
+        return self
 
 
 if __name__ == '__main__':

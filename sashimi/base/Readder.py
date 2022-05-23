@@ -92,7 +92,7 @@ class Reader(object):
                 relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
             except ValueError as err:
                 logger.warning(err)
-                relevant_reads = cls.__modify_chrom__( region, bam_file)
+                relevant_reads = cls.__modify_chrom__(region, bam_file)
 
             for read in relevant_reads:
                 yield read, __get_strand__(read, library=library)

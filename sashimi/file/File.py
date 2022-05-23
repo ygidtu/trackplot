@@ -32,5 +32,9 @@ class File(object):
             return self.region.end
         return 0
 
+    def load(self, *args, **kwargs):
+        return None
+
+
 if __name__ == "__main__":
     pass

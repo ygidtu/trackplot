@@ -4,9 +4,11 @@ u"""
 
 """
 import os
+
 import pysam
-from sashimi.base.GenomicLoci import GenomicLoci
+
 from conf.logger import logger
+from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.file.File import File
 
 
@@ -14,7 +16,7 @@ class Fasta(File):
 
     def __init__(self, path: str):
         super().__init__(path)
-        assert os.path.exists(path),  f"{path} not exists"
+        assert os.path.exists(path), f"{path} not exists"
 
     @classmethod
     def create(cls, path: str):
@@ -34,11 +36,16 @@ class Fasta(File):
 
         if not os.path.exists(self.path + ".fai"):
             logger.warning(f"{self.path}.fai not exists, try to create it")
-
             pysam.faidx(self.path)
 
+        self.data = {}
         with pysam.FastaFile(self.path) as r:
-            self.data = r.fetch(region.chromosome, region.start, region.end+1)
+            for i, j in zip(
+                    range(self.region.start, self.region.end + 1),
+                    r.fetch(region.chromosome, region.start, region.end + 1)
+            ):
+                self.data[i] = j
+        return self
 
 
 if __name__ == '__main__':

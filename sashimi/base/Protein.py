@@ -4,14 +4,16 @@
 u"""
 Fetch CDS information from a gtf then mapping to genomic position
 """
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Transcript import Transcript
+from collections import defaultdict, namedtuple
+
 from pysam import asGTF
 from pysam.libctabix import Tabixfile
-from collections import defaultdict, namedtuple
+
 from conf.logger import logger
-from sashimi.base.pyUniprot import Uniprot
 from sashimi.base.CoordinateMap import CoordinateMapper
+from sashimi.base.GenomicLoci import GenomicLoci
+from sashimi.base.Transcript import Transcript
+from sashimi.base.pyUniprot import Uniprot
 
 
 class CdsProtein(GenomicLoci):

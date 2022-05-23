@@ -5,15 +5,16 @@
 u"""
 Fetch protein information from uniprot website
 """
+import json
 from types import SimpleNamespace
+from xml.parsers.expat import ExpatError
 
 import numpy as np
 import requests as rq
 import xmltodict
-import json
-from xml.parsers.expat import ExpatError
-from conf.logger import logger
+
 from conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
+from conf.logger import logger
 
 
 class Uniprot(object):

@@ -8,6 +8,7 @@ Convert aa position into genomic coordinate, Ran zhou.
 """
 from itertools import islice
 from typing import Optional
+
 import numpy as np
 
 

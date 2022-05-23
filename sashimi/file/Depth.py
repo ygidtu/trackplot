@@ -58,6 +58,7 @@ class Depth(File):
         samtools depth *.bam | bgzip > depth.gz && tabix indexed tabix -s 1 -b 2 -e 3 depth.gz
         :param region: the region to query
         :param required_sample: the sample to use
+        :param log_trans: log transform
         :return:
         """
         self.region = region

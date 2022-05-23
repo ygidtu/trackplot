@@ -8,18 +8,17 @@ This scripts contains the class handle the reference file
 import gzip
 import os
 import re
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import filetype
 import matplotlib as mpl
 import pysam
-from matplotlib import pyplot as plt
 
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
+from sashimi.base.Protein import CdsProtein
 from sashimi.base.Readder import Reader
 from sashimi.base.Transcript import Transcript
-from sashimi.base.Protein import CdsProtein
 from sashimi.file.File import File
 
 # Put here to avoid outline stroke of font for this moment
@@ -44,6 +43,7 @@ class Reference(File):
         self.category = category
         self.data = []
         self.domain = None
+        self.interval_file = {}
 
     def __add__(self, other):
         assert isinstance(other, Reference), "only Reference and Reference could be added"
@@ -51,9 +51,26 @@ class Reference(File):
         new_ref.data += self.data
         new_ref.data += other.data
         new_ref.data = sorted(new_ref.data)
+
+        new_ref.interval_file.update(other.interval_file)
+
         if self.domain:
             new_ref.__add_domain__()
         return new_ref
+
+    def len(self, scale: Union[int, float] = .25) -> int:
+        u"""
+        the length of reference to draw in final plots, default using the quarter of number of transcripts
+        """
+        return int(max(len(self.data) * scale, 1))
+
+    @property
+    def exons(self) -> List[List[int]]:
+        res = []
+        for transcript in self.data:
+            for exon in transcript.exons:
+                res.append([exon.start, exon.end])
+        return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
     def create(cls, path: str, category: str = "gtf"):
@@ -89,6 +106,17 @@ class Reference(File):
                 self.domain.add(domain_info)
             else:
                 self.domain = domain_info
+
+    def add_interval(self, interval: str, label: str):
+        u"""
+        Add another annotation in to data, and each annotation has a track
+        :param interval: a bed file
+        :param label
+        :return:
+        """
+        assert os.path.exists(interval), f"{interval} not exists."
+        self.interval_file[interval] = label
+        return self
 
     @staticmethod
     def is_gtf(infile):
@@ -332,67 +360,62 @@ class Reference(File):
         else:
             self.data = self.__load_bam__(region, threshold_of_reads)
 
-    def add_interval(self, interval_file: str, interval_label: str):
-        u"""
-        Add another annotation in to data, and each annotation has a track
-        :param interval_file: a bed file
-        :return:
-        """
-        try:
-            if not os.path.exists(interval_file + ".tbi"):
-                interval_file = pysam.tabix_index(
-                    interval_file,
-                    preset="bed",
-                    force=True,
-                    keep_original=True
-                )
-
-            interval_target = []
-            for rec in Reader.read_gtf(interval_file, region=self.region, bed=True):
-                start = max(rec.start, self.region.start)
-                end = min(rec.end, self.region.end)
-
-                if end + 1 <= self.region.start:
-                    continue
-                if start + 1 >= self.region.end:
-                    break
-
-                try:
-                    strand = rec.strand
-                    rec_name = rec.name
-                except KeyError:
-                    strand = "*"
-                    rec_name = ""
-
-                interval_target.append(
-                    GenomicLoci(
-                        chromosome=rec.contig,
-                        start=rec.start,
-                        end=rec.end,
-                        strand=strand,
-                        name=rec_name
+        for interval_file, interval_label in self.interval_file.items():
+            try:
+                if not os.path.exists(interval_file + ".tbi"):
+                    interval_file = pysam.tabix_index(
+                        interval_file,
+                        preset="bed",
+                        force=True,
+                        keep_original=True
                     )
-                )
 
-            if len(interval_target) != 0:
-                self.data.append(Transcript(
-                    chromosome=rec.contig,
-                    start=start,
-                    end=end,
-                    strand=strand,
-                    exons=interval_target,
-                    transcript_id=interval_label,
-                    gene_id=interval_label,
-                    gene=interval_label,
-                    transcript=interval_label,
-                    category="interval"
-                ))
+                interval_target = []
+                for rec in Reader.read_gtf(interval_file, region=self.region, bed=True):
+                    start = max(rec.start, self.region.start)
+                    end = min(rec.end, self.region.end)
 
-        except NameError:
-            raise "Target region was not found, run load before add_bed."
+                    if end + 1 <= self.region.start:
+                        continue
+                    if start + 1 >= self.region.end:
+                        break
 
-        except OSError:
-            raise f"Error found when build index for {interval_file}, please sort file manually"
+                    try:
+                        strand = rec.strand
+                        rec_name = rec.name
+                    except KeyError:
+                        strand = "*"
+                        rec_name = ""
+
+                    interval_target.append(
+                        GenomicLoci(
+                            chromosome=rec.contig,
+                            start=rec.start,
+                            end=rec.end,
+                            strand=strand,
+                            name=rec_name
+                        )
+                    )
+
+                if len(interval_target) != 0:
+                    self.data.append(Transcript(
+                        chromosome=rec.contig,
+                        start=start,
+                        end=end,
+                        strand=strand,
+                        exons=interval_target,
+                        transcript_id=interval_label,
+                        gene_id=interval_label,
+                        gene=interval_label,
+                        transcript=interval_label,
+                        category="interval"
+                    ))
+
+            except NameError:
+                raise "Target region was not found, run load before add_bed."
+
+            except OSError:
+                raise f"Error found when build index for {interval_file}, please sort file manually"
 
 
 if __name__ == "__main__":
