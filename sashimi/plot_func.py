@@ -129,8 +129,9 @@ def set_x_ticks(
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         sequence: Optional[Dict[int, str]] = None,
         log_trans: Optional[str] = None,
-        nx_ticks: int = 4, font_size: int = 5):
+        nx_ticks: int = 4, font_size: int = 6):
 
+    Theme.set_theme(ax, "blank")
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
@@ -142,29 +143,32 @@ def set_x_ticks(
             log_trans = f"log{log_trans}"
         x_label = f"{x_label}, y axis is {log_trans} transformed"
 
-    pylab.xlabel(x_label, fontsize=font_size)
+    ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
+    ax.text(x=len(graph_coords) / 2, y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
 
     bk = 1
     if not sequence:
         bk = len(graph_coords) // nx_ticks
 
-    linspace, ticks = [], []
+    line_space = {}
     for i in range(0, len(graph_coords), bk):
-        linspace.append(graph_coords[i])
+        line_space[graph_coords[i]] = i
 
-        temp_txs = region.start + i
-        if sequence:
-            if (i - region.start) % nx_ticks == 0:
-                temp_txs = "{}\n{}".format(region.start + i, sequence.get(region.start + i, ""))
+    if sequence:
+        for i, seq in sequence.items():
+            relative_i = graph_coords[i - region.start]
+            if relative_i in line_space.keys():
+                temp_txs = "{}\n{}".format(sequence.get(i, ""), line_space[relative_i])
             else:
-                temp_txs = "\n{}".format(sequence.get(region.start + i, ""))
-        ticks.append(temp_txs)
+                temp_txs = "\n{}".format(sequence.get(i, ""))
+            line_space[relative_i] = temp_txs
 
-    ax.tick_params(bottom=True)
-    ax.spines['bottom'].set_visible(True)
-    ax.spines['bottom'].set_color('black')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.set_xticks(linspace, ticks, fontsize=font_size)
+    for x, s in line_space.items():
+        ax.vlines(x=x, ymin=-.5, ymax=0, color="black", lw=1)
+        ax.text(x=x, y=-1, s=s, fontsize=font_size, ha="center", va="top")
+
+    ax.set_ylim(-3.5, 1)
+    ax.set_xlim(0, max(graph_coords))
 
 
 def set_y_ticks(
@@ -175,7 +179,7 @@ def set_y_ticks(
         distance_between_label_axis: float = .1,
         n_y_ticks: int = 4,
         theme: str = "ticks",
-        font_size: int=5,
+        font_size: int = 5,
         show_y_label: bool = True,
         set_label_only: bool = False
 ):

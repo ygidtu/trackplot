@@ -3,24 +3,24 @@
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
-from typing import List, Optional, Set, Union, Dict
 from copy import deepcopy
+from typing import List, Optional, Set, Union, Dict
 
 import matplotlib.pyplot as plt
-
 from matplotlib import gridspec
 
 from conf.logger import logger
-from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.file.Reference import Reference
-from sashimi.file.File import File
-from sashimi.file.Fasta import Fasta
+from sashimi.base.ReadDepth import ReadDepth
+from sashimi.base.Stroke import Stroke
 from sashimi.file.Bam import Bam
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, set_indicator_lines, set_focus, plot_stroke
+from sashimi.file.Fasta import Fasta
+from sashimi.file.File import File
+from sashimi.file.Reference import Reference
+from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
+    set_indicator_lines, set_focus, plot_stroke
 
 
 class PlotInfo(object):
@@ -355,7 +355,7 @@ class Plot(object):
         """
         assert self.region is not None, f"please set the plotting region first."
 
-        plots_n_rows = 0
+        plots_n_rows = 1
         plots_n_cols = 1
         if self.reference is not None:
             logger.info("load reference")
@@ -439,14 +439,16 @@ class Plot(object):
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
 
-            if idx == len(self.plots) - 1:
-                set_x_ticks(
-                    ax=ax_var, region=self.region,
-                    graph_coords=self.graph_coords,
-                    sequence=self.sequence.data if self.sequence else None,
-                    *args, **kwargs
-                )
             curr_idx += 1
+
+        # draw x label
+        set_x_ticks(
+            ax=plt.subplot(gs[curr_idx, 0]), region=self.region,
+            graph_coords=self.graph_coords,
+            sequence=self.sequence.data if self.sequence else None,
+            *args, **kwargs
+        )
+        curr_idx += 1
 
         if self.reference is not None:
             ax_var = plt.subplot(gs[curr_idx:curr_idx+self.reference.len(scale=reference_scale), 0])
