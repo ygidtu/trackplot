@@ -451,6 +451,11 @@ def plot_reference(
         y_loc += 1  # if transcript.transcript else .5
 
         # here is plot domain
+        # print(plot_domain)
+        # print(obj.add_domain)
+        # print(obj.domain)
+        # print(transcript.transcript_id)
+
         if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
             current_domains = obj.domain.pep[transcript.transcript_id]
 

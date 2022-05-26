@@ -323,17 +323,17 @@ if __name__ == '__main__':
         })
     print(test.meta)
 
-    # test = ReadSegment.create(path='../../example/bams/WASH7P.bam')
-    # # chr1: 14362:29900
-    # test.load(
-    #     region=GenomicLoci(
-    #         chromosome="chr1",
-    #         start=14362,
-    #         end=29900,
-    #         strand="+"),
-    #     features={
-    #         "m6a": "ma",
-    #         "real_strand": "rs",
-    #         "polya": "pa"
-    #     })
-    # print(test.meta)
+    test = ReadSegment.create(path='../../example/bams/WASH7P.bam')
+    # chr1: 14362:29900
+    test.load(
+        region=GenomicLoci(
+            chromosome="chr1",
+            start=14362,
+            end=29900,
+            strand="+"),
+        features={
+            "m6a": "ma",
+            "real_strand": "rs",
+            "polya": "pa"
+        })
+    print(test.meta)

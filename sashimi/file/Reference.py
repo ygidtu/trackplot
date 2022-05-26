@@ -31,7 +31,7 @@ class Reference(File):
     The reference file, support gtf and gff format
     """
 
-    def __init__(self, path: str, category: str = "gtf"):
+    def __init__(self, path: str, add_domain: bool = False, category: str = "gtf"):
         u"""
         init func
         :param path: path to input file
@@ -42,6 +42,7 @@ class Reference(File):
         super().__init__(path=self.index_gtf(path) if category == "gtf" else path)
         self.category = category
         self.data = []
+        self.add_domain = add_domain
         self.domain = None
         self.interval_file = {}
 
@@ -73,15 +74,16 @@ class Reference(File):
         return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
-    def create(cls, path: str, category: str = "gtf"):
+    def create(cls, path: str, add_domain: bool = False, category: str = "gtf"):
         u"""
         create reference file object
         :param path: path to input file
+        :param add_domain: whether plot domain
         :param category: the type of reference file, include gtf and bam: customized reads as references
         :return: Reference obj
         """
         assert os.path.exists(path), f"{path} not exists"
-        return cls(path=path, category=category)
+        return cls(path=path, add_domain=add_domain, category=category)
 
     def __add_domain__(self):
         gene_id = set(map(lambda x: x.gene_id, self.data))
@@ -342,11 +344,10 @@ class Reference(File):
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
-    def load(self, region: GenomicLoci, domain: Optional[bool] = False, threshold_of_reads: int = 0):
+    def load(self, region: GenomicLoci, threshold_of_reads: int = 0):
         u"""
         Load transcripts inside of region
         :param region: target region
-        :param domain: init with domain, default: False
         :param threshold_of_reads: used for bam file, only kept reads with minimum frequency
         :return:
         """
@@ -355,7 +356,7 @@ class Reference(File):
         if self.category == "gtf":
             self.data = self.__load_gtf__(region)
 
-            if domain:
+            if self.add_domain:
                 self.__add_domain__()
         else:
             self.data = self.__load_bam__(region, threshold_of_reads)
@@ -430,8 +431,8 @@ if __name__ == "__main__":
     # print(len(ref1.data))
 
     loc = GenomicLoci(chromosome="chr1",
-                      start=1017198,
-                      end=1051741,
+                      start=1270656,
+                      end=1284730,
                       strand="-")
 
     gtf_ref = Reference("../../example/example.sorted.gtf.gz")
