@@ -15,6 +15,7 @@ biothings_client = "*"
 requests = "*"
 xmltodict = "*"
 pybigwig = "*"
+pandas = "*"
 
 [dev-packages]
 

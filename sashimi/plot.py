@@ -219,16 +219,20 @@ class Plot(object):
         self.sequence = Fasta.create(fasta)
         return self
 
-    def set_reference(self, gtf: str, interval: Optional[str] = None, interval_label: Optional[str] = None):
+    def set_reference(self, gtf: str,
+                      add_domain: bool = False,
+                      interval: Optional[str] = None,
+                      interval_label: Optional[str] = None):
         u"""
         add transcripts to this region
         :param gtf:
+        :param add_domain:
         :param interval:
         :param interval_label:
         :return:
         """
         logger.info(f"set reference file to {gtf}")
-        self.reference = Reference.create(gtf)
+        self.reference = Reference.create(gtf, add_domain=add_domain)
 
         if interval and interval_label:
             self.reference.add_interval(interval, interval_label)
@@ -452,7 +456,10 @@ class Plot(object):
 
         if self.reference is not None:
             ax_var = plt.subplot(gs[curr_idx:curr_idx+self.reference.len(scale=reference_scale), 0])
-            plot_reference(ax=ax_var, obj=self.reference, graph_coords=self.graph_coords, *args, **kwargs)
+            plot_reference(ax=ax_var,
+                           obj=self.reference,
+                           graph_coords=self.graph_coords,
+                           plot_domain=self.reference.add_domain, *args, **kwargs)
 
             # adjust indicator lines and focus background
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
@@ -480,7 +487,13 @@ if __name__ == '__main__':
         from conf.logger import init_logger
         init_logger("INFO")
         Plot().set_reference(
-            "../example/example.sorted.gtf.gz"
+            "../example/example.sorted.gtf.gz",
+            add_domain=True,
+            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
+            interval_label="polyA"
+        ).add_interval(
+            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
+            interval_label="polyAS"
         ).set_region(
             "chr1", 1270656, 1284730, "+"
         ).add_density(
@@ -522,7 +535,7 @@ if __name__ == '__main__':
             end=1270656 + 8200,
             color="green",
             label="test"
-        ).plot("test_plot.png")
+        ).plot("test_plot.pdf")
 
     test_plot()
     pass

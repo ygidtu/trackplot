@@ -64,19 +64,33 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
 class Reader(object):
 
     @classmethod
-    def __modify_chrom__(cls, region: GenomicLoci, reader, parser):
+    def __modify_chrom__(cls, region: GenomicLoci, reader, parser=None):
         if not region.chromosome.startswith("chr"):
             logger.info("Guess need 'chr'")
-            iter_ = reader.fetch(
-                "chr" + region.chromosome,
-                region.start, region.end, parser=parser
-            )
+
+            if parser:
+                iter_ = reader.fetch(
+                    "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
+                    region.start, region.end, parser=parser
+                )
+            else:
+                iter_ = reader.fetch(
+                    "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
+                    region.start, region.end
+                )
+
         else:
             logger.info("Guess 'chr' is redundant")
-            iter_ = reader.fetch(
-                region.chromosome.replace("chr", ""),
-                region.start, region.end, parser=parser
-            )
+            if parser:
+                iter_ = reader.fetch(
+                    region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
+                    region.start, region.end, parser=parser
+                )
+            else:
+                iter_ = reader.fetch(
+                    region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
+                    region.start, region.end
+                )
 
         return iter_
 
