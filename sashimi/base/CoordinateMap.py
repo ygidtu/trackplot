@@ -141,6 +141,12 @@ class Coordinate(object):
 
     @staticmethod
     def __group_consecutive_value__(location_list: np.ndarray, strand: str) -> list:
+        u"""
+        group the consecutive value into a list
+        :param location_list: a list of location site
+        :param strand: the strand of the current list to group
+        :return:
+        """
         offset = -1 if strand == "-" else 1
         group_ids = np.concatenate(([0], (np.diff(location_list) != offset).cumsum()))
 
@@ -154,6 +160,12 @@ class Coordinate(object):
 
     @classmethod
     def init_from_location_list(cls, truncated_location_array: np.ndarray, strand: str):
+        u"""
+        init class based on the list of location
+        :param truncated_location_array: truncated location array
+        :param strand: the strand of the current list
+        :return:
+        """
         __coordinate_list = []
         for sub_array in cls.__group_consecutive_value__(truncated_location_array, strand):
             if len(sub_array) == 0:
@@ -205,17 +217,16 @@ class CoordinateMapper(Coordinate):
             self.strand)
 
 
-def main():
-    cds = [(3216025, 3216968),
-           (3421702, 3421901),
-           (3670552, 3671348)]
-
-    coord = CoordinateMapper(cds, "+")
-    domain_info = [(1, 3, "1XK-related protein 4;chain")]
-    domain_coord = coord.pep_to_cds(1, 3)
-    print(domain_coord.se)
-    # [(3216025, 3216033)]
-
-
 if __name__ == '__main__':
+    def test():
+        cds = [(3216025, 3216968),
+               (3421702, 3421901),
+               (3670552, 3671348)]
+
+        coord = CoordinateMapper(cds, "+")
+        domain_info = [(1, 3, "1XK-related protein 4;chain")]
+        domain_coord = coord.pep_to_cds(1, 3)
+        print(domain_coord.se)
+        # [(3216025, 3216033)]
+    test()
     pass

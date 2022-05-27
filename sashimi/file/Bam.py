@@ -270,7 +270,8 @@ class Bam(File):
                                     logger.info(start, i)
                                     exit(err)
 
-                    if cigar not in (1, 2, 4, 5):  # I, D, S, H
+                    # remove the deletion.
+                    if cigar not in (1, 4, 5):  # I, S, H
                         start += length
 
                     if cigar == 3:  # N

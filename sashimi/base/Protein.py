@@ -239,26 +239,25 @@ class CdsProtein(GenomicLoci):
         return protein_info
 
 
-def main():
-    import pysam
-    with pysam.Tabixfile("../../example/example.sorted.gtf.gz", 'r') as gtf_tabix:
-        test = CdsProtein.__re_iter_gtf__(
-            gtf_tabix=gtf_tabix,
-            chromosome='chr1',
-            # transcript_id={'ENST00000421241'},
-            transcript_id={'ENST00000477196'},
-            gene_id={'ENSG00000131591'}
-        )
-        print(test.pep)
-        for transcript_id, domains in test.pep.items():
-            if len(domains) == 0:
-                continue
-
-            for sub_domain in domains:
-                print(transcript_id,
-                      sub_domain.gene,
-                      sub_domain.domain, sub_domain.exon_list)
-
-
 if __name__ == '__main__':
-    main()
+    def test():
+        import pysam
+        with pysam.Tabixfile("../../example/example.sorted.gtf.gz", 'r') as gtf_tabix:
+            cds_test = CdsProtein.__re_iter_gtf__(
+                gtf_tabix=gtf_tabix,
+                chromosome='chr1',
+                # transcript_id={'ENST00000421241'},
+                transcript_id={'ENST00000477196'},
+                gene_id={'ENSG00000131591'}
+            )
+            print(cds_test.pep)
+            for transcript_id, domains in cds_test.pep.items():
+                if len(domains) == 0:
+                    continue
+
+                for sub_domain in domains:
+                    print(transcript_id,
+                          sub_domain.gene,
+                          sub_domain.domain, sub_domain.exon_list)
+    test()
+    pass

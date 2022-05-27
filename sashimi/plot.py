@@ -12,6 +12,7 @@ from matplotlib import gridspec
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
+from sashimi.base.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.file.Bam import Bam
 from sashimi.file.Bigwig import Bigwig
@@ -20,7 +21,7 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like
 
 
 class PlotInfo(object):
@@ -45,11 +46,13 @@ class PlotInfo(object):
         return ";".join([obj.path for obj in self.obj])
 
     @property
-    def data(self) -> Dict[str, ReadDepth]:
+    def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
         data = {}
         for obj in self.obj:
             if isinstance(obj.data, dict):
                 data.update(data)
+            elif isinstance(obj, ReadSegment):
+                data[obj.label] = obj
             else:
                 data[obj.label] = obj.data
         return data
@@ -255,7 +258,10 @@ class Plot(object):
                             barcodes: Optional[Set[str]] = None,
                             cell_barcode: str = "BC",
                             umi_barcode: str = "UB",
-                            library: str = "fr-unstrand"
+                            library: str = "fr-unstrand",
+                            features: Optional[dict] = None,
+                            deletion_ignore: Optional[int] = True,
+                            del_ratio_ignore: float = .5
                             ):
         if category == "bam":
             obj = Bam.create(
@@ -266,6 +272,15 @@ class Plot(object):
                 cell_barcode=cell_barcode,
                 umi_barcode=umi_barcode,
                 library=library
+            )
+        elif category == "igv":
+            obj = ReadSegment.create(
+                path=path,
+                label=label,
+                library=library,
+                features=features,
+                deletion_ignore=deletion_ignore,
+                del_ratio_ignore=del_ratio_ignore
             )
         elif category == "bigwig" or category == "bw":
             category = "bw"
@@ -331,6 +346,20 @@ class Plot(object):
 
         return self
 
+    def add_igv(self, path: str, group: str, category: str = "igv", *args, **kwargs):
+        u"""
+        Add igv-like plot into track
+        :param path: path to input files
+        :param group: the label of current track
+        :param category: file category for the input file
+        :return:
+        """
+        obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
+        exists = False
+        self.plots.append(PlotInfo(obj=obj, category=category, type_="igv", group=group))
+
+        return self
+
     def __len__(self) -> int:
         return self.end - self.start + 1
 
@@ -348,7 +377,6 @@ class Plot(object):
              *args, **kwargs):
         u"""
         draw image
-
         :param output: if output is empty then show this image by plt.showfig
         :param show_side_plot: whether to show side plot
         :param reference_scale: to adjust the size of reference plot
@@ -436,6 +464,13 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     *args, **kwargs
                 )
+            elif p.type == "igv":
+                plot_igv_like(
+                    ax=ax_var,
+                    obj=p.data,
+                    y_label=p.group,
+                    graph_coords=self.graph_coords
+                )
             else:
                 raise ValueError(f"unknown plot type {p.type}")
 
@@ -509,7 +544,7 @@ if __name__ == '__main__':
         ).add_line(
             path="../example/bams/2.bam",
             category="bam",
-            group="1"
+            group="2"
         ).add_heatmap(
             path="../example/bams/1.bam",
             category="bam",
@@ -518,6 +553,15 @@ if __name__ == '__main__':
             path="../example/bams/2.bam",
             category="bam",
             group="1"
+        ).add_igv(
+            path="../example/bams/3.bam",
+            features={
+                "m6a": "ma",
+                "real_strand": "rs",
+                "polya": "pa"
+            },
+            category="igv",
+            group="3"
         ).add_sites(
             1270656 + 1000
         ).add_sites(
@@ -535,7 +579,7 @@ if __name__ == '__main__':
             end=1270656 + 8200,
             color="green",
             label="test"
-        ).plot("test_plot.pdf")
+        ).plot("test_plot.pdf", fig_width=6, fig_height=2)
 
     test_plot()
     pass

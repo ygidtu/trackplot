@@ -19,6 +19,7 @@ from scipy.stats import zscore
 from conf.logger import logger
 from conf.heatmap import DISTANCE_METRIC, CLUSTERING_METHOD
 from sashimi.anno.theme import Theme
+from sashimi.base.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
@@ -130,7 +131,6 @@ def set_x_ticks(
         sequence: Optional[Dict[int, str]] = None,
         log_trans: Optional[str] = None,
         nx_ticks: int = 4, font_size: int = 6):
-
     Theme.set_theme(ax, "blank")
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
@@ -251,7 +251,6 @@ def set_indicator_lines(
         min_y_used: Union[int, float] = 0,
         max_y_used: Union[int, float] = None
 ):
-
     if sites is None:
         return
 
@@ -273,12 +272,12 @@ def set_indicator_lines(
 
 
 def plot_stroke(
-    ax: mpl.axes.Axes,
-    data: List[Stroke],
-    graph_coords: Optional[Union[Dict, np.ndarray]] = None,
-    font_size: int = 5,
-    distance_between_label_axis: Union[int, float]=.1,
-    theme: str = "blank"
+        ax: mpl.axes.Axes,
+        data: List[Stroke],
+        graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+        font_size: int = 5,
+        distance_between_label_axis: Union[int, float] = .1,
+        theme: str = "blank"
 ):
     u"""
     plot stoke
@@ -850,6 +849,143 @@ def plot_line(
     )
 
 
+def plot_igv_like(
+        ax: mpl.axes.Axes,
+        obj: Dict[str, ReadSegment],
+        graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+        y_label: str = "",
+        exon_color: Optional[str] = None,
+        intron_color: Optional[str] = None,
+        feature_color: Optional[str] = None,
+        exon_width: float = .3,
+        font_size: int = 8,
+        n_y_ticks: int = 1,
+        distance_between_label_axis: float = .1,
+        show_y_label: bool = True,
+        theme: str = "ticks_blank"
+):
+    u"""
+
+    :param show_y_label:
+    :param n_y_ticks:
+    :param feature_color:
+    :param distance_between_label_axis:
+    :param ax:
+    :param obj:
+    :param graph_coords:
+    :param y_label:
+    :param exon_color:
+    :param intron_color:
+    :param exon_width:
+    :param font_size:
+    :param theme:
+    :return:
+    """
+
+    assert len(obj) == 1, "IGV-like plot only support one file"
+
+    obj = list(obj.values())[0]
+    assert obj.region is not None, "please load data first"
+
+    region = obj.region
+    if graph_coords is None:
+        graph_coords = init_graph_coords(region)
+
+    if not y_label:
+        y_label = obj.label
+
+    y_loc = 1.0
+
+    for c_ind_list in obj.get_index():
+        for c_ind in c_ind_list:
+            c_data = obj.data[c_ind]
+            # skip truncated reads in the given region
+            if c_data.start < region.start or c_data.end > region.end:
+                continue
+
+            for exon in c_data.exons:
+                s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
+                if e < 0 or s > len(region):
+                    continue
+
+                s = 0 if s < 0 else s
+                e = len(region) - 1 if e >= len(region) else e
+
+                x = [
+                    graph_coords[s], graph_coords[e],
+                    graph_coords[e], graph_coords[s]
+                ]
+                y = [
+                    y_loc - exon_width, y_loc - exon_width,
+                    y_loc + exon_width, y_loc + exon_width
+                ]
+
+                ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
+
+            for intron in c_data.introns:
+                s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
+
+                if e < 0 or s > len(region):
+                    continue
+                s = 0 if s < 0 else s
+                e = len(region) - 1 if e >= len(region) else e
+                intron_sites = [
+                    graph_coords[s],
+                    graph_coords[e]
+                ]
+                ax.plot(intron_sites, [y_loc, y_loc],
+                        color="#4d4d4d" if not intron_color else intron_color, lw=0.2)
+
+            for feature in c_data.features:
+                if feature.start == -1:
+                    continue
+
+                s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
+                is_site = False
+
+                if s == e:
+                    s = s - 1
+                    is_site = True
+
+                if e < 0 or s > len(region):
+                    continue
+
+                s = 0 if s < 0 else s
+                e = len(region) - 1 if e >= len(region) else e
+
+                x = [
+                    graph_coords[s], graph_coords[e],
+                    graph_coords[e], graph_coords[s]
+                ]
+                width_ratio = 0.75 if not is_site else 1.5
+
+                y = [
+                    y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
+                    y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
+                ]
+                ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+                if is_site:
+                    ax.scatter(graph_coords[s],
+                               y_loc + exon_width * width_ratio,
+                               c='b' if not feature_color else feature_color,
+                               s=.5,
+                               linewidths=(0,)
+                            )
+
+        y_loc += 1
+        #
+
+    set_y_ticks(
+        ax, label=y_label, theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=y_loc,
+        n_y_ticks=n_y_ticks,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+    )
+
+
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
 
@@ -990,4 +1126,26 @@ if __name__ == '__main__':
         set_x_ticks(ax, region, font_size=10, sequence={110: "A", 106: "C"})
         plt.savefig("plot_x_ticks.png")
 
-    test_set_x_ticks()
+
+    def test_igv_plot():
+        from sashimi.base.ReadSegments import ReadSegment
+        fig, ax = plt.subplots()
+        region = GenomicLoci("chr1", 13362, 29900, "+")
+        rs = ReadSegment.create("../example/bams/WASH7P.bam")
+        rs.load(region, features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
+        plot_igv_like(ax, rs, y_label="fl")
+        plt.savefig("test_igv_plot.pdf")
+
+
+    def test_igv_plot2():
+        from sashimi.base.ReadSegments import ReadSegment
+        fig, ax = plt.subplots()
+        region = GenomicLoci("chr1", 1270656, 1284730, "+")
+        rs = ReadSegment.create("../example/bams/0.bam")
+        rs.load(region, features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
+        plot_igv_like(ax, rs, y_label="fl")
+        plt.savefig("test_igv_plot.2.pdf")
+
+
+    test_igv_plot()
+    test_igv_plot2()
