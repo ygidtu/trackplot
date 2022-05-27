@@ -851,7 +851,7 @@ def plot_line(
 
 def plot_igv_like(
         ax: mpl.axes.Axes,
-        obj: ReadSegment,
+        obj: Dict[str, ReadSegment],
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         y_label: str = "",
         exon_color: Optional[str] = None,
@@ -881,6 +881,10 @@ def plot_igv_like(
     :param theme:
     :return:
     """
+
+    assert len(obj) == 1, "IGV-like plot only support one file"
+
+    obj = list(obj.values())[0]
     assert obj.region is not None, "please load data first"
 
     region = obj.region

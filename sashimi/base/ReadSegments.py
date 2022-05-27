@@ -155,7 +155,11 @@ class ReadSegment(File):
             label: str = "",
             meta: Optional[pd.DataFrame] = None,
             region: Optional[GenomicLoci] = None,
-            library: str = "fr-unstrand"
+            library: str = "fr-unstrand",
+            deletion_ignore: Optional[int] = True,
+            del_ratio_ignore: float = .5,
+            features: Optional[dict] = None
+
     ):
         u"""
 
@@ -164,6 +168,7 @@ class ReadSegment(File):
         """
         super().__init__(path)
 
+        self.features = None
         assert library in ["fr-firststrand", "fr-secondstrand", "fr-unstrand"], \
             "Illegal library name."
 
@@ -172,19 +177,33 @@ class ReadSegment(File):
         self.meta = meta
         self.region = region
         self.label = label
+        self.deletion_ignore = deletion_ignore
+        self.del_ratio_ignore = del_ratio_ignore
+        self.features = features
 
     @classmethod
     def create(
             cls,
             path: str,
             label: str = "",
-            library: str = "fr-unstrand"
+            library: str = "fr-unstrand",
+            deletion_ignore: Optional[int] = True,
+            del_ratio_ignore: float = .5,
+            features: Optional[dict] = None
+
     ):
         u"""
+        Load each reads and its strand, features.
+        m6a tag support the genomic site
+        polya tag support length of polya. if polya tag is available, then read_strand (rl) is also essential
 
         :param path:
         :param label:
         :param library:
+        :param deletion_ignore: ignore the deletion length
+        :param del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
+        :param features: support m6a and polyA length from bam tag.
+        like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
         :return:
         """
         if not os.path.exists(path + ".bai"):
@@ -193,7 +212,10 @@ class ReadSegment(File):
         return cls(
             path=path,
             label=label,
-            library=library
+            library=library,
+            deletion_ignore=deletion_ignore,
+            del_ratio_ignore=del_ratio_ignore,
+            features=features
         )
 
     def get_index(self):
@@ -274,33 +296,23 @@ class ReadSegment(File):
 
     def load(
             self,
-            region: GenomicLoci,
-            deletion_ignore: Optional[int] = True,
-            del_ratio_ignore: float = .5,
-            features: Optional[dict] = None
-    ):
+            region: GenomicLoci):
         u"""
-        Load each reads and its strand, features.
-        m6a tag support the genomic site
-        polya tag support length of polya. if polya tag is available, then read_strand (rl) is also essential
+        loading data
         :param region:
-        :param deletion_ignore: ignore the deletion length
-        :param del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
-        :param features: support m6a and polyA length from bam tag.
-        like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
         :return:
         """
 
         self.region = region
-        feature_ids = ["m6a", "polya", "read_strand"]
 
         try:
             for read, _ in Reader.read_bam(self.path, self.region):
                 if read.reference_start < self.region.start or read.reference_end > self.region.end:
                     continue
 
-                if not deletion_ignore:
-                    current_ignore_num = min([deletion_ignore, read.query_alignment_length * del_ratio_ignore])
+                if not self.deletion_ignore:
+                    current_ignore_num = min(
+                        [self.deletion_ignore, read.query_alignment_length * self.del_ratio_ignore])
                 else:
                     current_ignore_num = np.Inf
 
@@ -360,9 +372,9 @@ class ReadSegment(File):
                 # for m6a
                 m6a_loci = -1
                 polya_length = -1
-                if features:
-                    if read.has_tag(features["m6a"]):
-                        m6a_loci = int(read.get_tag(features["m6a"]))
+                if self.features:
+                    if read.has_tag(self.features["m6a"]):
+                        m6a_loci = int(read.get_tag(self.features["m6a"]))
                         assert read.reference_start <= m6a_loci <= read.reference_end, \
                             f"{read.query_name}'s m6a loci was out of mapped region"
 
@@ -374,10 +386,10 @@ class ReadSegment(File):
                             name="m6a"
                         ))
 
-                    if read.has_tag(features["real_strand"]) and read.has_tag(features["polya"]):
-                        polya_length = float(read.get_tag(features["polya"]))
-                        real_strand = read.get_tag(features["real_strand"])
-                        assert read.get_tag(features["real_strand"]) in {"+", "-", "*"}, \
+                    if read.has_tag(self.features["real_strand"]) and read.has_tag(self.features["polya"]):
+                        polya_length = float(read.get_tag(self.features["polya"]))
+                        real_strand = read.get_tag(self.features["real_strand"])
+                        assert read.get_tag(self.features["real_strand"]) in {"+", "-", "*"}, \
                             f"strand should be *, + or -, not {real_strand}"
                         if real_strand == "+":
                             features_list.append(
@@ -450,20 +462,20 @@ if __name__ == '__main__':
     #     print(i)
     #     break
 
-    test = ReadSegment.create(path='../../example/bams/WASH7P.bam')
+    test = ReadSegment.create(path='../../example/bams/WASH7P.bam',
+                              deletion_ignore=True,
+                              features={
+                                  "m6a": "ma",
+                                  "real_strand": "rs",
+                                  "polya": "pa"
+                              })
     # chr1: 14362:29900
     test.load(
         region=GenomicLoci(
             chromosome="chr1",
             start=14362,
             end=29900,
-            strand="+"),
-        deletion_ignore=True,
-        features={
-            "m6a": "ma",
-            "real_strand": "rs",
-            "polya": "pa"
-        })
+            strand="+"))
     print(test.meta)
     for i in test.data:
         if i.id == "SRR12503063.3994985":
