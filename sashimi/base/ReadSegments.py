@@ -4,14 +4,13 @@ u"""
 Generate object for plotting reads like IGV track
 """
 import os.path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import numpy as np
 import pandas as pd
 import pysam
 
 from conf.logger import logger
-from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
@@ -40,7 +39,7 @@ class Reads(GenomicLoci):
         :param exons: a list of GenomicLoci obj which contains region of exon
         :param introns: a list of GenomicLoci obj which contains region of intron
         :param polya_length: length of polya
-        :param features: current support m6a site and polya length, a list of GenomicLoci
+        :param features: current support m6a site and polya length, like below
         """
 
         super().__init__(
@@ -49,8 +48,6 @@ class Reads(GenomicLoci):
             end=end,
             strand=strand
         )
-        # self.exons = sorted(exons)
-        # self.introns = sorted(introns)
 
         self.exons = self.__collapse_read__(sorted(exons))
         self.introns = self.__collapse_read__(sorted(introns))
@@ -104,7 +101,7 @@ class Reads(GenomicLoci):
             "|".join(exons_str)
         )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         u"""
         return a dict for generate DataFrame object
         :return:
@@ -119,7 +116,12 @@ class Reads(GenomicLoci):
         }
 
     @staticmethod
-    def __collapse_read__(genomic_list: List[GenomicLoci]):
+    def __collapse_read__(genomic_list: List[GenomicLoci]) -> List[GenomicLoci]:
+        u"""
+        Collapse the consecutive region, because of the coordinate shift of matplotlib
+        :param genomic_list: a list of GenomicLoci
+        :return:
+        """
 
         if len(genomic_list) <= 1:
             return genomic_list
@@ -162,9 +164,15 @@ class ReadSegment(File):
 
     ):
         u"""
-
-        :param path:
-        :param library:
+        init a class for store the information for IGV-like plot
+        :param path: the path of the input file
+        :param label: the label of current track
+        :param meta: the meta info of all reads which was used to sort the reads
+        :param region: the region for plotting
+        :param library: the library category of the input file
+        :param deletion_ignore: whether to ignore the deletion region, default: Ture
+        :param del_ratio_ignore: the length of deletion must below to del_ratio_ignore * length of alignment
+        :param features: default: features={"m6a": "ma","real_strand": "rs","polya": "pa"}
         """
         super().__init__(path)
 
@@ -219,6 +227,10 @@ class ReadSegment(File):
         )
 
     def get_index(self):
+        u"""
+        get a nested list which presents the order of plot
+        :return:
+        """
         assert self.meta is not None, f"Not found meta information, please `load` first."
         for ind in self.meta.groupby(['y_loci'])['list_index'].apply(list).tolist()[::-1]:
             yield ind
@@ -228,6 +240,14 @@ class ReadSegment(File):
                    start,
                    end,
                    strand):
+        u"""
+        set the plotting region
+        :param chromosome: the name of chromosome
+        :param start: the start of the plotting region
+        :param end: the end of the plotting region
+        :param strand: stand of the plotting region
+        :return:
+        """
         self.region = GenomicLoci(
             chromosome=chromosome,
             start=start,
@@ -236,7 +256,7 @@ class ReadSegment(File):
         )
 
     @staticmethod
-    def df_sort(df: pd.DataFrame):
+    def df_sort(df: pd.DataFrame) -> pd.DataFrame:
         u"""
         sorting the dataframe to generate plot index,
         copy from jinbu jia
@@ -299,7 +319,7 @@ class ReadSegment(File):
             region: GenomicLoci):
         u"""
         loading data
-        :param region:
+        :param region: the plotting region
         :return:
         """
 

@@ -348,12 +348,10 @@ class Plot(object):
 
     def add_igv(self, path: str, group: str, category: str = "igv", *args, **kwargs):
         u"""
-
-        :param path:
-        :param group:
-        :param category:
-        :param args:
-        :param kwargs:
+        Add igv-like plot into track
+        :param path: path to input files
+        :param group: the label of current track
+        :param category: file category for the input file
         :return:
         """
         obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
@@ -379,7 +377,6 @@ class Plot(object):
              *args, **kwargs):
         u"""
         draw image
-
         :param output: if output is empty then show this image by plt.showfig
         :param show_side_plot: whether to show side plot
         :param reference_scale: to adjust the size of reference plot
@@ -582,7 +579,7 @@ if __name__ == '__main__':
             end=1270656 + 8200,
             color="green",
             label="test"
-        ).plot("test_plot.pdf")
+        ).plot("test_plot.pdf", fig_width=6, fig_height=2)
 
     test_plot()
     pass
