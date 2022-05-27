@@ -4,12 +4,14 @@ u"""
 Generate object for plotting reads like IGV track
 """
 import os.path
-from typing import Optional
+from typing import Optional, List
 
+import numpy as np
 import pandas as pd
 import pysam
 
 from conf.logger import logger
+from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
@@ -47,9 +49,11 @@ class Reads(GenomicLoci):
             end=end,
             strand=strand
         )
+        # self.exons = sorted(exons)
+        # self.introns = sorted(introns)
 
-        self.exons = sorted(exons)
-        self.introns = sorted(introns)
+        self.exons = self.__collapse_read__(sorted(exons))
+        self.introns = self.__collapse_read__(sorted(introns))
         self.polya_length = polya_length
         self.m6a = m6a
         self.features = features
@@ -59,25 +63,27 @@ class Reads(GenomicLoci):
     def exon_list(self):
         u"""
         return a nested list which contains exon regions
+        1-based coordinate
         :return: a nested list
         """
 
         exon_nested_lst = []
         for i in self.exons:
-            exon_nested_lst.append(([i.start + 1, i.end]))
+            exon_nested_lst.append(([i.start, i.end]))
         return exon_nested_lst
 
     @property
     def intron_list(self):
         u"""
         return a nested list which contains intronic regions
+        1-based coordinate
         :return: a nested list
         """
 
         intron_nested_lst = []
         for i in self.introns:
             intron_nested_lst.append(
-                ([i.start + 1, i.end])
+                ([i.start, i.end])
             )
         return intron_nested_lst
 
@@ -112,12 +118,41 @@ class Reads(GenomicLoci):
             "m6a": self.m6a
         }
 
+    @staticmethod
+    def __collapse_read__(genomic_list: List[GenomicLoci]):
+
+        if len(genomic_list) <= 1:
+            return genomic_list
+
+        list_return = []
+        current_gl = None
+
+        for gl in genomic_list:
+            if not current_gl:
+                current_gl = gl
+            else:
+                if current_gl.end + 1 == gl.start:
+                    current_gl = GenomicLoci(
+                        chromosome=current_gl.chromosome,
+                        start=current_gl.start,
+                        end=gl.end,
+                        strand=current_gl.strand,
+                        name=current_gl.name
+                    )
+                else:
+                    list_return.append(current_gl)
+                    current_gl = gl
+
+        list_return.append(current_gl)
+        return list_return
+
 
 class ReadSegment(File):
 
     def __init__(
             self,
             path: str,
+            label: str = "",
             meta: Optional[pd.DataFrame] = None,
             region: Optional[GenomicLoci] = None,
             library: str = "fr-unstrand"
@@ -136,16 +171,19 @@ class ReadSegment(File):
         self.data = []
         self.meta = meta
         self.region = region
+        self.label = label
 
     @classmethod
     def create(
             cls,
             path: str,
+            label: str = "",
             library: str = "fr-unstrand"
     ):
         u"""
 
         :param path:
+        :param label:
         :param library:
         :return:
         """
@@ -154,8 +192,14 @@ class ReadSegment(File):
 
         return cls(
             path=path,
+            label=label,
             library=library
         )
+
+    def get_index(self):
+        assert self.meta is not None, f"Not found meta information, please `load` first."
+        for ind in self.meta.groupby(['y_loci'])['list_index'].apply(list).tolist()[::-1]:
+            yield ind
 
     def set_region(self,
                    chromosome,
@@ -169,9 +213,70 @@ class ReadSegment(File):
             strand=strand
         )
 
+    @staticmethod
+    def df_sort(df: pd.DataFrame):
+        u"""
+        sorting the dataframe to generate plot index,
+        copy from jinbu jia
+        :param df: a pd.DataFrame object
+        :return: pd.DataFrame
+        """
+
+        y_loci = []
+        have_overlap_regions = []
+        now_max_x = 0
+        height = 1
+        for index, row in df.iterrows():
+            start = row["start"]
+            end = row["end"]
+
+            if start > now_max_x:
+                y_min = 1
+                y_max = height
+                now_max_x = end
+                have_overlap_regions = [[1, y_max, now_max_x]]
+            else:
+                for d in have_overlap_regions:
+                    if d[2] < start:
+                        d[2] = start - 1
+                if len(have_overlap_regions) > 1:
+                    new_have_overlap_regions = [have_overlap_regions[0]]
+                    for d in have_overlap_regions[1:]:
+                        if d[2] == new_have_overlap_regions[-1][2]:
+                            new_have_overlap_regions[-1][1] = d[1]
+                        else:
+                            new_have_overlap_regions.append(d)
+                    have_overlap_regions = new_have_overlap_regions
+                have_insert = False
+                for (i, d) in enumerate(have_overlap_regions):
+                    x1, x2, x3 = d
+                    if x3 < start and (x2 - x1 + 1) >= height:
+                        have_insert = True
+                        y_min = x1
+                        y_max = y_min + height - 1
+                        if y_max != x3:
+                            d[0] = y_max + 1
+                            have_overlap_regions.insert(i, [x1, y_max, end])
+                        else:
+                            d[2] = end
+                        break
+                if not have_insert:
+                    y_min = have_overlap_regions[-1][1] + 1 if have_overlap_regions else 1
+                    y_max = y_min + height - 1
+                    have_overlap_regions.append([y_min, y_max, end])
+                if end > now_max_x:
+                    now_max_x = end
+            y_loci.append(y_min)
+
+        df["y_loci"] = y_loci
+
+        return df
+
     def load(
             self,
             region: GenomicLoci,
+            deletion_ignore: Optional[int] = True,
+            del_ratio_ignore: float = .5,
             features: Optional[dict] = None
     ):
         u"""
@@ -179,7 +284,10 @@ class ReadSegment(File):
         m6a tag support the genomic site
         polya tag support length of polya. if polya tag is available, then read_strand (rl) is also essential
         :param region:
-        :param features: support m6a and polyA length from bam tag. like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
+        :param deletion_ignore: ignore the deletion length
+        :param del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
+        :param features: support m6a and polyA length from bam tag.
+        like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
         :return:
         """
 
@@ -188,6 +296,13 @@ class ReadSegment(File):
 
         try:
             for read, _ in Reader.read_bam(self.path, self.region):
+                if read.reference_start < self.region.start or read.reference_end > self.region.end:
+                    continue
+
+                if not deletion_ignore:
+                    current_ignore_num = min([deletion_ignore, read.query_alignment_length * del_ratio_ignore])
+                else:
+                    current_ignore_num = np.Inf
 
                 exon_bound = []
                 intron_bound = []
@@ -200,7 +315,6 @@ class ReadSegment(File):
                                 chromosome=self.region.chromosome,
                                 start=start,
                                 end=start + l - 1,
-                                # strand information from minimap2
                                 strand=self.region.strand,
                                 name="exon"
                             )
@@ -211,6 +325,16 @@ class ReadSegment(File):
                         continue
 
                     elif c == 2:  # for del
+                        if l <= current_ignore_num:
+                            exon_bound.append(
+                                GenomicLoci(
+                                    chromosome=self.region.chromosome,
+                                    start=start,
+                                    end=start + l - 1,
+                                    strand=self.region.strand,
+                                    name="exon"
+                                )
+                            )
                         start += l
 
                     elif c == 3:  # for intron
@@ -227,29 +351,29 @@ class ReadSegment(File):
 
                     elif c == 4:  # soft clip
                         continue
-                        # start += l
 
                     else:
                         continue
 
                 features_list = []
+
                 # for m6a
                 m6a_loci = -1
-                if read.has_tag(features["m6a"]):
-                    m6a_loci = int(read.get_tag(features["m6a"]))
-                    assert read.reference_start <= m6a_loci <= read.reference_end, \
-                        f"{read.query_name}'s m6a loci was out of mapped region"
-
-                    features_list.append(GenomicLoci(
-                        chromosome=self.region.chromosome,
-                        start=m6a_loci,
-                        end=m6a_loci,
-                        strand="*",
-                        name="m6a"
-                    ))
-
                 polya_length = -1
                 if features:
+                    if read.has_tag(features["m6a"]):
+                        m6a_loci = int(read.get_tag(features["m6a"]))
+                        assert read.reference_start <= m6a_loci <= read.reference_end, \
+                            f"{read.query_name}'s m6a loci was out of mapped region"
+
+                        features_list.append(GenomicLoci(
+                            chromosome=self.region.chromosome,
+                            start=m6a_loci,
+                            end=m6a_loci,
+                            strand="*",
+                            name="m6a"
+                        ))
+
                     if read.has_tag(features["real_strand"]) and read.has_tag(features["polya"]):
                         polya_length = float(read.get_tag(features["polya"]))
                         real_strand = read.get_tag(features["real_strand"])
@@ -259,7 +383,7 @@ class ReadSegment(File):
                             features_list.append(
                                 GenomicLoci(
                                     chromosome=self.region.chromosome,
-                                    start=read.reference_start + 1,
+                                    start=read.reference_end + 1,
                                     end=read.reference_end + polya_length - 1,
                                     strand=real_strand,
                                     name="polya"
@@ -270,7 +394,7 @@ class ReadSegment(File):
                                 GenomicLoci(
                                     chromosome=self.region.chromosome,
                                     start=read.reference_start - polya_length + 1,
-                                    end=read.reference_end,
+                                    end=read.reference_start,
                                     strand=real_strand,
                                     name="polya"
                                 )
@@ -281,8 +405,8 @@ class ReadSegment(File):
                 self.data.append(
                     Reads(
                         chromosome=self.region.chromosome,
-                        start=min(map(lambda x: x.start, exon_bound)),
-                        end=min(map(lambda x: x.end, exon_bound)),
+                        start=min(map(lambda x: x.start, exon_bound + features_list)),
+                        end=max(map(lambda x: x.end, exon_bound + features_list)),
                         strand=self.region.strand,
                         id=read.query_name,
                         exons=exon_bound,
@@ -300,28 +424,31 @@ class ReadSegment(File):
             logger.error(self.path)
             logger.error(err)
 
-        self.meta = pd.DataFrame(
+        tmp_df = pd.DataFrame(
             map(lambda x: x.to_dict(), self.data)
         )
-
-        self.meta["index"] = range(len(self.data))
+        tmp_df["list_index"] = range(len(self.data))
+        self.meta = self.df_sort(tmp_df)
 
 
 if __name__ == '__main__':
-    test = ReadSegment.create(path='../../example/bams/0.bam')
-
-    test.load(
-        region=GenomicLoci(
-            chromosome="chr1",
-            start=1270656,
-            end=1284730,
-            strand="+"),
-        features={
-            "m6a": "ma",
-            "real_strand": "rs",
-            "polya": "pa"
-        })
-    print(test.meta)
+    # test = ReadSegment.create(path='../../example/bams/0.bam')
+    #
+    # test.load(
+    #     region=GenomicLoci(
+    #         chromosome="chr1",
+    #         start=1270656,
+    #         end=1284730,
+    #         strand="+"),
+    #     features={
+    #         "m6a": "ma",
+    #         "real_strand": "rs",
+    #         "polya": "pa"
+    #     })
+    # print(test.meta)
+    # for i in test.get_index():
+    #     print(i)
+    #     break
 
     test = ReadSegment.create(path='../../example/bams/WASH7P.bam')
     # chr1: 14362:29900
@@ -331,9 +458,17 @@ if __name__ == '__main__':
             start=14362,
             end=29900,
             strand="+"),
+        deletion_ignore=True,
         features={
             "m6a": "ma",
             "real_strand": "rs",
             "polya": "pa"
         })
     print(test.meta)
+    for i in test.data:
+        if i.id == "SRR12503063.3994985":
+            print(i.exons[0].start, i.exons[0].end)
+
+            print('exon', i.exon_list)
+            print('intron', i.intron_list)
+    # break

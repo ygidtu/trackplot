@@ -509,7 +509,7 @@ if __name__ == '__main__':
         ).add_line(
             path="../example/bams/2.bam",
             category="bam",
-            group="1"
+            group="2"
         ).add_heatmap(
             path="../example/bams/1.bam",
             category="bam",
