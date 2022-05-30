@@ -805,14 +805,6 @@ def plot_line(
     :param show_y_label:
     :param graph_coords:
     :param y_label:
-    :param do_scale: whether to scale the matrix
-    :param clustering: whether reorder matrix by clustering
-    :param clustering_method: same as  scipy.cluster.hierarchy.linkage
-    :param distance_metric: same as scipy.spatial.distance.pdist
-    :param color: used for seaborn.heatmap, see: https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html
-                'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
-                'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
-                'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
     :param line_attrs: dict contains attributes like color and type for each line
     :param theme: the theme name
     :param n_y_ticks: the number of y ticks

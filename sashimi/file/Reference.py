@@ -8,7 +8,7 @@ This scripts contains the class handle the reference file
 import gzip
 import os
 import re
-from typing import List, Optional, Union
+from typing import List, Union
 
 import filetype
 import matplotlib as mpl
@@ -63,7 +63,11 @@ class Reference(File):
         u"""
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """
-        return int(max(len(self.data) * scale, 1))
+        size = len(self.data)
+        if self.domain:
+            size += len(self.domain)
+
+        return int(max(size * scale, 1))
 
     @property
     def exons(self) -> List[List[int]]:

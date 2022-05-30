@@ -45,6 +45,11 @@ class PlotInfo(object):
     def __str__(self) -> str:
         return ";".join([obj.path for obj in self.obj])
 
+    def __hash__(self) -> int:
+        if self.type in ["heatmap", "line"]:
+            return hash(self.group)
+        return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
+
     @property
     def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
         data = {}
@@ -77,7 +82,7 @@ class PlotInfo(object):
         self.category.append(category)
         return self
 
-    def load(self, region:GenomicLoci, *args, **kwargs):
+    def load(self, region: GenomicLoci, *args, **kwargs):
         for obj in self.obj:
             obj.load(region=region, *args, **kwargs)
         return self
@@ -101,6 +106,7 @@ class Plot(object):
         self.reference = None
         self.graph_coords = None
         self.plots = []
+        self.params = {}
 
     @property
     def chrom(self) -> Optional[str]:
@@ -225,13 +231,36 @@ class Plot(object):
     def set_reference(self, gtf: str,
                       add_domain: bool = False,
                       interval: Optional[str] = None,
-                      interval_label: Optional[str] = None):
+                      interval_label: Optional[str] = None,
+                      transcripts: Optional[List[str]] = None,
+                      remove_empty_transcripts: bool = False,
+                      color: Optional[str] = None,
+
+                      # transcripts related parameters
+                      font_size: int = 5,
+                      show_gene: bool = False,
+                      show_id: bool = False,
+                      reverse_minus: bool = False,
+                      exon_width: float = .3,
+                      show_exon_id: bool = False,
+                      theme: str = "blank"
+                      ):
         u"""
         add transcripts to this region
         :param gtf:
         :param add_domain:
         :param interval:
         :param interval_label:
+        :param font_size: the size of transcript id, name
+        :param transcripts: the list of name or ids of transcripts to draw
+        :param remove_empty_transcripts: whether to remove transcripts without any exons
+        :param color: the color of exons
+        :param show_gene: whether to show gene name/id
+        :param show_id: show gene id or gene name
+        :param reverse_minus: whether to remove strand of transcripts
+        :param theme: the theme of transcript
+        :param exon_width: the height of exons
+        :param show_exon_id: whether to show exon id
         :return:
         """
         logger.info(f"set reference file to {gtf}")
@@ -239,6 +268,19 @@ class Plot(object):
 
         if interval and interval_label:
             self.reference.add_interval(interval, interval_label)
+
+        self.params["reference"] = {
+            "transcripts": transcripts,
+            "remove_empty_transcripts": remove_empty_transcripts,
+            "color": color,
+            "font_size": font_size,
+            "show_gene": show_gene,
+            "show_id": show_id,
+            "reverse_minus": reverse_minus,
+            "exon_width": exon_width,
+            "show_exon_id": show_exon_id,
+            "theme": theme
+        }
 
         return self
 
@@ -291,26 +333,138 @@ class Plot(object):
             raise ValueError(f"the category should be one of [bam, bigwig, bw, depth], instead of {category}")
         return obj, category
 
-    def add_density(self, path: str, category: str, *args, **kwargs):
+    def add_density(self,
+                    path: str,
+                    category: str,
+
+                    # file loading parameters
+                    label: Union[str, List[str]] = "",
+                    title: str = "",
+                    barcodes: Optional[Set[str]] = None,
+                    cell_barcode: str = "BC",
+                    umi_barcode: str = "UB",
+                    library: str = "fr-unstrand",
+
+                    # plotting parameters
+                    color="blue",
+                    font_size: int = 8,
+                    show_junction_number: bool = True,
+                    junction_number_font_size: int = 5,
+                    n_y_ticks: int = 4,
+                    distance_between_label_axis: float = .1,
+                    show_y_label: bool = True,
+                    y_label: str = "",
+                    theme: str = "ticks_blank"
+                    ):
         u"""
         add density object to plot
         :param path: the path to input file
         :param category: the input file type
+        :param label: the label of input file
+        :param title: the title of input file
+        :param barcodes: list of required barcodes
+        :param cell_barcode: cell barcode tag
+        :param umi_barcode: umi barcode tag
+        :param library: fr-unstrand
+        :param font_size: the font size for ticks, y-axis label and title
+        :param show_junction_number: whether to show the number of junctions
+        :param distance_between_label_axis: distance between y-axis label and y-axis ticks
+        :param n_y_ticks: number of y ticks
+        :param junction_number_font_size:
+        :param color: color for this density plot
+        :param show_y_label: whether to show y-axis label
+        :param y_label: the text of y-axis title
+        :param theme: the theme name
         :return:
         """
-        obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
-        self.plots.append(PlotInfo(obj=obj, type_="density", category=category))
+        obj, category = self.__init_input_file__(
+            path=path,
+            category=category,
+            label=label,
+            title=title,
+            barcodes=barcodes,
+            cell_barcode=cell_barcode,
+            umi_barcode=umi_barcode,
+            library=library
+        )
+
+        info = PlotInfo(obj=obj, type_="density", category=category)
+        self.plots.append(info)
+        self.params[info] = {
+            "show_junction_number": show_junction_number,
+            "junction_number_font_size": junction_number_font_size,
+            "color": color,
+            "font_size": font_size,
+            "n_y_ticks": n_y_ticks,
+            "distance_between_label_axis": distance_between_label_axis,
+            "show_y_label": show_y_label,
+            "y_label": y_label,
+            "theme": theme
+        }
         return self
 
-    def add_heatmap(self, path: str, group: str, category: str = "bam", *args, **kwargs):
+    def add_heatmap(self,
+                    path: str,
+                    group: str,
+                    category: str = "bam",
+
+                    # file loading parameters
+                    label: Union[str, List[str]] = "",
+                    title: str = "",
+                    barcodes: Optional[Set[str]] = None,
+                    cell_barcode: str = "BC",
+                    umi_barcode: str = "UB",
+                    library: str = "fr-unstrand",
+
+                    # plotting parameters
+                    color="viridis",
+                    font_size: int = 8,
+                    distance_between_label_axis: float = .1,
+                    show_y_label: bool = True,
+                    theme: str = "ticks",
+                    do_scale: bool = False,
+                    clustering: bool = False,
+                    clustering_method: str = "ward",
+                    distance_metric: str = "euclidean",
+                    raster: bool = True
+                    ):
         u"""
         add multiple objects for a group of heatmap
         :param path: path to input files
         :param group: the heatmap group
         :param category: file category corresponding to input file
+        :param label: the label of input file
+        :param title: the title of input file
+        :param barcodes: list of required barcodes
+        :param cell_barcode: cell barcode tag
+        :param umi_barcode: umi barcode tag
+        :param library: fr-unstrand
+        :param color: color for this density plot
+        :param show_y_label: whether to show y-axis label
+        :param theme: the theme name
+        :param font_size:
+        :param distance_between_label_axis:
+        :param do_scale: whether to scale the matrix
+        :param clustering: whether reorder matrix by clustering
+        :param clustering_method: same as  scipy.cluster.hierarchy.linkage
+        :param distance_metric: same as scipy.spatial.distance.pdist
+        :param color: used for seaborn.heatmap, see: https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html
+                    'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
+                    'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
+                    'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+        :param raster: whether to draw image in raster mode
         :return:
         """
-        obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
+        obj, category = self.__init_input_file__(
+            path=path,
+            category=category,
+            label=label,
+            title=title,
+            barcodes=barcodes,
+            cell_barcode=cell_barcode,
+            umi_barcode=umi_barcode,
+            library=library
+        )
 
         exists = False
         for p in self.plots:
@@ -320,43 +474,170 @@ class Plot(object):
                 break
 
         if not exists:
-            self.plots.append(PlotInfo(obj=obj, category=category, type_="heatmap", group=group))
+            info = PlotInfo(obj=obj, category=category, type_="heatmap", group=group)
+            self.plots.append(info)
+            self.params[info] = {
+                "color": color,
+                "font_size": font_size,
+                "distance_between_label_axis": distance_between_label_axis,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "do_scale": do_scale,
+                "clustering": clustering,
+                "clustering_method": clustering_method,
+                "distance_metric": distance_metric,
+                "raster": raster
+            }
 
         return self
 
-    def add_line(self, path: str, group: str, category: str = "bam", *args, **kwargs):
+    def add_line(self,
+                 path: str,
+                 group: str,
+                 category: str = "bam",
+
+                 # file loading parameters
+                 label: Union[str, List[str]] = "",
+                 title: str = "",
+                 barcodes: Optional[Set[str]] = None,
+                 cell_barcode: str = "BC",
+                 umi_barcode: str = "UB",
+                 library: str = "fr-unstrand",
+
+                 # plotting parameters
+                 color="blue",
+                 font_size: int = 8,
+                 distance_between_label_axis: float = .1,
+                 show_y_label: bool = True,
+                 line_attrs: Optional[Dict] = None,
+                 theme: str = "ticks_blank",
+                 n_y_ticks: int = 4,
+                 show_legend: bool = False
+                 ):
         u"""
         add multiple objects for a group of heatmap
         :param path: path to input files
         :param group: the heatmap group
         :param category: file category corresponding to input file
+        :param label: the label of input file
+        :param title: the title of input file
+        :param barcodes: list of required barcodes
+        :param cell_barcode: cell barcode tag
+        :param umi_barcode: umi barcode tag
+        :param library: fr-unstrand
+        :param distance_between_label_axis: distance between y-axis label and y-axis ticks
+        :param n_y_ticks: number of y ticks
+        :param color: color for this density plot
+        :param show_y_label: whether to show y-axis label
+        :param theme: the theme name
+        :param font_size:
+        :param line_attrs: the additional attributes to control the line, usd by matpltolib.axes.Axes.plot
+        :param show_legend: whether to show legend
         :return:
         """
-        obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
+        obj, category = self.__init_input_file__(
+            path=path,
+            category=category,
+            label=label,
+            title=title,
+            barcodes=barcodes,
+            cell_barcode=cell_barcode,
+            umi_barcode=umi_barcode,
+            library=library
+        )
+
+        line_attrs["color"] = color
 
         exists = False
         for p in self.plots:
             if p.group == group and p.type == "line":
                 p.add(obj=obj, category=category, type_="line")
+                self.params[p]["line_attrs"][obj.label] = line_attrs
                 exists = True
                 break
 
         if not exists:
-            self.plots.append(PlotInfo(obj=obj, category=category, type_="line", group=group))
+            info = PlotInfo(obj=obj, category=category, type_="line", group=group)
+            self.plots.append(info)
+            self.params[info] = {
+                "line_attrs": {obj.label: line_attrs},
+                "show_legend": show_legend,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "distance_between_label_axis": distance_between_label_axis,
+                "show_y_label": show_y_label,
+                "theme": theme
+            }
 
         return self
 
-    def add_igv(self, path: str, group: str, category: str = "igv", *args, **kwargs):
+    def add_igv(
+            self,
+            path: str,
+            category: str = "igv",
+            label: str = "",
+
+            # file loading parameters
+            library: str = "fr-unstrand",
+            features: Optional[dict] = None,
+            deletion_ignore: Optional[int] = True,
+            del_ratio_ignore: float = .5,
+
+            # plotting parameters
+            exon_color: Optional[str] = None,
+            intron_color: Optional[str] = None,
+            feature_color: Optional[str] = None,
+            exon_width: float = .3,
+            font_size: int = 8,
+            n_y_ticks: int = 1,
+            distance_between_label_axis: float = .1,
+            show_y_label: bool = True,
+            theme: str = "ticks_blank"
+    ):
         u"""
         Add igv-like plot into track
         :param path: path to input files
         :param group: the label of current track
         :param category: file category for the input file
+        :param library: fr-unstrand
+        :param features:
+        :param deletion_ignore:
+        :param del_ratio_ignore:
+        :param label:
+        :param exon_color:
+        :param intron_color:
+        :param feature_color:
+        :param exon_width:
+        :param font_size:
+        :param n_y_ticks:
+        :param distance_between_label_axis:
+        :param show_y_label:
+        :param theme:
         :return:
         """
-        obj, category = self.__init_input_file__(path=path, category=category, *args, **kwargs)
-        exists = False
-        self.plots.append(PlotInfo(obj=obj, category=category, type_="igv", group=group))
+        obj, category = self.__init_input_file__(
+            path=path,
+            category=category,
+            library=library,
+            features=features,
+            deletion_ignore=deletion_ignore,
+            del_ratio_ignore=del_ratio_ignore
+        )
+
+        info = PlotInfo(obj=obj, category=category, type_="igv")
+        self.plots.append(info)
+        self.params[info] = {
+            "y_label": label,
+            "exon_color": exon_color,
+            "intron_color": intron_color,
+            "feature_color": feature_color,
+            "exon_width": exon_width,
+            "font_size": font_size,
+            "n_y_ticks": n_y_ticks,
+            "distance_between_label_axis": distance_between_label_axis,
+            "show_y_label": show_y_label,
+            "theme": theme
+        }
 
         return self
 
@@ -384,6 +665,7 @@ class Plot(object):
         :param dpi: the dpi of saved plot
         :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
         :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
+
         """
         assert self.region is not None, f"please set the plotting region first."
 
@@ -445,7 +727,7 @@ class Plot(object):
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
-                    *args, **kwargs
+                    **self.params[p]
                 )
             elif p.type == "heatmap":
                 plot_heatmap(
@@ -454,7 +736,7 @@ class Plot(object):
                     data=p.data,
                     y_label=p.group,
                     graph_coords=self.graph_coords,
-                    *args, **kwargs
+                    **self.params[p]
                 )
             elif p.type == "line":
                 plot_line(
@@ -462,14 +744,14 @@ class Plot(object):
                     data=p.data,
                     y_label=p.group,
                     graph_coords=self.graph_coords,
-                    *args, **kwargs
+                    **self.params[p]
                 )
             elif p.type == "igv":
                 plot_igv_like(
                     ax=ax_var,
                     obj=p.data,
-                    y_label=p.group,
-                    graph_coords=self.graph_coords
+                    graph_coords=self.graph_coords,
+                    **self.params[p]
                 )
             else:
                 raise ValueError(f"unknown plot type {p.type}")
@@ -490,11 +772,12 @@ class Plot(object):
         curr_idx += 1
 
         if self.reference is not None:
-            ax_var = plt.subplot(gs[curr_idx:curr_idx+self.reference.len(scale=reference_scale), 0])
+            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
             plot_reference(ax=ax_var,
                            obj=self.reference,
                            graph_coords=self.graph_coords,
-                           plot_domain=self.reference.add_domain, *args, **kwargs)
+                           plot_domain=self.reference.add_domain,
+                           **self.params["reference"])
 
             # adjust indicator lines and focus background
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
@@ -525,7 +808,9 @@ if __name__ == '__main__':
             "../example/example.sorted.gtf.gz",
             add_domain=True,
             interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
-            interval_label="polyA"
+            interval_label="polyA",
+            show_gene=True,
+            color="pink",
         ).add_interval(
             interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
             interval_label="polyAS"
@@ -533,18 +818,23 @@ if __name__ == '__main__':
             "chr1", 1270656, 1284730, "+"
         ).add_density(
             path="../example/bams/1.bam",
-            category="bam"
+            category="bam",
+            color="blue"
         ).add_density(
             path="../example/bws/2.bw",
-            category="bw"
+            category="bw",
+            color="green"
         ).add_line(
             path="../example/bams/1.bam",
             category="bam",
-            group="1"
+            group="1",
+            line_attrs={"lw": 3}
         ).add_line(
             path="../example/bams/2.bam",
             category="bam",
-            group="2"
+            group="2",
+            color="red",
+            line_attrs={"linestyle": "dashed"}
         ).add_heatmap(
             path="../example/bams/1.bam",
             category="bam",
@@ -561,7 +851,7 @@ if __name__ == '__main__':
                 "polya": "pa"
             },
             category="igv",
-            group="3"
+            label="igv"
         ).add_sites(
             1270656 + 1000
         ).add_sites(
@@ -580,6 +870,7 @@ if __name__ == '__main__':
             color="green",
             label="test"
         ).plot("test_plot.pdf", fig_width=6, fig_height=2)
+
 
     test_plot()
     pass

@@ -35,6 +35,12 @@ class File(object):
     def load(self, *args, **kwargs):
         return None
 
+    def __hash__(self) -> int:
+        return hash((self.path, self.label, self.title))
+
+    def __eq__(self, other):
+        return self.path == other.path and self.label == other.label and self.title == other.title
+
 
 if __name__ == "__main__":
     pass
