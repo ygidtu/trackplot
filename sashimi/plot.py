@@ -21,7 +21,7 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot
 
 
 class PlotInfo(object):
@@ -62,11 +62,11 @@ class PlotInfo(object):
                 data[obj.label] = obj.data
         return data
 
-    def len(self, show_side_plot: bool = False) -> int:
+    def len(self) -> int:
         n = 0
         if not self.category:
             pass
-        elif self.type not in ["heatmap", "line"] and self.category[0] == "bam" and show_side_plot:
+        elif self.type == "side-plot" and self.category[0] == "bam":
             n += 2
         else:
             n += 1
@@ -354,12 +354,17 @@ class Plot(object):
                     distance_between_label_axis: float = .1,
                     show_y_label: bool = True,
                     y_label: str = "",
-                    theme: str = "ticks_blank"
+                    theme: str = "ticks_blank",
+
+                    # side plot parameters
+                    show_side_plot: bool = False,
+                    strand_choice: Optional[str] = None,
                     ):
         u"""
         add density object to plot
         :param path: the path to input file
         :param category: the input file type
+        :param show_side_plot: draw the density distribution of reads from different strand
         :param label: the label of input file
         :param title: the title of input file
         :param barcodes: list of required barcodes
@@ -375,6 +380,7 @@ class Plot(object):
         :param show_y_label: whether to show y-axis label
         :param y_label: the text of y-axis title
         :param theme: the theme name
+        :param strand_choice: the strand to draw on side plot
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -388,7 +394,13 @@ class Plot(object):
             library=library
         )
 
-        info = PlotInfo(obj=obj, type_="density", category=category)
+        type_ = "density"
+        if show_side_plot and category == "bam":
+            type_ = "side-plot"
+        elif show_side_plot:
+            logger.warning("show_side_plot only works with bam files")
+
+        info = PlotInfo(obj=obj, type_=type_, category=category)
         self.plots.append(info)
         self.params[info] = {
             "show_junction_number": show_junction_number,
@@ -399,7 +411,8 @@ class Plot(object):
             "distance_between_label_axis": distance_between_label_axis,
             "show_y_label": show_y_label,
             "y_label": y_label,
-            "theme": theme
+            "theme": theme,
+            "strand_choice": strand_choice
         }
         return self
 
@@ -426,7 +439,6 @@ class Plot(object):
                     clustering: bool = False,
                     clustering_method: str = "ward",
                     distance_metric: str = "euclidean",
-                    raster: bool = True
                     ):
         u"""
         add multiple objects for a group of heatmap
@@ -452,7 +464,6 @@ class Plot(object):
                     'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
                     'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                     'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
-        :param raster: whether to draw image in raster mode
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -485,8 +496,7 @@ class Plot(object):
                 "do_scale": do_scale,
                 "clustering": clustering,
                 "clustering_method": clustering_method,
-                "distance_metric": distance_metric,
-                "raster": raster
+                "distance_metric": distance_metric
             }
 
         return self
@@ -649,23 +659,22 @@ class Plot(object):
 
     def plot(self,
              output: Optional[str] = None,
-             show_side_plot: bool = False,
              reference_scale: Union[int, float] = .25,
              stroke_scale: Union[int, float] = .25,
              dpi: int = 300,
              fig_width: Union[int, float] = 0,
              fig_height: Union[int, float] = 0,
+             raster: bool = False,
              *args, **kwargs):
         u"""
         draw image
         :param output: if output is empty then show this image by plt.showfig
-        :param show_side_plot: whether to show side plot
         :param reference_scale: to adjust the size of reference plot
         :param stroke_scale: to adjust the size of stroke plot
         :param dpi: the dpi of saved plot
         :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
         :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
-
+        :param raster: plot rasterizer side plot
         """
         assert self.region is not None, f"please set the plotting region first."
 
@@ -691,7 +700,7 @@ class Plot(object):
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err
-            plots_n_rows += p.len(show_side_plot=show_side_plot)
+            plots_n_rows += p.len()
             if p.type in ["heatmap"]:
                 plots_n_cols = 2
 
@@ -720,8 +729,8 @@ class Plot(object):
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, wspace=.7, hspace=.15)
 
         curr_idx = 0
-        for idx, p in enumerate(self.plots):
-            ax_var = plt.subplot(gs[idx, 0])
+        for p in self.plots:
+            ax_var = plt.subplot(gs[curr_idx, 0])
             if p.type == "density":
                 plot_density(
                     ax=ax_var,
@@ -729,13 +738,30 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     **self.params[p]
                 )
+            elif p.type == "side-plot":
+                plot_density(
+                    ax=ax_var,
+                    obj=p.obj[0],
+                    graph_coords=self.graph_coords,
+                    **self.params[p]
+                )
+
+                side_ax = plt.subplot(gs[curr_idx+1, 0])
+                plot_side_plot(
+                    side_ax, p.obj[0],
+                    graph_coords=self.graph_coords,
+                    raster=raster,
+                    **self.params[p]
+                )
+                curr_idx += 1
             elif p.type == "heatmap":
                 plot_heatmap(
                     ax=ax_var,
-                    cbar_ax=plt.subplot(gs[idx, 1]),
+                    cbar_ax=plt.subplot(gs[curr_idx, 1]),
                     data=p.data,
                     y_label=p.group,
                     graph_coords=self.graph_coords,
+                    raster=raster,
                     **self.params[p]
                 )
             elif p.type == "line":
@@ -751,6 +777,7 @@ class Plot(object):
                     ax=ax_var,
                     obj=p.data,
                     graph_coords=self.graph_coords,
+                    raster=raster,
                     **self.params[p]
                 )
             else:
@@ -819,7 +846,8 @@ if __name__ == '__main__':
         ).add_density(
             path="../example/bams/1.bam",
             category="bam",
-            color="blue"
+            color="blue",
+            show_side_plot=True,
         ).add_density(
             path="../example/bws/2.bw",
             category="bw",
@@ -838,7 +866,7 @@ if __name__ == '__main__':
         ).add_heatmap(
             path="../example/bams/1.bam",
             category="bam",
-            group="1"
+            group="1",
         ).add_heatmap(
             path="../example/bams/2.bam",
             category="bam",
@@ -869,8 +897,7 @@ if __name__ == '__main__':
             end=1270656 + 8200,
             color="green",
             label="test"
-        ).plot("test_plot.pdf", fig_width=6, fig_height=2)
-
+        ).plot("test_plot.pdf", fig_width=6, fig_height=2, raster=True)
 
     test_plot()
     pass

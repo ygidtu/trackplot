@@ -14,7 +14,7 @@ from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
-from scipy.stats import zscore
+from scipy.stats import gaussian_kde, zscore
 
 from conf.logger import logger
 from conf.heatmap import DISTANCE_METRIC, CLUSTERING_METHOD
@@ -531,7 +531,8 @@ def plot_density(
         distance_between_label_axis: float = .1,
         show_y_label: bool = True,
         y_label: str = "",
-        theme: str = "ticks_blank"
+        theme: str = "ticks_blank",
+        **kwargs
 ):
     u"""
     draw density plot
@@ -697,6 +698,87 @@ def plot_density(
     )
 
 
+def plot_side_plot(
+        ax: mpl.axes.Axes,
+        obj: File,
+        graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+        color="blue",
+        font_size: int = 8,
+        n_y_ticks: int = 3,
+        distance_between_label_axis: float = .1,
+        show_y_label: bool = True,
+        y_label: str = "",
+        strand_choice: str = None,
+        theme="ticks",
+        raster: bool = False,
+        **kwargs
+):
+    """
+    :param ax:
+    :param obj:
+    :param graph_coords:
+    :param color:
+    :param font_size:
+    :param n_y_ticks:
+    :param distance_between_label_axis:
+    :param show_y_label:
+    :param y_label:
+    :param strand_choice:
+    :param theme:
+    :param raster:
+    :return:
+    """
+    region = obj.region
+    if graph_coords is None:
+        graph_coords = init_graph_coords(region)
+
+    data = deepcopy(obj.data)
+    data.transform(obj.log_trans)
+
+    if not y_label:
+        y_label = obj.label
+
+    if not show_y_label:
+        y_label = ""
+
+    plus, minus = data.plus, data.minus
+
+    max_height = max(plus)
+    min_height = min(minus)
+    max_val = max(max_height, abs(min_height))
+
+    for label, array_plot in zip(['plus', 'minus'], [plus, minus]):
+        if strand_choice is not None and label != strand_choice:
+            continue
+
+        array_hist = np.repeat(graph_coords, np.abs(array_plot).astype(np.int))
+        try:
+            kde = gaussian_kde(array_hist)
+            fit_value = kde.pdf(graph_coords)
+        except Exception as err:
+            logger.warning(err)
+            continue
+
+        fit_value = fit_value / fit_value.max()
+        if label == 'plus':
+            ax.plot(graph_coords, fit_value * array_plot.max(), c=color, lw=1)
+            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
+        else:
+            ax.plot(graph_coords, fit_value * array_plot.min(), c=color, lw=1)
+            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
+
+    # set the y limit
+    # set y ticks, y label and label
+    set_y_ticks(
+        ax, label=y_label, theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=1.1 * max_val,
+        n_y_ticks=n_y_ticks,
+        font_size=font_size,
+        distance_between_label_axis=distance_between_label_axis
+    )
+
+
 def plot_heatmap(
         ax: mpl.axes.Axes,
         cbar_ax: mpl.axes.Axes,
@@ -854,7 +936,8 @@ def plot_igv_like(
         n_y_ticks: int = 1,
         distance_between_label_axis: float = .1,
         show_y_label: bool = True,
-        theme: str = "ticks_blank"
+        theme: str = "ticks_blank",
+        raster: bool = False
 ):
     u"""
 
@@ -871,6 +954,7 @@ def plot_igv_like(
     :param exon_width:
     :param font_size:
     :param theme:
+    :param raster:
     :return:
     """
 
@@ -926,7 +1010,8 @@ def plot_igv_like(
                     graph_coords[e]
                 ]
                 ax.plot(intron_sites, [y_loc, y_loc],
-                        color="#4d4d4d" if not intron_color else intron_color, lw=0.2)
+                        color="#4d4d4d" if not intron_color else intron_color,
+                        lw=0.2, rasterized=raster)
 
             for feature in c_data.features:
                 if feature.start == -1:
@@ -961,8 +1046,9 @@ def plot_igv_like(
                                y_loc + exon_width * width_ratio,
                                c='b' if not feature_color else feature_color,
                                s=.5,
-                               linewidths=(0,)
-                            )
+                               linewidths=(0,),
+                               rasterized=raster
+                               )
 
         y_loc += 1
         #
