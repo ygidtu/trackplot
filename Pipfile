@@ -16,6 +16,7 @@ requests = "*"
 xmltodict = "*"
 pybigwig = "*"
 pandas = "*"
+click-option-group = "*"
 
 [dev-packages]
 

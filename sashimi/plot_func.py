@@ -319,7 +319,8 @@ def plot_reference(
         y_loc: int = 0,
         exon_width: float = .3,
         plot_domain: bool = False,
-        show_exon_id: bool = False
+        show_exon_id: bool = False,
+        raster: bool = True
 ):
     u"""
     Plot the structure of reference
@@ -338,6 +339,7 @@ def plot_reference(
     :param exon_width:
     :param  plot_domain:
     :param show_exon_id:
+    :param raster:
     :return:
     """
     region = obj.region
@@ -349,6 +351,7 @@ def plot_reference(
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
+    color = "k" if not color else color
     """
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
@@ -368,30 +371,13 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text(
-                        x=-1, y=y_loc + 0.25, s=transcript.gene_id,
-                        fontsize=font_size,
-                        ha="right"
-                    )
-
-                    ax.text(
-                        x=-1, y=y_loc - 0.25,
-                        s=transcript.transcript_id,
-                        fontsize=font_size,
-                        ha="right"
-                    )
+                    ax.text( x=-1, y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1, y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
-                    ax.text(
-                        x=-1, y=y_loc,
-                        s=transcript.gene + " | " + transcript.transcript,
-                        fontsize=font_size,
-                        ha="right"
-                    )
+                    ax.text(x=-1, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
+                            fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1, y=y_loc - 0.1,
-                        s=transcript.transcript,
-                        fontsize=font_size,
-                        ha="right")
+                ax.text(x=-1, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -407,15 +393,12 @@ def plot_reference(
                 y_loc - exon_width / 2, y_loc - exon_width / 2,
                 y_loc + exon_width / 2, y_loc + exon_width / 2
             ]
-            ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
+            ax.fill(x, y, color, lw=.5, zorder=20)
 
             if show_exon_id:
                 y_loc_offset = 0.1 if ind % 2 == 0 else - 0.2
-                ax.text(x=(graph_coords[s] + graph_coords[s]) / 2,
-                        y=y_loc + y_loc_offset,
-                        s=exon.name,
-                        fontsize=font_size / 2,
-                        ha="right")
+                ax.text(x=(graph_coords[s] + graph_coords[s]) / 2, y=y_loc + y_loc_offset,
+                        s=exon.name, fontsize=font_size / 2, ha="right")
 
         # @2018.12.21
         # change the intron range
@@ -426,7 +409,7 @@ def plot_reference(
                 graph_coords[region.relative(transcript.start)],
                 graph_coords[region.relative(transcript.end)]
             ]
-            ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.5)
+            ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.5, rasterized=raster)
 
             # @2018.12.23 fix intron arrows issues
             # Draw intron arrows.
@@ -445,7 +428,7 @@ def plot_reference(
                     else:
                         x = [loc + spread, loc, loc + spread]
                     y = [y_loc - exon_width / 5, y_loc, y_loc + exon_width / 5]
-                    ax.plot(x, y, lw=.5, color='k')
+                    ax.plot(x, y, lw=.5, color=color, rasterized=raster)
 
         y_loc += 1  # if transcript.transcript else .5
 
@@ -480,31 +463,21 @@ def plot_reference(
                             y_loc - exon_width / 4, y_loc - exon_width / 4,
                             y_loc + exon_width / 4, y_loc + exon_width / 4
                         ]
-                        ax.fill(x, y, 'k' if not color else color, lw=.5, zorder=20)
+                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
 
                     # @2022.05.13
-                    intron_relative_s = region.relative(
-                        min(map(lambda x: x.end, sub_exon))
-                    )
+                    intron_relative_s = region.relative(min(map(lambda x: x.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
 
-                    intron_relative_e = region.relative(
-                        max(map(lambda x: x.start, sub_exon))
-                    )
+                    intron_relative_e = region.relative(max(map(lambda x: x.start, sub_exon)))
                     intron_relative_e = len(region) if intron_relative_e >= len(region) else intron_relative_e
 
-                    intron_sites = [
-                        graph_coords[intron_relative_s],
-                        graph_coords[intron_relative_e]
-                    ]
+                    intron_sites = [graph_coords[intron_relative_s], graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc], color='k' if not color else color, lw=0.2)
+                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
 
-                ax.text(
-                    x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}\n{transcript.transcript_id}",
-                    fontsize=font_size / 2,
-                    ha="right"
-                )
+                ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}\n{transcript.transcript_id}",
+                        fontsize=font_size / 2, ha="right")
 
                 y_loc += 0.25
         # offset for next term.
