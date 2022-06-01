@@ -45,23 +45,23 @@ def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
 
 class Bam(File):
     def __init__(self, path: str, label: str = "", title: str = "", barcodes: Optional[Set[str]] = None,
-                 cell_barcode: str = "BC", umi_barcode: str = "UB", library: str = "fr-unstrand"):
+                 barcode_tag: str = "BC", umi_tag: str = "UB", library: str = "fr-unstrand"):
         u"""
         init this object
         :param label: the left axis label
         :param title: the default title to show in the upper-right of density plot
         :param barcodes: the path to barcodes,
                 default: ../filtered_feature_bc_matrix/barcodes.tsv.gz of bam file according to 10X Genomics
-        :param cell_barcode: the cell barcode tag, default is BC according to 10X Genomics
-        :param umi_barcode: the UMI barcode tag, default is BC according to 10X Genomics
+        :param barcode_tag: the cell barcode tag, default is BC according to 10X Genomics
+        :param umi_tag: the UMI barcode tag, default is BC according to 10X Genomics
         :param library: library for determining of read strand.
         """
         super().__init__(path)
         self.title = title
         self.label = label if label else os.path.basename(path).replace(".bam", "")
         self.barcodes = __set_barcodes__(barcodes)
-        self.cell_barcode = cell_barcode
-        self.umi_barcode = umi_barcode
+        self.barcode_tag = barcode_tag
+        self.umi_tag = umi_tag
         self.library = library
 
     @classmethod
@@ -70,8 +70,8 @@ class Bam(File):
                label: str = "",
                title: str = "",
                barcodes: Optional[Set[str]] = None,
-               cell_barcode: str = "BC",
-               umi_barcode: str = "UB",
+               barcode_tag: str = "BC",
+               umi_tag: str = "UB",
                library: str = "fr-unstrand"
                ):
         u"""
@@ -81,8 +81,8 @@ class Bam(File):
         :param title: the default title to show in the upper-right of density plot
         :param barcodes: the path to barcodes,
                 default: ../filtered_feature_bc_matrix/barcodes.tsv.gz of bam file according to 10X Genomics
-        :param cell_barcode: the cell barcode tag, default is BC according to 10X Genomics
-        :param umi_barcode: the UMI barcode tag, default is BC according to 10X Genomics
+        :param barcode_tag: the cell barcode tag, default is BC according to 10X Genomics
+        :param umi_tag: the UMI barcode tag, default is BC according to 10X Genomics
         :param library: library for determining of read strand.
         :return:
         """
@@ -106,8 +106,8 @@ class Bam(File):
             label=label,
             title=title,
             barcodes=barcode,
-            cell_barcode=cell_barcode,
-            umi_barcode=umi_barcode,
+            barcode_tag=barcode_tag,
+            umi_tag=umi_tag,
             library=library
         )
 
@@ -187,7 +187,8 @@ class Bam(File):
              threshold: int = 0,
              reads1: Optional[bool] = None,
              required_strand: Optional[str] = None,
-             log_trans: Optional[str] = None
+             log_trans: Optional[str] = None,
+             **kwargs
              ):
         """
             determine_depth determines the coverage at each base between start_coord and end_coord, inclusive.
@@ -234,8 +235,8 @@ class Bam(File):
 
                 # filter reads by 10x barcodes
                 if self.barcodes:
-                    if not read.has_tag(self.cell_barcode) or read.get_tag(
-                            self.cell_barcode) not in self.barcodes:
+                    if not read.has_tag(self.barcode_tag) or read.get_tag(
+                            self.barcode_tag) not in self.barcodes:
                         continue
 
                 start = read.reference_start

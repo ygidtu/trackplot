@@ -1,0 +1,11 @@
+# filepath  file_category   group   color
+example/bams/1.bam bam  bam
+example/bams/2.bam bam  bam
+example/bams/3.bam bam  bam
+example/bams/4.bam bam  bam
+example/bams/0.bam bam  bam
+example/bws/1.bw    bw  bw  YlOrBr
+example/bws/2.bw    bw  bw  YlOrBr
+example/bws/3.bw    bw  bw  YlOrBr
+example/bws/4.bw    bw  bw  YlOrBr
+example/bws/0.bw    bw  bw  YlOrBr

@@ -33,7 +33,7 @@ class Bigwig(File):
             label = os.path.basename(path)
         return cls(path=path, label=label, title=title)
 
-    def load(self, region: GenomicLoci):
+    def load(self, region: GenomicLoci, **kwargs):
         self.region = region
         self.data = ReadDepth(np.nan_to_num(
             Reader.read_bigwig(self.path, region),

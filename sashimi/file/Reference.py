@@ -348,7 +348,7 @@ class Reference(File):
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
-    def load(self, region: GenomicLoci, threshold_of_reads: int = 0):
+    def load(self, region: GenomicLoci, threshold_of_reads: int = 0, **kwargs):
         u"""
         Load transcripts inside of region
         :param region: target region

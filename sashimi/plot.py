@@ -298,8 +298,8 @@ class Plot(object):
                             label: Union[str, List[str]] = "",
                             title: str = "",
                             barcodes: Optional[Set[str]] = None,
-                            cell_barcode: str = "BC",
-                            umi_barcode: str = "UB",
+                            barcode_tag: str = "BC",
+                            umi_tag: str = "UB",
                             library: str = "fr-unstrand",
                             features: Optional[dict] = None,
                             deletion_ignore: Optional[int] = True,
@@ -311,8 +311,8 @@ class Plot(object):
                 label=label,
                 title=title,
                 barcodes=barcodes,
-                cell_barcode=cell_barcode,
-                umi_barcode=umi_barcode,
+                barcode_tag=barcode_tag,
+                umi_tag=umi_tag,
                 library=library
             )
         elif category == "igv":
@@ -341,8 +341,8 @@ class Plot(object):
                     label: Union[str, List[str]] = "",
                     title: str = "",
                     barcodes: Optional[Set[str]] = None,
-                    cell_barcode: str = "BC",
-                    umi_barcode: str = "UB",
+                    barcode_tag: str = "BC",
+                    umi_tag: str = "UB",
                     library: str = "fr-unstrand",
 
                     # plotting parameters
@@ -368,8 +368,8 @@ class Plot(object):
         :param label: the label of input file
         :param title: the title of input file
         :param barcodes: list of required barcodes
-        :param cell_barcode: cell barcode tag
-        :param umi_barcode: umi barcode tag
+        :param barcode_tag: cell barcode tag
+        :param umi_tag: umi barcode tag
         :param library: fr-unstrand
         :param font_size: the font size for ticks, y-axis label and title
         :param show_junction_number: whether to show the number of junctions
@@ -389,8 +389,8 @@ class Plot(object):
             label=label,
             title=title,
             barcodes=barcodes,
-            cell_barcode=cell_barcode,
-            umi_barcode=umi_barcode,
+            barcode_tag=barcode_tag,
+            umi_tag=umi_tag,
             library=library
         )
 
@@ -425,8 +425,8 @@ class Plot(object):
                     label: Union[str, List[str]] = "",
                     title: str = "",
                     barcodes: Optional[Set[str]] = None,
-                    cell_barcode: str = "BC",
-                    umi_barcode: str = "UB",
+                    barcode_tag: str = "BC",
+                    umi_tag: str = "UB",
                     library: str = "fr-unstrand",
 
                     # plotting parameters
@@ -448,8 +448,8 @@ class Plot(object):
         :param label: the label of input file
         :param title: the title of input file
         :param barcodes: list of required barcodes
-        :param cell_barcode: cell barcode tag
-        :param umi_barcode: umi barcode tag
+        :param barcode_tag: cell barcode tag
+        :param umi_tag: umi barcode tag
         :param library: fr-unstrand
         :param color: color for this density plot
         :param show_y_label: whether to show y-axis label
@@ -472,8 +472,8 @@ class Plot(object):
             label=label,
             title=title,
             barcodes=barcodes,
-            cell_barcode=cell_barcode,
-            umi_barcode=umi_barcode,
+            barcode_tag=barcode_tag,
+            umi_tag=umi_tag,
             library=library
         )
 
@@ -510,8 +510,8 @@ class Plot(object):
                  label: Union[str, List[str]] = "",
                  title: str = "",
                  barcodes: Optional[Set[str]] = None,
-                 cell_barcode: str = "BC",
-                 umi_barcode: str = "UB",
+                 barcode_tag: str = "BC",
+                 umi_tag: str = "UB",
                  library: str = "fr-unstrand",
 
                  # plotting parameters
@@ -522,7 +522,9 @@ class Plot(object):
                  line_attrs: Optional[Dict] = None,
                  theme: str = "ticks_blank",
                  n_y_ticks: int = 4,
-                 show_legend: bool = False
+                 show_legend: bool = False,
+                 legend_position: str = "upper right",
+                 legend_ncol: int = 0
                  ):
         u"""
         add multiple objects for a group of heatmap
@@ -532,8 +534,8 @@ class Plot(object):
         :param label: the label of input file
         :param title: the title of input file
         :param barcodes: list of required barcodes
-        :param cell_barcode: cell barcode tag
-        :param umi_barcode: umi barcode tag
+        :param barcode_tag: cell barcode tag
+        :param umi_tag: umi barcode tag
         :param library: fr-unstrand
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
         :param n_y_ticks: number of y ticks
@@ -543,6 +545,8 @@ class Plot(object):
         :param font_size:
         :param line_attrs: the additional attributes to control the line, usd by matpltolib.axes.Axes.plot
         :param show_legend: whether to show legend
+        :param legend_position:
+        :param legend_ncol:
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -551,11 +555,13 @@ class Plot(object):
             label=label,
             title=title,
             barcodes=barcodes,
-            cell_barcode=cell_barcode,
-            umi_barcode=umi_barcode,
+            barcode_tag=barcode_tag,
+            umi_tag=umi_tag,
             library=library
         )
 
+        if not line_attrs:
+            line_attrs = {}
         line_attrs["color"] = color
 
         exists = False
@@ -576,7 +582,9 @@ class Plot(object):
                 "n_y_ticks": n_y_ticks,
                 "distance_between_label_axis": distance_between_label_axis,
                 "show_y_label": show_y_label,
-                "theme": theme
+                "theme": theme,
+                "legend_position": legend_position,
+                "legend_ncol": legend_ncol
             }
 
         return self
@@ -682,7 +690,7 @@ class Plot(object):
         plots_n_cols = 1
         if self.reference is not None:
             logger.info("load reference")
-            self.reference.load(self.region, *args, **kwargs)
+            self.reference.load(self.region, *args,  **kwargs)
             plots_n_rows += self.reference.len(scale=reference_scale)
 
         if self.stroke:

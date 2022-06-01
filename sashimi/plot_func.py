@@ -16,8 +16,8 @@ from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
+from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from conf.logger import logger
-from conf.heatmap import DISTANCE_METRIC, CLUSTERING_METHOD
 from sashimi.anno.theme import Theme
 from sashimi.base.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
@@ -130,7 +130,7 @@ def set_x_ticks(
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         sequence: Optional[Dict[int, str]] = None,
         log_trans: Optional[str] = None,
-        nx_ticks: int = 4, font_size: int = 6):
+        nx_ticks: int = 4, font_size: int = 6, **kwargs):
     Theme.set_theme(ax, "blank")
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
@@ -277,7 +277,8 @@ def plot_stroke(
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         font_size: int = 5,
         distance_between_label_axis: Union[int, float] = .1,
-        theme: str = "blank"
+        theme: str = "blank",
+        **kwargs
 ):
     u"""
     plot stoke
@@ -748,6 +749,7 @@ def plot_side_plot(
         max_used_y_val=1.1 * max_val,
         n_y_ticks=n_y_ticks,
         font_size=font_size,
+        show_y_label=False,
         distance_between_label_axis=distance_between_label_axis
     )
 
@@ -849,7 +851,9 @@ def plot_line(
         line_attrs: Optional[Dict[str, Dict]] = None,
         theme: str = "ticks_blank",
         n_y_ticks: int = 4,
-        show_legend: bool = False
+        show_legend: bool = False,
+        legend_position: str = "upper right",
+        legend_ncol: int = 0
 ):
     u"""
 
@@ -864,6 +868,8 @@ def plot_line(
     :param theme: the theme name
     :param n_y_ticks: the number of y ticks
     :param show_legend: whether to show legend
+    :param legend_position:
+    :param legend_ncol:
     """
     max_used_y_val = 0
     max_used_x_val = 0
@@ -883,7 +889,9 @@ def plot_line(
     ax.tick_params(labelsize=font_size)
 
     if show_legend:
-        ax.legend()
+        ax.legend(loc=legend_position,
+                  ncol=int(len(data) / 1.5) if legend_ncol <= 0 else legend_ncol,
+                  fancybox=False, shadow=False)
 
     set_y_ticks(
         ax, label=y_label, theme=theme,

@@ -27,7 +27,7 @@ class Fasta(File):
 
         return cls(path)
 
-    def load(self, region: GenomicLoci):
+    def load(self, region: GenomicLoci, **kwargs):
         u"""
         load sequence from a fasta file
         :param region:

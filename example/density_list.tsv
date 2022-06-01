@@ -1,0 +1,5 @@
+# filepath  file_category   label   color
+example/bams/1.bam bam
+example/bams/2.bam bam  2bam
+example/bams/3.bam bam  3bam    blue
+example/bws/2.bw    bw bw green
