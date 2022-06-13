@@ -17,8 +17,9 @@ python main.py \
   -o example/example.png \
   --dpi 300 \
   --width 10 \
-  --height 1
+  --height 1 \
+  --barcode example/barcode_list.tsv
 ```
 
-![]("example/example.png")
+![](example/example.png)
 

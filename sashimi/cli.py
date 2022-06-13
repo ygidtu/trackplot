@@ -5,17 +5,17 @@ Created at 2022.05.31
 
 This script contains all the command line parameters
 """
+import gzip
 import os
 
 from multiprocessing import cpu_count
-from typing import Optional
+from typing import Optional, Dict, Set
 
 import click
 import matplotlib as mpl
 import matplotlib.font_manager
 
 from click_option_group import optgroup
-from rich import print
 
 from conf.logger import init_logger, logger
 from conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
@@ -54,6 +54,35 @@ class FileList(object):
         self.color = color
         self.category = category
         self.library = library
+
+
+def load_barcodes(barcode: str) -> Dict[str, Dict[str, Set[str]]]:
+    u"""
+    as name says
+    :param barcode: the path to barcode file
+    """
+    r = gzip.open(barcode, "rt") if barcode.endswith(".gz") else open(barcode, "r")
+    res = {}
+    for line in r:
+        line = line.strip().split()
+        if len(line) >= 3:
+            key, bc, group = line
+        elif len(line) == 2:
+            key, bc = line
+            group = ""
+        else:
+            continue
+
+        if key not in res.keys():
+            res[key] = {}
+
+        if group not in res[key]:
+            res[key][group] = set()
+
+        res[key][group].add(bc)
+
+    r.close()
+    return res
 
 
 def process_file_list(infile: str, category: str = "density"):
@@ -269,8 +298,10 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The size of stroke plot in final image", show_default=True)
 @optgroup.group("Overall settings")
 @optgroup.option("--barcode", type=click.Path(), show_default=True,
-                 help="Path to barcode list file, At list  three columns were required, "
-                      "1st The name of bam file; 2nd the barcode; 3rd The group label")
+                 help="Path to barcode list file, At list two columns were required, "
+                      "- 1st The name of bam file; \b"
+                      "- 2nd the barcode; \b"
+                      "- 3rd The group label, optional.")
 @optgroup.option("--barcode-tag", type=click.STRING, default="CB", show_default=True,
                  help="The default cell barcode tag label")
 @optgroup.option("--umi-tag", type=click.STRING, default="UB", show_default=True,
@@ -281,7 +312,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Whether to reverse strand of bam/reference file")
 @optgroup.option("--hide-y-label", default=False, is_flag=True, type=click.BOOL,
                  help="Whether hide y-axis label")
-@optgroup.option("--share-y", default=False, is_flag=True, type=click.BOOL,
+@optgroup.option("--same-y", default=False, is_flag=True, type=click.BOOL,
                  help="Whether different sashimi/line plots shared same y-axis boundaries")
 @optgroup.option('--log', type=click.Choice(["0", "2", "10", "zscore"]), default="0",
                  help="y axis log transformed, 0 -> not log transform; 2 -> log2; 10 -> log10")
@@ -303,6 +334,10 @@ def main(**kwargs):
     chrom, start, end, strand = decode_region(kwargs["event"])
     p.set_region(chrom, start, end, strand)
 
+    barcodes = None
+    if kwargs.get("barcode") and os.path.exists(kwargs.get("barcode")):
+        barcodes = load_barcodes(kwargs.get("barcode"))
+
     # add reference
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
@@ -321,56 +356,108 @@ def main(**kwargs):
                     p.add_interval(f.path, f.label)
             elif key == "density":
                 for f in process_file_list(kwargs[key], key):
-                    p.add_density(f.path,
-                                  category=f.category,
-                                  label=f.label,
-                                  barcodes=kwargs["barcode"],
-                                  barcode_tag=kwargs["barcode_tag"],
-                                  umi_tag=kwargs["umi_tag"],
-                                  library=f.library,
-                                  color=f.color,
-                                  font_size=kwargs["font_size"],
-                                  show_junction_number=kwargs["show_junction_num"],
-                                  n_y_ticks=kwargs["n_y_ticks"],
-                                  distance_between_label_axis=kwargs["distance_ratio"],
-                                  show_y_label=not kwargs["hide_y_label"],
-                                  show_side_plot=kwargs["show_side"],
-                                  strand_choice=kwargs["side_strand"])
+                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
+                        for group, bcs in barcodes[f.label].items():
+                            p.add_density(f.path,
+                                          category=f.category,
+                                          label=f"{f.label} - {group}" if group else f.label,
+                                          barcodes=bcs,
+                                          barcode_tag=kwargs["barcode_tag"],
+                                          umi_tag=kwargs["umi_tag"],
+                                          library=f.library,
+                                          color=f.color,
+                                          font_size=kwargs["font_size"],
+                                          show_junction_number=kwargs["show_junction_num"],
+                                          n_y_ticks=kwargs["n_y_ticks"],
+                                          distance_between_label_axis=kwargs["distance_ratio"],
+                                          show_y_label=not kwargs["hide_y_label"],
+                                          show_side_plot=kwargs["show_side"],
+                                          strand_choice=kwargs["side_strand"])
+                    else:
+                        p.add_density(f.path,
+                                      category=f.category,
+                                      label=f.label,
+                                      barcode_tag=kwargs["barcode_tag"],
+                                      umi_tag=kwargs["umi_tag"],
+                                      library=f.library,
+                                      color=f.color,
+                                      font_size=kwargs["font_size"],
+                                      show_junction_number=kwargs["show_junction_num"],
+                                      n_y_ticks=kwargs["n_y_ticks"],
+                                      distance_between_label_axis=kwargs["distance_ratio"],
+                                      show_y_label=not kwargs["hide_y_label"],
+                                      show_side_plot=kwargs["show_side"],
+                                      strand_choice=kwargs["side_strand"])
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
-                    p.add_heatmap(f.path,
-                                  category=f.category,
-                                  group=f.group,
-                                  label=f.label,
-                                  barcodes=kwargs["barcode"],
-                                  barcode_tag=kwargs["barcode_tag"],
-                                  umi_tag=kwargs["umi_tag"],
-                                  library=f.library,
-                                  color=f.color,
-                                  distance_between_label_axis=kwargs["distance_ratio"],
-                                  show_y_label=not kwargs["hide_y_label"],
-                                  clustering=kwargs["clustering"],
-                                  clustering_method=kwargs["clustering_method"],
-                                  distance_metric=kwargs["distance_metric"],
-                                  font_size=kwargs["font_size"])
+                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
+                        for group, bcs in barcodes[f.label].items():
+                            p.add_heatmap(f.path,
+                                          category=f.category,
+                                          label=f"{f.label} - {group}" if group else f.label,
+                                          barcodes=bcs,
+                                          group=f.group,
+                                          barcode_tag=kwargs["barcode_tag"],
+                                          umi_tag=kwargs["umi_tag"],
+                                          library=f.library,
+                                          color=f.color,
+                                          distance_between_label_axis=kwargs["distance_ratio"],
+                                          show_y_label=not kwargs["hide_y_label"],
+                                          clustering=kwargs["clustering"],
+                                          clustering_method=kwargs["clustering_method"],
+                                          distance_metric=kwargs["distance_metric"],
+                                          font_size=kwargs["font_size"])
+                    else:
+                        p.add_heatmap(f.path,
+                                      category=f.category,
+                                      group=f.group,
+                                      label=f.label,
+                                      barcode_tag=kwargs["barcode_tag"],
+                                      umi_tag=kwargs["umi_tag"],
+                                      library=f.library,
+                                      color=f.color,
+                                      distance_between_label_axis=kwargs["distance_ratio"],
+                                      show_y_label=not kwargs["hide_y_label"],
+                                      clustering=kwargs["clustering"],
+                                      clustering_method=kwargs["clustering_method"],
+                                      distance_metric=kwargs["distance_metric"],
+                                      font_size=kwargs["font_size"])
             elif key == "line":
                 for f in process_file_list(kwargs[key], key):
-                    p.add_line(f.path,
-                               category=f.category,
-                               group=f.group,
-                               label=f.label,
-                               barcodes=kwargs["barcode"],
-                               barcode_tag=kwargs["barcode_tag"],
-                               umi_tag=kwargs["umi_tag"],
-                               library=f.library,
-                               color=f.color,
-                               distance_between_label_axis=kwargs["distance_ratio"],
-                               show_y_label=not kwargs["hide_y_label"],
-                               font_size=kwargs["font_size"],
-                               n_y_ticks=kwargs["n_y_ticks"],
-                               show_legend=not kwargs["hide_legend"],
-                               legend_position=kwargs["legend_position"],
-                               legend_ncol=kwargs["legend_ncol"])
+                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
+                        for group, bcs in barcodes[f.label].items():
+                            p.add_line(f.path,
+                                       category=f.category,
+                                       label=f"{f.label} - {group}" if group else f.label,
+                                       barcodes=bcs,
+                                       group=f.group,
+                                       barcode_tag=kwargs["barcode_tag"],
+                                       umi_tag=kwargs["umi_tag"],
+                                       library=f.library,
+                                       color=f.color,
+                                       distance_between_label_axis=kwargs["distance_ratio"],
+                                       show_y_label=not kwargs["hide_y_label"],
+                                       font_size=kwargs["font_size"],
+                                       n_y_ticks=kwargs["n_y_ticks"],
+                                       show_legend=not kwargs["hide_legend"],
+                                       legend_position=kwargs["legend_position"],
+                                       legend_ncol=kwargs["legend_ncol"])
+                    else:
+                        p.add_line(f.path,
+                                   category=f.category,
+                                   group=f.group,
+                                   label=f.label,
+                                   barcode_tag=kwargs["barcode_tag"],
+                                   umi_tag=kwargs["umi_tag"],
+                                   library=f.library,
+                                   color=f.color,
+                                   distance_between_label_axis=kwargs["distance_ratio"],
+                                   show_y_label=not kwargs["hide_y_label"],
+                                   font_size=kwargs["font_size"],
+                                   n_y_ticks=kwargs["n_y_ticks"],
+                                   show_legend=not kwargs["hide_legend"],
+                                   legend_position=kwargs["legend_position"],
+                                   legend_ncol=kwargs["legend_ncol"])
             elif key == "igv":
                 for f in process_file_list(kwargs[key], key):
                     p.add_igv(f.path, category=f.category, label=f.label)
@@ -390,7 +477,8 @@ def main(**kwargs):
         intron_scale=kwargs["intron_scale"],
         exon_scale=kwargs["exon_scale"],
         reference_scale=kwargs["reference_scale"],
-        strock_scale=kwargs["stroke_scale"]
+        strock_scale=kwargs["stroke_scale"],
+        same_y=kwargs["same_y"]
     )
 
 

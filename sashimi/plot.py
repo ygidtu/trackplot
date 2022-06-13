@@ -3,6 +3,8 @@
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
+import math
+
 from copy import deepcopy
 from typing import List, Optional, Set, Union, Dict
 
@@ -615,7 +617,6 @@ class Plot(object):
         u"""
         Add igv-like plot into track
         :param path: path to input files
-        :param group: the label of current track
         :param category: file category for the input file
         :param library: fr-unstrand
         :param features:
@@ -736,6 +737,24 @@ class Plot(object):
         else:
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, wspace=.7, hspace=.15)
 
+        max_used_y_val = None
+        if kwargs["same_y"]:
+            for p in self.plots:
+                if p.type in ["density", "side-plot", "line"]:
+                    for obj in p.obj:
+                        y = max(obj.data.wiggle)
+
+                        if obj.log_trans == "2":
+                            y = math.log2(y)
+                        elif obj.log_trans == "10":
+                            y = math.log10(y)
+                        elif obj.log_trans == "1p":
+                            y = math.log1p(y)
+                        elif obj.log_trans == "e":
+                            y = math.log(y)
+
+                        max_used_y_val = y if max_used_y_val is None else max(y, max_used_y_val)
+
         curr_idx = 0
         for p in self.plots:
             ax_var = plt.subplot(gs[curr_idx, 0])
@@ -744,6 +763,7 @@ class Plot(object):
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
+                    max_used_y_val=max_used_y_val,
                     **self.params[p]
                 )
             elif p.type == "side-plot":
@@ -751,6 +771,7 @@ class Plot(object):
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
+                    max_used_y_val=max_used_y_val,
                     **self.params[p]
                 )
 
@@ -777,6 +798,7 @@ class Plot(object):
                     ax=ax_var,
                     data=p.data,
                     y_label=p.group,
+                    max_used_y_val=max_used_y_val,
                     graph_coords=self.graph_coords,
                     **self.params[p]
                 )

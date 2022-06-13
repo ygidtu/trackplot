@@ -237,7 +237,7 @@ def set_focus(
         try:
             fill_x = [left, right, right, left]
 
-            _, _, y1, y2 = pylab.axis()
+            y1, y2 = ax.get_ylim()
             fill_y = [y1, y1, y2, y2]
             ax.fill(fill_x, fill_y, alpha=0.1, color='grey')
         except IndexError as err:
@@ -506,6 +506,7 @@ def plot_density(
         show_y_label: bool = True,
         y_label: str = "",
         theme: str = "ticks_blank",
+        max_used_y_val: Optional[float] = None,
         **kwargs
 ):
     u"""
@@ -525,6 +526,7 @@ def plot_density(
     :param show_y_label: whether to show y-axis label
     :param y_label: the text of y-axis title
     :param theme: the theme name
+    :param max_used_y_val: used to set same max y axis
     :return:
     """
     if obj:
@@ -543,9 +545,10 @@ def plot_density(
         raise ValueError("please input obj or region and data")
     wiggle = data.wiggle
 
-    max_used_y_val = max(wiggle)
-    if max_used_y_val % 2 == 1:
-        max_used_y_val += 1
+    if max_used_y_val is None:
+        max_used_y_val = max(wiggle)
+        if max_used_y_val % 2 == 1:
+            max_used_y_val += 1
 
     jxns = data.junctions_dict
 
@@ -853,7 +856,8 @@ def plot_line(
         n_y_ticks: int = 4,
         show_legend: bool = False,
         legend_position: str = "upper right",
-        legend_ncol: int = 0
+        legend_ncol: int = 0,
+        max_used_y_val: Optional[float] = None,
 ):
     u"""
 
@@ -870,9 +874,10 @@ def plot_line(
     :param show_legend: whether to show legend
     :param legend_position:
     :param legend_ncol:
+    :param max_used_y_val:
     """
-    max_used_y_val = 0
-    max_used_x_val = 0
+    max_y_val = 0
+    max_x_val = 0
 
     for ylab, val in data.items():
         attr = line_attrs.get(ylab, {}) if line_attrs else {}
@@ -882,8 +887,9 @@ def plot_line(
             x.append(graph_coords[i])
             y.append(j)
         ax.plot(x, y, label=ylab if show_y_label else "", **attr)
-        max_used_y_val = max(max_used_y_val, max(val.wiggle))
-        max_used_x_val = max(max_used_x_val, len(val.wiggle))
+
+        max_y_val = max(max_y_val, max(val.wiggle))
+        max_x_val = max(max_x_val, len(val.wiggle))
 
     ax.tick_params(axis='both', which='major', labelsize=font_size)
     ax.tick_params(labelsize=font_size)
@@ -896,7 +902,7 @@ def plot_line(
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max_used_y_val,
+        max_used_y_val=max_y_val if max_used_y_val is None else max_used_y_val,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,

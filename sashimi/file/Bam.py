@@ -45,15 +45,15 @@ def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
 
 class Bam(File):
     def __init__(self, path: str, label: str = "", title: str = "", barcodes: Optional[Set[str]] = None,
-                 barcode_tag: str = "BC", umi_tag: str = "UB", library: str = "fr-unstrand"):
+                 barcode_tag: str = "CB", umi_tag: str = "UB", library: str = "fr-unstrand"):
         u"""
         init this object
         :param label: the left axis label
         :param title: the default title to show in the upper-right of density plot
         :param barcodes: the path to barcodes,
                 default: ../filtered_feature_bc_matrix/barcodes.tsv.gz of bam file according to 10X Genomics
-        :param barcode_tag: the cell barcode tag, default is BC according to 10X Genomics
-        :param umi_tag: the UMI barcode tag, default is BC according to 10X Genomics
+        :param barcode_tag: the cell barcode tag, default is CB according to 10X Genomics
+        :param umi_tag: the UMI barcode tag, default is UB according to 10X Genomics
         :param library: library for determining of read strand.
         """
         super().__init__(path)
@@ -70,7 +70,7 @@ class Bam(File):
                label: str = "",
                title: str = "",
                barcodes: Optional[Set[str]] = None,
-               barcode_tag: str = "BC",
+               barcode_tag: str = "CB",
                umi_tag: str = "UB",
                library: str = "fr-unstrand"
                ):
@@ -81,8 +81,8 @@ class Bam(File):
         :param title: the default title to show in the upper-right of density plot
         :param barcodes: the path to barcodes,
                 default: ../filtered_feature_bc_matrix/barcodes.tsv.gz of bam file according to 10X Genomics
-        :param barcode_tag: the cell barcode tag, default is BC according to 10X Genomics
-        :param umi_tag: the UMI barcode tag, default is BC according to 10X Genomics
+        :param barcode_tag: the cell barcode tag, default is CB according to 10X Genomics
+        :param umi_tag: the UMI barcode tag, default is UB according to 10X Genomics
         :param library: library for determining of read strand.
         :return:
         """
@@ -100,7 +100,6 @@ class Bam(File):
                 with gzip.open(barcodes, "rt") as r:
                     for line in r:
                         barcode.add(line.strip())
-
         return cls(
             path=path,
             label=label,
@@ -235,12 +234,10 @@ class Bam(File):
 
                 # filter reads by 10x barcodes
                 if self.barcodes:
-                    if not read.has_tag(self.barcode_tag) or read.get_tag(
-                            self.barcode_tag) not in self.barcodes:
+                    if not read.has_tag(self.barcode_tag) or self.has_barcode(read.get_tag(self.barcode_tag)):
                         continue
 
                 start = read.reference_start
-
                 if required_strand and strand != required_strand:
                     continue
 
