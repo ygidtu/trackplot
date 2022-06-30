@@ -9,6 +9,7 @@ python main.py \
   --interval example/interval_list.tsv \
   --density example/density_list.tsv \
   --show-side \
+  --igv example/igv.tsv \
   --heatmap example/heatmap_list.tsv \
   --focus 1272656-1272656:1275656-1277656 \
   --stroke 1275656-1277656:1277856-1278656@blue \
