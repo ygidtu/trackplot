@@ -18,7 +18,8 @@ python main.py \
   --dpi 300 \
   --width 10 \
   --height 1 \
-  --barcode example/barcode_list.tsv
+  --barcode example/barcode_list.tsv \
+  --domain
 ```
 
 ![](example/example.png)

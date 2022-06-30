@@ -36,7 +36,7 @@ class Uniprot(object):
         self.database = database
 
         self.__valid_fmt = {'txt', 'xml', 'rdf', 'gff', 'fasta'}
-        self.__url = "https://www.uniprot.org"
+        self.__url = "https://rest.uniprot.org"
         self.request_res = self.__request_url__()
         self.guessed_id = self.__guess_protein_id__()
         self.domain = self.__domain_info__()
@@ -48,7 +48,7 @@ class Uniprot(object):
         """
         assert self.fmt in self.__valid_fmt, f"Nonlegal format was found, {self.fmt}"
 
-        request_url = f"{self.__url}/uniprot/?query={self.ui}&format={self.fmt}"
+        request_url = f"{self.__url}/uniprotkb/search?&query={self.ui}&format={self.fmt}"
 
         try:
             url_response = rq.get(request_url, timeout=10)
@@ -162,6 +162,7 @@ class Uniprot(object):
         Check the attribution of "feature" in the response results.
         :return: a list which contained feature's attribution
         """
+        # print(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}")
         feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}", timeout=10)
 
         try:
@@ -197,15 +198,15 @@ class Uniprot(object):
 
 if __name__ == '__main__':
     def test():
-        trans_id = 'ENST00000339381'
-        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
+        # trans_id = 'ENST00000339381'
+        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
 
         # trans_id = 'ENST00000379319'
         # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
 
-        # trans_id = 'ENST00000486161'
+        trans_id = 'ENST00000486161'
         # # 5736 real, 4515 false
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
 
         print(trans_id_pep.guessed_id)
         print(trans_id_pep.domain)
