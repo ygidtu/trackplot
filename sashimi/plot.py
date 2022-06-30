@@ -776,6 +776,7 @@ class Plot(object):
                 )
 
                 side_ax = plt.subplot(gs[curr_idx+1, 0])
+
                 plot_side_plot(
                     side_ax, p.obj[0],
                     graph_coords=self.graph_coords,
@@ -853,6 +854,8 @@ class Plot(object):
             )
         else:
             plt.show()
+
+        plt.close()
 
         return self
 

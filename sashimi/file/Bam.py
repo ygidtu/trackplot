@@ -286,9 +286,9 @@ class Bam(File):
 
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
-                if strand == "+" and read.reference_start >= region.start:
+                if strand == "+" and 0 <= start - region.start < len(plus):
                     plus[start - region.start] += 1
-                elif strand == "-" and read.reference_end <= region.end:
+                elif strand == "-" and 0 <= end - region.start < len(minus):
                     minus[end - region.start] += 1
 
             for k, v in spanned_junctions.items():

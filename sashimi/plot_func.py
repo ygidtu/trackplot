@@ -725,15 +725,16 @@ def plot_side_plot(
     max_val = max(max_height, abs(min_height))
 
     for label, array_plot in zip(['plus', 'minus'], [plus, minus]):
-        if strand_choice is not None and label != strand_choice:
+        if strand_choice != "all" and label != strand_choice:
             continue
 
         array_hist = np.repeat(graph_coords, np.abs(array_plot).astype(np.int))
         try:
             kde = gaussian_kde(array_hist)
             fit_value = kde.pdf(graph_coords)
-        except Exception as err:
-            logger.warning(err)
+        except ValueError:
+            # logger.warning(err)
+            # logger.warning(traceback.format_exc())
             continue
 
         fit_value = fit_value / fit_value.max()

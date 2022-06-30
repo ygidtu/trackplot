@@ -219,7 +219,7 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="Threshold to filter low abundance junctions")
 @optgroup.option("--show-side", is_flag=True, type=click.BOOL,
                  show_default=True, help="Whether to draw additional side plot")
-@optgroup.option("--side-strand", type=click.Choice(["All", "+", "-"]), default="All", show_default=True,
+@optgroup.option("--side-strand", type=click.Choice(["all", "+", "-"]), default="all", show_default=True,
                  help="Which strand kept for side plot, default use all")
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
