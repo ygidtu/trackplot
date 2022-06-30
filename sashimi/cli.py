@@ -55,6 +55,10 @@ class FileList(object):
         self.category = category
         self.library = library
 
+    def __str__(self):
+        return f"path: {self.path} \nlabel: {self.label} \ngroup: {self.group} \n" \
+               f"color: {self.color} \ncategory: {self.category} \nlibrary: {self.library}"
+
 
 def load_barcodes(barcode: str) -> Dict[str, Dict[str, Set[str]]]:
     u"""
@@ -91,7 +95,8 @@ def process_file_list(infile: str, category: str = "density"):
     :param infile: path to input file list
     :param category: the image type of file list used for
     """
-    if category in ["density"]:
+
+    if category in ["density", "igv"]:
         with open(infile) as r:
             for idx, line in enumerate(r):
                 if line.startswith("#"):
@@ -99,7 +104,7 @@ def process_file_list(infile: str, category: str = "density"):
                 line = line.split()
                 path, category = line[0], line[1]
 
-                if category not in ["bam", "bigwig", "bw", "depth"]:
+                if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
                     raise ValueError(f"{category} is not supported in density plot.")
 
                 if len(line) < 3:
@@ -165,9 +170,6 @@ def process_file_list(infile: str, category: str = "density"):
                     groups[line[2]] += 1
                     yield FileList(path=path, category=category, label=line[3],
                                    color=line[4], group=line[2])
-
-    elif category in ["igv"]:
-        pass
     elif category in ["interval"]:
         with open(infile) as r:
             for idx, line in enumerate(r):
@@ -233,6 +235,8 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--show-exon-id", is_flag=True, show_default=True, help="Whether show gene id or gene name")
 @optgroup.option("--no-gene", is_flag=True, type=click.BOOL, show_default=True,
                  help="Do not show gene id next to transcript id")
+@optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
+                 help="Add domain information into reference track")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
@@ -272,10 +276,15 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, ?
+                 The path to list of input files,
+                 The path to list of input files, a tab separated text file, \b 
+                 - 1st column is path to input file, \b
+                 - 2nd column is the file category, \b
+                 - 3rd column is input file alias (optional), \b
+                 - 4th column is color of input files (optional),
                  """)
-@optgroup.option("--reads-strand", type=click.Choice(["All", "R1", "R2"]), default="All",
-                 show_default=True, help="Show the reads from specific strand")
+# @optgroup.option("--reads-strand", type=click.Choice(["All", "R1", "R2"]), default="All",
+#                  show_default=True, help="Show the reads from specific strand")
 @optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
                  show_default=True, help="Threshold to filter low abundance reads for stacked plot")
 @optgroup.group("Additional annotation")
@@ -350,7 +359,10 @@ def main(**kwargs):
                                 show_id=kwargs["show_id"],
                                 reverse_minus=kwargs["reverse_minus"],
                                 show_exon_id=kwargs["show_exon_id"],
-                                transcripts=kwargs["transcripts_to_show"])
+                                transcripts=kwargs["transcripts_to_show"],
+                                add_domain=kwargs["domain"]
+                                )
+
             elif key == "interval":
                 for f in process_file_list(kwargs[key], key):
                     p.add_interval(f.path, f.label)
@@ -459,8 +471,12 @@ def main(**kwargs):
                                    legend_position=kwargs["legend_position"],
                                    legend_ncol=kwargs["legend_ncol"])
             elif key == "igv":
-                for f in process_file_list(kwargs[key], key):
-                    p.add_igv(f.path, category=f.category, label=f.label)
+                for f in process_file_list(kwargs[key], "density"):
+                    p.add_igv(f.path,
+                              category=f.category,
+                              label=f.label,
+                              exon_color=f.color,
+                              intron_color=f.color)
         elif key == "focus":
             p.add_focus(kwargs[key])
         elif key == "stroke":

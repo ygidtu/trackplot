@@ -738,7 +738,7 @@ class Plot(object):
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, wspace=.7, hspace=.15)
 
         max_used_y_val = None
-        if kwargs["same_y"]:
+        if kwargs.get("same_y"):
             for p in self.plots:
                 if p.type in ["density", "side-plot", "line"]:
                     for obj in p.obj:
@@ -856,7 +856,6 @@ class Plot(object):
             plt.show()
 
         plt.close()
-
         return self
 
 
@@ -913,6 +912,10 @@ if __name__ == '__main__':
             },
             category="igv",
             label="igv"
+        ).add_igv(
+            path="../example/SRX9697989.corrected_reads.bed.gz",
+            category="igv",
+            label="bed12"
         ).add_sites(
             1270656 + 1000
         ).add_sites(
@@ -930,7 +933,7 @@ if __name__ == '__main__':
             end=1270656 + 8200,
             color="green",
             label="test"
-        ).plot("test_plot.pdf", fig_width=6, fig_height=2, raster=True)
+        ).plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
 
     test_plot()
     pass

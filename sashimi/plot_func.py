@@ -1079,17 +1079,17 @@ if __name__ == '__main__':
     def test_ref():
         region = GenomicLoci("chr1", 1270656, 1284730, "+")
         fig, ax = plt.subplots()
-        ref = Reference.create("../example/example.sorted.gtf.gz")
-        ref.load(region, domain=True)
+        ref = Reference.create("../example/example.sorted.gtf.gz",add_domain=True)
+        ref.load(region)
 
         ref.add_interval(
-            interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
-            interval_label="PolyASite"
+            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
+            label="PolyASite"
         )
 
         ref.add_interval(
-            interval_file="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
-            interval_label="PolyASite_simple"
+            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
+            label="PolyASite_simple"
         )
 
         plot_reference(ax, ref,
@@ -1197,9 +1197,11 @@ if __name__ == '__main__':
         from sashimi.base.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
         region = GenomicLoci("chr1", 13362, 29900, "+")
-        rs = ReadSegment.create("../example/bams/WASH7P.bam")
-        rs.load(region, features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
-        plot_igv_like(ax, rs, y_label="fl")
+
+        rs = ReadSegment.create("../example/bams/WASH7P.bam",
+                                features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
+        rs.load(region)
+        plot_igv_like(ax, {'full': rs}, y_label="fl")
         plt.savefig("test_igv_plot.pdf")
 
 
@@ -1207,11 +1209,23 @@ if __name__ == '__main__':
         from sashimi.base.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
         region = GenomicLoci("chr1", 1270656, 1284730, "+")
-        rs = ReadSegment.create("../example/bams/0.bam")
-        rs.load(region, features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
-        plot_igv_like(ax, rs, y_label="fl")
+
+        rs = ReadSegment.create("../example/bams/0.bam",
+                                features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
+        rs.load(region)
+        plot_igv_like(ax, {'full': rs}, y_label="fl")
         plt.savefig("test_igv_plot.2.pdf")
 
+    def test_igv_plot3():
+        from sashimi.base.ReadSegments import ReadSegment
+        fig, ax = plt.subplots()
+        region = GenomicLoci("chr1", 1270656, 1284730, "+")
+        rs = ReadSegment.create("../example/SRX9697989.corrected_reads.bed.gz")
+        rs.load(region)
+        plot_igv_like(ax, {'full': rs}, y_label="fl")
+        plt.savefig("test_igv_plot.3.pdf")
 
     test_igv_plot()
     test_igv_plot2()
+    test_igv_plot3()
+    test_ref()

@@ -173,7 +173,7 @@ class CdsProtein(GenomicLoci):
         )
 
         for current_transcript_id in self.cds.keys():
-
+            # print(current_transcript_id, len(self.cds[current_transcript_id]))
             current_pep = Uniprot(
                 uniprot_id=current_transcript_id,
                 cds_len=len(self.cds[current_transcript_id])
