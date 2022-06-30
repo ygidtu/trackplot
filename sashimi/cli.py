@@ -283,6 +283,15 @@ def process_file_list(infile: str, category: str = "density"):
                  - 3rd column is input file alias (optional), \b
                  - 4th column is color of input files (optional),
                  """)
+@optgroup.option("--del-ratio-ignore", default=1.0,
+                 type=click.FloatRange(min=0.0, max=1.0, clamp=True),
+                 help="""
+                 Ignore the deletion gap in nanopore or pacbio reads. \b
+                 if a deletion region was smaller than (alginment length) * (del_ratio_ignore), \b
+                 then the deletion gap will be filled. \b
+                 currently the del_ratio_ignore was 1.0.
+                 """)
+
 # @optgroup.option("--reads-strand", type=click.Choice(["All", "R1", "R2"]), default="All",
 #                  show_default=True, help="Show the reads from specific strand")
 @optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
@@ -476,7 +485,14 @@ def main(**kwargs):
                               category=f.category,
                               label=f.label,
                               exon_color=f.color,
-                              intron_color=f.color)
+                              intron_color=f.color,
+                              font_size=kwargs["font_size"],
+                              n_y_ticks=kwargs["n_y_ticks"],
+                              show_y_label=not kwargs["hide_y_label"],
+                              deletion_ignore=True if kwargs["del_ratio_ignore"] == 1.0 else False,
+                              del_ratio_ignore=kwargs["del_ratio_ignore"],
+                              distance_between_label_axis=kwargs["distance_ratio"]
+                              )
         elif key == "focus":
             p.add_focus(kwargs[key])
         elif key == "stroke":

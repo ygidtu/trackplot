@@ -1039,7 +1039,6 @@ def plot_igv_like(
                                )
 
         y_loc += 1
-        #
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
