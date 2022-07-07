@@ -451,10 +451,10 @@ def plot_reference(
 
                     for exon in sub_exon:
                         s, e = region.relative(exon.start), region.relative(exon.end)
-                        if e < 0 or s > len(region):
+                        if e <= 0 or s > len(region):
                             continue
                         s = 0 if s < 0 else s
-                        e = len(region) if e >= len(region) else e
+                        e = len(region) - 1 if e > len(region) else e
 
                         x = [
                             graph_coords[s], graph_coords[e],
@@ -469,18 +469,23 @@ def plot_reference(
                     # @2022.05.13
                     intron_relative_s = region.relative(min(map(lambda x: x.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
+                    if intron_relative_s > len(region):
+                        continue
 
                     intron_relative_e = region.relative(max(map(lambda x: x.start, sub_exon)))
-                    intron_relative_e = len(region) if intron_relative_e >= len(region) else intron_relative_e
+                    intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+                    if intron_relative_e <= 0:
+                        continue
 
                     intron_sites = [graph_coords[intron_relative_s], graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
                         ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
 
-                ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}\n{transcript.transcript_id}",
+                ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}}|{transcript.transcript_id}",
                         fontsize=font_size / 2, ha="right")
 
                 y_loc += 0.25
+
         # offset for next term.
         y_loc += 0.75
 
@@ -1078,7 +1083,7 @@ if __name__ == '__main__':
     def test_ref():
         region = GenomicLoci("chr1", 1270656, 1284730, "+")
         fig, ax = plt.subplots()
-        ref = Reference.create("../example/example.sorted.gtf.gz",add_domain=True)
+        ref = Reference.create("../example/example.sorted.gtf.gz", add_domain=True)
         ref.load(region)
 
         ref.add_interval(
@@ -1218,13 +1223,14 @@ if __name__ == '__main__':
     def test_igv_plot3():
         from sashimi.base.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
-        rs = ReadSegment.create("../example/SRX9697989.corrected_reads.bed.gz")
+        # 1: 10024601 - 10038168
+        region = GenomicLoci("1", 10024601, 10038168, "+")
+        rs = ReadSegment.create("../example/test.bed.gz")
         rs.load(region)
         plot_igv_like(ax, {'full': rs}, y_label="fl")
         plt.savefig("test_igv_plot.3.pdf")
 
-    test_igv_plot()
-    test_igv_plot2()
+    # test_igv_plot()
+    # test_igv_plot2()
     test_igv_plot3()
-    test_ref()
+    # test_ref()
