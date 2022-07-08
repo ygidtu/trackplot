@@ -149,6 +149,9 @@ class Uniprot(object):
         except ExpatError:
             logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
             return None
+        except KeyError:
+            # logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
+            return None
 
         # this set may be empty
         if not current_uniprot_id:
@@ -162,7 +165,6 @@ class Uniprot(object):
         Check the attribution of "feature" in the response results.
         :return: a list which contained feature's attribution
         """
-        # print(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}")
         feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}", timeout=10)
 
         try:
@@ -204,9 +206,15 @@ if __name__ == '__main__':
         # trans_id = 'ENST00000379319'
         # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
 
-        trans_id = 'ENST00000486161'
-        # # 5736 real, 4515 false
-        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
+        # trans_id = 'ENST00000486161'
+        # # # 5736 real, 4515 false
+        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
+
+        # trans_id = 'ENST00000378891'
+        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2085)
+
+        trans_id = 'ENST00000378888'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
 
         print(trans_id_pep.guessed_id)
         print(trans_id_pep.domain)
