@@ -305,7 +305,8 @@ class Plot(object):
                             library: str = "fr-unstrand",
                             features: Optional[dict] = None,
                             deletion_ignore: Optional[int] = True,
-                            del_ratio_ignore: float = .5
+                            del_ratio_ignore: float = .5,
+                            exon_focus: Optional[str] = None
                             ):
         if category == "bam":
             obj = Bam.create(
@@ -324,7 +325,8 @@ class Plot(object):
                 library=library,
                 features=features,
                 deletion_ignore=deletion_ignore,
-                del_ratio_ignore=del_ratio_ignore
+                del_ratio_ignore=del_ratio_ignore,
+                exon_focus=exon_focus
             )
         elif category == "bigwig" or category == "bw":
             category = "bw"
@@ -596,6 +598,7 @@ class Plot(object):
             path: str,
             category: str = "igv",
             label: str = "",
+            exon_focus: Optional[str] = None,
 
             # file loading parameters
             library: str = "fr-unstrand",
@@ -640,7 +643,8 @@ class Plot(object):
             library=library,
             features=features,
             deletion_ignore=deletion_ignore,
-            del_ratio_ignore=del_ratio_ignore
+            del_ratio_ignore=del_ratio_ignore,
+            exon_focus=exon_focus
         )
 
         info = PlotInfo(obj=obj, category=category, type_="igv")

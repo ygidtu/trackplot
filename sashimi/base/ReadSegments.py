@@ -18,6 +18,8 @@ from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.base.CoordinateMap import Coordinate
 
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+
 
 class Reads(GenomicLoci):
 
@@ -164,6 +166,7 @@ class ReadSegment(File):
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
             features: Optional[dict] = None,
+            exon_focus: Optional[str] = None,
             is_bed: bool = False
 
     ):
@@ -177,6 +180,7 @@ class ReadSegment(File):
         :param deletion_ignore: whether to ignore the deletion region, default: Ture
         :param del_ratio_ignore: the length of deletion must below to del_ratio_ignore * length of alignment
         :param features: default: features={"m6a": "ma","real_strand": "rs","polya": "pa"}
+        :param exon_focus: exon to focus, like start1-end1,start2-end2
         :param is_bed: bed file for generating igv-like reads.
         """
         super().__init__(path)
@@ -194,6 +198,7 @@ class ReadSegment(File):
         self.del_ratio_ignore = del_ratio_ignore
         self.features = features
         self.is_bed = is_bed
+        self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(',')))
 
     @classmethod
     def create(
@@ -203,7 +208,8 @@ class ReadSegment(File):
             library: str = "fr-unstrand",
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
-            features: Optional[dict] = None
+            features: Optional[dict] = None,
+            exon_focus: Optional[str] = None
 
     ):
         u"""
@@ -218,6 +224,7 @@ class ReadSegment(File):
         :param del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
         :param features: support m6a and polyA length from bam tag.
         like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
+        :param exon_focus: exon to focus, like start1-end1,start2-end2
         :return:
         """
         # if bam file then check the index file of the given file
@@ -250,6 +257,7 @@ class ReadSegment(File):
             deletion_ignore=deletion_ignore,
             del_ratio_ignore=del_ratio_ignore,
             features=features,
+            exon_focus=exon_focus,
             is_bed=is_bed
         )
 
@@ -283,11 +291,11 @@ class ReadSegment(File):
         )
 
     @staticmethod
-    def df_sort(df: pd.DataFrame) -> pd.DataFrame:
+    def df_sort(dfs: pd.DataFrame) -> pd.DataFrame:
         u"""
         sorting the dataframe to generate plot index,
         copy from jinbu jia
-        :param df: a pd.DataFrame object
+        :param dfs: a pd.DataFrame object
         :return: pd.DataFrame
         """
 
@@ -295,51 +303,56 @@ class ReadSegment(File):
         have_overlap_regions = []
         now_max_x = 0
         height = 1
-        for index, row in df.iterrows():
-            start = row["start"]
-            end = row["end"]
+        y_min = 1
+        dfs_lst = []
+        for _, df in dfs.groupby('exon_group'):
+            for index, row in df.iterrows():
+                start = row["start"]
+                end = row["end"]
 
-            if start > now_max_x:
-                y_min = 1
-                y_max = height
-                now_max_x = end
-                have_overlap_regions = [[1, y_max, now_max_x]]
-            else:
-                for d in have_overlap_regions:
-                    if d[2] < start:
-                        d[2] = start - 1
-                if len(have_overlap_regions) > 1:
-                    new_have_overlap_regions = [have_overlap_regions[0]]
-                    for d in have_overlap_regions[1:]:
-                        if d[2] == new_have_overlap_regions[-1][2]:
-                            new_have_overlap_regions[-1][1] = d[1]
-                        else:
-                            new_have_overlap_regions.append(d)
-                    have_overlap_regions = new_have_overlap_regions
-                have_insert = False
-                for (i, d) in enumerate(have_overlap_regions):
-                    x1, x2, x3 = d
-                    if x3 < start and (x2 - x1 + 1) >= height:
-                        have_insert = True
-                        y_min = x1
-                        y_max = y_min + height - 1
-                        if y_max != x3:
-                            d[0] = y_max + 1
-                            have_overlap_regions.insert(i, [x1, y_max, end])
-                        else:
-                            d[2] = end
-                        break
-                if not have_insert:
-                    y_min = have_overlap_regions[-1][1] + 1 if have_overlap_regions else 1
-                    y_max = y_min + height - 1
-                    have_overlap_regions.append([y_min, y_max, end])
-                if end > now_max_x:
+                if start > now_max_x:
+                    if y_min != 0:
+                        y_min += 1
+                    y_max = height
                     now_max_x = end
-            y_loci.append(y_min)
+                    have_overlap_regions = [[1, y_max, now_max_x]]
+                else:
+                    for d in have_overlap_regions:
+                        if d[2] < start:
+                            d[2] = start - 1
+                    if len(have_overlap_regions) > 1:
+                        new_have_overlap_regions = [have_overlap_regions[0]]
+                        for d in have_overlap_regions[1:]:
+                            if d[2] == new_have_overlap_regions[-1][2]:
+                                new_have_overlap_regions[-1][1] = d[1]
+                            else:
+                                new_have_overlap_regions.append(d)
+                        have_overlap_regions = new_have_overlap_regions
+                    have_insert = False
+                    for (i, d) in enumerate(have_overlap_regions):
+                        x1, x2, x3 = d
+                        if x3 < start and (x2 - x1 + 1) >= height:
+                            have_insert = True
+                            y_min = x1
+                            y_max = y_min + height - 1
+                            if y_max != x3:
+                                d[0] = y_max + 1
+                                have_overlap_regions.insert(i, [x1, y_max, end])
+                            else:
+                                d[2] = end
+                            break
+                    if not have_insert:
+                        y_min = have_overlap_regions[-1][1] + 1 if have_overlap_regions else 1
+                        y_max = y_min + height - 1
+                        have_overlap_regions.append([y_min, y_max, end])
+                    if end > now_max_x:
+                        now_max_x = end
+                y_loci.append(y_min)
+            df["y_loci"] = y_loci
+            dfs_lst.append(df)
+            y_loci = []
 
-        df["y_loci"] = y_loci
-
-        return df
+        return pd.concat(dfs_lst)
 
     def load_bed(self):
         try:
@@ -565,6 +578,16 @@ class ReadSegment(File):
             map(lambda x: x.to_dict(), self.data)
         )
         tmp_df["list_index"] = range(len(self.data))
+        if self.exon_focus:
+            e_f_use = []
+            for read in self.data:
+                tmp_ind = []
+                for f_e in self.exon_focus:
+                    tmp_ind.append("1" if f_e in str(read) else "0")
+                e_f_use.append("_".join(tmp_ind))
+            tmp_df["exon_group"] = e_f_use
+        else:
+            tmp_df["exon_group"] = "0"
         self.meta = self.df_sort(tmp_df)
 
 

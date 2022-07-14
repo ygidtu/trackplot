@@ -131,3 +131,9 @@ dmypy.json
 .idea/
 *.png
 *.pdf
+
+Mus_musculus.GRCm38.101.gtf.gz*
+hg38.chr19.gtf*
+Homo_sapiens.GRCh38.101.sorted.gtf.gz*
+SRX8994511.corrected_reads.bed.gz*
+SRX8994511_sample.bed.gz*
