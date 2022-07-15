@@ -169,24 +169,24 @@ class Reference(File):
 
         try:
             w = open(output_gtf.replace(".gz", ""), "w+")
+            r = gzip.open(input_gtf, "rt") if input_gtf.endswith(".gz") else open(input_gtf)
+            for line in r:
+                if line.startswith("#"):
+                    w.write(line)
+                    continue
 
-            with open(input_gtf) as r:
-                for line in r:
-                    if line.startswith("#"):
-                        w.write(line)
-                        continue
+                lines = line.split()
 
-                    lines = line.split()
+                if len(lines) < 1:
+                    continue
 
-                    if len(lines) < 1:
-                        continue
-
-                    data.append(
-                        GenomicLoci(
-                            chromosome=lines[0], start=lines[3], end=lines[4],
-                            strand=lines[6], gtf_line=line
-                        )
+                data.append(
+                    GenomicLoci(
+                        chromosome=lines[0], start=lines[3], end=lines[4],
+                        strand=lines[6], gtf_line=line
                     )
+                )
+            r.close()
 
             for i in sorted(data, key=lambda x: [x.chromosome, x.start]):
                 w.write(i.gtf_line)
