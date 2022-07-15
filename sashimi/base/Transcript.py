@@ -90,7 +90,15 @@ class Transcript(GenomicLoci):
     def __str__(self):
         exons_str = []
         for i in self.exons:
-            exons_str.append("{}-{}".format(i.start, i.end))
+            if isinstance(i, list):
+                """
+                2022.07.05
+                Domain setting
+                """
+                exons_str.append("|".join(map(lambda x: f"{x.start}-{x.end}", i)))
+
+            else:
+                exons_str.append("{}-{}".format(i.start, i.end))
 
         return "{}:{}-{}:{} {} {}".format(
             self.chromosome,

@@ -146,6 +146,35 @@ class Reader(object):
                     return r.values("chr" + region.chromosome, region.start, region.end + 1)
 
     @classmethod
+    def read_bigbed(cls, path: str, region: GenomicLoci):
+        with pyBigWig.open(path) as r:
+            if not r.isBigBed():
+                logger.warning(f"{path} don't look like bigbed file.")
+                yield from []
+            else:
+                try:
+                    iter_ = r.entries(region.chromosome, region.start, region.end + 1)
+                except RuntimeError as e:
+                    logger.warning(e)
+
+                    logger.info("may be caused by the mismatch of chromosome")
+                    if region.chromosome.startswith("chr"):
+                        iter_ = r.entries(
+                            region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
+                            region.start,
+                            region.end + 1
+                        )
+                    else:
+                        iter_ = r.entries(
+                            "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
+                            region.start,
+                            region.end + 1
+                        )
+                if not iter_:
+                    iter_ = []
+                yield from iter_
+
+    @classmethod
     def read_depth(cls, path: str, region: GenomicLoci):
         if not os.path.exists(path + ".tbi"):
             logger.info(f"create tbi index for {path}")

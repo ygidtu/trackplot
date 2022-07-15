@@ -372,7 +372,7 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text( x=-1, y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1, y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
                     ax.text(x=-1, y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
                     ax.text(x=-1, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
@@ -433,12 +433,6 @@ def plot_reference(
 
         y_loc += 1  # if transcript.transcript else .5
 
-        # here is plot domain
-        # print(plot_domain)
-        # print(obj.add_domain)
-        # print(obj.domain)
-        # print(transcript.transcript_id)
-
         if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
             current_domains = obj.domain.pep[transcript.transcript_id]
 
@@ -488,6 +482,51 @@ def plot_reference(
 
         # offset for next term.
         y_loc += 0.75
+    if obj.local_domain:
+        for base_name, current_domain in obj.local_domain.items():
+            for sub_current_domain in current_domain:
+                if not (sub_current_domain.start <= region.end and
+                        sub_current_domain.end >= region.start):
+                    continue
+
+                for sub_exon in sub_current_domain.exons:
+
+                    for exon in sub_exon:
+                        s, e = region.relative(exon.start), region.relative(exon.end)
+                        if e <= 0 or s > len(region):
+                            continue
+                        s = 0 if s < 0 else s
+                        e = len(region) - 1 if e > len(region) else e
+
+                        x = [
+                            graph_coords[s], graph_coords[e],
+                            graph_coords[e], graph_coords[s]
+                        ]
+                        y = [
+                            y_loc - exon_width / 4, y_loc - exon_width / 4,
+                            y_loc + exon_width / 4, y_loc + exon_width / 4
+                        ]
+                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
+
+                    # @2022.05.13
+                    intron_relative_s = region.relative(min(map(lambda x: x.end, sub_exon)))
+                    intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
+                    if intron_relative_s > len(region):
+                        continue
+
+                    intron_relative_e = region.relative(max(map(lambda x: x.start, sub_exon)))
+                    intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+                    if intron_relative_e <= 0:
+                        continue
+
+                    intron_sites = [graph_coords[intron_relative_s], graph_coords[intron_relative_e]]
+                    if len(sub_exon) != 1:
+                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
+
+                ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{base_name}",
+                        fontsize=font_size / 2, ha="right")
+
+            y_loc += 1
 
     # @2022.05.13
     # Set y lim using y_loc value.
@@ -782,6 +821,8 @@ def plot_heatmap(
 ):
     u"""
 
+    :param theme:
+    :param graph_coords:
     :param ax: whether to scale the matrix
     :param cbar_ax: whether to scale the matrix
     :param font_size:
@@ -1083,7 +1124,9 @@ if __name__ == '__main__':
     def test_ref():
         region = GenomicLoci("chr1", 1270656, 1284730, "+")
         fig, ax = plt.subplots()
-        ref = Reference.create("../example/example.sorted.gtf.gz", add_domain=True)
+        ref = Reference.create(
+            "../example/example.sorted.gtf.gz",
+            add_domain=True)
         ref.load(region)
 
         ref.add_interval(

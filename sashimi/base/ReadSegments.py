@@ -198,7 +198,7 @@ class ReadSegment(File):
         self.del_ratio_ignore = del_ratio_ignore
         self.features = features
         self.is_bed = is_bed
-        self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(',')))
+        self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(','))) if exon_focus else exon_focus
 
     @classmethod
     def create(
