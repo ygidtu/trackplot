@@ -1,0 +1,4 @@
+example/
+*.sh
+.git/
+Dockerfile
