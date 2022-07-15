@@ -291,7 +291,7 @@ class ReadSegment(File):
         )
 
     @staticmethod
-    def df_sort(dfs: pd.DataFrame) -> pd.DataFrame:
+    def df_sort(dfs: pd.DataFrame) -> Optional[pd.DataFrame]:
         u"""
         sorting the dataframe to generate plot index,
         copy from jinbu jia
@@ -351,6 +351,10 @@ class ReadSegment(File):
             df["y_loci"] = y_loci
             dfs_lst.append(df)
             y_loci = []
+
+        if len(dfs_lst) <= 0:
+            logger.error(f"There is no any read segments")
+            return None
 
         return pd.concat(dfs_lst)
 

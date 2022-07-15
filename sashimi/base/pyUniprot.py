@@ -6,6 +6,7 @@ u"""
 Fetch protein information from uniprot website
 """
 import json
+from typing import Optional
 from types import SimpleNamespace
 from xml.parsers.expat import ExpatError
 
@@ -22,7 +23,8 @@ class Uniprot(object):
     Get domain information from uniprot based uniprot id
     """
 
-    def __init__(self, uniprot_id: str, cds_len: int, fmt="xml", database="uniprot"):
+    def __init__(self, uniprot_id: str, cds_len: int, fmt="xml", database="uniprot",
+                 timeout: int = 10, proxy: Optional[str] = None):
         u"""
         Fetch transcript's translation information based gene id
         :param uniprot_id: the ensemble transcript id works well currently
@@ -34,6 +36,11 @@ class Uniprot(object):
         self.cds_len = cds_len
         self.fmt = fmt
         self.database = database
+        self.timeout = timeout
+        self.proxy = {
+            "http": proxy,
+            "https": proxy
+        }
 
         self.__valid_fmt = {'txt', 'xml', 'rdf', 'gff', 'fasta'}
         self.__url = "https://rest.uniprot.org"
@@ -51,7 +58,7 @@ class Uniprot(object):
         request_url = f"{self.__url}/uniprotkb/search?&query={self.ui}&format={self.fmt}"
 
         try:
-            url_response = rq.get(request_url, timeout=10)
+            url_response = rq.get(request_url, timeout=self.timeout, proxies=self.proxy)
         except ConnectionError:
             raise f"Failed connect to for {request_url}."
         except rq.exceptions.Timeout:
@@ -130,7 +137,8 @@ class Uniprot(object):
                     try:
                         current_uniprot_inf = rq.get(
                             request_url,
-                            timeout=10
+                            timeout=self.timeout,
+                            proxies = self.proxy
                         )
                         current_uniprot_inf = json.loads(current_uniprot_inf.text)
 
@@ -165,7 +173,8 @@ class Uniprot(object):
         Check the attribution of "feature" in the response results.
         :return: a list which contained feature's attribution
         """
-        feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}", timeout=10)
+        feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}",
+                              timeout=self.timeout, proxies=self.proxy)
 
         try:
             feature_info = json.loads(feature_info.text)['features']

@@ -17,6 +17,7 @@ xmltodict = "*"
 pybigwig = "*"
 pandas = "*"
 click-option-group = "*"
+cairocffi = "*"
 
 [dev-packages]
 
