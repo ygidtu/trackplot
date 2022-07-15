@@ -47,12 +47,14 @@ class FileList(object):
                  color: str = "black",
                  label: Optional[str] = None,
                  group: Optional[str] = None,
+                 exon_focus: Optional[str] = None,
                  library: str = "fr-unstrand"):
         self.path = os.path.abspath(path)
         self.label = label if label else os.path.basename(path)
         self.group = group
         self.color = color
         self.category = category
+        self.exon_focus = exon_focus
         self.library = library
 
     def __str__(self):
@@ -96,7 +98,7 @@ def process_file_list(infile: str, category: str = "density"):
     :param category: the image type of file list used for
     """
 
-    if category in ["density", "igv"]:
+    if category in ["density"]:
         with open(infile) as r:
             for idx, line in enumerate(r):
                 if line.startswith("#"):
@@ -180,6 +182,26 @@ def process_file_list(infile: str, category: str = "density"):
                     yield FileList(path=line[0], category="interval")
                 else:
                     yield FileList(path=line[0], category="interval", label=line[1])
+    elif category in ["igv"]:
+        with open(infile) as r:
+            for idx, line in enumerate(r):
+                if line.startswith("#"):
+                    continue
+                line = line.split()
+                path, category = line[0], line[1]
+
+                if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
+                    raise ValueError(f"{category} is not supported in density plot.")
+
+                if len(line) < 3:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                elif len(line) < 4:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
+                elif len(line) < 5:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2])
+                else:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
+
     return None
 
 
@@ -480,7 +502,7 @@ def main(**kwargs):
                                    legend_position=kwargs["legend_position"],
                                    legend_ncol=kwargs["legend_ncol"])
             elif key == "igv":
-                for f in process_file_list(kwargs[key], "density"):
+                for f in process_file_list(kwargs[key], "igv"):
                     p.add_igv(f.path,
                               category=f.category,
                               label=f.label,
@@ -491,7 +513,8 @@ def main(**kwargs):
                               show_y_label=not kwargs["hide_y_label"],
                               deletion_ignore=True if kwargs["del_ratio_ignore"] == 1.0 else False,
                               del_ratio_ignore=kwargs["del_ratio_ignore"],
-                              distance_between_label_axis=kwargs["distance_ratio"]
+                              distance_between_label_axis=kwargs["distance_ratio"],
+                              exon_focus = f.exon_focus
                               )
         elif key == "focus":
             p.add_focus(kwargs[key])
