@@ -228,7 +228,7 @@ class CdsProtein(GenomicLoci):
                 ])
 
                 end_site = max([
-                    max(map(lambda x: x.start, i)) for i in domain_list
+                    max(map(lambda x: x.end, i)) for i in domain_list
                 ])
 
                 protein_info[current_transcript_id].append(

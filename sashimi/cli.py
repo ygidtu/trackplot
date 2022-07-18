@@ -253,6 +253,9 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Do not show gene id next to transcript id")
 @optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
                  help="Add domain information into reference track")
+@optgroup.option("--local-domain", default=False, is_flag=False, type=click.STRING, show_default=True,
+                 help="Add local domain into reference track, download from "
+                      "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
@@ -400,7 +403,8 @@ def main(**kwargs):
                                 reverse_minus=kwargs["reverse_minus"],
                                 show_exon_id=kwargs["show_exon_id"],
                                 transcripts=kwargs["transcripts_to_show"],
-                                add_domain=kwargs["domain"]
+                                add_domain=kwargs["domain"],
+                                local_domain=kwargs["local_domain"]
                                 )
 
             elif key == "interval":

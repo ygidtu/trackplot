@@ -5,14 +5,18 @@ Created by ygidtu@gmail.com at 2020.05.07
 
 This scripts contains the class handle the reference file
 """
+import glob
 import gzip
 import os
 import re
+
+from collections import namedtuple, defaultdict
 from typing import List, Union, Optional
 
 import filetype
 import matplotlib as mpl
 import pysam
+import pyBigWig
 
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -31,7 +35,8 @@ class Reference(File):
     The reference file, support gtf and gff format
     """
 
-    def __init__(self, path: str, add_domain: bool = False, category: str = "gtf",
+    def __init__(self, path: str, category: str = "gtf",
+                 add_domain: bool = False, add_local_domain: Optional[str] = False,
                  proxy: Optional[str] = None, timeout: int = 10):
         u"""
         init func
@@ -46,6 +51,10 @@ class Reference(File):
         self.add_domain = add_domain
         self.domain = None
         self.interval_file = {}
+
+        self.add_local_domain = add_local_domain
+        self.local_domain = None
+
         self.proxy = proxy
         self.timeout = timeout
 
@@ -63,6 +72,8 @@ class Reference(File):
 
         if self.domain:
             new_ref.__add_domain__()
+        if self.add_local_domain:
+            new_ref.__load_local_domain__()
         return new_ref
 
     def len(self, scale: Union[int, float] = .25) -> int:
@@ -84,16 +95,93 @@ class Reference(File):
         return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
-    def create(cls, path: str, add_domain: bool = False, category: str = "gtf"):
+    def create(cls, path: str, add_domain: bool = False, add_local_domain: Optional[str] = False, category: str = "gtf"):
         u"""
         create reference file object
         :param path: path to input file
         :param add_domain: whether plot domain
+        :param add_local_domain: fetch domain information from local file, which download from ucsc
         :param category: the type of reference file, include gtf and bam: customized reads as references
         :return: Reference obj
         """
         assert os.path.exists(path), f"{path} not exists"
-        return cls(path=path, add_domain=add_domain, category=category)
+        if add_local_domain:
+            assert os.path.isdir(add_local_domain), f"{add_local_domain} not exists"
+        return cls(
+            path=path,
+            add_domain=add_domain,
+            add_local_domain=add_local_domain,
+            category=category)
+
+    def __load_local_domain__(self, region: GenomicLoci):
+
+        if self.local_domain:
+            u"""
+            Because there is no gene or transcript id, we don't merge multiple domain here.
+            """
+            pass
+
+        Domain_region = namedtuple(
+            "DomainGenomicRegion",
+            ["category", "type", "description", "unique_id", "start", "end"]
+        )
+        protein_info = defaultdict(list)
+
+        if self.add_local_domain:
+            for bb_file in glob.glob(pathname=f"{self.add_local_domain}/*.bb"):
+                domain_res = defaultdict(list)
+                base_name = os.path.basename(bb_file).replace(".bb", "")
+                for record in Reader.read_bigbed(bb_file, region):
+                    record = record[2].split("\t")
+                    current_id = record[0]
+                    strand = record[2]
+                    current_start = int(record[3])
+                    num_of_chunk = record[6]
+                    block_sizes = [int(x) for x in record[7].split(",") if x]
+                    block_starts = [int(x) for x in record[8].split(",") if x]
+                    current_desc = record[17]
+
+                    current_domain_res = []
+                    for index in range(len(block_starts)):
+                        current_domain_res.append(
+                            Domain_region._make(
+                                [current_id,
+                                 current_id,
+                                 current_desc,
+                                 current_id,
+                                 current_start + 1 + block_starts[index],
+                                 current_start + 1 + block_starts[index] + block_sizes[index] - 1
+                                 ]
+                            )
+                        )
+                    domain_res[current_id].extend([current_domain_res])
+
+                for domain_unique_id, domain_list in domain_res.items():
+
+                    start_site = min([
+                        min(map(lambda x: x.start, i)) for i in domain_list
+                    ])
+
+                    end_site = max([
+                        max(map(lambda x: x.end, i)) for i in domain_list
+                    ])
+
+                    protein_info[base_name].append(
+                                Transcript(
+                                    chromosome=region.chromosome,
+                                    start=start_site,
+                                    end=end_site,
+                                    strand="*",
+                                    exons=domain_list,
+                                    gene=domain_list[0][0].unique_id,
+                                    domain_type=domain_list[0][0].type,
+                                    domain_description=domain_list[0][0].description,
+                                    domain_category=domain_list[0][0].category,
+                                    category="protein"
+                                )
+                            )
+
+            self.local_domain = protein_info
 
     def __add_domain__(self):
         gene_id = set(map(lambda x: x.gene_id, self.data))
@@ -370,6 +458,8 @@ class Reference(File):
         self.region = region
         if self.category == "gtf":
             self.data = self.__load_gtf__(region)
+            if self.add_local_domain:
+                self.__load_local_domain__(region)
 
             if self.add_domain:
                 self.__add_domain__()

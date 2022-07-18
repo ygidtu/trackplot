@@ -232,6 +232,7 @@ class Plot(object):
 
     def set_reference(self, gtf: str,
                       add_domain: bool = False,
+                      local_domain: Optional[str] = False,
                       interval: Optional[str] = None,
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
@@ -251,6 +252,7 @@ class Plot(object):
         add transcripts to this region
         :param gtf:
         :param add_domain:
+        :param local_domain:
         :param interval:
         :param interval_label:
         :param font_size: the size of transcript id, name
@@ -266,7 +268,11 @@ class Plot(object):
         :return:
         """
         logger.info(f"set reference file to {gtf}")
-        self.reference = Reference.create(gtf, add_domain=add_domain)
+        self.reference = Reference.create(
+            gtf,
+            add_domain=add_domain,
+            add_local_domain=local_domain
+        )
 
         if interval and interval_label:
             self.reference.add_interval(interval, interval_label)
