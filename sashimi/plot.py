@@ -4,6 +4,7 @@ u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
 import math
+import os.path
 
 from copy import deepcopy
 from typing import List, Optional, Set, Union, Dict
@@ -24,6 +25,7 @@ from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
     set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot
+from sashimi.file.Junction import load_custom_junction
 
 
 class PlotInfo(object):
@@ -109,6 +111,7 @@ class Plot(object):
         self.graph_coords = None
         self.plots = []
         self.params = {}
+        self.junctions = {}
 
     @property
     def chrom(self) -> Optional[str]:
@@ -343,6 +346,10 @@ class Plot(object):
             raise ValueError(f"the category should be one of [bam, bigwig, bw, depth], instead of {category}")
         return obj, category
 
+    def add_customized_junctions(self, path: str):
+        if path and os.path.exists(path) and os.path.isfile(path):
+            self.junctions = load_custom_junction(path)
+
     def add_density(self,
                     path: str,
                     category: str,
@@ -369,6 +376,7 @@ class Plot(object):
                     # side plot parameters
                     show_side_plot: bool = False,
                     strand_choice: Optional[str] = None,
+                    customized_junction: Optional[str] = None,
                     ):
         u"""
         add density object to plot
@@ -391,6 +399,7 @@ class Plot(object):
         :param y_label: the text of y-axis title
         :param theme: the theme name
         :param strand_choice: the strand to draw on side plot
+        :param customized_junction:
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -716,7 +725,7 @@ class Plot(object):
         for p in self.plots:
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             try:
-                p.load(region=self.region, *args, **kwargs)
+                p.load(region=self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err

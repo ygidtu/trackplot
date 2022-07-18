@@ -37,6 +37,8 @@ If there is any problem with installation of `cairocffi`
 
 ## Using docker image
 
+For users who wish to running this program on `Windows` or `macOS (Apple Silicon)`, we strongly recommend docker image.
+
 ### Pull from docker hub
 ```bash
 docker pull ygidtu/sashimi

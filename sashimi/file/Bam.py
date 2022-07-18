@@ -213,7 +213,7 @@ class Bam(File):
         self.log_trans = log_trans
         filtered_junctions = {}
         depth_vector = np.zeros(len(region), dtype='f')
-        spanned_junctions = {}
+        spanned_junctions = kwargs.get("junctions", {})
         plus, minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
 
         try:

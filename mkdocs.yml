@@ -1,1 +1,10 @@
 site_name: Sashimi
+repo_url: https://github.com/ygidtu/sashimi.git
+site_description: Pure python version sashimi plot.
+site_author: Yiming Zhang & Ran Zhou
+nav:
+  - 'index.md'
+  - 'installation.md'
+  - 'command_line_usage.md'
+  - 'interactive.md'
+  - 'docker.md'

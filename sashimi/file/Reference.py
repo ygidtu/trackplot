@@ -105,8 +105,10 @@ class Reference(File):
         :return: Reference obj
         """
         assert os.path.exists(path), f"{path} not exists"
+
         if add_local_domain:
             assert os.path.isdir(add_local_domain), f"{add_local_domain} not exists"
+
         return cls(
             path=path,
             add_domain=add_domain,
@@ -315,43 +317,34 @@ class Reference(File):
         else:
             output_gtf = input_gtf + ".gz"
 
-        sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
-        if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
-            return sorted_gtf
+        if not os.path.exists(output_gtf + ".tbi"):
+            logger.info("Create index for %s", input_gtf)
+            try:
+                pysam.tabix_index(
+                    output_gtf,
+                    preset="gff",
+                    force=True,
+                    keep_original=True
+                )
+            except OSError as err:
+                logger.error(err)
+                logger.error("Guess gtf needs to be sorted")
 
-        if not os.path.exists(output_gtf) or not os.path.exists(output_gtf + ".tbi"):
-            logger.info(f"the {output_gtf} or tbi index not exists")
-            index = True
+                sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
+                if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
+                    return sorted_gtf
+
+                cls.sort_gtf(input_gtf, sorted_gtf)
+                pysam.tabix_index(
+                    sorted_gtf, preset="gff",
+                    force=True, keep_original=True
+                )
+                return sorted_gtf
         elif os.path.getctime(output_gtf) < os.path.getctime(output_gtf):
             logger.info("the tbi index is older than the gtf file")
-            index = True
-
-        if not index:
-            return output_gtf
-
-        logger.info("Create index for %s", input_gtf)
-        try:
-            cls.sort_gtf(input_gtf, sorted_gtf)
-            pysam.tabix_index(
-                input_gtf,
-                preset="gff",
-                force=True,
-                keep_original=True
-            )
-        except OSError as err:
-            if re.search("could not open", str(err)):
-                raise err
-
-            logger.error(err)
-            logger.error("Guess gtf needs to be sorted")
-
-            cls.sort_gtf(input_gtf, sorted_gtf)
-            pysam.tabix_index(
-                sorted_gtf, preset="gff",
-                force=True, keep_original=True
-            )
 
         return output_gtf
+
 
     def __load_gtf__(self, region: GenomicLoci) -> List[Transcript]:
 

@@ -209,6 +209,17 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Index of column with color levels (1-based); "
                       "NOTE: LUAD|red -> LUAD while be labeled in plots and red while be the fill color",
                  show_default=True)
+@optgroup.option("--barcode", type=click.Path(), show_default=True,
+                 help="Path to barcode list file, At list two columns were required, "
+                      "- 1st The name of bam file; \b"
+                      "- 2nd the barcode; \b"
+                      "- 3rd The group label, optional.")
+@optgroup.option("--barcode-tag", type=click.STRING, default="CB", show_default=True,
+                 help="The default cell barcode tag label")
+@optgroup.option("--umi-tag", type=click.STRING, default="UB", show_default=True,
+                 help="The default UMI barcode tag label")
+@optgroup.option("-p", "--process", type=click.IntRange(min=1, max=cpu_count()), default=1,
+                 help="How many cpu to use")
 @optgroup.group("Output settings")
 @optgroup.option("-o", "--output", type=click.Path(),
                  help="Path to output graph file", show_default=True)
@@ -221,6 +232,30 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The height of output file, default adjust image height by content", show_default=True)
 @optgroup.option("--width", default=0, type=click.IntRange(min=0, clamp=True),
                  help="The width of output file, default adjust image width by content", show_default=True)
+@optgroup.option("--backend", type=click.STRING, default="Cairo", help="Recommended backend", show_default=True)
+@optgroup.group("Reference settings")
+@optgroup.option("-r", "--reference", type=click.Path(exists=True),
+                 help="Path to gtf file, both transcript and exon tags are necessary")
+@optgroup.option("--interval", type=click.Path(exists=True),
+                 help="Path to list of interval files in bed format, "
+                      "1st column is path to file, 2nd column is the label [optional]")
+@optgroup.option("--show-id", is_flag=True, show_default=True, help="Whether show gene id or gene name")
+@optgroup.option("--show-exon-id", is_flag=True, show_default=True, help="Whether show gene id or gene name")
+@optgroup.option("--no-gene", is_flag=True, type=click.BOOL, show_default=True,
+                 help="Do not show gene id next to transcript id")
+@optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
+                 help="Add domain information into reference track")
+@optgroup.option("--local-domain", default="", is_flag=False, type=click.STRING, show_default=True,
+                 help="Add local domain into reference track, download from "
+                      "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
+@optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
+                 help="Whether to plot empty transcript")
+@optgroup.option("--transcripts-to-show", default="", show_default=True,
+                 help="Which transcript to show, transcript name or id in gtf file, eg: transcript1,transcript2")
+@optgroup.option("--ref-color", default="black", type=click.STRING,
+                 show_default=True, help="The color of exons")
+@optgroup.option("--intron-scale", type=click.FLOAT, default=0.5, help="The scale of intron", show_default=True)
+@optgroup.option("--exon-scale", type=click.FLOAT, default=1, help="The scale of exon", show_default=True)
 @optgroup.group("Density plot settings")
 @optgroup.option("--density", type=click.Path(exists=True),
                  help="""
@@ -241,43 +276,6 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Which strand kept for side plot, default use all")
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
-@optgroup.group("Reference settings")
-@optgroup.option("-r", "--reference", type=click.Path(exists=True),
-                 help="Path to gtf file, both transcript and exon tags are necessary")
-@optgroup.option("--interval", type=click.Path(exists=True),
-                 help="Path to list of interval files in bed format, "
-                      "1st column is path to file, 2nd column is the label [optional]")
-@optgroup.option("--show-id", is_flag=True, show_default=True, help="Whether show gene id or gene name")
-@optgroup.option("--show-exon-id", is_flag=True, show_default=True, help="Whether show gene id or gene name")
-@optgroup.option("--no-gene", is_flag=True, type=click.BOOL, show_default=True,
-                 help="Do not show gene id next to transcript id")
-@optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
-                 help="Add domain information into reference track")
-@optgroup.option("--local-domain", default=False, is_flag=False, type=click.STRING, show_default=True,
-                 help="Add local domain into reference track, download from "
-                      "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
-@optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
-                 help="Whether to plot empty transcript")
-@optgroup.option("--transcripts-to-show", default="", show_default=True,
-                 help="Which transcript to show, transcript name or id in gtf file, eg: transcript1,transcript2")
-@optgroup.option("--ref-color", default="black", type=click.STRING,
-                 show_default=True, help="The color of exons")
-@optgroup.option("--intron-scale", type=click.FLOAT, default=0.5, help="The scale of intron", show_default=True)
-@optgroup.option("--exon-scale", type=click.FLOAT, default=1, help="The scale of exon", show_default=True)
-@optgroup.group("Heatmap plot settings")
-@optgroup.option("--heatmap", type=click.Path(exists=True),
-                 help="""
-                 The path to list of input files, a tab separated text file, \b 
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file group (optional), \b
-                 - 4th column is color platte of corresponding group.
-                 """)
-@optgroup.option("--clustering", is_flag=True, show_default=True, help="Enable clustering of the heatmap")
-@optgroup.option("--clustering-method", type=click.Choice(CLUSTERING_METHOD), default="ward",
-                 show_default=True, help="The clustering method for the heatmap files")
-@optgroup.option("--distance-metric", type=click.Choice(DISTANCE_METRIC), default="euclidean",
-                 show_default=True, help="The clustering method for the heatmap")
 @optgroup.group("Line plot settings")
 @optgroup.option("--line", type=click.Path(exists=True),
                  help="""
@@ -292,6 +290,20 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--legend-position", default="upper right", type=click.STRING, help="The legend position")
 @optgroup.option("--legend-ncol", default=0, type=click.IntRange(min=0, clamp=True),
                  help="The number of columns of legend")
+@optgroup.group("Heatmap plot settings")
+@optgroup.option("--heatmap", type=click.Path(exists=True),
+                 help="""
+                 The path to list of input files, a tab separated text file, \b 
+                 - 1st column is path to input file, \b
+                 - 2nd column is the file category, \b
+                 - 3rd column is input file group (optional), \b
+                 - 4th column is color platte of corresponding group.
+                 """)
+@optgroup.option("--clustering", is_flag=True, show_default=True, help="Enable clustering of the heatmap")
+@optgroup.option("--clustering-method", type=click.Choice(CLUSTERING_METHOD), default="ward",
+                 show_default=True, help="The clustering method for heatmap")
+@optgroup.option("--distance-metric", type=click.Choice(DISTANCE_METRIC), default="euclidean",
+                 show_default=True, help="The distance metric for heatmap")
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
@@ -335,15 +347,6 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--stroke-scale", type=click.FLOAT, default=.25,
                  help="The size of stroke plot in final image", show_default=True)
 @optgroup.group("Overall settings")
-@optgroup.option("--barcode", type=click.Path(), show_default=True,
-                 help="Path to barcode list file, At list two columns were required, "
-                      "- 1st The name of bam file; \b"
-                      "- 2nd the barcode; \b"
-                      "- 3rd The group label, optional.")
-@optgroup.option("--barcode-tag", type=click.STRING, default="CB", show_default=True,
-                 help="The default cell barcode tag label")
-@optgroup.option("--umi-tag", type=click.STRING, default="UB", show_default=True,
-                 help="The default UMI barcode tag label")
 @optgroup.option("--font-size", default=8, type=click.IntRange(min=1, clamp=True),
                  help="The font size of x, y-axis and so on")
 @optgroup.option("--reverse-minus", default=False, is_flag=True, type=click.BOOL,
@@ -354,10 +357,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Whether different sashimi/line plots shared same y-axis boundaries")
 @optgroup.option('--log', type=click.Choice(["0", "2", "10", "zscore"]), default="0",
                  help="y axis log transformed, 0 -> not log transform; 2 -> log2; 10 -> log10")
-@optgroup.option("-p", "--process", type=click.IntRange(min=1, max=cpu_count()), default=1,
-                 help="How many cpu to use")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
-@optgroup.option("--backend", type=click.STRING, default="Cairo", help="Recommended backend", show_default=True)
 def main(**kwargs):
     u"""
     Welcome to use sashimi
@@ -385,6 +385,7 @@ def main(**kwargs):
 
     chrom, start, end, strand = decode_region(kwargs["event"])
     p.set_region(chrom, start, end, strand)
+    p.add_customized_junctions(kwargs["customized_junction"])
 
     barcodes = None
     if kwargs.get("barcode") and os.path.exists(kwargs.get("barcode")):
@@ -428,7 +429,8 @@ def main(**kwargs):
                                           distance_between_label_axis=kwargs["distance_ratio"],
                                           show_y_label=not kwargs["hide_y_label"],
                                           show_side_plot=kwargs["show_side"],
-                                          strand_choice=kwargs["side_strand"])
+                                          strand_choice=kwargs["side_strand"],
+                                          )
                     else:
                         p.add_density(f.path,
                                       category=f.category,
