@@ -5,6 +5,7 @@ u"""
 Fetch CDS information from a gtf then mapping to genomic position
 """
 from collections import defaultdict, namedtuple
+from typing import Optional
 
 from pysam import asGTF
 from pysam.libctabix import Tabixfile
@@ -29,7 +30,9 @@ class CdsProtein(GenomicLoci):
             strand: str,
             cds: dict,
             gene_id: set,
-            transcript_id: set
+            transcript_id: set,
+            proxy: Optional[str] = None,
+            timeout: int = 10
     ):
         u"""
         Re-iter the gtf and collection all CDS information from gtf, not truncated genomic region at here
@@ -46,6 +49,8 @@ class CdsProtein(GenomicLoci):
             start=start,
             end=end,
             strand=strand)
+        self.proxy = proxy
+        self.timeout = timeout
         self.cds = cds
         self.pep = self.__init_protein__() if cds is not None else None
         self.gene_id = gene_id
@@ -79,7 +84,9 @@ class CdsProtein(GenomicLoci):
             chromosome: str,
             transcript_id: set,
             gene_id: set,
-            strand: str = "*"
+            strand: str = "*",
+            proxy: Optional[str] = None,
+            timeout: int = 10
     ):
         u"""
         Generate the CdsProtein object
@@ -155,7 +162,9 @@ class CdsProtein(GenomicLoci):
                 strand=strand,
                 cds=cds_contain,
                 gene_id=gene_id,
-                transcript_id=transcript_id
+                transcript_id=transcript_id,
+                proxy=proxy,
+                timeout=timeout
             )
 
         return None
@@ -176,7 +185,8 @@ class CdsProtein(GenomicLoci):
             # print(current_transcript_id, len(self.cds[current_transcript_id]))
             current_pep = Uniprot(
                 uniprot_id=current_transcript_id,
-                cds_len=len(self.cds[current_transcript_id])
+                cds_len=len(self.cds[current_transcript_id]),
+                proxy=self.proxy, timeout=self.timeout
             )
 
             if not current_pep.domain:

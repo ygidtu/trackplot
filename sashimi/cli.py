@@ -21,12 +21,6 @@ from conf.logger import init_logger, logger
 from conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
 from sashimi.plot import Plot
 
-mpl.use('Agg')
-mpl.rcParams['pdf.fonttype'] = 42
-
-if any(["Arial" in f.name for f in matplotlib.font_manager.fontManager.ttflist]):
-    mpl.rcParams['font.family'] = 'Arial'
-
 
 def decode_region(region: str):
     regions = region.split(":")
@@ -316,11 +310,12 @@ def process_file_list(infile: str, category: str = "density"):
                  then the deletion gap will be filled. \b
                  currently the del_ratio_ignore was 1.0.
                  """)
-
-# @optgroup.option("--reads-strand", type=click.Choice(["All", "R1", "R2"]), default="All",
-#                  show_default=True, help="Show the reads from specific strand")
 @optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
                  show_default=True, help="Threshold to filter low abundance reads for stacked plot")
+@optgroup.option("--proxy", default=None, type=click.STRING,
+                 help="The http or https proxy for EBI/Uniprot requests, eg: http://127.0.0.1:1080")
+@optgroup.option("--timeout", default=10, type=click.IntRange(min=1, clamp=True),
+                 show_default=True, help="The requests timeout")
 @optgroup.group("Additional annotation")
 @optgroup.option("-f", "--genome", type=click.Path(), default=None,
                  show_default=True, help="Path to genome fasta")
@@ -362,12 +357,26 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("-p", "--process", type=click.IntRange(min=1, max=cpu_count()), default=1,
                  help="How many cpu to use")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
+@optgroup.option("--backend", type=click.STRING, default="Cairo", help="Recommended backend", show_default=True)
 def main(**kwargs):
     u"""
     Welcome to use sashimi
     \f
     """
     init_logger("DEBUG" if kwargs["debug"] else "INFO")
+
+    if kwargs["backend"].lower() == "cairo":
+        try:
+            mpl.use(kwargs["backend"])
+        except ImportError:
+            logger.warning("Cairo backend required cairocffi installed")
+            logger.warning("Role back to Agg backend")
+            mpl.use("Agg")
+
+    mpl.rcParams['pdf.fonttype'] = 42
+
+    if any(["Arial" in f.name for f in matplotlib.font_manager.fontManager.ttflist]):
+        mpl.rcParams['font.family'] = 'Arial'
 
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
@@ -518,7 +527,7 @@ def main(**kwargs):
                               deletion_ignore=True if kwargs["del_ratio_ignore"] == 1.0 else False,
                               del_ratio_ignore=kwargs["del_ratio_ignore"],
                               distance_between_label_axis=kwargs["distance_ratio"],
-                              exon_focus = f.exon_focus
+                              exon_focus=f.exon_focus
                               )
         elif key == "focus":
             p.add_focus(kwargs[key])

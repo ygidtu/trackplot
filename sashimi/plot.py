@@ -629,6 +629,7 @@ class Plot(object):
         :param category: file category for the input file
         :param library: fr-unstrand
         :param features:
+        :param exon_focus:
         :param deletion_ignore:
         :param del_ratio_ignore:
         :param label:

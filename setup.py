@@ -24,8 +24,10 @@ def locate_packages():
                         name, version = line.split(" = ")
                         version = version.strip('"')
                         if version == "*":
-                            version = ""
-                        packages.append(f"{name}, {version}")
+                            packages.append(f"{name}")
+                        else:
+                            packages.append(f"{name}, {version}")
+    print(packages)
     return packages
 
 
@@ -39,10 +41,10 @@ setup(
     entry_points={
         'console_scripts':
             [
-                'pysashimi = cli.cli:plot'
+                'sashimi = sashimi.cli:main'
             ]
     },
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     data_files=[(".", ['settings.ini'])],
     install_requires=locate_packages(),
 )

@@ -9,6 +9,7 @@ import glob
 import gzip
 import os
 import re
+
 from collections import namedtuple, defaultdict
 from typing import List, Union, Optional
 
@@ -34,11 +35,9 @@ class Reference(File):
     The reference file, support gtf and gff format
     """
 
-    def __init__(self,
-                 path: str,
-                 add_domain: bool = False,
-                 add_local_domain: Optional[str] = False,
-                 category: str = "gtf"):
+    def __init__(self, path: str, category: str = "gtf",
+                 add_domain: bool = False, add_local_domain: Optional[str] = False,
+                 proxy: Optional[str] = None, timeout: int = 10):
         u"""
         init func
         :param path: path to input file
@@ -52,8 +51,15 @@ class Reference(File):
         self.add_domain = add_domain
         self.domain = None
         self.interval_file = {}
+
         self.add_local_domain = add_local_domain
         self.local_domain = None
+
+        self.proxy = proxy
+        self.timeout = timeout
+
+        if proxy:
+            logger.info(f"Using proxy: {proxy}")
 
     def __add__(self, other):
         assert isinstance(other, Reference), "only Reference and Reference could be added"
@@ -252,6 +258,11 @@ class Reference(File):
 
     @classmethod
     def sort_gtf(cls, input_gtf: str, output_gtf: str):
+
+        if os.path.exists(output_gtf) and os.path.getsize(output_gtf) > 10:
+            logger.info(f"{output_gtf} already exists, skip sorting")
+            return
+
         data = []
         logger.info("Sorting %s" % input_gtf)
 
