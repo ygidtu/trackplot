@@ -22,7 +22,7 @@ kiwisolver>=1.4.4; python_version >= '3.7'
 matplotlib>=3.5.2
 numpy
 packaging>=21.3; python_version >= '3.6'
-pandas>=1.4.3
+pandas
 pillow>=9.2.0; python_version >= '3.7'
 pybigwig>=0.3.18
 pycparser>=2.21
