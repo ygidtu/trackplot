@@ -1,6 +1,7 @@
-## Interactivate Usage
 
-### Example Usage
+# Interactive Usage
+
+## Example Usage
 
 ```python
 from sashimi.plot import Plot

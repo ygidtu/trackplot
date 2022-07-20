@@ -1,6 +1,6 @@
-## Command line Usage
+# Command line Usage
 
-### Example
+## Example
 
 The following code is used to generate the example images.
 
@@ -25,7 +25,7 @@ python main.py \
 ```
 
 
-### Command line arguments
+## Command line arguments
 
 List all the parameters
 
@@ -184,11 +184,11 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
-### Detailed description
+## Detailed description
 
-#### Common options
+### Common options
 
-###### 1. `--color-factor`: the index of column to set colors
+1. `--color-factor`: the index of column to set colors
 
 - basic usage: the input file list as follows,
 
@@ -209,10 +209,10 @@ path/to/bam2 LUSC|#000000
 then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000" to LUSC separately.  
 
 
-#### Output options
+### Output options
 
-###### 1. `-o, --output`: the path to output file, the common image format such as pdf, png, jpg and svg are supported.
-###### 2. `--backend`: the backend is used to switch matplotlib plotting backend,
+1. `-o, --output`: the path to output file, the common image format such as pdf, png, jpg and svg are supported.
+2. `--backend`: the backend is used to switch matplotlib plotting backend,
 
 **known issues: ** 
 
@@ -222,13 +222,13 @@ then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
 
-#### Reference plot
+### Reference plot
 
-###### 1. `--local-domain`
+1. `--local-domain`
 
 
 
-#### Density plot
+### Density plot
 
 density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.
 
@@ -242,7 +242,7 @@ example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc
 ```
 
-###### 1. `--customized-junction` 
+1. `--customized-junction` 
 
 this parameter is used to add user defined junctions
 
@@ -256,28 +256,28 @@ chr1:1000-20000 100 200
 - the columns corresponding to input files in file list.
 - the table were filled with junction counts.
 
-###### 2. `--show-side` and `--show-strand`
+2. `--show-side` and `--show-strand`
 
 these two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
 ![](imgs/cmd/2.svg)
 
 
-#### Line plot
+### Line plot
 
 the line plot is simply another format of density plots.
 
 the input file list as same as density plots
 
 
-###### 1. `--hide-legend`, `--legend-position` and `--legend-ncol`
+1. `--hide-legend`, `--legend-position` and `--legend-ncol`
 
 these three parameters were used to disable legend, modify legend position and the columns of legend separately.
 
 By default, the position of legend and columns of legend were determined by [matplotlib](https://matplotlib.org/), and the further detailed legend configuration please check [matplotlib legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html).
 
 
-#### Heatmap plot
+### Heatmap plot
 
 density plot takes bam or bigwig as input.
 
@@ -297,10 +297,10 @@ example/bws/0.bw    bw  bw  YlOrBr
 ```
 
 
-#### Igv plot
+### Igv plot
 
 
-#### Additional annotation
+### Additional annotation
 
 We also provide multiple annotations, including indicator lines, focues, stroke and sequance.
 
