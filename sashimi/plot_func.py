@@ -874,7 +874,7 @@ def plot_heatmap(
         rasterized=raster
     )
 
-    ax.tick_params(axis='both', which='major', labelsize=font_size)
+    ax.tick_params(axis='both', which='major', labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)
 
     set_y_ticks(
