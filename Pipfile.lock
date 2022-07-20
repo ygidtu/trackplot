@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "90394e355f766bc232cfcced4adf05d6975a7a72cb7d68bb7efd6d81b22d7119"
+            "sha256": "b45c13524d56f54bc4f3354a715e9b32456feb9f12f5b1b7f7f3c0aafade7f9b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,14 +16,6 @@
         ]
     },
     "default": {
-        "biothings-client": {
-            "hashes": [
-                "sha256:84d9d577b8fb3963a2fa71c5a13b10411566f3bc2e8ba67bb15de9d2ced08c2d",
-                "sha256:f88f3dfcc962d84b3555a426ae59cf4752761c17b8968ae60532109b9e8a232e"
-            ],
-            "index": "pypi",
-            "version": "==0.2.6"
-        },
         "cairocffi": {
             "hashes": [
                 "sha256:108a3a7cb09e203bdd8501d9baad91d786d204561bd71e9364e8b34897c47b91"
@@ -526,7 +518,7 @@
                 "sha256:8298d6d56d39be0e3bc13c1c97d133f9b45d797169a0e11cdd0e0489d786f7ec",
                 "sha256:879ba4d1e89654d9769ce13121e0f94310ea32e8d2f8cf587b77c08bbcdb30d6"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5' and python_full_version < '4.0.0'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5' and python_version < '4'",
             "version": "==1.26.10"
         },
         "xmltodict": {
