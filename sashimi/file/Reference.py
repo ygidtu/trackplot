@@ -168,7 +168,7 @@ class Reference(File):
                         max(map(lambda x: x.end, i)) for i in domain_list
                     ])
 
-                    protein_info[base_name].append(
+                    protein_info[f"{domain_unique_id}_{base_name}"].append(
                                 Transcript(
                                     chromosome=region.chromosome,
                                     start=start_site,

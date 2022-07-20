@@ -245,8 +245,14 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Do not show gene id next to transcript id")
 @optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
                  help="Add domain information into reference track")
+@optgroup.option("--proxy", default=None, type=click.STRING,
+                 help="The http or https proxy for EBI/Uniprot requests,"
+                      "if `--domain` is True, eg: http://127.0.0.1:1080")
+@optgroup.option("--timeout", default=10, type=click.IntRange(min=1, clamp=True),
+                 show_default=True,
+                 help="The requests timeout when `--domain` is True.")
 @optgroup.option("--local-domain", default="", is_flag=False, type=click.STRING, show_default=True,
-                 help="Add local domain into reference track, download from "
+                 help="Load local domain folder and load into reference track, download from "
                       "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
@@ -304,15 +310,17 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="The clustering method for heatmap")
 @optgroup.option("--distance-metric", type=click.Choice(DISTANCE_METRIC), default="euclidean",
                  show_default=True, help="The distance metric for heatmap")
+@optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
+                 show_default=True, help="Threshold to filter low abundance reads for stacked plot")
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files,
                  The path to list of input files, a tab separated text file, \b 
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file alias (optional), \b
-                 - 4th column is color of input files (optional),
+                 - 4th column is color of input files (optional),\b
+                 - 5th column is exon_id for sorting the reads (optional).
                  """)
 @optgroup.option("--del-ratio-ignore", default=1.0,
                  type=click.FloatRange(min=0.0, max=1.0, clamp=True),
@@ -322,12 +330,6 @@ def process_file_list(infile: str, category: str = "density"):
                  then the deletion gap will be filled. \b
                  currently the del_ratio_ignore was 1.0.
                  """)
-@optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
-                 show_default=True, help="Threshold to filter low abundance reads for stacked plot")
-@optgroup.option("--proxy", default=None, type=click.STRING,
-                 help="The http or https proxy for EBI/Uniprot requests, eg: http://127.0.0.1:1080")
-@optgroup.option("--timeout", default=10, type=click.IntRange(min=1, clamp=True),
-                 show_default=True, help="The requests timeout")
 @optgroup.group("Additional annotation")
 @optgroup.option("-f", "--genome", type=click.Path(), default=None,
                  show_default=True, help="Path to genome fasta")
