@@ -9,14 +9,12 @@ import glob
 import gzip
 import os
 import re
-
 from collections import namedtuple, defaultdict
 from typing import List, Union, Optional
 
 import filetype
 import matplotlib as mpl
 import pysam
-import pyBigWig
 
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
