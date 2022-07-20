@@ -219,9 +219,8 @@ then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 **known issues: ** 
 
 - the `Cairo` backend required `cairocffi` packages, which may have difficulty to install for some users, if then please try to use our docker image or use a alternative backend like Agg/PDF.
-- the `Agg`, `PDF`, etc. backends may have problems with the small protein domains, so use as appropriate.
-- ![](imgs/cmd/1.svg)
-
+- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image, so use as appropriate.
+![](imgs/cmd/1.svg)
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
 
@@ -248,7 +247,6 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.
 
 the input file list as follows
-
 ```bash
 # filepath  file_category   label   color
 example/bams/1.bam bam
@@ -292,6 +290,7 @@ these three parameters were used to disable legend, modify legend position and t
 
 By default, the position of legend and columns of legend were determined by [matplotlib](https://matplotlib.org/), and the further detailed legend configuration please check [matplotlib legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html).
 
+![](imgs/cmd/line_plot.png)
 
 ### Heatmap plot
 
@@ -312,6 +311,7 @@ example/bws/4.bw    bw  bw  YlOrBr
 example/bws/0.bw    bw  bw  YlOrBr
 ```
 
+![](imgs/cmd/line_plot.png)
 
 ### Igv plot
 
@@ -320,7 +320,6 @@ example/bws/0.bw    bw  bw  YlOrBr
 An Igv-like plot provides a landscape of aligned reads in a straight and convenient way. 
 
 User could pass bed and bam file into Sashimi, and the input config file list as follows
-
 ```bash
 #filepath	file_category	label	color
 example/SRX9697989.corrected_reads.bed.gz	igv	bed12	blue
@@ -335,7 +334,6 @@ example/bams/0.bam	igv	bam
 In this topic, Sashimi.igv could load m6A modification (tag, ma:i) and length of polyA (tag, pa:f) tag from bam file, and then present it on each reads.
 
 here is the subset bam information,
-
 ```bash
 SRR12503063.3513161	16	1	14362	1	..	*	0	0	..	..	NM:i:197	ms:i:1177	AS:i:977	nn:i:0	ts:Z:+	tp:Z:P	cm:i:191	s1:i:837	s2:i:861	de:f:0.089	rl:i:41	pa:f:55.6556	rs:Z:-	ma:i:14368
 SRR12503063.4180535	0	1	14363	48	..	*	0	0	..	..	NM:i:117	ms:i:636	AS:i:1093	nn:i:0	ts:Z:-	tp:Z:P	cm:i:245	s1:i:1045	s2:i:1023	de:f:0.0588	rl:i:0	pa:f:90.4319	rs:Z:-	ma:i:14372
@@ -345,6 +343,7 @@ SRR12503063.89603	16	1	14394	2	..	*	0	0	..	..	NM:i:220	ms:i:1064	AS:i:891	nn:i:0
 
 ```
 
+In this picture, the read track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
 
 3. Sashimi.igv module also allow sort these reads by specific alternative exon
