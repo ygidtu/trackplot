@@ -95,7 +95,8 @@ class Reference(File):
         return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
-    def create(cls, path: str, add_domain: bool = False, add_local_domain: Optional[str] = False, category: str = "gtf"):
+    def create(cls, path: str, add_domain: bool = False, add_local_domain: Optional[str] = False,
+               category: str = "gtf"):
         u"""
         create reference file object
         :param path: path to input file
@@ -159,7 +160,6 @@ class Reference(File):
                     domain_res[current_id].extend([current_domain_res])
 
                 for domain_unique_id, domain_list in domain_res.items():
-
                     start_site = min([
                         min(map(lambda x: x.start, i)) for i in domain_list
                     ])
@@ -169,19 +169,19 @@ class Reference(File):
                     ])
 
                     protein_info[base_name].append(
-                                Transcript(
-                                    chromosome=region.chromosome,
-                                    start=start_site,
-                                    end=end_site,
-                                    strand="*",
-                                    exons=domain_list,
-                                    gene=domain_list[0][0].unique_id,
-                                    domain_type=domain_list[0][0].type,
-                                    domain_description=domain_list[0][0].description,
-                                    domain_category=domain_list[0][0].category,
-                                    category="protein"
-                                )
-                            )
+                        Transcript(
+                            chromosome=region.chromosome,
+                            start=start_site,
+                            end=end_site,
+                            strand="*",
+                            exons=domain_list,
+                            gene=domain_list[0][0].unique_id,
+                            domain_type=domain_list[0][0].type,
+                            domain_description=domain_list[0][0].description,
+                            domain_category=domain_list[0][0].category,
+                            category="protein"
+                        )
+                    )
 
             self.local_domain = protein_info
 
@@ -344,7 +344,6 @@ class Reference(File):
             logger.info("the tbi index is older than the gtf file")
 
         return output_gtf
-
 
     def __load_gtf__(self, region: GenomicLoci) -> List[Transcript]:
 

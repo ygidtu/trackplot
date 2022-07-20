@@ -30,16 +30,6 @@ plot.set_reference(
 )
 ```
 
-    building of index for ../example/example.sorted.gtf.gz failed
-    Guess gtf needs to be sorted
-
-
-
-
-
-    <sashimi.plot.Plot at 0x7f91e1074100>
-
-
 
 3. setup plotting parameters
 
@@ -127,11 +117,15 @@ plot.plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
 
 ## API documentation
 
+
+### set_region
+
+change the plot region
+
 ```python
 def set_region(self, chromosome: str, start: int, end: int, strand: str = "+")
 ```
 
-change the plot region
 
 - chromosome:
 - start:
@@ -141,6 +135,10 @@ change the plot region
 Return
 
 ---
+
+### set_reference
+
+add transcripts into track
 
 ```python
 def set_reference(self, gtf: str,
@@ -163,8 +161,6 @@ def set_reference(self, gtf: str,
                   )
 ```
 
-add transcripts to this region
-
 - gtf: path to gtf file
 - add_domain:
 - local_domain:
@@ -184,6 +180,10 @@ add transcripts to this region
 Returns `Plot`
 
 ---
+
+### add_density
+
+add a density plot into track
 
 ```python
  def add_density(self,
@@ -215,8 +215,6 @@ Returns `Plot`
                 )
 ```
 
-add density object to plot
-
 - path: the path to input file
 - category: the input file type
 - show_side_plot: draw the density distribution of reads from different strand
@@ -240,6 +238,10 @@ add density object to plot
 Returns `Plot`
 
 ---
+
+### add_heatmap
+
+add a heatmap based on a group of objects into track
 
 ```python
 def add_heatmap(self,
@@ -267,8 +269,6 @@ def add_heatmap(self,
                 distance_metric: str = "euclidean",
                 )
 ```
-
-add multiple objects for a group of heatmap
 
 - path: path to input files
 - group: the heatmap group
@@ -298,6 +298,10 @@ Returns `Plot`
 
 ---
 
+### add_line
+
+add a line plot based on a group of objects into track
+
 ```python
 def add_line(self,
              path: str,
@@ -326,8 +330,6 @@ def add_line(self,
              )
 ```
 
-add multiple objects for a group of heatmap
-
 - path: path to input files
 - group: the heatmap group
 - category: file category corresponding to input file
@@ -351,6 +353,10 @@ add multiple objects for a group of heatmap
 Returns `Plot`
 
 ---
+
+### add_igv
+
+add an igv-like plot into track
 
 ```python
 def add_igv(
@@ -379,8 +385,6 @@ def add_igv(
 )
 ```
 
-Add igv-like plot into track
-
 - path: path to input files
 - category: file category for the input file
 - library: fr-unstrand
@@ -404,6 +408,10 @@ Returns `Plot`
 
 ---
 
+### add_sites
+
+add multiple highlight sites into track
+
 ```python
 def add_sites(self, sites)
 ```
@@ -415,6 +423,10 @@ highlight specific sites
 Returns `Plot`
 
 ---
+
+### add_focus
+
+add multiple highlight background into track
 
 ```python
 def add_focus(self, focus: Optional[str], start: int = 0, end: int = 0)
@@ -428,6 +440,10 @@ set focus region
 Returns `Plot`
 
 --- 
+
+### add_stroke
+
+add multiple highlight region under transcripts into track
 
 ```python
 def add_stroke(
@@ -450,6 +466,10 @@ Returns `Plot`
 
 ---
 
+### set_sequence
+
+display the corresponding sequence under x-axis 
+
 ```python
 def set_sequence(self, fasta: str)
 ```
@@ -462,11 +482,17 @@ Returns `Plot`
 
 ---
 
+### add_interval
+
 ```python
 def add_interval(self, interval: str, interval_label: str)
 ```
 
 ---
+
+### plot
+
+save/show the final image
 
 ```python
 def plot(self,
@@ -479,7 +505,6 @@ def plot(self,
          raster: bool = False,
          *args, **kwargs)
 ```
-save image
 
 - output: if output is empty then show this image by plt.showfig
 - reference_scale: to adjust the size of reference plot

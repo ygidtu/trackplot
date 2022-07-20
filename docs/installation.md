@@ -27,11 +27,15 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## Note:
+** Note: **
 If there is any problem with installation of `cairocffi`
 
-- please install the requirements according to the [Official Documentation of cairocffi](https://cairocffi.readthedocs.io/en/stable/overview.html)
-- please try to use another backend, including `Agg`, `Pdf`, `Svg`, etc..., instead of `Cairo` by default.
+- Please install the requirements according to the [Official Documentation of cairocffi](https://cairocffi.readthedocs.io/en/stable/overview.html)
+- Or try to use another backend, including `Agg`, `Pdf`, `Svg`, etc..., instead of `Cairo` by default.
+
+But:
+- the `Agg`, `PDF`, etc. backends may have problems with the small protein domains, so use as appropriate.
+- ![](imgs/cmd/1.svg)
 
 ---
 

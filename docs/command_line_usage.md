@@ -217,7 +217,7 @@ then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 **known issues: ** 
 
 - the `Cairo` backend required `cairocffi` packages, which may have difficulty to install for some users, if then please try to use our docker image or use a alternative backend like Agg/PDF.
-- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image, so use as appropriate.
+- the `Agg`, `PDF`, etc. backends may have problems with the small protein domains, so use as appropriate.
 - ![](imgs/cmd/1.svg)
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
