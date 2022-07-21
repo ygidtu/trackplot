@@ -599,7 +599,7 @@ class ReadSegment(File):
             tmp_df["exon_group"] = "0"
         self.meta = self.df_sort(tmp_df)
 
-    def len(self, scale: Union[int, float] = .25) -> int:
+    def len(self, scale: Union[int, float] = 0.005) -> int:
         u"""
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """

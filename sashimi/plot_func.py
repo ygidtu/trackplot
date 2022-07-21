@@ -121,6 +121,12 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
         for i, j in enumerate(range(region.start, region.end + 1)):
             graph_coords[j - region.start] = i
 
+    # if there is no exon or intron in last of region
+    if graph_coords[-1] == 0:
+        current_max = max(np.where(graph_coords == np.max(graph_coords))[-1])
+        for i in np.where(graph_coords == 0)[0]:
+            if i > current_max:
+                graph_coords[i] = max(graph_coords) + 1
     return graph_coords
 
 
@@ -149,11 +155,9 @@ def set_x_ticks(
     bk = 1
     if not sequence:
         bk = len(graph_coords) // nx_ticks
-
     line_space = {}
     for i in range(0, len(graph_coords), bk):
         line_space[graph_coords[i]] = i + region.start
-
     if sequence:
         for i, seq in sequence.items():
             relative_i = graph_coords[i - region.start]
@@ -212,7 +216,8 @@ def set_y_ticks(
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
             else:
-                curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
+                # curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
+                curr_y_tick_labels.append("%d" % lab)
 
         u"""
         @2019.01.04
@@ -1013,7 +1018,7 @@ def plot_igv_like(
     if not y_label:
         y_label = obj.label
 
-    y_loc = 0
+    y_loc = 0.5
 
     for c_ind_list in obj.get_index():
         add_plot = False
@@ -1274,6 +1279,7 @@ if __name__ == '__main__':
         plot_igv_like(ax, {'full': rs}, y_label="fl")
         plt.savefig("test_igv_plot.2.pdf")
 
+
     def test_igv_plot3():
         from sashimi.file.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
@@ -1283,6 +1289,7 @@ if __name__ == '__main__':
         rs.load(region)
         plot_igv_like(ax, {'full': rs}, y_label="fl")
         plt.savefig("test_igv_plot.3.pdf")
+
 
     # test_igv_plot()
     # test_igv_plot2()

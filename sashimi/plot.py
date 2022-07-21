@@ -73,7 +73,7 @@ class PlotInfo(object):
         elif self.type == "side-plot" and self.category[0] == "bam":
             n += 2
         elif self.type == "igv":
-            n += self.obj[0].len(scale)
+            n += self.obj[0].len(scale/8)
         else:
             n += 1
         return n
