@@ -1016,6 +1016,7 @@ def plot_igv_like(
     y_loc = 0
 
     for c_ind_list in obj.get_index():
+        add_plot = False
         for c_ind in c_ind_list:
             c_data = obj.data[c_ind]
             # skip truncated reads in the given region
@@ -1040,6 +1041,7 @@ def plot_igv_like(
                 ]
 
                 ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
+                add_plot = add_plot | True
 
             for intron in c_data.introns:
                 s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
@@ -1092,8 +1094,8 @@ def plot_igv_like(
                                linewidths=(0,),
                                rasterized=raster
                                )
-
-        y_loc += 1
+        if add_plot:
+            y_loc += 1
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
