@@ -1,5 +1,5 @@
 
-# Install from source
+## Install from source
 
 download source code using git
 ```bash
@@ -7,14 +7,14 @@ git clone from https://github.com/ygidtu/sashimi
 cd sashimi
 ```
 
-## Run as command line tools
+### Run as command line tools
 
 ```bash
 python setup.py install
 sashimi --help
 ```
 
-## Run as script
+### Run as script
 1. using pipenv
 ```bash
 pipenv install
@@ -39,17 +39,17 @@ But:
 
 ---
 
-# Using docker image
+## Using docker image
 
 For users who wish to running this program on `Windows` or `macOS (Apple Silicon)`, we strongly recommend docker image.
 
-## Pull from docker hub
+### Pull from docker hub
 ```bash
 docker pull ygidtu/sashimi
 docker run --rm ygidtu/sashimi --help
 ```
 
-## Build docker image from source
+### Build docker image from source
 ```bash
 git clone from https://github.com/ygidtu/sashimi
 cd sashimi
@@ -57,7 +57,7 @@ docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
 ```
 
-## Command line Usage
+### Command line Usage
 
 ```bash
 docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help

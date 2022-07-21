@@ -5,8 +5,6 @@
 #    pipenv lock --requirements
 #
 
--i https://pypi.douban.com/simple
-biothings-client>=0.2.6
 cairocffi>=1.3.0
 certifi>=2022.6.15; python_version >= '3.6'
 cffi>=1.15.1

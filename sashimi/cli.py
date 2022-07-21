@@ -236,7 +236,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--raster", is_flag=True, show_default=True,
                  help="The would convert heatmap and side plot to raster image "
                       "(speed up rendering and produce smaller files), only affects pdf, svg and PS")
-@optgroup.option("--height", default=0, type=click.IntRange(min=0, clamp=True),
+@optgroup.option("--height", default=0, type=float,
                  help="The height of output file, default adjust image height by content", show_default=True)
 @optgroup.option("--width", default=0, type=click.IntRange(min=0, clamp=True),
                  help="The width of output file, default adjust image width by content", show_default=True)

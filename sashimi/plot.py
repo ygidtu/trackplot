@@ -15,7 +15,7 @@ from matplotlib import gridspec
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.ReadSegments import ReadSegment
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.file.Bam import Bam
 from sashimi.file.Bigwig import Bigwig
@@ -66,12 +66,14 @@ class PlotInfo(object):
                 data[obj.label] = obj.data
         return data
 
-    def len(self) -> int:
+    def len(self, scale: Union[int, float] = .25) -> int:
         n = 0
         if not self.category:
             pass
         elif self.type == "side-plot" and self.category[0] == "bam":
             n += 2
+        elif self.type == "igv":
+            n += self.obj[0].len(scale)
         else:
             n += 1
         return n
@@ -376,7 +378,6 @@ class Plot(object):
                     # side plot parameters
                     show_side_plot: bool = False,
                     strand_choice: Optional[str] = None,
-                    customized_junction: Optional[str] = None,
                     ):
         u"""
         add density object to plot
@@ -729,7 +730,8 @@ class Plot(object):
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err
-            plots_n_rows += p.len()
+
+            plots_n_rows += p.len(reference_scale)
             if p.type in ["heatmap"]:
                 plots_n_cols = 2
 
@@ -777,7 +779,10 @@ class Plot(object):
 
         curr_idx = 0
         for p in self.plots:
-            ax_var = plt.subplot(gs[curr_idx, 0])
+            if p.type == "igv":
+                ax_var = plt.subplot(gs[curr_idx: curr_idx+p.len(reference_scale), 0])
+            else:
+                ax_var = plt.subplot(gs[curr_idx, 0])
             if p.type == "density":
                 plot_density(
                     ax=ax_var,
@@ -838,7 +843,10 @@ class Plot(object):
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
 
-            curr_idx += 1
+            if p.type != "igv":
+                curr_idx += 1
+            else:
+                curr_idx += p.len(reference_scale)
 
         # draw x label
         set_x_ticks(
@@ -851,8 +859,7 @@ class Plot(object):
 
         if self.reference is not None:
             ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
-            plot_reference(ax=ax_var,
-                           obj=self.reference,
+            plot_reference(ax=ax_var, obj=self.reference,
                            graph_coords=self.graph_coords,
                            plot_domain=self.reference.add_domain,
                            **self.params["reference"])
@@ -867,11 +874,7 @@ class Plot(object):
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 
         if output:
-            plt.savefig(
-                output,
-                transparent=True,
-                bbox_inches='tight'
-            )
+            plt.savefig(output, transparent=True, bbox_inches='tight')
         else:
             plt.show()
 

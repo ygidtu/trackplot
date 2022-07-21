@@ -19,7 +19,7 @@ from scipy.stats import gaussian_kde, zscore
 from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from conf.logger import logger
 from sashimi.anno.theme import Theme
-from sashimi.base.ReadSegments import ReadSegment
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
@@ -144,7 +144,7 @@ def set_x_ticks(
         x_label = f"{x_label}, y axis is {log_trans} transformed"
 
     ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
-    ax.text(x=len(graph_coords) / 2, y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
+    ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
 
     bk = 1
     if not sequence:
@@ -1004,7 +1004,7 @@ def plot_igv_like(
     if not y_label:
         y_label = obj.label
 
-    y_loc = 1.0
+    y_loc = 0
 
     for c_ind_list in obj.get_index():
         for c_ind in c_ind_list:
@@ -1086,6 +1086,7 @@ def plot_igv_like(
 
         y_loc += 1
 
+    print(f"plotted segments: {y_loc}")
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
@@ -1241,7 +1242,7 @@ if __name__ == '__main__':
 
 
     def test_igv_plot():
-        from sashimi.base.ReadSegments import ReadSegment
+        from sashimi.file.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
         region = GenomicLoci("chr1", 13362, 29900, "+")
 
@@ -1253,7 +1254,7 @@ if __name__ == '__main__':
 
 
     def test_igv_plot2():
-        from sashimi.base.ReadSegments import ReadSegment
+        from sashimi.file.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
         region = GenomicLoci("chr1", 1270656, 1284730, "+")
 
@@ -1264,7 +1265,7 @@ if __name__ == '__main__':
         plt.savefig("test_igv_plot.2.pdf")
 
     def test_igv_plot3():
-        from sashimi.base.ReadSegments import ReadSegment
+        from sashimi.file.ReadSegments import ReadSegment
         fig, ax = plt.subplots()
         # 1: 10024601 - 10038168
         region = GenomicLoci("1", 10024601, 10038168, "+")

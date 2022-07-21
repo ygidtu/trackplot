@@ -5,18 +5,17 @@ Generate object for plotting reads like IGV track
 """
 import os.path
 import sys
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 import numpy as np
 import pandas as pd
 import pysam
 
 from conf.logger import logger
+from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
-from sashimi.file.Reference import Reference
-from sashimi.base.CoordinateMap import Coordinate
 
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
@@ -168,7 +167,6 @@ class ReadSegment(File):
             features: Optional[dict] = None,
             exon_focus: Optional[str] = None,
             is_bed: bool = False
-
     ):
         u"""
         init a class for store the information for IGV-like plot
@@ -406,20 +404,24 @@ class ReadSegment(File):
                                 name="intron"
                             )
                         )
-                self.data.append(
-                    Reads(
-                        chromosome=self.region.chromosome,
-                        start=min(map(lambda x: x.start, exon_bound)),
-                        end=max(map(lambda x: x.end, exon_bound)),
-                        strand=self.region.strand,
-                        id=current_id,
-                        exons=exon_bound,
-                        introns=intron_bound,
-                        polya_length=-1,
-                        m6a=-1,
-                        features=[]
-                    )
+
+                read = Reads(
+                    chromosome=self.region.chromosome,
+                    start=min(map(lambda x: x.start, exon_bound)),
+                    end=max(map(lambda x: x.end, exon_bound)),
+                    strand=self.region.strand,
+                    id=current_id,
+                    exons=exon_bound,
+                    introns=intron_bound,
+                    polya_length=-1,
+                    m6a=-1,
+                    features=[]
                 )
+                if read.start < self.region.start or read.end > self.region.end:
+                    continue
+
+                self.data.append(read)
+
         except IOError as err:
             logger.error('There is no .bed file at {0}'.format(self.path))
             logger.error(err)
@@ -537,20 +539,23 @@ class ReadSegment(File):
                         else:
                             pass
 
-                self.data.append(
-                    Reads(
-                        chromosome=self.region.chromosome,
-                        start=min(map(lambda x: x.start, exon_bound + features_list)),
-                        end=max(map(lambda x: x.end, exon_bound + features_list)),
-                        strand=self.region.strand,
-                        id=read.query_name,
-                        exons=exon_bound,
-                        introns=intron_bound,
-                        polya_length=polya_length,
-                        m6a=m6a_loci,
-                        features=features_list
-                    )
+                read = Reads(
+                    chromosome=self.region.chromosome,
+                    start=min(map(lambda x: x.start, exon_bound + features_list)),
+                    end=max(map(lambda x: x.end, exon_bound + features_list)),
+                    strand=self.region.strand,
+                    id=read.query_name,
+                    exons=exon_bound,
+                    introns=intron_bound,
+                    polya_length=polya_length,
+                    m6a=m6a_loci,
+                    features=features_list
                 )
+
+                if read.start < self.region.start or read.end > self.region.end:
+                    continue
+
+                self.data.append(read)
 
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
@@ -593,6 +598,14 @@ class ReadSegment(File):
         else:
             tmp_df["exon_group"] = "0"
         self.meta = self.df_sort(tmp_df)
+
+    def len(self, scale: Union[int, float] = .25) -> int:
+        u"""
+        the length of reference to draw in final plots, default using the quarter of number of transcripts
+        """
+        size = len(self.data)
+        print(f"total segments: {size}")
+        return int(max(size * scale, 1))
 
 
 if __name__ == '__main__':
