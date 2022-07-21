@@ -604,7 +604,6 @@ class ReadSegment(File):
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """
         size = len(self.data)
-        print(f"total segments: {size}")
         return int(max(size * scale, 1))
 
 

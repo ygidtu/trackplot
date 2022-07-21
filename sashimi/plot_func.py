@@ -152,7 +152,7 @@ def set_x_ticks(
 
     line_space = {}
     for i in range(0, len(graph_coords), bk):
-        line_space[graph_coords[i]] = i
+        line_space[graph_coords[i]] = i + region.start
 
     if sequence:
         for i, seq in sequence.items():
@@ -192,7 +192,16 @@ def set_y_ticks(
 
     if not set_label_only:
         ax.set_xlim(0, max(graph_coords))
-        ax.set_ylim(- 0.5 * max_used_y_val, 1.2 * max_used_y_val)
+
+        max_ = max_used_y_val
+        minus = -0.5
+        plus = 0.2
+        while max_ > 10:
+            max_ /= 10
+            minus /= 10
+            plus /= 10
+
+            ax.set_ylim(plus * max_used_y_val, (1 + plus) * max_used_y_val)
         ax.spines["left"].set_bounds(0, max_used_y_val)
 
         universal_y_ticks = pylab.linspace(0, max_used_y_val, n_y_ticks + 1)
@@ -1086,7 +1095,6 @@ def plot_igv_like(
 
         y_loc += 1
 
-    print(f"plotted segments: {y_loc}")
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
