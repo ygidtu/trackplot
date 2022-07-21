@@ -236,7 +236,7 @@ The sashimi will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCE
 
 2. `--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
-In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to sashimi by following with `--local-domain`.
+In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to sashimi with `--local-domain`.
 
 But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi couldn't map the protein information into the corresponding transcript id.
 
@@ -311,7 +311,7 @@ example/bws/4.bw    bw  bw  YlOrBr
 example/bws/0.bw    bw  bw  YlOrBr
 ```
 
-![](imgs/cmd/line_plot.png)
+![](imgs/cmd/heatmap.png)
 
 ### Igv plot
 
@@ -335,15 +335,17 @@ In this topic, Sashimi.igv could load m6A modification (tag, ma:i) and length of
 
 here is the subset bam information,
 ```bash
+
 SRR12503063.3513161	16	1	14362	1	..	*	0	0	..	..	NM:i:197	ms:i:1177	AS:i:977	nn:i:0	ts:Z:+	tp:Z:P	cm:i:191	s1:i:837	s2:i:861	de:f:0.089	rl:i:41	pa:f:55.6556	rs:Z:-	ma:i:14368
 SRR12503063.4180535	0	1	14363	48	..	*	0	0	..	..	NM:i:117	ms:i:636	AS:i:1093	nn:i:0	ts:Z:-	tp:Z:P	cm:i:245	s1:i:1045	s2:i:1023	de:f:0.0588	rl:i:0	pa:f:90.4319	rs:Z:-	ma:i:14372
 SRR12503063.4171820	16	1	14363	51	..	*	0	0	..	..	NM:i:132	ms:i:700	AS:i:1191	nn:i:0	ts:Z:+	tp:Z:P	cm:i:257	s1:i:1182	s2:i:1152	de:f:0.0555	rl:i:0	pa:f:99.63	rs:Z:-	ma:i:14367
 SRR12503063.8305358	16	1	14364	23	..	*	0	0	..	..	NM:i:285	ms:i:890	AS:i:716	nn:i:0	ts:Z:+	tp:Z:P	cm:i:99	s1:i:487	s2:i:466	de:f:0.1315	rl:i:33	pa:f:78.8698	rs:Z:-	ma:i:14368
 SRR12503063.89603	16	1	14394	2	..	*	0	0	..	..	NM:i:220	ms:i:1064	AS:i:891	nn:i:0	ts:Z:+	tp:Z:P	cm:i:163	s1:i:740	s2:i:741	de:f:0.0992	rl:i:30	pa:f:66.8433	rs:Z:-	ma:i:14401
+......
 
 ```
 
-In this picture, the read track and blue dot represents the length of poly(A) and m6a modification respectively,
+In this picture, the red track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
 
 3. Sashimi.igv module also allow sort these reads by specific alternative exon
