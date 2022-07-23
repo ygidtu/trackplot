@@ -35,16 +35,16 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
     Determine the strand of for each read.
     :param read: a pysam.AlignedSegment from the bam file.
     :param library: the method for preparing of the library,
-    value should be one of ["fr-firststrand", "fr-secondstrand", "fr-unstrand"]
+    value should be one of [frf: "fr-firststrand", frs: "fr-secondstrand", fru: "fr-unstrand"]
     :return:
     """
-    assert library in ["fr-firststrand", "fr-secondstrand", "fr-unstrand"], "Can't recognize the definition of library."
+    assert library in ["frf", "frs", "fru"], "Can't recognize the definition of library."
 
     # return '+' strand for all unstrand library.
-    if library == "fr-unstrand":
+    if library == "fru":
         return "+"
 
-    # Only guessing the strand based on fr-secondstrand rule.
+    # Only guessing the strand based on fr-firststrand rule.
     if read.is_paired:
         if read.is_read1 and read.is_reverse:
             current_strand = "+"
@@ -55,7 +55,7 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
     else:
         current_strand = "+" if read.is_reverse else "-"
 
-    if library == "fr-secondstrand":
+    if library == "frf":
         return current_strand
     else:
         return __opposite_strand__(current_strand)
@@ -95,7 +95,7 @@ class Reader(object):
         return iter_
 
     @classmethod
-    def read_bam(cls, path: str, region: GenomicLoci, library: str = "fr-unstrand"):
+    def read_bam(cls, path: str, region: GenomicLoci, library: str = "fru"):
         chrom = region.chromosome
         if not os.path.exists(path + ".bai"):
             logger.info(f"try to create index for {path}")

@@ -42,7 +42,7 @@ class FileList(object):
                  label: Optional[str] = None,
                  group: Optional[str] = None,
                  exon_focus: Optional[str] = None,
-                 library: str = "fr-unstrand"):
+                 library: str = "fru"):
 
         self.path = os.path.abspath(path)
 
@@ -138,7 +138,7 @@ def process_file_list(infile: str, category: str = "density"):
                     else:
                         groups[line[2]] = 0
                         yield FileList(path=path, category=category,
-                                       color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fr-unstrand")
+                                       color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru")
         elif category in ["line"]:
             groups = {}
             with open(infile) as r:

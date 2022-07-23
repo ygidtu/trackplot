@@ -22,9 +22,10 @@ class Junction(object):
     def __init__(self, chromosome, start, end):
         u"""
         init this class
-        :param chromosome:
-        :param start:
-        :param end:
+        :param chromosome: the chromosome name of the given junction
+        :param start: the start site of the given junction
+        :param end: the end site of the given junction
+
         """
         self.chromosome = chromosome
         self.start = int(start) + 1

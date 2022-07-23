@@ -1,6 +1,6 @@
-# filepath  file_category   label   color
+# filepath  file_category   label   color  strand
 example/bams/1.bam bam
 example/bams/2.bam bam  2bam
 example/bams/3.bam bam  3bam    blue
 example/bws/2.bw    bw bw green
-example/bams/sc.bam bam sc
+example/bams/sc.bam bam sc	red	frf

@@ -313,7 +313,7 @@ class Plot(object):
                             barcodes: Optional[Set[str]] = None,
                             barcode_tag: str = "BC",
                             umi_tag: str = "UB",
-                            library: str = "fr-unstrand",
+                            library: str = "fru",
                             features: Optional[dict] = None,
                             deletion_ignore: Optional[int] = True,
                             del_ratio_ignore: float = .5,
@@ -362,7 +362,7 @@ class Plot(object):
                     barcodes: Optional[Set[str]] = None,
                     barcode_tag: str = "BC",
                     umi_tag: str = "UB",
-                    library: str = "fr-unstrand",
+                    library: str = "fru",
 
                     # plotting parameters
                     color="blue",
@@ -389,7 +389,7 @@ class Plot(object):
         :param barcodes: list of required barcodes
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
-        :param library: fr-unstrand
+        :param library: should be one of [frf: "fr-firststrand", frs:"fr-secondstrand", fru:"fr-unstrand"], default: fru
         :param font_size: the font size for ticks, y-axis label and title
         :param show_junction_number: whether to show the number of junctions
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
@@ -447,7 +447,7 @@ class Plot(object):
                     barcodes: Optional[Set[str]] = None,
                     barcode_tag: str = "BC",
                     umi_tag: str = "UB",
-                    library: str = "fr-unstrand",
+                    library: str = "fru",
 
                     # plotting parameters
                     color="viridis",
@@ -470,7 +470,7 @@ class Plot(object):
         :param barcodes: list of required barcodes
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
-        :param library: fr-unstrand
+        :param library: fru: fr-unstrand
         :param color: color for this density plot
         :param show_y_label: whether to show y-axis label
         :param theme: the theme name
@@ -532,7 +532,7 @@ class Plot(object):
                  barcodes: Optional[Set[str]] = None,
                  barcode_tag: str = "BC",
                  umi_tag: str = "UB",
-                 library: str = "fr-unstrand",
+                 library: str = "fru",
 
                  # plotting parameters
                  color="blue",
@@ -556,7 +556,7 @@ class Plot(object):
         :param barcodes: list of required barcodes
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
-        :param library: fr-unstrand
+        :param library: fru: fr-unstrand
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
         :param n_y_ticks: number of y ticks
         :param color: color for this density plot
@@ -617,7 +617,7 @@ class Plot(object):
             exon_focus: Optional[str] = None,
 
             # file loading parameters
-            library: str = "fr-unstrand",
+            library: str = "fru",
             features: Optional[dict] = None,
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
@@ -637,7 +637,7 @@ class Plot(object):
         Add igv-like plot into track
         :param path: path to input files
         :param category: file category for the input file
-        :param library: fr-unstrand
+        :param library: fru: fr-unstrand
         :param features:
         :param exon_focus:
         :param deletion_ignore:

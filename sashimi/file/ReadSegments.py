@@ -161,7 +161,7 @@ class ReadSegment(File):
             label: str = "",
             meta: Optional[pd.DataFrame] = None,
             region: Optional[GenomicLoci] = None,
-            library: str = "fr-unstrand",
+            library: str = "fru",
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
             features: Optional[dict] = None,
@@ -184,7 +184,7 @@ class ReadSegment(File):
         super().__init__(path)
 
         self.features = None
-        assert library in ["fr-firststrand", "fr-secondstrand", "fr-unstrand"], \
+        assert library in ["frf", "frs", "fru"], \
             "Illegal library name."
 
         self.library = library
@@ -203,7 +203,7 @@ class ReadSegment(File):
             cls,
             path: str,
             label: str = "",
-            library: str = "fr-unstrand",
+            library: str = "fru",
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
             features: Optional[dict] = None,

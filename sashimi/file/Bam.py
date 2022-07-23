@@ -45,7 +45,7 @@ def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
 
 class Bam(File):
     def __init__(self, path: str, label: str = "", title: str = "", barcodes: Optional[Set[str]] = None,
-                 barcode_tag: str = "CB", umi_tag: str = "UB", library: str = "fr-unstrand"):
+                 barcode_tag: str = "CB", umi_tag: str = "UB", library: str = "fru"):
         u"""
         init this object
         :param label: the left axis label
@@ -72,7 +72,7 @@ class Bam(File):
                barcodes: Optional[Set[str]] = None,
                barcode_tag: str = "CB",
                umi_tag: str = "UB",
-               library: str = "fr-unstrand"
+               library: str = "fru"
                ):
         u"""
 
@@ -202,22 +202,24 @@ class Bam(File):
             spanned_junctions, which is a dictionary containing the junctions supported by reads.
             The keys in spanned_junctions are the
                 names of the junctions, with the format chromosome:lowerBasePosition-higherBasePosition
-
-        :param region:
-        :param threshold:
+        :param region: GenomicLoci object including the region for calculating coverage
+        :param threshold: minimums counts of the given splice junction for visualization
         :param reads1: None -> all reads, True -> only R1 kept; False -> only R2 kept
         :param required_strand: None -> all reads, else reads on specific strand
-        :param log_trans:
+        :param log_trans: should one of {"10": np.log10, "2": np.log2}
         """
         self.region = region
         self.log_trans = log_trans
         filtered_junctions = {}
         depth_vector = np.zeros(len(region), dtype='f')
         spanned_junctions = kwargs.get("junctions", {})
+        spanned_junctions_plus = dict()
+        spanned_junctions_minus = dict()
         plus, minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
+        side_plus, side_minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
 
         try:
-            for read, strand in Reader.read_bam(self.path, region):
+            for read, strand in Reader.read_bam(path=self.path, region=region, library=self.library):
                 # make sure that the read can be used
                 cigar_string = read.cigartuples
 
@@ -262,6 +264,12 @@ class Bam(File):
                             if region.start <= start + i + 1 <= region.end:
                                 try:
                                     depth_vector[start + i + 1 - region.start] += 1
+                                    if strand == "+":
+                                        plus[start + i + 1 - region.start] += 1
+                                    elif strand == "-":
+                                        minus[start + i + 1 - region.start] += 1
+                                    else:
+                                        pass
                                 except IndexError as err:
                                     logger.info(region)
                                     logger.info(cigar_string)
@@ -278,18 +286,27 @@ class Bam(File):
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
+                            if strand == "+":
+                                if junction_name not in spanned_junctions_plus:
+                                    spanned_junctions_plus[junction_name] = -1
+                                else:
+                                    spanned_junctions_plus[junction_name] += -1
+                            elif strand == "-":
+                                if junction_name not in spanned_junctions_minus:
+                                    spanned_junctions_minus[junction_name] = -1
+                                else:
+                                    spanned_junctions_minus[junction_name] += -1
 
                             spanned_junctions[junction_name] = spanned_junctions[junction_name] + 1
                         except ValueError as err:
                             logger.warning(err)
                             continue
-
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
                 if strand == "+" and 0 <= start - region.start < len(plus):
-                    plus[start - region.start] += 1
+                    side_plus[start - region.start] += 1
                 elif strand == "-" and 0 <= end - region.start < len(minus):
-                    minus[end - region.start] += 1
+                    side_minus[end - region.start] += 1
 
             for k, v in spanned_junctions.items():
                 if v >= threshold:
@@ -301,12 +318,23 @@ class Bam(File):
             logger.error(self.path)
             logger.error(err)
 
-        self.data = ReadDepth(depth_vector, junctions_dict=filtered_junctions, plus=plus, minus=minus)
+        self.data = ReadDepth(
+            depth_vector,
+            junctions_dict=filtered_junctions,
+            side_plus=side_plus,
+            side_minus=side_minus,
+            plus=plus,
+            minus=minus,
+            junction_dict_plus={k: spanned_junctions_plus[k] for k in filtered_junctions if k in spanned_junctions_plus},
+            junction_dict_minus={k: spanned_junctions_minus[k] for k in filtered_junctions if k in spanned_junctions_minus},
+            strand_aware=False if self.library == "fru" else True)
         return self
 
 
 if __name__ == '__main__':
-    bam = Bam.create("../../example/bams/1.bam")
+    bam = Bam.create(
+        "../../example/bams/sc.bam",
+        library="frf")
     bam.load(GenomicLoci("chr1", 1270656, 1284730, "+"), 10)
 
     print(str(bam))
@@ -314,5 +342,7 @@ if __name__ == '__main__':
     print(max(bam.data.wiggle), min(bam.data.wiggle))
     print(bam.data.junctions_dict)
     print(max(bam.data.plus))
-    print(max(bam.data.minus))
+    print(min(bam.data.minus))
+    print(max(bam.data.side_plus))
+    print(min(bam.data.side_minus))
     pass
