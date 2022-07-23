@@ -242,6 +242,19 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 
 ![](imgs/cmd/local_domain.png)
 
+3. `--interval`: add additional feature track into reference.
+
+In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into reference track.
+And user could prepare and record custom annotation information into a config file, like this
+```bash
+$ cat example/interval_list.tsv
+#file_location  label_of_file
+example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz   polyAS 
+```
+Then Sashimi receive the custom annotation file with parameter `--interval`, the additional genomic features will be visualized at the reference track.
+
+![](imgs/cmd/interval.png)
+
 ### Density plot
 
 density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.

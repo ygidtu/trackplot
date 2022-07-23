@@ -1,0 +1,3 @@
+# filepath  file_category   label   color  strand
+example/bams/sc.bam bam test-frs	red	fr-secondstrand
+example/bams/sc.bam bam test-frf	red	fr-firststrand

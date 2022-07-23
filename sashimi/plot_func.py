@@ -19,6 +19,7 @@ from scipy.stats import gaussian_kde, zscore
 from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from conf.logger import logger
 from sashimi.anno.theme import Theme
+from sashimi.file.Bam import Bam
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -180,12 +181,14 @@ def set_y_ticks(
         label: str,
         graph_coords: Union[Dict, np.array],
         max_used_y_val: Union[int, float],
+        min_used_y_val: Optional[Union[int, float]] = 0,
         distance_between_label_axis: float = .1,
         n_y_ticks: int = 4,
         theme: str = "ticks",
         font_size: int = 5,
         show_y_label: bool = True,
-        set_label_only: bool = False
+        set_label_only: bool = False,
+        y_axis_skip_zero: bool = True
 ):
     u"""
     The y ticks are formatted here
@@ -206,23 +209,27 @@ def set_y_ticks(
             plus /= 10
 
             ax.set_ylim(plus * max_used_y_val, (1 + plus) * max_used_y_val)
-        ax.spines["left"].set_bounds(0, max_used_y_val)
 
-        universal_y_ticks = pylab.linspace(0, max_used_y_val, n_y_ticks + 1)
+        ax.spines["left"].set_bounds(min_used_y_val, max_used_y_val)
 
+        universal_y_ticks = pylab.linspace(min_used_y_val, max_used_y_val, n_y_ticks + 1)
+        # add zero into strand-aware plot
+        universal_y_ticks = np.append(universal_y_ticks, 0)
+        universal_y_ticks = sorted(universal_y_ticks)
         curr_y_tick_labels = []
+
         for lab in universal_y_ticks:
-            if lab <= 0:
+            if y_axis_skip_zero and lab <= 0:
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
             else:
                 # curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
                 curr_y_tick_labels.append("%d" % lab)
-
         u"""
         @2019.01.04
         If there is no bam file, draw a blank y-axis 
         """
+
         ax.set_yticks(universal_y_ticks)
         ax.set_yticklabels(curr_y_tick_labels, fontsize=font_size)
         ax.yaxis.set_ticks_position('left')
@@ -601,32 +608,57 @@ def plot_density(
 
     elif not (region and data):
         raise ValueError("please input obj or region and data")
-    wiggle = data.wiggle
-
-    if max_used_y_val is None:
-        max_used_y_val = max(wiggle)
-        if max_used_y_val % 2 == 1:
-            max_used_y_val += 1
 
     jxns = data.junctions_dict
 
-    y_max = max_used_y_val
-    y_min = -.5 * y_max
+    if not data.strand_aware:
+        wiggle = data.wiggle
 
-    # Reduce memory footprint by using incremented graphcoords.
-    compressed_x = []
-    compressed_wiggle = []
+        if max_used_y_val is None:
+            max_used_y_val = max(wiggle)
+            if max_used_y_val % 2 == 1:
+                max_used_y_val += 1
 
-    u"""
-    @2019.01.04
-    If there is no bam file, use half of y axis as the upper bound of exon 
-    And draw a white point to maintain the height of the y axis
-    """
-    for i in range(len(graph_coords)):
-        compressed_wiggle.append(wiggle[i])
-        compressed_x.append(graph_coords[i])
+        y_max = max_used_y_val
+        y_min = -.5 * y_max
+        # Reduce memory footprint by using incremented graphcoords.
+        compressed_x = []
+        compressed_wiggle = []
 
-    ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+        u"""
+        @2019.01.04
+        If there is no bam file, use half of y axis as the upper bound of exon 
+        And draw a white point to maintain the height of the y axis
+        """
+        for i in range(len(graph_coords)):
+            compressed_wiggle.append(wiggle[i])
+            compressed_x.append(graph_coords[i])
+
+        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+
+    else:
+        wiggle = data.wiggle
+        if max_used_y_val is None:
+            max_used_y_val = max(data.plus)
+            if max_used_y_val % 2 == 1:
+                max_used_y_val += 1
+
+        min_used_y_val = min(data.minus)
+        y_max = max_used_y_val
+        y_min = min_used_y_val
+
+        # Reduce memory footprint by using incremented graphcoords.
+        for current_dat in [data.minus, data.plus]:
+            if sum(current_dat) == 0:
+                continue
+            compressed_x = []
+            compressed_wiggle = []
+
+            for i in range(len(graph_coords)):
+                compressed_wiggle.append(current_dat[i])
+                compressed_x.append(graph_coords[i])
+
+            ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -656,29 +688,58 @@ def plot_density(
             """
             ss1 = graph_coords[ss1_idx]
             ss2 = graph_coords[ss2_idx]
+            if not data.strand_aware:
+                # draw junction on bottom
+                if plotted_count % 2 == 0:
 
-            # draw junction on bottom
-            if plotted_count % 2 == 0:
+                    pts = [
+                        (ss1, 0 if not ss1_modified else -current_height),
+                        (ss1, -current_height),
+                        (ss2, -current_height),
+                        (ss2, 0 if not ss2_modified else -current_height)
+                    ]
+                    midpt = cubic_bezier(pts, .5)
 
-                pts = [
-                    (ss1, 0 if not ss1_modified else -current_height),
-                    (ss1, -current_height),
-                    (ss2, -current_height),
-                    (ss2, 0 if not ss2_modified else -current_height)
-                ]
-                midpt = cubic_bezier(pts, .5)
+                # draw junction on top
+                else:
 
-            # draw junction on top
+                    left_dens = wiggle[ss1_idx]
+                    right_dens = wiggle[ss2_idx]
+
+                    """
+                    @2019.01.04
+        
+                    If there is no bam, lower half of y axis as the height of junctions
+                    """
+                    pts = [
+                        (ss1, left_dens if not ss1_modified else left_dens + current_height),
+                        (ss1, left_dens + current_height),
+                        (ss2, right_dens + current_height),
+                        (ss2, right_dens if not ss2_modified else right_dens + current_height)
+                    ]
+
+                    midpt = cubic_bezier(pts, .5)
             else:
+                u"""
+                @2022.0723
+                plot splice junction with strand information
+                """
+                if jxn in data.junction_dict_minus:
+                    current_wiggle = data.minus
+                    current_height = -3 / 8 * max(abs(y_min), y_max)
+                else:
+                    current_wiggle = data.plus
+                    current_height = 3 / 8 * max(abs(y_min), y_max)
 
-                left_dens = wiggle[ss1_idx]
-                right_dens = wiggle[ss2_idx]
+                left_dens = current_wiggle[ss1_idx]
+                right_dens = current_wiggle[ss2_idx]
 
                 """
                 @2019.01.04
-    
+
                 If there is no bam, lower half of y axis as the height of junctions
                 """
+
                 pts = [
                     (ss1, left_dens if not ss1_modified else left_dens + current_height),
                     (ss1, left_dens + current_height),
@@ -725,11 +786,13 @@ def plot_density(
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max_used_y_val,
+        max_used_y_val=max(abs(y_min), y_max) if data.strand_aware else max_used_y_val,
+        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else 0,
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
+        y_axis_skip_zero=False if data.strand_aware else True
     )
 
 
@@ -776,7 +839,7 @@ def plot_side_plot(
     if not show_y_label:
         y_label = ""
 
-    plus, minus = data.plus, data.minus
+    plus, minus = data.side_plus, data.side_minus
 
     max_height = max(plus)
     min_height = min(minus)
@@ -797,11 +860,11 @@ def plot_side_plot(
 
         fit_value = fit_value / fit_value.max()
         if label == 'plus':
+            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
             ax.plot(graph_coords, fit_value * array_plot.max(), c=color, lw=1)
-            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
         else:
-            ax.plot(graph_coords, fit_value * array_plot.min(), c=color, lw=1)
             ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
+            ax.plot(graph_coords, fit_value * array_plot.min(), c=color, lw=1)
 
     # set the y limit
     # set y ticks, y label and label
@@ -809,10 +872,12 @@ def plot_side_plot(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
         max_used_y_val=1.1 * max_val,
+        min_used_y_val=-1.1 * max_val,
         n_y_ticks=n_y_ticks,
         font_size=font_size,
         show_y_label=False,
-        distance_between_label_axis=distance_between_label_axis
+        distance_between_label_axis=distance_between_label_axis,
+        y_axis_skip_zero=False
     )
 
 
