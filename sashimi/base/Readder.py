@@ -198,6 +198,14 @@ class Reader(object):
             for record in iter_:
                 yield record
 
+    @classmethod
+    def read_hic(cls, path: str, region: GenomicLoci):
+        from hicmatrix import HiCMatrix as hm
+        os.environ['NUMEXPR_MAX_THREADS'] = '16'
+        os.environ['NUMEXPR_NUM_THREADS'] = '8'
+        hic = hm.hiCMatrix(path, f"{region.chromosome}:{region.start}-{region.end}")
+        return hic
+
 
 if __name__ == '__main__':
     pass

@@ -42,8 +42,9 @@ class FileList(object):
                  label: Optional[str] = None,
                  group: Optional[str] = None,
                  exon_focus: Optional[str] = None,
-                 library: str = "fru"):
-
+                 library: str = "fru",
+                 trans: Optional[str] = None,
+                 depth: int = 30000):
         self.path = os.path.abspath(path)
 
         if not os.path.exists(self.path):
@@ -55,6 +56,8 @@ class FileList(object):
         self.category = category
         self.exon_focus = exon_focus
         self.library = library
+        self.trans = trans
+        self.depth = depth
 
     def __str__(self):
         return f"path: {self.path} \nlabel: {self.label} \ngroup: {self.group} \n" \
@@ -119,8 +122,11 @@ def process_file_list(infile: str, category: str = "density"):
                         yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
                     elif len(line) < 5:
                         yield FileList(path=path, category=category, color=line[3], label=line[2])
-                    else:
+                    elif len(line) < 6:
                         yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4])
+                    else:
+                        yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4],
+                                       depth=line[5])
         elif category in ["heatmap"]:
             groups = {}
             with open(infile) as r:
@@ -204,6 +210,22 @@ def process_file_list(infile: str, category: str = "density"):
                         yield FileList(path=path, category=category, color=line[3], label=line[2])
                     else:
                         yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
+        elif category in ["hic"]:
+            with open(infile) as r:
+                for idx, line in enumerate(r):
+                    if line.startswith("#"):
+                        continue
+                    line = line.split()
+                    path, category = line[0], line[1]
+                    if len(line) < 3:
+                        yield FileList(path=path, category=category)
+                    elif len(line) < 4:
+                        yield FileList(path=path, category=category, label=line[2])
+                    elif len(line) < 5:
+                        yield FileList(path=path, category=category, )
+                    else:
+                        yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
+
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -343,6 +365,16 @@ def process_file_list(infile: str, category: str = "density"):
                  if a deletion region was smaller than (alginment length) * (del_ratio_ignore), \b
                  then the deletion gap will be filled. \b
                  currently the del_ratio_ignore was 1.0.
+                 """)
+@optgroup.group("HiC settings")
+@optgroup.option("--hic", type=click.Path(exists=True),
+                 help="""
+                 The path to list of input files, a tab separated text file, \b 
+                 - 1st column is path to input file, \b
+                 - 2nd column is the file category, \b
+                 - 3rd column is input file alias (optional), \b
+                 - 4th column is color of input files (optional),\b
+                 - 5th column is data transform for HiC matrix, eg log1p, log2, log10 (optional).
                  """)
 @optgroup.group("Additional annotation")
 @optgroup.option("-f", "--genome", type=click.Path(), default=None,
@@ -559,6 +591,21 @@ def main(**kwargs):
                               distance_between_label_axis=kwargs["distance_ratio"],
                               exon_focus=f.exon_focus
                               )
+            elif key == "hic":
+                for f in process_file_list(kwargs[key], "hic"):
+                    p.add_hic(
+                        f.path,
+                        category=f.category,
+                        label=f.label,
+                        trans=f.trans,
+                        depth=f.depth,
+                        color=f.color,
+                        show_legend=not kwargs["hide_legend"],
+                        distance_between_label_axis=kwargs["distance_ratio"],
+                        show_y_label=not kwargs["hide_y_label"],
+                        font_size=kwargs["font_size"],
+                        n_y_ticks=kwargs["n_y_ticks"]
+                    )
         elif key == "focus":
             p.add_focus(kwargs[key])
         elif key == "stroke":
