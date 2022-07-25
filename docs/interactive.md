@@ -488,6 +488,26 @@ Returns `Plot`
 def add_interval(self, interval: str, interval_label: str)
 ```
 
+### merge_by_cell
+
+```python
+def merge_by_cell(self)
+```
+
+This is used to merge input files by label, for instance, 
+
+```python
+p = Plot()
+p.add_density('bam', label="cell1")
+p.add_density('bam', label="cell2")
+p.add_density('bam1', label="cell1")
+
+# After that, 3 plot obj saved in p.plots
+
+p.merge_by_cell()
+# the bam and bam1 with label == 'cell1' merged into one
+```
+
 ---
 
 ### plot

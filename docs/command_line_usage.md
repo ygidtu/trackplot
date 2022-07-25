@@ -54,12 +54,15 @@ Options:
     --barcode PATH                Path to barcode list file, At list two
                                   columns were required, - 1st The name of bam
                                   file;- 2nd the barcode;- 3rd The group
-                                  label, optional.
+                                  label, optional;- 4th The color of each
+                                  cell type, default using the color of
+                                  corresponding bam file.
     --barcode-tag TEXT            The default cell barcode tag label
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=10]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
+    --group-by-cell               Group by cell types in density/line plot
   Output settings:
     -o, --output PATH             Path to output graph file
     -d, --dpi INTEGER RANGE       The resolution of output file  [default:
@@ -67,8 +70,9 @@ Options:
     --raster                      The would convert heatmap and side plot to
                                   raster image (speed up rendering and produce
                                   smaller files), only affects pdf, svg and PS
-    --height INTEGER RANGE        The height of output file, default adjust
-                                  image height by content  [default: 0; x>=0]
+                                  [default: False]
+    --height FLOAT                The height of output file, default adjust
+                                  image height by content  [default: 0]
     --width INTEGER RANGE         The width of output file, default adjust
                                   image width by content  [default: 0; x>=0]
     --backend TEXT                Recommended backend  [default: Cairo]
@@ -78,10 +82,14 @@ Options:
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
                                   column is the label [optional]
-    --show-id                     Whether show gene id or gene name
-    --show-exon-id                Whether show gene id or gene name
+    --show-id                     Whether show gene id or gene name  [default:
+                                  False]
+    --show-exon-id                Whether show gene id or gene name  [default:
+                                  False]
     --no-gene                     Do not show gene id next to transcript id
+                                  [default: False]
     --domain                      Add domain information into reference track
+                                  [default: False]
     --proxy TEXT                  The http or https proxy for EBI/Uniprot
                                   requests,if `--domain` is True, eg:
                                   http://127.0.0.1:1080
@@ -90,7 +98,8 @@ Options:
     --local-domain TEXT           Load local domain folder and load into
                                   reference track, download from https://hgdow
                                   nload.soe.ucsc.edu/gbdb/hg38/uniprot/
-    --remove-empty                Whether to plot empty transcript
+    --remove-empty                Whether to plot empty transcript  [default:
+                                  False]
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
     --ref-color TEXT              The color of exons  [default: black]
@@ -111,9 +120,11 @@ Options:
                                   Threshold to filter low abundance junctions
                                   [default: 0; x>=0]
     --show-side                   Whether to draw additional side plot
+                                  [default: False]
     --side-strand [all|+|-]       Which strand kept for side plot, default use
                                   all  [default: all]
     --show-junction-num           Whether to show the number of junctions
+                                  [default: False]
   Line plot settings:
     --line PATH                   The path to list of input files, a tab
                                   separated text file,  - 1st column is path
@@ -132,7 +143,8 @@ Options:
                                   category, - 3rd column is input file group
                                   (optional), - 4th column is color platte
                                   of corresponding group.
-    --clustering                  Enable clustering of the heatmap
+    --clustering                  Enable clustering of the heatmap  [default:
+                                  False]
     --clustering-method [single|complete|average|weighted|centroid|median|ward]
                                   The clustering method for heatmap  [default:
                                   ward]
@@ -199,7 +211,7 @@ path/to/bam1 LUAD
 path/to/bam2 LUSC
 ```
 
-then the `--color-factor 2` means sashimi assign two colors to LUAD and LUSC separately automatically.  
+Then the `--color-factor 2` means sashimi assign two colors to LUAD and LUSC separately automatically.  
    
 - advanced usage:
 
@@ -208,7 +220,7 @@ path/to/bam1 LUAD|red
 path/to/bam2 LUSC|#000000
 ```
 
-then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000" to LUSC separately.  
+Then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000" to LUSC separately.  
 
 
 ### Output options
@@ -225,6 +237,7 @@ then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
 
 ### Reference plot
+
 1. `--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
 
 For each transcript, sashimi firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
@@ -246,20 +259,23 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 
 In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into reference track.
 And user could prepare and record custom annotation information into a config file, like this
+
 ```bash
 $ cat example/interval_list.tsv
 #file_location  label_of_file
 example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz   polyAS 
 ```
+
 Then Sashimi receive the custom annotation file with parameter `--interval`, the additional genomic features will be visualized at the reference track.
 
 ![](imgs/cmd/interval.png)
 
 ### Density plot
 
-density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.
+Density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.
 
-the input file list as follows
+The input file list as follows
+
 ```bash
 # filepath  file_category   label   color
 example/bams/1.bam bam
@@ -271,7 +287,7 @@ example/bams/sc.bam bam sc
 
 1. `--customized-junction` 
 
-this parameter is used to add user defined junctions
+This parameter is used to add user defined junctions
 
 ```bash
 # junctions corresponding_input_file
@@ -285,31 +301,64 @@ chr1:1000-20000 100 200
 
 2. `--show-side` and `--show-strand`
 
-these two parameters were used to show the density of reads starts by forward and reverse strand separately.
+These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
 ![](imgs/cmd/2.png)
 
 
+#### Single cell bam related parameters
+
+1. `--barcode`
+
+Provide a manually curated barcode list to separate bam files by cell types or other groups.
+   
+This barcode list as follows:
+
+```bash
+#bam  barcode cell_type(optional) cell_type(optional)
+sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
+sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
+sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
+```
+
+
+2. `--barocde-tag` and `--umi-tag`
+
+3. The tag to extract barcode and umi from each reads record, here we take the 10x Genomics bam format as default.
+
+4. `--group-by-cell`
+
+Group by cell types in density/line plot.
+
+![group by cell](imgs/cmd/group_by_cell.png)
+    
+
 ### Line plot
 
-the line plot is simply another format of density plots.
+The line plot is simply another format of density plots.
 
-the input file list as same as density plots
+The input file list as same as density plots
 
 
 1. `--hide-legend`, `--legend-position` and `--legend-ncol`
 
-these three parameters were used to disable legend, modify legend position and the columns of legend separately.
+These three parameters were used to disable legend, modify legend position and the columns of legend separately.
 
 By default, the position of legend and columns of legend were determined by [matplotlib](https://matplotlib.org/), and the further detailed legend configuration please check [matplotlib legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html).
 
 ![](imgs/cmd/line_plot.png)
 
+
+#### single cell bam related parameters
+
+Please check the documentation in density plot.
+
 ### Heatmap plot
 
-density plot takes bam or bigwig as input.
+Heatmap plot takes bam or bigwig as input.
 
-the input file list as follows
+The input file list as follows
+
 ```bash
 # filepath  file_category   group   color
 example/bams/1.bam bam  bam
@@ -333,6 +382,7 @@ example/bws/0.bw    bw  bw  YlOrBr
 An Igv-like plot provides a landscape of aligned reads in a straight and convenient way. 
 
 User could pass bed and bam file into Sashimi, and the input config file list as follows
+
 ```bash
 #filepath	file_category	label	color
 example/SRX9697989.corrected_reads.bed.gz	igv	bed12	blue
@@ -346,7 +396,8 @@ example/bams/0.bam	igv	bam
 
 In this topic, Sashimi.igv could load m6A modification (tag, ma:i) and length of polyA (tag, pa:f) tag from bam file, and then present it on each reads.
 
-here is the subset bam information,
+Here is the subset bam information,
+
 ```bash
 
 SRR12503063.3513161	16	1	14362	1	..	*	0	0	..	..	NM:i:197	ms:i:1177	AS:i:977	nn:i:0	ts:Z:+	tp:Z:P	cm:i:191	s1:i:837	s2:i:861	de:f:0.089	rl:i:41	pa:f:55.6556	rs:Z:-	ma:i:14368
