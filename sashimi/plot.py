@@ -54,6 +54,13 @@ class PlotInfo(object):
             return hash(self.group)
         return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
 
+    def __add__(self, other):
+        if self.category == ["heatmap", "line"]:
+            self.obj[0] += other.obj
+        else:
+            self.obj += other.obj
+        return self
+
     @property
     def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
         data = {}
@@ -400,7 +407,6 @@ class Plot(object):
         :param y_label: the text of y-axis title
         :param theme: the theme name
         :param strand_choice: the strand to draw on side plot
-        :param customized_junction:
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -678,6 +684,25 @@ class Plot(object):
             "show_y_label": show_y_label,
             "theme": theme
         }
+
+        return self
+
+    def merge_by_cell(self):
+
+        plots = {}
+        for p in self.plots:
+            assert isinstance(p, PlotInfo)
+
+            if p.category in ["density", "line"]:
+                label = p.obj[0].label
+                if label in plots.keys():
+                    plots[label] += p
+                else:
+                    plots[label] = p
+            else:
+                plots[p.obj[0].label] = p
+
+        self.plots = list(plots.values())
 
         return self
 

@@ -9,7 +9,7 @@ import gzip
 import os
 
 from multiprocessing import cpu_count
-from typing import Optional, Dict, Set
+from typing import Optional, Dict, Set, Tuple
 
 import click
 import matplotlib as mpl
@@ -61,17 +61,21 @@ class FileList(object):
                f"color: {self.color} \ncategory: {self.category} \nlibrary: {self.library}"
 
 
-def load_barcodes(barcode: str) -> Dict[str, Dict[str, Set[str]]]:
+def load_barcodes(barcode: str) -> Tuple[Dict[str, Dict[str, Set[str]]], Dict[str, str]]:
     u"""
     as name says
     :param barcode: the path to barcode file
     """
     r = gzip.open(barcode, "rt") if barcode.endswith(".gz") else open(barcode, "r")
     res = {}
+    colors = {}
     for line in r:
         line = line.strip().split()
-        if len(line) >= 3:
-            key, bc, group = line
+        if len(line) >= 4:
+            key, bc, group, color = line[:4]
+            colors[group] = color
+        elif len(line) == 3:
+            key, bc, group = line[:3]
         elif len(line) == 2:
             key, bc = line
             group = ""
@@ -87,7 +91,7 @@ def load_barcodes(barcode: str) -> Dict[str, Dict[str, Set[str]]]:
         res[key][group].add(bc)
 
     r.close()
-    return res
+    return res, colors
 
 
 def process_file_list(infile: str, category: str = "density"):
@@ -221,13 +225,15 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Path to barcode list file, At list two columns were required, "
                       "- 1st The name of bam file; \b"
                       "- 2nd the barcode; \b"
-                      "- 3rd The group label, optional.")
+                      "- 3rd The group label, optional; \b"
+                      "- 4th The color of each cell type, default using the color of corresponding bam file.\n")
 @optgroup.option("--barcode-tag", type=click.STRING, default="CB", show_default=True,
                  help="The default cell barcode tag label")
 @optgroup.option("--umi-tag", type=click.STRING, default="UB", show_default=True,
                  help="The default UMI barcode tag label")
 @optgroup.option("-p", "--process", type=click.IntRange(min=1, max=cpu_count()), default=1,
                  help="How many cpu to use")
+@optgroup.option("--group-by-cell", type=click.BOOL, is_flag=True, help="Group by cell types in density/line plot")
 @optgroup.group("Output settings")
 @optgroup.option("-o", "--output", type=click.Path(),
                  help="Path to output graph file", show_default=True)
@@ -397,9 +403,9 @@ def main(**kwargs):
     p.set_region(chrom, start, end, strand)
     p.add_customized_junctions(kwargs["customized_junction"])
 
-    barcodes = None
+    barcodes, sc_colors = {}, {}
     if kwargs.get("barcode") and os.path.exists(kwargs.get("barcode")):
-        barcodes = load_barcodes(kwargs.get("barcode"))
+        barcodes, sc_colors = load_barcodes(kwargs.get("barcode"))
 
     # add reference
     for key in kwargs.keys():
@@ -425,14 +431,20 @@ def main(**kwargs):
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category == "bam":
                         for group, bcs in barcodes[f.label].items():
+                            if kwargs["group_by_cell"] and group:
+                                label = group
+                            elif group:
+                                label = f"{f.label} - {group}"
+                            else:
+                                label = f.label
                             p.add_density(f.path,
                                           category=f.category,
-                                          label=f"{f.label} - {group}" if group else f.label,
+                                          label=label,
                                           barcodes=bcs,
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
-                                          color=f.color,
+                                          color=sc_colors.get(group, f.color),
                                           font_size=kwargs["font_size"],
                                           show_junction_number=kwargs["show_junction_num"],
                                           n_y_ticks=kwargs["n_y_ticks"],
@@ -494,15 +506,21 @@ def main(**kwargs):
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category == "bam":
                         for group, bcs in barcodes[f.label].items():
+                            if kwargs["group_by_cell"] and group:
+                                label = group
+                            elif group:
+                                label = f"{f.label} - {group}"
+                            else:
+                                label = f.label
                             p.add_line(f.path,
                                        category=f.category,
-                                       label=f"{f.label} - {group}" if group else f.label,
+                                       label=label,
                                        barcodes=bcs,
                                        group=f.group,
                                        barcode_tag=kwargs["barcode_tag"],
                                        umi_tag=kwargs["umi_tag"],
                                        library=f.library,
-                                       color=f.color,
+                                       color=sc_colors.get(group, f.color),
                                        distance_between_label_axis=kwargs["distance_ratio"],
                                        show_y_label=not kwargs["hide_y_label"],
                                        font_size=kwargs["font_size"],
@@ -547,6 +565,9 @@ def main(**kwargs):
             p.add_stroke(kwargs[key])
         elif key == "sites":
             p.add_sites(kwargs[key])
+
+    if kwargs["group_by_cell"]:
+        p.merge_by_cell()
 
     p.plot(
         kwargs["output"],
