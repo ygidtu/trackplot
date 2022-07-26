@@ -999,15 +999,20 @@ def plot_hic(
         y_label = obj.label
 
     pc = ax.pcolormesh(obj.x - obj.region.start,
-                  obj.y, np.flipud(obj.matrix),
-                  cmap=color, rasterized=raster)
+                       obj.y, np.flipud(obj.matrix),
+                       cmap=color, rasterized=raster)
     ax.set_xlim(0, len(obj.region))
 
     if show_legend:
-        cbar = pylab.colorbar(mappable=pc, ax=cbar_ax)
+        cbar = pylab.colorbar(
+            mappable=mpl.cm.ScalarMappable(
+                norm=mpl.colors.Normalize(vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)),
+                cmap=color),
+            cax=cbar_ax)
+        cbar.ax.tick_params(labelsize=font_size)
         if obj.trans:
             legend_ticks = cbar.get_ticks().tolist()
-            legend_ticks[0] = f"{legend_ticks[0]} / {obj.trans}"
+            legend_ticks[0] = f"{legend_ticks[0]}\n{obj.trans}"
             cbar.set_ticklabels(legend_ticks)
 
     ax.axis("off")

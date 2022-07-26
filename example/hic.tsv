@@ -1,2 +1,2 @@
-# filepath  file_category   label   color  tranform	depth
+# filepath  file_category   label   color  transform	depth
 example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
