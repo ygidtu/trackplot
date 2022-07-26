@@ -15,6 +15,7 @@ from matplotlib import gridspec
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
+from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.file.Bam import Bam
@@ -24,7 +25,7 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot, plot_hic
 from sashimi.file.Junction import load_custom_junction
 
 
@@ -80,7 +81,7 @@ class PlotInfo(object):
         elif self.type == "side-plot" and self.category[0] == "bam":
             n += 2
         elif self.type == "igv":
-            n += self.obj[0].len(scale/8)
+            n += self.obj[0].len(scale / 8)
         else:
             n += 1
         return n
@@ -324,7 +325,10 @@ class Plot(object):
                             features: Optional[dict] = None,
                             deletion_ignore: Optional[int] = True,
                             del_ratio_ignore: float = .5,
-                            exon_focus: Optional[str] = None
+                            exon_focus: Optional[str] = None,
+                            # for hic plot
+                            trans: Optional[str] = None,
+                            depth: Optional[int] = 30000
                             ):
         if category == "bam":
             obj = Bam.create(
@@ -346,6 +350,14 @@ class Plot(object):
                 del_ratio_ignore=del_ratio_ignore,
                 exon_focus=exon_focus
             )
+        elif category == "hic":
+            obj = HiCTrack.create(
+                path=path,
+                label=label,
+                trans=trans,
+                depth=depth
+            )
+
         elif category == "bigwig" or category == "bw":
             category = "bw"
             obj = Bigwig.create(path, label=label, title=title)
@@ -615,6 +627,44 @@ class Plot(object):
 
         return self
 
+    def add_hic(
+            self,
+            path: str,
+            category: str = "hic",
+            label: str = "",
+            color: str = "RdYlBu_r",
+            trans: Optional[str] = None,
+            show_legend: bool = True,
+            depth: int = 30000,
+            font_size: int = 8,
+            n_y_ticks: int = 4,
+            distance_between_label_axis: float = .1,
+            show_y_label: bool = True,
+            theme: str = "ticks"
+    ):
+        obj, category = self.__init_input_file__(
+            path=path,
+            category=category,
+            label=label,
+            depth=depth,
+            trans=trans
+        )
+
+        info = PlotInfo(obj=obj, category=category, type_="hic")
+        self.plots.append(info)
+        self.params[info] = {
+            "show_legend": show_legend,
+            "color": color,
+            "y_label": label,
+            "font_size": font_size,
+            "n_y_ticks": n_y_ticks,
+            "distance_between_label_axis": distance_between_label_axis,
+            "show_y_label": show_y_label,
+            "theme": theme
+        }
+
+        return self
+
     def add_igv(
             self,
             path: str,
@@ -737,7 +787,7 @@ class Plot(object):
         plots_n_cols = 1
         if self.reference is not None:
             logger.info("load reference")
-            self.reference.load(self.region, *args,  **kwargs)
+            self.reference.load(self.region, *args, **kwargs)
             plots_n_rows += self.reference.len(scale=reference_scale)
 
         if self.stroke:
@@ -757,7 +807,7 @@ class Plot(object):
                 raise err
 
             plots_n_rows += p.len(reference_scale)
-            if p.type in ["heatmap"]:
+            if p.type in ["heatmap", "hic"]:
                 plots_n_cols = 2
 
         if fig_width and fig_height:
@@ -805,7 +855,7 @@ class Plot(object):
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
-                ax_var = plt.subplot(gs[curr_idx: curr_idx+p.len(reference_scale), 0])
+                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(reference_scale), 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
             if p.type == "density":
@@ -814,6 +864,13 @@ class Plot(object):
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
+                    **self.params[p]
+                )
+            elif p.type == "hic":
+                plot_hic(
+                    ax=ax_var,
+                    cbar_ax=plt.subplot(gs[curr_idx, 1]),
+                    obj=p.obj,
                     **self.params[p]
                 )
             elif p.type == "side-plot":
@@ -825,7 +882,7 @@ class Plot(object):
                     **self.params[p]
                 )
 
-                side_ax = plt.subplot(gs[curr_idx+1, 0])
+                side_ax = plt.subplot(gs[curr_idx + 1, 0])
 
                 plot_side_plot(
                     side_ax, p.obj[0],
@@ -951,6 +1008,11 @@ if __name__ == '__main__':
             path="../example/bams/2.bam",
             category="bam",
             group="1"
+        ).add_hic(
+            path="../example/Li_et_al_2015.h5",
+            category="hic",
+            trans="log2",
+            depth=30000
         ).add_igv(
             path="../example/bams/3.bam",
             features={
@@ -982,6 +1044,7 @@ if __name__ == '__main__':
             color="green",
             label="test"
         ).plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
+
 
     test_plot()
     pass

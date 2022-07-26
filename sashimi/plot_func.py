@@ -13,6 +13,7 @@ import seaborn as sns
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
@@ -20,6 +21,7 @@ from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from conf.logger import logger
 from sashimi.anno.theme import Theme
 from sashimi.file.Bam import Bam
+from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -214,7 +216,7 @@ def set_y_ticks(
 
         universal_y_ticks = pylab.linspace(min_used_y_val, max_used_y_val, n_y_ticks + 1)
         # add zero into strand-aware plot
-        universal_y_ticks = np.append(universal_y_ticks, 0)
+        universal_y_ticks = np.unique(np.append(universal_y_ticks, 0))
         universal_y_ticks = sorted(universal_y_ticks)
         curr_y_tick_labels = []
 
@@ -223,8 +225,7 @@ def set_y_ticks(
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
             else:
-                # curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
-                curr_y_tick_labels.append("%d" % lab)
+                curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
         u"""
         @2019.01.04
         If there is no bam file, draw a blank y-axis 
@@ -969,6 +970,62 @@ def plot_heatmap(
         ax.set_rasterization_zorder(0)
 
 
+def plot_hic(
+        ax: mpl.axes.Axes,
+        cbar_ax: mpl.axes.Axes,
+        obj: List[HiCTrack],
+        show_legend: bool = True,
+        graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+        color: str = "RdYlBu_r",
+        font_size: int = 8,
+        distance_between_label_axis: float = .1,
+        show_y_label: bool = True,
+        theme: str = "ticks",
+        y_label: str = "",
+        n_y_ticks: int = 4,
+        raster: bool = True
+):
+    assert len(obj) == 1, "HiC plot only support one file"
+
+    obj = obj[0]
+
+    if graph_coords is None:
+        graph_coords = init_graph_coords(
+            obj.region
+        )
+
+    if not y_label:
+        y_label = obj.label
+
+    pc = ax.pcolormesh(obj.x - obj.region.start,
+                       obj.y, np.flipud(obj.matrix),
+                       cmap=color, rasterized=raster)
+    ax.set_xlim(0, len(obj.region))
+
+    if show_legend:
+        cbar = pylab.colorbar(
+            mappable=mpl.cm.ScalarMappable(
+                norm=mpl.colors.Normalize(vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)),
+                cmap=color),
+            cax=cbar_ax)
+        cbar.ax.tick_params(labelsize=font_size)
+        if obj.trans:
+            legend_ticks = cbar.get_ticks().tolist()
+            legend_ticks[0] = f"{legend_ticks[0]}\n{obj.trans}"
+            cbar.set_ticklabels(legend_ticks)
+
+    ax.axis("off")
+    set_y_ticks(
+        ax, label=y_label, theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=obj.depth,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+        n_y_ticks=n_y_ticks
+    )
+
+
 def plot_line(
         ax: mpl.axes.Axes,
         data: Dict[str, ReadDepth],
@@ -1356,7 +1413,22 @@ if __name__ == '__main__':
         plt.savefig("test_igv_plot.3.pdf")
 
 
+    def test_hic_plot():
+        from sashimi.file.HiCMatrixTrack import HiCTrack
+        fig, ax = plt.subplots()
+        region = GenomicLoci("X", 2500000, 2600000, "*")
+        hic = HiCTrack.create(path="../example/Li_et_al_2015.h5", label="Li",
+                              depth=30000,
+                              trans="log2"
+                              )
+        hic.load(
+            region=region
+        )
+        plot_hic(ax, {hic.label: hic}, y_label=hic.label)
+        plt.savefig("test_hic.pdf")
+
+
     # test_igv_plot()
     # test_igv_plot2()
-    test_igv_plot3()
+    test_hic_plot()
     # test_ref()

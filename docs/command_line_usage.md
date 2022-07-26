@@ -61,7 +61,7 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=48]
     --group-by-cell               Group by cell types in density/line plot
   Output settings:
     -o, --output PATH             Path to output graph file
@@ -169,6 +169,15 @@ Options:
                                   (del_ratio_ignore), then the deletion gap
                                   will be filled. currently the
                                   del_ratio_ignore was 1.0.  [0.0<=x<=1.0]
+  HiC settings:
+    --hic PATH                    The path to list of input files, a tab
+                                  separated text file,  - 1st column is path
+                                  to input file, - 2nd column is the file
+                                  category, - 3rd column is input file alias
+                                  (optional), - 4th column is color of input
+                                  files (optional) - 5th column is data
+                                  transform for HiC matrix, eg log1p, log2,
+                                  log10 (optional).
   Additional annotation:
     -f, --genome PATH             Path to genome fasta
     --sites TEXT                  Where to plot additional indicator lines,
@@ -330,7 +339,7 @@ sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 
 Group by cell types in density/line plot.
 
-![group by cell](imgs/cmd/group_by_cell.png)
+![](imgs/cmd/group_by_cell.png)
     
 
 ### Line plot
@@ -377,6 +386,7 @@ example/bws/0.bw    bw  bw  YlOrBr
 
 ### Igv plot
 
+
 1. Sashimi.igv module support different format file as input.
 
 An Igv-like plot provides a landscape of aligned reads in a straight and convenient way. 
@@ -422,6 +432,57 @@ SRX8994511.corrected_reads.bed.gz	igv	SRX8994511	black	43100453-43100519,4310136
 ```
 
 ![](imgs/cmd/igv_plot.3.png)
+
+### HiC heatmap
+
+#### HiC toy example 1
+
+Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https://github.com/deeptools/HiCMatrix/blob/master/hicmatrix/test/test_data/Li_et_al_2015.h5) into a config file, then pass to `--hic`. here is an example config file,
+
+```bash
+# filepath  file_category   label   color  transform	depth
+example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
+```
+
+for each hic track, a bigger `depth` means a higher y-axis.  
+
+![](imgs/cmd/hic.1.png)
+
+#### HiC toy example 2
+
+Because `Li_et_al_2015.h5` doesn't contain chromosome 1, user could download a new toy dataset and add into example picture.
+
+1. download hic file and convert into h5 format
+
+```bash
+wget https://encode-public.s3.amazonaws.com/2016/12/01/a241cba5-df2e-45fb-9a8f-5af5587fb02a/ENCFF121YPY.hic
+hicConvertFormat -m ENCFF121YPY.hic --inputFormat hic --outputFormat cool -o ENCFF121YPY.cool --resolutions 1000
+hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
+```
+
+2. prepare the config file
+
+```bash
+# filepath  file_category   label   color  transform	depth
+example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
+```
+3. run Sashimi
+
+```bash
+python main.py \
+-e chr1:1200000-1300000:+ \
+-r example/example.sorted.gtf.gz \
+--interval example/interval_list.tsv \
+--hic example/hic.2.tsv \
+-o hic.2.pdf \
+--dpi 300 \
+--width 10 \
+--height 1 \
+--domain
+
+```
+here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
+
 
 ### Additional annotation
 
