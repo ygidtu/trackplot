@@ -339,7 +339,7 @@ sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 
 Group by cell types in density/line plot.
 
-![group by cell](imgs/cmd/group_by_cell.png)
+![](imgs/cmd/group_by_cell.png)
     
 
 ### Line plot
