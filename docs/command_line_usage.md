@@ -456,15 +456,15 @@ Because `Li_et_al_2015.h5` doesn't contain chromosome 1, user could download a n
 
 ```bash
 wget https://encode-public.s3.amazonaws.com/2016/12/01/a241cba5-df2e-45fb-9a8f-5af5587fb02a/ENCFF121YPY.hic
-hicConvertFormat -m ENCFF121YPY.hic --inputFormat hic --outputFormat cool -o ENCFF121YPY.cool --resolutions 10000
-hicConvertFormat -m ENCFF121YPY_10000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
+hicConvertFormat -m ENCFF121YPY.hic --inputFormat hic --outputFormat cool -o ENCFF121YPY.cool --resolutions 1000
+hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
 ```
 
 2. prepare the config file
 
 ```bash
 # filepath  file_category   label   color  transform	depth
-example/ENCFF718AWL_chr1.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
+example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
 ```
 3. run Sashimi
 

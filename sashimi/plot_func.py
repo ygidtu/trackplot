@@ -216,7 +216,7 @@ def set_y_ticks(
 
         universal_y_ticks = pylab.linspace(min_used_y_val, max_used_y_val, n_y_ticks + 1)
         # add zero into strand-aware plot
-        universal_y_ticks = np.append(universal_y_ticks, 0)
+        universal_y_ticks = np.unique(np.append(universal_y_ticks, 0))
         universal_y_ticks = sorted(universal_y_ticks)
         curr_y_tick_labels = []
 
@@ -225,8 +225,7 @@ def set_y_ticks(
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
             else:
-                # curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
-                curr_y_tick_labels.append("%d" % lab)
+                curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
         u"""
         @2019.01.04
         If there is no bam file, draw a blank y-axis 
