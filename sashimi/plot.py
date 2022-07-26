@@ -249,7 +249,7 @@ class Plot(object):
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
                       remove_empty_transcripts: bool = False,
-                      color: Optional[str] = None,
+                      color: Optional[str] = "black",
 
                       # transcripts related parameters
                       font_size: int = 5,
@@ -361,7 +361,7 @@ class Plot(object):
 
     def add_density(self,
                     path: str,
-                    category: str,
+                    category: str = "bam",
 
                     # file loading parameters
                     label: Union[str, List[str]] = "",
@@ -444,7 +444,7 @@ class Plot(object):
 
     def add_heatmap(self,
                     path: str,
-                    group: str,
+                    group: str = "",
                     category: str = "bam",
 
                     # file loading parameters
@@ -529,7 +529,7 @@ class Plot(object):
 
     def add_line(self,
                  path: str,
-                 group: str,
+                 group: str = "",
                  category: str = "bam",
 
                  # file loading parameters
