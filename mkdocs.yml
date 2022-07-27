@@ -7,4 +7,5 @@ nav:
   - 'installation.md'
   - 'command_line_usage.md'
   - 'interactive.md'
+  - 'web.md'
 theme: 'readthedocs'

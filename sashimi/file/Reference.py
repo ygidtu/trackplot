@@ -79,10 +79,11 @@ class Reference(File):
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """
         size = len(self.data)
+
         if self.domain:
             size += len(self.domain)
 
-        return int(max(size * scale, 1))
+        return int(max(size * float(scale), 1))
 
     @property
     def exons(self) -> List[List[int]]:

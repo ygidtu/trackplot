@@ -3,6 +3,7 @@
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
+import io
 import math
 import os.path
 
@@ -11,6 +12,8 @@ from typing import List, Optional, Set, Union, Dict
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
 from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -770,6 +773,7 @@ class Plot(object):
              fig_width: Union[int, float] = 0,
              fig_height: Union[int, float] = 0,
              raster: bool = False,
+             return_image: Optional[str] = None,
              *args, **kwargs):
         u"""
         draw image
@@ -780,6 +784,7 @@ class Plot(object):
         :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
         :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
         :param raster: plot rasterizer side plot
+        :param return_image: used for interactive ui
         """
         assert self.region is not None, f"please set the plotting region first."
 
@@ -811,9 +816,9 @@ class Plot(object):
                 plots_n_cols = 2
 
         if fig_width and fig_height:
-            plt.figure(figsize=[fig_width, fig_height * plots_n_rows], dpi=dpi)
+            fig = plt.figure(figsize=[fig_width, fig_height * plots_n_rows], dpi=dpi)
         else:
-            plt.figure(dpi=dpi)
+            fig = plt.figure(dpi=dpi)
 
         logger.debug(f"plots n_rows={plots_n_rows}; n_cols = {plots_n_cols}")
         logger.info("init graph_coords")
@@ -957,6 +962,13 @@ class Plot(object):
 
         if output:
             plt.savefig(output, transparent=True, bbox_inches='tight')
+        elif return_image:
+            output = io.BytesIO()
+            if return_image == "png":
+                FigureCanvasAgg(fig).print_png(output)
+            elif return_image == "pdf":
+                FigureCanvasPdf(fig).print_pdf(output)
+            return output
         else:
             plt.show()
 
