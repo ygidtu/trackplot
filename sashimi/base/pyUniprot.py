@@ -98,7 +98,7 @@ class Uniprot(object):
                         for i in sub_domain["comment"]:
                             if "isoform" in i.keys():
                                 all_alternative_uniprot_id.extend(list(map(lambda x: x['id'], i["isoform"])))
-                    except KeyError:
+                    except (KeyError, AttributeError):
                         continue
 
                 if len(all_alternative_uniprot_id) != 0:
@@ -138,7 +138,7 @@ class Uniprot(object):
                         current_uniprot_inf = rq.get(
                             request_url,
                             timeout=self.timeout,
-                            proxies = self.proxy
+                            proxies=self.proxy
                         )
                         current_uniprot_inf = json.loads(current_uniprot_inf.text)
 
@@ -233,5 +233,7 @@ if __name__ == '__main__':
         # print(trans_id_pep.info)
         # print('done')
         # print(trans_id_pep.ensembl_info, trans_id_pep.__domain_info__)
+
+
     test()
     pass
