@@ -352,6 +352,7 @@ class Reference(File):
         :return: list of Transcript
         """
         transcripts = {}
+        exons = {}
 
         for rec in Reader.read_gtf(self.path, region):
             start = max(rec.start, region.start)
@@ -377,7 +378,10 @@ class Reference(File):
                     )
 
             elif re.search(r"(exon)", rec.feature, re.I):
-                transcripts[rec.transcript_id].exons.append(
+                if rec.transcript_id not in exons.keys():
+                    exons[rec.transcript_id] = []
+
+                exons[rec.transcript_id].append(
                     GenomicLoci(
                         chromosome=rec.contig,
                         start=start,
@@ -385,6 +389,11 @@ class Reference(File):
                         strand=rec.strand
                     )
                 )
+
+        for key, trans in transcripts.items():
+            if key in exons.keys():
+                trans.exons += exons[key]
+
         return sorted(transcripts.values())
 
     def __load_bam__(self, region: GenomicLoci, threshold_of_reads: int = 0) -> List[Transcript]:
