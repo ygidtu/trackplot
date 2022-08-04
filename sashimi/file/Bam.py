@@ -10,7 +10,7 @@ changelog:
 import gzip
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional, Set
+from typing import Optional, Set
 
 import numpy as np
 import pysam
@@ -20,30 +20,10 @@ from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Junction import Junction
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Readder import Reader
-from sashimi.file.File import File
+from sashimi.file.File import SingleCell
 
 
-def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
-    u"""
-    separate barcodes by its first character to reduce set size
-    :params barcodes: list or set of barcodes
-    """
-    res = {}
-
-    if barcodes is not None:
-        for b in barcodes:
-            if b:
-                f = b[:min(3, len(b))]
-
-                if f not in res.keys():
-                    res[f] = set()
-
-                res[f].add(b)
-
-    return res
-
-
-class Bam(File):
+class Bam(SingleCell):
     def __init__(self, path: str, label: str = "", title: str = "", barcodes: Optional[Set[str]] = None,
                  barcode_tag: str = "CB", umi_tag: str = "UB", library: str = "fru"):
         u"""
@@ -56,12 +36,9 @@ class Bam(File):
         :param umi_tag: the UMI barcode tag, default is UB according to 10X Genomics
         :param library: library for determining of read strand.
         """
-        super().__init__(path)
+        super().__init__(path, barcodes, barcode_tag, umi_tag)
         self.title = title
         self.label = label if label else os.path.basename(path).replace(".bam", "")
-        self.barcodes = __set_barcodes__(barcodes)
-        self.barcode_tag = barcode_tag
-        self.umi_tag = umi_tag
         self.library = library
 
     @classmethod
@@ -110,34 +87,6 @@ class Bam(File):
             library=library
         )
 
-    def has_barcode(self, barcode: str) -> bool:
-        u"""
-        check whether contains barcodes
-        :param barcode: barcode string
-        """
-        if barcode:
-            f = barcode[:min(3, len(barcode))]
-
-            temp = self.barcodes.get(f, set())
-
-            return barcode in temp
-        return False
-
-    def empty_barcode(self) -> bool:
-        u"""
-        check whether this bam do not contain any barcodes
-
-        """
-        count = 0
-
-        for i in self.barcodes.values():
-            count += len(i)
-
-            if count > 0:
-                return False
-
-        return True
-
     def __hash__(self):
         return hash(self.label)
 
@@ -152,9 +101,6 @@ class Bam(File):
 
         return "\t".join(temp)
 
-    def __eq__(self, other) -> bool:
-        return self.__hash__() == other.__hash__()
-
     def to_csv(self) -> str:
         temp = []
 
@@ -166,20 +112,6 @@ class Bam(File):
             temp.append(str(x))
 
         return ",".join(temp)
-
-    def __add__(self, other):
-        self.path += other.path
-
-        for i, j in other.barcodes.items():
-            if i not in self.barcodes.keys():
-                self.barcodes[i] = j
-            else:
-                self.barcodes[i] |= j
-
-        return self
-
-    def copy(self):
-        return deepcopy(self)
 
     def load(self,
              region: GenomicLoci,
@@ -213,10 +145,13 @@ class Bam(File):
         filtered_junctions = {}
         depth_vector = np.zeros(len(region), dtype='f')
         spanned_junctions = kwargs.get("junctions", {})
+        remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus = dict()
         spanned_junctions_minus = dict()
         plus, minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
         side_plus, side_minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
+
+        umis = {}
 
         try:
             for read, strand in Reader.read_bam(path=self.path, region=region, library=self.library):
@@ -238,6 +173,21 @@ class Bam(File):
                 if self.barcodes:
                     if not read.has_tag(self.barcode_tag) or self.has_barcode(read.get_tag(self.barcode_tag)):
                         continue
+
+                    if remove_duplicate_umi:
+                        barcode = read.get_tag(self.barcode_tag)
+                        if barcode not in umis.keys():
+                            umis[barcode] = {}
+
+                        # filter reads with duplicate umi by barcode
+                        if not read.has_tag(self.umi_tag):
+                            umi = read.get_tag(self.umi_tag)
+
+                            if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
+                                continue
+
+                            if len(umis[barcode]) == 0:
+                                umis[barcode][umi] = hash(read.query_name)
 
                 start = read.reference_start
                 if required_strand and strand != required_strand:

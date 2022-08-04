@@ -68,3 +68,35 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 - the rest usage please check [Command line usage](./command_line_usage.md)
 
 **Note: ** detailed command line usage please check [Command line Usage](./command_line_usage.md)
+
+
+## Build Web interface from source
+
+1. **nodejs is required**
+2. **Users could change the server ip and port by modify the settings.ini**
+
+```bash
+git clone https://github.com/ygidtu/sashimi
+cd sashimi/web
+
+# build the frontend static files
+npm install -g vue-cli && npm install
+npm build
+
+# prepare the backend server
+pip fastapi pydantic jinja2 uvicorn
+
+python server.py
+```
+
+
+### Using docker image
+
+#### Pull from web
+
+```bash
+docker pull ygidtu/sashimiweb
+
+export PORT=8080  # the port your are trying to exposed
+docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) -p $PORT:5000 ygidtu/sashimiweb
+```

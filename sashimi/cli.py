@@ -256,6 +256,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("-p", "--process", type=click.IntRange(min=1, max=cpu_count()), default=1,
                  help="How many cpu to use")
 @optgroup.option("--group-by-cell", type=click.BOOL, is_flag=True, help="Group by cell types in density/line plot")
+@optgroup.option("--remove-duplicate-umi", type=click.BOOL, is_flag=True, help="Drop duplicated UMIs by barcode")
 @optgroup.group("Output settings")
 @optgroup.option("-o", "--output", type=click.Path(),
                  help="Path to output graph file", show_default=True)
@@ -626,7 +627,8 @@ def main(**kwargs):
         exon_scale=kwargs["exon_scale"],
         reference_scale=kwargs["reference_scale"],
         strock_scale=kwargs["stroke_scale"],
-        same_y=kwargs["same_y"]
+        same_y=kwargs["same_y"],
+        remove_duplicate_umi=kwargs["remove_duplicate_umi"]
     )
 
 

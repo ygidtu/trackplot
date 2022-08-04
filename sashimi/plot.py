@@ -21,6 +21,7 @@ from sashimi.base.ReadDepth import ReadDepth
 from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
+from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
@@ -342,6 +343,13 @@ class Plot(object):
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
                 library=library
+            )
+        elif category == "atac":
+            obj = ATAC.create(
+                path,
+                label=label,
+                title=title,
+                barcodes=barcodes
             )
         elif category == "igv":
             obj = ReadSegment.create(
