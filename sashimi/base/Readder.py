@@ -54,6 +54,12 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
             current_strand = "-"
     else:
         current_strand = "+" if read.is_reverse else "-"
+        """
+        TODO, add a more elegant way to solve some single-end strand specific library.
+        """
+        if library == "frf":
+            # here for 3' tag rna seq
+            current_strand = __opposite_strand__(current_strand)
 
     if library == "frf":
         return current_strand
