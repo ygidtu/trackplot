@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.douban.com/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+rich = "*"
+pysam = "*"
+seaborn = "*"
+matplotlib = "*"
+filetype = "*"
+click = "*"
+numpy = "*"
+requests = "*"
+xmltodict = "*"
+pybigwig = "*"
+pandas = "*"
+click-option-group = "*"
+cairocffi = "*"
+hicmatrix = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3"

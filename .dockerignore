@@ -1,0 +1,6 @@
+example/
+*.sh
+.git/
+Dockerfile
+WebDockerfile
+node_modules/

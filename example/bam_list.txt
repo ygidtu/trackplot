@@ -1,0 +1,5 @@
+example/bams/0.bam	P1
+example/bams/1.bam	P1
+example/bams/2.bam	P1
+example/bams/3.bam	P1
+example/bams/4.bam	P1

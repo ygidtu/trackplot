@@ -1,0 +1,5 @@
+#filepath	file_category	label	color
+example/SRX9697989.corrected_reads.bed.gz	igv	bed12	blue
+example/SRX9697989.corrected_reads.6.bed.gz	igv	bed6
+example/SRX9697989.corrected_reads.3.bed.gz	igv	bed3	red
+example/bams/0.bam	igv	bam
