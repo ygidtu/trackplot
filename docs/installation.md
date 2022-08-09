@@ -80,8 +80,8 @@ git clone https://github.com/ygidtu/sashimi
 cd sashimi/web
 
 # build the frontend static files
-npm install -g vue-cli && npm install
-npm build
+npm install -g vue-cli vite && npm install
+vite build
 
 # prepare the backend server
 pip fastapi pydantic jinja2 uvicorn

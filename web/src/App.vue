@@ -1,12 +1,10 @@
 <template>
-  <div id="app">
-    <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
-    <el-row>
-      <el-col :span="24">
-        <router-view/>
-      </el-col>
-    </el-row>
-  </div>
+  <el-row>
+    <el-col :span="20" :offset="2">
+        <router-view style="width:100%" />
+    </el-col>
+  </el-row>
+
 </template>
 
 <script>
@@ -23,6 +21,5 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
 </style>

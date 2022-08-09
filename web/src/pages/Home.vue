@@ -1,5 +1,5 @@
 <template>
-  <div class="hello">
+  <div>
     <h1>{{ msg }}</h1>
 
     <el-divider/>
@@ -14,18 +14,22 @@
 
     <el-row>
       <el-col :span="20" :offset="2">
-        <img src="../assets/example.png" width="100%"/>
+        <el-image :src="example" width="100%"/>
       </el-col>
     </el-row>
   </div>
 </template>
 
 <script>
+
+import urls from '../url.js'
+
 export default {
   name: 'Home',
   data() {
     return {
-      msg: "Wellcome to your Sashimi App"
+      msg: "Wellcome to your Sashimi App",
+      example: `${urls.static}/assets/example.png`
     }
   }
 }

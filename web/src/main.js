@@ -1,22 +1,29 @@
-import Vue from 'vue'
-
-import axios from 'axios';
-import VueAxios from 'vue-axios';
-import VueCookies from 'vue-cookies'
-
-import ElementUI from 'element-ui';
-import 'element-ui/lib/theme-chalk/index.css';
+import { createApp, h, ref } from 'vue'
 import App from './App.vue'
-import index from './router';
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+import VueCookies from 'vue-cookies'
+import { createRouter, createWebHashHistory } from 'vue-router'
+
+import Home from "./pages/Home.vue";
+import Plot from "./pages/Plot.vue";
 
 
-Vue.use(ElementUI);
-Vue.use(VueAxios, axios);
-Vue.config.productionTip = false
-Vue.use(VueCookies, { expire: '7d'})
+const routes = [
+    { path: "/", component: Home },
+    { path: "/home", redirect: "/" },
+    { path: "/plot", component: Plot },
+];
 
+const router = createRouter({
+    history: createWebHashHistory(),
+    routes,
+})
 
-new Vue({
-  router: index,
-  render: h => h(App),
-}).$mount('#app')
+const app = createApp(App);
+app.use(h)
+app.use(ref)
+app.use(VueAxios, axios)
+app.use(VueCookies)
+app.use(router)
+app.mount('#app')
