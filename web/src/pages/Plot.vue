@@ -1,5 +1,5 @@
 <template>
-  <div class="hello">
+  <div>
     <h1>{{ msg }}</h1>
 
     <el-divider/>
@@ -23,7 +23,7 @@
     <el-divider/>
     <el-row>
       <el-col :span="20" :offset="2">
-        <el-form :model="ruleForm" ref="ruleForm" label-width="80px" :rules="rules">
+        <el-form :model="ruleForm" ref="ruleForm" style="width: 100%" label-width="80px" :rules="rules">
           <el-collapse v-model="active">
             <el-collapse-item title="Region" name="0">
               <el-row :gutter="20">
@@ -43,7 +43,9 @@
               </el-row>
             </el-collapse-item>
             <el-collapse-item title="Reference" name="1">
-              <Reference/>
+              <div>
+                <Reference />
+              </div>
             </el-collapse-item>
             <el-collapse-item title="Add" name="2">
               <Add/>
@@ -60,9 +62,10 @@
 
 <script>
 
-import Add from '@/components/Add.vue'
-import Param from '@/components/Param.vue'
-import Reference from '@/components/Reference.vue'
+import Add from '../components/Add.vue'
+import Param from '../components/Param.vue'
+import Reference from '../components/Reference.vue'
+import urls from '../url.js'
 
 export default {
   name: "Plot",
@@ -119,7 +122,7 @@ export default {
       let sites = regions[1].split("-")
 
       const self = this;
-      this.axios.post(`/api/plot?pid=${this.$cookies.get("plot")}&func=set_region`, {
+      this.axios.post(`${urls.plot}?pid=${this.$cookies.get("plot")}&func=set_region`, {
         path: "",
         param: [
           {key: "chromosome", default: chrom, annotation: "str"},
@@ -128,29 +131,28 @@ export default {
           {key: "strand", default: strand, annotation: "str"},
         ]
       }).then(response => {
-        this.$notify({
+        ElNotification({
           title: 'Success',
           message: `set_region execute success`,
           type: 'success'
-        });
+        })
       }).catch(error => {
-        self.$notify({
-          showClose: true,
+        ElNotification({
           type: 'error',
           title: `Error Status: ${error.response.status}`,
-          message: error.response.data.detail
+          message: h('i', { style: 'color: teal' }, error.response.data.detail)
         })
       })
     },
     reset() {
-      this.axios.get(`/api/del?pid=${this.$cookies.get("plot")}`)
+      this.axios.get(`${urls.del}?pid=${this.$cookies.get("plot")}`)
       location.reload()
     }
   },
   components: {Add, Param, Reference},
   mounted() {
     if (this.$cookies.isKey("plot")) {
-      this.axios.get(`/api/del?pid=${this.$cookies.get("plot")}`)
+      this.axios.get(`${urls.del}?pid=${this.$cookies.get("plot")}`)
     }
     this.$cookies.set("plot", (Math.random() + 1).toString(36).substring(7)) //
   }

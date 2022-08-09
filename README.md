@@ -20,7 +20,7 @@ python main.py \
   --width 10 \
   --height 1 \
   --barcode example/barcode_list.tsv \
-  --domain
+  --domain --remove-duplicate-umi
 ```
 
 ![](example/example.png)

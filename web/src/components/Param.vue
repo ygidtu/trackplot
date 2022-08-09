@@ -5,7 +5,7 @@
         <el-form-item :label="p.key" v-if="!String(p.default).includes('inspect._empty')">
           <el-input v-if="p.annotation === 'str' || p.annotation === 'Optional[str]'" v-model="p.default"/>
           <el-input-number v-else-if="p.annotation === 'int'" v-model="p.default"/>
-          <el-input-number v-else-if="p.annotation === 'float'" :precision="2" v-model="p.default"/>
+          <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default"/>
           <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>
           <el-input v-else-if="!p.default.includes('inspect._empty')" v-model="p.default"></el-input>
         </el-form-item>
@@ -30,7 +30,8 @@
 </template>
 
 <script>
-import saveAs from 'file-saver'
+import saveAs from 'file-saver';
+import urls from '../url.js';
 
 export default {
   name: "Param",
@@ -48,11 +49,24 @@ export default {
   methods: {
     loadParams() {
       const self = this;
-      this.axios.get("/api/params", {
+      this.axios.get(urls.params, {
         params: {target: this.$props.func}
       }).then(response => {
-        self.param = response.data
+        self.param = []
+        for (let row of response.data) {
+          if (row.annotation === 'float') {
+            row.default = parseFloat(row.default)
+          } else if (row.annotation === 'int') {
+            row.default = parseInt(row.default)
+          }
+
+          self.param.push(row)
+        }
       }).catch(error => {
+          ElNotification({
+            title: 'Title',
+            message: h('i', { style: 'color: teal' }, 'This is a reminder'),
+          })
         self.$notify({
           showClose: true,
           type: 'error',
@@ -68,15 +82,15 @@ export default {
       if (this.$props.func === "plot") {
         config["responseType"] = "blob"
       } else if (this.$props.path === "") {
-        self.$notify({
-          showClose: true,
-          type: 'error',
-          title: `Please choose file first`,
+        ElNotification({
+           showClose: true,
+           type: 'error',
+           title: `Please choose file first`,
         })
         return
       }
 
-      this.axios.post(`http://127.0.0.1:5000/api/plot?pid=${this.$cookies.get("plot")}&func=${this.$props.func}`, {
+      this.axios.post(`${urls.plot}?pid=${this.$cookies.get("plot")}&func=${this.$props.func}`, {
         path: this.$props.path,
         param: this.param
       }, config).then(response => {
@@ -85,33 +99,37 @@ export default {
           const blob = new Blob([data], {type: headers['content-type']})
           self.img = window.URL.createObjectURL(blob)
         } else {
-          this.$notify({
+          ElNotification({
             title: 'Success',
             message: `${this.$props.func} execute success`,
             type: 'success'
-          });
+          })
         }
       }).catch(error => {
-        self.$notify({
-          showClose: true,
-          type: 'error',
-          title: `Error Status: ${error.response.status}`,
-          message: error.response.data.detail
-        })
+        let fr = new FileReader();
+        fr.onload = function() {
+          let msg = JSON.parse(this.result)
+          ElNotification({
+            type: 'error',
+            title: `Error Status: ${error.response.status}`,
+            message: h('i', { style: 'color: teal' }, msg.detail)
+          })
+        };
+
+        fr.readAsText(error.response.data);
       })
     },
     save() {
       const self = this;
       if (this.$props.func !== "plot") {
-        self.$notify({
-          showClose: true,
+        ElNotification({
           type: 'error',
           title: `Please choose file first`,
         })
         return
       }
 
-      this.axios.post(`http://127.0.0.1:5000/api/plot?pid=${this.$cookies.get("plot")}&func=save`, {
+      this.axios.post(`${urls.plot}?pid=${this.$cookies.get("plot")}&func=save`, {
         path: this.$props.path,
         param: this.param,
       }, {responseType: 'blob'}).then(response => {
@@ -119,12 +137,17 @@ export default {
         let filename = headers["content-disposition"]
         saveAs(data, filename)
       }).catch(error => {
-        self.$notify({
-          showClose: true,
-          type: 'error',
-          title: `Error Status: ${error.response.status}`,
-          message: error.response.data.detail
-        })
+        let fr = new FileReader();
+        fr.onload = function() {
+          let msg = JSON.parse(this.result)
+          ElNotification({
+            type: 'error',
+            title: `Error Status: ${error.response.status}`,
+            message: h('i', { style: 'color: teal' }, msg.detail)
+          })
+        };
+
+        fr.readAsText(error.response.data);
       })
     },
   },

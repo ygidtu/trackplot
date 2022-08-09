@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-row :gutter="20"> <!--  v-if="status.region === 'success'" -->
+    <el-row :gutter="20">
       <el-col :span="8" :offset="1">
         <el-row>
           <el-select v-model="image.select" placeholder="Please choose">
@@ -14,41 +14,45 @@
         </el-row>
       </el-col>
       <el-col :span="12" :offset="1">
-        <Param :func.sync="funcName" :path.sync="options.file" :plot_type.sync="image.select"/>
+        <Param :func.sync="'add_' + this.image.select.toLowerCase()" :path.sync="options.file" :plot_type.sync="image.select"/>
       </el-col>
     </el-row>
     <div id="dialog">
-      <el-dialog title="Reference" :visible.sync="dialog.file" :modal="true">
-        <el-row>
-          <el-col :span="16" :offset="2">
-            <el-input type="textarea"
-                      v-model="options.file"
-                      clearable @input="fill_path(options.file)"
-                      :rows="5"
-            />
-          </el-col>
-          <el-col :span="4">
-            <el-button type="primary" @click="valid(options.file)">Choose</el-button>
-          </el-col>
-        </el-row>
+      <el-dialog title="Reference" v-model="dialog.file">
+        <template #footer>
+          <el-row>
+            <el-col :span="16" :offset="2">
+              <el-input type="textarea"
+                        v-model="options.file"
+                        clearable @input="fill_path(options.file)"
+                        :rows="5"
+              />
+            </el-col>
+            <el-col :span="4">
+              <el-button type="primary" @click="valid(options.file)">Choose</el-button>
+            </el-col>
+          </el-row>
 
-        <el-row>
-          <ul class="infinite-list" style="overflow:auto">
-            <li v-for="i in options.files" :key="i.path" style="text-align: left;">
-              <el-link @click="fill_path(i.path)" :icon="i.isdir ? 'el-icon-folder' : 'el-icon-files'">
-                {{ i.path }}
-              </el-link>
-            </li>
-          </ul>
-        </el-row>
-
+          <el-row>
+            <ul class="infinite-list" style="overflow:auto">
+              <li v-for="i in options.files" :key="i.path" style="text-align: left;">
+                <el-link @click="fill_path(i.path)" :icon="i.isdir ? 'el-icon-folder' : 'el-icon-files'">
+                  {{ i.path }}
+                </el-link>
+              </li>
+            </ul>
+          </el-row>
+        </template>
       </el-dialog>
     </div>
   </div>
 </template>
 
 <script>
-import Param from '@/components/Param'
+import Param from './Param.vue'
+import urls from '../url.js'
+
+import {ref} from 'vue'
 
 export default {
   name: "Add",
@@ -60,7 +64,7 @@ export default {
         select: "Density"
       },
       dialog: {
-        file: false
+        file: ref(false)
       },
       options: {
         files: [],
@@ -74,41 +78,41 @@ export default {
 
       this.options.file = path;
 
-      this.axios.get("/api/file", {
+      this.axios.get(urls.file, {
         params: {"target": path}
       }).then(response => {
         self.options.files = response.data;
       }).catch(error => {
-        self.$notify({
+        ElNotification({
           showClose: true,
           type: 'error',
           title: `Error Status: ${error.response.status}`,
-          message: error.response.data.detail
-        });
+          message: h('i', { style: 'color: teal' },error.response.data.detail)
+        })
       })
     },
     valid: function (path) {
       const self = this;
-      this.axios.get("/api/file", {
+      this.axios.get(urls.file, {
         params: {"target": path, valid: true},
       }).then(response => {
         if (response.data) {
-          self.dialog.file = false;
+          self.dialog.file = ref(false);
         } else {
-          self.$notify({
-            showClose: true,
-            type: 'error',
-            title: "Error",
-            message: "Please select a file, instead of directory"
-          });
+         ElNotification({
+          showClose: true,
+          type: 'error',
+          title: `Error`,
+          message: h('i', { style: 'color: teal' }, "Please select a file, instead of directory")
+        })
         }
       }).catch(error => {
-        self.$notify({
+         ElNotification({
           showClose: true,
           type: 'error',
           title: `Error Status: ${error.response.status}`,
-          message: error.response.data.detail
-        });
+          message: h('i', { style: 'color: teal' }, error.response.data.detail)
+        })
       })
     }
 
@@ -116,11 +120,6 @@ export default {
   mounted() {
     this.fill_path(this.options.file)
   },
-  computed: {
-    funcName() {
-      return "add_" + this.image.select.toLowerCase()
-    }
-  }
 }
 </script>
 
