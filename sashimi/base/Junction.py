@@ -13,23 +13,20 @@ class Junction(object):
     And provide relative position comparison
     """
 
-    __slots__ = [
-        "chromosome",
-        "start",
-        "end"
-    ]
+    __slots__ = ["chromosome", "start", "end", "strand"]
 
-    def __init__(self, chromosome, start, end):
+    def __init__(self, chromosome, start, end, strand: str = "+"):
         u"""
         init this class
         :param chromosome: the chromosome name of the given junction
         :param start: the start site of the given junction
         :param end: the end site of the given junction
-
+        :param strand: the strand of the given junction.
         """
         self.chromosome = chromosome
         self.start = int(start) + 1
         self.end = int(end)
+        self.strand = strand
 
         if self.end <= self.start:
             raise ValueError(f"End site({start}) should bigger than start site({end})")
@@ -53,7 +50,11 @@ class Junction(object):
         chromosome = string[0]
         start, end = string[1].split("-")
 
-        return cls(chromosome=chromosome, start=start, end=end)
+        strand = "+"
+        if len(string) > 2:
+            strand = string[-1]
+
+        return cls(chromosome=chromosome, start=start, end=end, strand=strand)
 
     def __hash__(self):
         u"""

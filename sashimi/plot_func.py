@@ -573,6 +573,7 @@ def plot_density(
         y_label: str = "",
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
+        density_by_plot: bool = False,
         **kwargs
 ):
     u"""
@@ -593,6 +594,8 @@ def plot_density(
     :param y_label: the text of y-axis title
     :param theme: the theme name
     :param max_used_y_val: used to set same max y axis
+    :param density_by_plot: whether to draw density plot in strand-specific manner.
+    :param kwargs:
     :return:
     """
     if obj:
@@ -612,7 +615,7 @@ def plot_density(
 
     jxns = data.junctions_dict
 
-    if not data.strand_aware:
+    if not data.strand_aware and not density_by_plot:
         wiggle = data.wiggle
 
         if max_used_y_val is None:
@@ -648,8 +651,8 @@ def plot_density(
         y_max = max_used_y_val
         y_min = min_used_y_val
 
-        # Reduce memory footprint by using incremented graphcoords.
-        for current_dat in [data.minus, data.plus]:
+        # Reduce memory footprint by using incremented graph_coords.
+        for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
             if sum(current_dat) == 0:
                 continue
             compressed_x = []
@@ -659,7 +662,10 @@ def plot_density(
                 compressed_wiggle.append(current_dat[i])
                 compressed_x.append(graph_coords[i])
 
-            ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+            if idx == "-" and density_by_plot:
+                ax.fill_between(compressed_x, [-1 * x for x in compressed_wiggle], y2=0, color=color, lw=0, step="post")
+            else:
+                ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -689,7 +695,7 @@ def plot_density(
             """
             ss1 = graph_coords[ss1_idx]
             ss2 = graph_coords[ss2_idx]
-            if not data.strand_aware:
+            if not data.strand_aware and not density_by_plot:
                 # draw junction on bottom
                 if plotted_count % 2 == 0:
 
@@ -797,7 +803,7 @@ def plot_density(
     )
 
 
-def plot_side_plot(
+def plot_site_plot(
         ax: mpl.axes.Axes,
         obj: File,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
@@ -840,7 +846,7 @@ def plot_side_plot(
     if not show_y_label:
         y_label = ""
 
-    plus, minus = data.side_plus, data.side_minus
+    plus, minus = data.site_plus, data.site_minus
 
     max_height = max(plus)
     min_height = min(minus)

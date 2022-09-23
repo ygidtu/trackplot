@@ -9,7 +9,7 @@ python main.py \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
-  --show-side \
+  --show-site \
   --focus 1272656-1272656:1275656-1277656 \
   --stroke 1275656-1277656:1277856-1278656@blue \
   --sites 1271656,1271656,1272656 \
@@ -32,13 +32,13 @@ List all the parameters
 ```bash
 python main.py --help
 # Or
-sashimi --help
+pysashimi --help
 ```
 
 Parameters:
 
 ```bash
-Usage: main.py [OPTIONS]
+Usage: main.py [OPTIONS] ?12  python main.py -h                                                                                                                                             ✔  sashimi-Zgs4tuDQ Py │ base Py  16:49:18 
 
   Welcome to use sashimi
 
@@ -46,7 +46,7 @@ Options:
   --version                       Show the version and exit.
   --debug                         enable debug level log
   -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
-  Common input files configuration:
+  Common input files configuration: 
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
                                   NOTE: LUAD|red -> LUAD while be labeled in
                                   plots and red while be the fill color
@@ -61,35 +61,31 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=48]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
     --group-by-cell               Group by cell types in density/line plot
-  Output settings:
+    --remove-duplicate-umi        Drop duplicated UMIs by barcode
+  Output settings: 
     -o, --output PATH             Path to output graph file
     -d, --dpi INTEGER RANGE       The resolution of output file  [default:
                                   300; x>=1]
-    --raster                      The would convert heatmap and side plot to
+    --raster                      The would convert heatmap and site plot to
                                   raster image (speed up rendering and produce
                                   smaller files), only affects pdf, svg and PS
-                                  [default: False]
     --height FLOAT                The height of output file, default adjust
                                   image height by content  [default: 0]
     --width INTEGER RANGE         The width of output file, default adjust
                                   image width by content  [default: 0; x>=0]
     --backend TEXT                Recommended backend  [default: Cairo]
-  Reference settings:
+  Reference settings: 
     -r, --reference PATH          Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
                                   column is the label [optional]
-    --show-id                     Whether show gene id or gene name  [default:
-                                  False]
-    --show-exon-id                Whether show gene id or gene name  [default:
-                                  False]
+    --show-id                     Whether show gene id or gene name
+    --show-exon-id                Whether show gene id or gene name
     --no-gene                     Do not show gene id next to transcript id
-                                  [default: False]
     --domain                      Add domain information into reference track
-                                  [default: False]
     --proxy TEXT                  The http or https proxy for EBI/Uniprot
                                   requests,if `--domain` is True, eg:
                                   http://127.0.0.1:1080
@@ -98,14 +94,13 @@ Options:
     --local-domain TEXT           Load local domain folder and load into
                                   reference track, download from https://hgdow
                                   nload.soe.ucsc.edu/gbdb/hg38/uniprot/
-    --remove-empty                Whether to plot empty transcript  [default:
-                                  False]
+    --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
     --exon-scale FLOAT            The scale of exon  [default: 1]
-  Density plot settings:
+  Density plot settings: 
     --density PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -113,19 +108,18 @@ Options:
                                   (optional), - 4th column is color of input
                                   files (optional), - 5th column is the
                                   library of input file (optional, only
-                                  required by bam file).
+                                  required by bam file). 
     --customized-junction TEXT    Path to junction table column name needs to
                                   be bam name or bam alias.
     -t, --threshold INTEGER RANGE
                                   Threshold to filter low abundance junctions
                                   [default: 0; x>=0]
-    --show-side                   Whether to draw additional side plot
-                                  [default: False]
-    --side-strand [all|+|-]       Which strand kept for side plot, default use
+    --density-by-strand           Whether to draw density plot by strand
+    --show-site                   Whether to draw additional site plot
+    --site-strand [all|+|-]       Which strand kept for site plot, default use
                                   all  [default: all]
     --show-junction-num           Whether to show the number of junctions
-                                  [default: False]
-  Line plot settings:
+  Line plot settings: 
     --line PATH                   The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -136,15 +130,14 @@ Options:
     --hide-legend                 Whether to hide legend
     --legend-position TEXT        The legend position
     --legend-ncol INTEGER RANGE   The number of columns of legend  [x>=0]
-  Heatmap plot settings:
+  Heatmap plot settings: 
     --heatmap PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file group
                                   (optional), - 4th column is color platte
                                   of corresponding group.
-    --clustering                  Enable clustering of the heatmap  [default:
-                                  False]
+    --clustering                  Enable clustering of the heatmap
     --clustering-method [single|complete|average|weighted|centroid|median|ward]
                                   The clustering method for heatmap  [default:
                                   ward]
@@ -154,7 +147,7 @@ Options:
     -T, --threshold-of-reads INTEGER RANGE
                                   Threshold to filter low abundance reads for
                                   stacked plot  [default: 0; x>=0]
-  IGV settings:
+  IGV settings: 
     --igv PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -169,7 +162,7 @@ Options:
                                   (del_ratio_ignore), then the deletion gap
                                   will be filled. currently the
                                   del_ratio_ignore was 1.0.  [0.0<=x<=1.0]
-  HiC settings:
+  HiC settings: 
     --hic PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -178,7 +171,7 @@ Options:
                                   files (optional) - 5th column is data
                                   transform for HiC matrix, eg log1p, log2,
                                   log10 (optional).
-  Additional annotation:
+  Additional annotation: 
     -f, --genome PATH             Path to genome fasta
     --sites TEXT                  Where to plot additional indicator lines,
                                   comma separated int
@@ -186,7 +179,7 @@ Options:
                                   start1-end1:start2-end2@color-label, draw a
                                   stroke line at bottom, default color is red
     --focus TEXT                  The highlight regions: 100-200:300-400
-  Layout settings:
+  Layout settings: 
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        distance between transcript label and
                                   transcript line  [default: 0.3]
@@ -194,7 +187,7 @@ Options:
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image
                                   [default: 0.25]
-  Overall settings:
+  Overall settings: 
     --font-size INTEGER RANGE     The font size of x, y-axis and so on  [x>=1]
     --reverse-minus               Whether to reverse strand of bam/reference
                                   file
@@ -308,7 +301,7 @@ chr1:1000-20000 100 200
 - the columns corresponding to input files in file list.
 - the table were filled with junction counts.
 
-2. `--show-side` and `--show-strand`
+2. `--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 

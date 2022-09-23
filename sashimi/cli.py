@@ -22,6 +22,9 @@ from conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IM
 from sashimi.plot import Plot
 
 
+__version__ = "0.0.1a"
+
+
 def decode_region(region: str):
     regions = region.split(":")
 
@@ -234,7 +237,7 @@ def process_file_list(infile: str, category: str = "density"):
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), )
-@click.version_option("0.0.1", message="Current version %(version)s")
+@click.version_option(__version__, message="Current version %(version)s")
 @click.option("--debug", is_flag=True, help="enable debug level log")
 @click.option("-e", "--event", type=click.STRING, required=True,
               help="Event range eg: chr1:100-200:+")
@@ -243,7 +246,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Index of column with color levels (1-based); "
                       "NOTE: LUAD|red -> LUAD while be labeled in plots and red while be the fill color",
                  show_default=True)
-@optgroup.option("--barcode", type=click.Path(), show_default=True,
+@optgroup.option("--barcode", type=click.Path(exists=True), show_default=True,
                  help="Path to barcode list file, At list two columns were required, "
                       "- 1st The name of bam file; \b"
                       "- 2nd the barcode; \b"
@@ -263,7 +266,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("-d", "--dpi", default=300, type=click.IntRange(min=1, clamp=True),
                  help="The resolution of output file", show_default=True)
 @optgroup.option("--raster", is_flag=True, show_default=True,
-                 help="The would convert heatmap and side plot to raster image "
+                 help="The would convert heatmap and site plot to raster image "
                       "(speed up rendering and produce smaller files), only affects pdf, svg and PS")
 @optgroup.option("--height", default=0, type=float,
                  help="The height of output file, default adjust image height by content", show_default=True)
@@ -313,10 +316,12 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Path to junction table column name needs to be bam name or bam alias.")
 @optgroup.option("-t", "--threshold", default=0, type=click.IntRange(min=0, clamp=True),
                  show_default=True, help="Threshold to filter low abundance junctions")
-@optgroup.option("--show-side", is_flag=True, type=click.BOOL,
-                 show_default=True, help="Whether to draw additional side plot")
-@optgroup.option("--side-strand", type=click.Choice(["all", "+", "-"]), default="all", show_default=True,
-                 help="Which strand kept for side plot, default use all")
+@optgroup.option("--density-by-strand", is_flag=True, type=click.BOOL,
+                 show_default=True, help="Whether to draw density plot by strand")
+@optgroup.option("--show-site", is_flag=True, type=click.BOOL,
+                 show_default=True, help="Whether to draw additional site plot")
+@optgroup.option("--site-strand", type=click.Choice(["all", "+", "-"]), default="all", show_default=True,
+                 help="Which strand kept for site plot, default use all")
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
 @optgroup.group("Line plot settings")
@@ -470,6 +475,7 @@ def main(**kwargs):
                                 label = f"{f.label} - {group}"
                             else:
                                 label = f.label
+
                             p.add_density(f.path,
                                           category=f.category,
                                           label=label,
@@ -483,8 +489,9 @@ def main(**kwargs):
                                           n_y_ticks=kwargs["n_y_ticks"],
                                           distance_between_label_axis=kwargs["distance_ratio"],
                                           show_y_label=not kwargs["hide_y_label"],
-                                          show_side_plot=kwargs["show_side"],
-                                          strand_choice=kwargs["side_strand"],
+                                          show_site_plot=kwargs["show_site"],
+                                          strand_choice=kwargs["site_strand"],
+                                          density_by_strand=kwargs["density_by_strand"]
                                           )
                     else:
                         p.add_density(f.path,
@@ -499,8 +506,8 @@ def main(**kwargs):
                                       n_y_ticks=kwargs["n_y_ticks"],
                                       distance_between_label_axis=kwargs["distance_ratio"],
                                       show_y_label=not kwargs["hide_y_label"],
-                                      show_side_plot=kwargs["show_side"],
-                                      strand_choice=kwargs["side_strand"])
+                                      show_site_plot=kwargs["show_site"],
+                                      strand_choice=kwargs["site_strand"])
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category == "bam":
@@ -628,7 +635,8 @@ def main(**kwargs):
         reference_scale=kwargs["reference_scale"],
         strock_scale=kwargs["stroke_scale"],
         same_y=kwargs["same_y"],
-        remove_duplicate_umi=kwargs["remove_duplicate_umi"]
+        remove_duplicate_umi=kwargs["remove_duplicate_umi"],
+        threshold=kwargs["threshold"],
     )
 
 

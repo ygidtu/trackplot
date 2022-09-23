@@ -29,7 +29,7 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot, plot_hic
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic
 from sashimi.file.Junction import load_custom_junction
 
 
@@ -82,7 +82,7 @@ class PlotInfo(object):
         n = 0
         if not self.category:
             pass
-        elif self.type == "side-plot" and self.category[0] == "bam":
+        elif self.type == "site-plot" and self.category[0] == "bam":
             n += 2
         elif self.type == "igv":
             n += self.obj[0].len(scale / 8)
@@ -330,6 +330,7 @@ class Plot(object):
                             deletion_ignore: Optional[int] = True,
                             del_ratio_ignore: float = .5,
                             exon_focus: Optional[str] = None,
+
                             # for hic plot
                             trans: Optional[str] = None,
                             depth: Optional[int] = 30000
@@ -342,7 +343,7 @@ class Plot(object):
                 barcodes=barcodes,
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
-                library=library
+                library=library,
             )
         elif category == "atac":
             obj = ATAC.create(
@@ -393,6 +394,7 @@ class Plot(object):
                     barcode_tag: str = "BC",
                     umi_tag: str = "UB",
                     library: str = "fru",
+                    density_by_strand: bool = False,
 
                     # plotting parameters
                     color="blue",
@@ -405,20 +407,21 @@ class Plot(object):
                     y_label: str = "",
                     theme: str = "ticks_blank",
 
-                    # side plot parameters
-                    show_side_plot: bool = False,
+                    # site plot parameters
+                    show_site_plot: bool = False,
                     strand_choice: Optional[str] = None,
                     ):
         u"""
         add density object to plot
         :param path: the path to input file
         :param category: the input file type
-        :param show_side_plot: draw the density distribution of reads from different strand
+        :param show_site_plot: draw the density distribution of reads from different strand
         :param label: the label of input file
         :param title: the title of input file
         :param barcodes: list of required barcodes
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
+        :param density_by_strand: whether to draw density plot in strand-specific manner.
         :param library: should be one of [frf: "fr-firststrand", frs:"fr-secondstrand", fru:"fr-unstrand"], default: fru
         :param font_size: the font size for ticks, y-axis label and title
         :param show_junction_number: whether to show the number of junctions
@@ -429,7 +432,7 @@ class Plot(object):
         :param show_y_label: whether to show y-axis label
         :param y_label: the text of y-axis title
         :param theme: the theme name
-        :param strand_choice: the strand to draw on side plot
+        :param strand_choice: the strand to draw on site plot
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -444,10 +447,10 @@ class Plot(object):
         )
 
         type_ = "density"
-        if show_side_plot and category == "bam":
-            type_ = "side-plot"
-        elif show_side_plot:
-            logger.warning("show_side_plot only works with bam files")
+        if show_site_plot and category == "bam":
+            type_ = "site-plot"
+        elif show_site_plot:
+            logger.warning("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
         self.plots.append(info)
@@ -461,7 +464,8 @@ class Plot(object):
             "show_y_label": show_y_label,
             "y_label": y_label,
             "theme": theme,
-            "strand_choice": strand_choice
+            "strand_choice": strand_choice,
+            "density_by_strand": density_by_strand
         }
         return self
 
@@ -791,7 +795,7 @@ class Plot(object):
         :param dpi: the dpi of saved plot
         :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
         :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
-        :param raster: plot rasterizer side plot
+        :param raster: plot rasterizer site plot
         :param return_image: used for interactive ui
         """
         assert self.region is not None, f"please set the plotting region first."
@@ -850,7 +854,7 @@ class Plot(object):
         max_used_y_val = None
         if kwargs.get("same_y"):
             for p in self.plots:
-                if p.type in ["density", "side-plot", "line"]:
+                if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
                         y = max(obj.data.wiggle)
 
@@ -886,7 +890,7 @@ class Plot(object):
                     obj=p.obj,
                     **self.params[p]
                 )
-            elif p.type == "side-plot":
+            elif p.type == "site-plot":
                 plot_density(
                     ax=ax_var,
                     obj=p.obj[0],
@@ -895,10 +899,10 @@ class Plot(object):
                     **self.params[p]
                 )
 
-                side_ax = plt.subplot(gs[curr_idx + 1, 0])
+                site_ax = plt.subplot(gs[curr_idx + 1, 0])
 
-                plot_side_plot(
-                    side_ax, p.obj[0],
+                plot_site_plot(
+                    site_ax, p.obj[0],
                     graph_coords=self.graph_coords,
                     raster=raster,
                     **self.params[p]
@@ -965,7 +969,7 @@ class Plot(object):
             curr_idx += self.reference.len(scale=reference_scale)
 
         if self.stroke:
-            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
+            ax_var = plt.subplot(gs[curr_idx:plots_n_rows, 0])
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 
         if output:
@@ -1004,7 +1008,7 @@ if __name__ == '__main__':
             path="../example/bams/1.bam",
             category="bam",
             color="blue",
-            show_side_plot=True,
+            show_site_plot=True,
         ).add_density(
             path="../example/bws/2.bw",
             category="bw",

@@ -3,15 +3,19 @@
 
 download source code using git
 ```bash
-git clone from https://github.com/ygidtu/sashimi
-cd sashimi
+git clone from https://github.com/ygidtu/pysashimi
+cd pysashimi
 ```
 
 ### Run as command line tools
 
 ```bash
+pip install pysashimi
+
+# or install from source
 python setup.py install
-sashimi --help
+
+pysashimi --help
 ```
 
 ### Run as script
@@ -51,8 +55,8 @@ docker run --rm ygidtu/sashimi --help
 
 ### Build docker image from source
 ```bash
-git clone from https://github.com/ygidtu/sashimi
-cd sashimi
+git clone from https://github.com/ygidtu/pysashimi
+cd pysashimi
 docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
 ```
@@ -76,8 +80,8 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 2. **Users could change the server ip and port by modify the settings.ini**
 
 ```bash
-git clone https://github.com/ygidtu/sashimi
-cd sashimi/web
+git clone https://github.com/ygidtu/pysashimi
+cd pysashimi/web
 
 # build the frontend static files
 npm install -g vue-cli vite && npm install

@@ -1,6 +1,6 @@
-# Welcome to sashimi
+# Welcome to pySashimi
 
-[Sashimi](https://github.com/ygidtu/sashimi) is a feature-rich sashimi plot framework written in pure Python code.
+[pySashimi](https://github.com/ygidtu/pysashimi) is a feature-rich sashimi plot framework written in pure Python code.
 
 The full-featured example
 
