@@ -248,9 +248,9 @@ class Bam(SingleCell):
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
                 if strand == "+" and 0 <= start - region.start < len(plus):
-                    site_plus[start - region.start] += 1
+                    site_plus[end - region.start] += 1
                 elif strand == "-" and 0 <= end - region.start < len(minus):
-                    site_minus[end - region.start] += 1
+                    site_minus[start - region.start] += 1
 
             for k, v in spanned_junctions.items():
                 if v >= threshold:

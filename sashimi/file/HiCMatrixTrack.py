@@ -6,6 +6,7 @@ Generate object for processing HiC matrix information
 pre-process code was re-wrote based
 https://github.com/deeptools/pyGenomeTracks/blob/c42e74e725d22269c33718d9f5df11e0c45c7378/pygenometracks/tracks/HiCMatrixTrack.py#L13
 """
+
 import itertools
 from typing import Optional
 
@@ -49,7 +50,7 @@ class HiCTrack:
         :param path: the HiC file which could be one of [h5, cool / mcool / scool, hicpro, homer]
         :param label: the label of the given HiC data
         :param depth: the depth of the given HiC data, a bigger depth means big y-axis
-        :param trans: log1p, log2 or log10 tranform
+        :param trans: log1p, log2 or log10 transform
         :return:
         """
         return cls(

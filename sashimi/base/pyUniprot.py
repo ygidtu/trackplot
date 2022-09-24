@@ -209,18 +209,21 @@ class Uniprot(object):
 
 if __name__ == '__main__':
     def test():
-        # trans_id = 'ENST00000339381'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
+        """
+        trans_id = 'ENST00000339381'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
 
-        # trans_id = 'ENST00000379319'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
+        trans_id = 'ENST00000379319'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
 
-        # trans_id = 'ENST00000486161'
-        # # # 5736 real, 4515 false
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
+        trans_id = 'ENST00000486161'
+        # # 5736 real, 4515 false
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
 
-        # trans_id = 'ENST00000378891'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2085)
+        trans_id = 'ENST00000378891'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2085)
+
+        """
 
         trans_id = 'ENST00000378888'
         trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
@@ -229,11 +232,6 @@ if __name__ == '__main__':
         print(trans_id_pep.domain)
         for i in trans_id_pep.domain:
             print(i.category, i.type, i.begin, i.end)
-        # print(type(trans_id_pep.info))
-        # print(trans_id_pep.info)
-        # print('done')
-        # print(trans_id_pep.ensembl_info, trans_id_pep.__domain_info__)
-
 
     test()
     pass
