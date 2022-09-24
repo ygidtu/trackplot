@@ -17,7 +17,7 @@ from sashimi.base.GenomicLoci import GenomicLoci
 
 def __opposite_strand__(strand: str) -> str:
     u"""
-    replace to opposite of current strand information.
+    replace to opposite of current strand information
     :param strand: strand, one of ['+', '-', '*']
     :return: an opposite of strand
     """
