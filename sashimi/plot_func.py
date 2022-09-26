@@ -794,7 +794,7 @@ def plot_density(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
         max_used_y_val=max(abs(y_min), y_max) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else 0,
+        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else -abs(y_min),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
