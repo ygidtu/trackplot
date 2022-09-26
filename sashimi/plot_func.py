@@ -683,6 +683,11 @@ def plot_density(
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
+            # @2022.09.26
+            # Skip these too short span junction for avoiding plotting junction number
+            if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
+                continue
+
             # @2018.12.19
             # set junctions coordinate here
             # the junction out of boundaries, set the boundaries as coordinate
@@ -794,7 +799,7 @@ def plot_density(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
         max_used_y_val=max(abs(y_min), y_max) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else 0,
+        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else -abs(y_min),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
