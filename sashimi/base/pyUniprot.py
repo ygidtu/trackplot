@@ -225,8 +225,8 @@ if __name__ == '__main__':
 
         """
 
-        trans_id = 'ENST00000378888'
-        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
+        trans_id = 'ENST00000351718'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=3549)
 
         print(trans_id_pep.guessed_id)
         print(trans_id_pep.domain)
