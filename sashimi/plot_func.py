@@ -683,6 +683,11 @@ def plot_density(
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
+            # @2022.09.26
+            # Skip these too short span junction for avoiding plotting junction number
+            if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
+                continue
+
             # @2018.12.19
             # set junctions coordinate here
             # the junction out of boundaries, set the boundaries as coordinate
