@@ -175,8 +175,9 @@ class Bam(SingleCell):
                     continue
 
                 # filter reads by 10x barcodes
+                # @20220924, add `not` before has_barcode and skip these reads without umi tag.
                 if self.barcodes:
-                    if not read.has_tag(self.barcode_tag) or self.has_barcode(read.get_tag(self.barcode_tag)):
+                    if not read.has_tag(self.barcode_tag) or not self.has_barcode(read.get_tag(self.barcode_tag)):
                         continue
 
                     if remove_duplicate_umi:
@@ -185,7 +186,7 @@ class Bam(SingleCell):
                             umis[barcode] = {}
 
                         # filter reads with duplicate umi by barcode
-                        if not read.has_tag(self.umi_tag):
+                        if read.has_tag(self.umi_tag):
                             umi = read.get_tag(self.umi_tag)
 
                             if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
@@ -193,6 +194,8 @@ class Bam(SingleCell):
 
                             if len(umis[barcode]) == 0:
                                 umis[barcode][umi] = hash(read.query_name)
+                        else:
+                            continue
 
                 start = read.reference_start
                 if required_strand and strand != required_strand:
@@ -248,9 +251,9 @@ class Bam(SingleCell):
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
                 if strand == "+" and 0 <= start - region.start < len(plus):
-                    site_plus[start - region.start] += 1
+                    site_plus[end - region.start] += 1
                 elif strand == "-" and 0 <= end - region.start < len(minus):
-                    site_minus[end - region.start] += 1
+                    site_minus[start - region.start] += 1
 
             for k, v in spanned_junctions.items():
                 if v >= threshold:

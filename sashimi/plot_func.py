@@ -866,12 +866,10 @@ def plot_site_plot(
             continue
 
         fit_value = fit_value / fit_value.max()
-        if label == 'plus':
-            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
-            ax.plot(graph_coords, fit_value * array_plot.max(), c=color, lw=1)
-        else:
-            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
-            ax.plot(graph_coords, fit_value * array_plot.min(), c=color, lw=1)
+        ax.bar(graph_coords, array_plot, color=color, rasterized=raster)
+        ax.plot(graph_coords,
+                fit_value * array_plot.max() if label == 'plus' else fit_value * array_plot.min(),
+                c=color, lw=1)
 
     # set the y limit
     # set y ticks, y label and label
