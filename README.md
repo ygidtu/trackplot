@@ -98,7 +98,7 @@ python main.py \
 
 ## Questions
 
-Visit issues or contact Yiming Zhang(@ygidtu) and Ran Zhou(@zhou-ran)
+Visit [issues](https://github.com/ygidtu/sashimi.py/issues) or contact [Yiming Zhang](https://github.com/ygidtu) and [Ran Zhou](https://github.com/zhou-ran)
 
 ## Citation
 
