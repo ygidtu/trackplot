@@ -13,20 +13,18 @@ import seaborn as sns
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
 from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from conf.logger import logger
 from sashimi.anno.theme import Theme
-from sashimi.file.Bam import Bam
-from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.ReadSegments import ReadSegment
-from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
+from sashimi.base.Stroke import Stroke
 from sashimi.file.File import File
+from sashimi.file.HiCMatrixTrack import HiCTrack
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 
 
@@ -685,6 +683,7 @@ def plot_density(
 
             # @2022.09.26
             # Skip these too short span junction for avoiding plotting junction number
+            overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
             if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
                 continue
 

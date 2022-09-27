@@ -268,9 +268,9 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--raster", is_flag=True, show_default=True,
                  help="The would convert heatmap and site plot to raster image "
                       "(speed up rendering and produce smaller files), only affects pdf, svg and PS")
-@optgroup.option("--height", default=0, type=float,
+@optgroup.option("--height", default=1, type=float,
                  help="The height of output file, default adjust image height by content", show_default=True)
-@optgroup.option("--width", default=0, type=click.IntRange(min=0, clamp=True),
+@optgroup.option("--width", default=10, type=click.IntRange(min=0, clamp=True),
                  help="The width of output file, default adjust image width by content", show_default=True)
 @optgroup.option("--backend", type=click.STRING, default="Cairo", help="Recommended backend", show_default=True)
 @optgroup.group("Reference settings")
@@ -412,6 +412,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option('--log', type=click.Choice(["0", "2", "10", "zscore"]), default="0",
                  help="y axis log transformed, 0 -> not log transform; 2 -> log2; 10 -> log10")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
+@optgroup.option("--font", type=click.STRING, default=None, help="Fonts", show_default=True)
 def main(**kwargs):
     u"""
     Welcome to use sashimi
@@ -429,8 +430,12 @@ def main(**kwargs):
 
     mpl.rcParams['pdf.fonttype'] = 42
 
-    if any(["Arial" in f.name for f in matplotlib.font_manager.fontManager.ttflist]):
-        mpl.rcParams['font.family'] = 'Arial'
+    if kwargs["font"]:
+        mpl.rcParams['font.family'] = kwargs["font"]
+    else:
+        for f in matplotlib.font_manager.fontManager.ttflist:
+            if "Arial" in f.name:
+                mpl.rcParams['font.family'] = f.name
 
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")

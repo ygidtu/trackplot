@@ -32,7 +32,7 @@ List all the parameters
 ```bash
 python main.py --help
 # Or
-pysashimi --help
+sashimipy --help
 ```
 
 Parameters:
@@ -197,6 +197,7 @@ Options:
     --log [0|2|10|zscore]         y axis log transformed, 0 -> not log
                                   transform; 2 -> log2; 10 -> log10
     --title TEXT                  Title
+    --font  TEXT                  Font
   -h, --help                      Show this message and exit.
 ```
 
@@ -305,6 +306,19 @@ chr1:1000-20000 100 200
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
+**Example: `--show-site`, `--focus` and `--sites` **
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --show-site \
+  --focus 1272656-1272656:1275656-1277656 \
+  --sites 1271656,1271656,1272656 \
+  --output example.pdf
+```
+
 ![](imgs/cmd/2.png)
 
 
@@ -323,7 +337,6 @@ sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
 sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 ```
 
-
 2. `--barocde-tag` and `--umi-tag`
 
 3. The tag to extract barcode and umi from each reads record, here we take the 10x Genomics bam format as default.
@@ -331,6 +344,20 @@ sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 4. `--group-by-cell`
 
 Group by cell types in density/line plot.
+
+**Example: `--barcode` and `--group-by-cell`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --barcode example/barcode_list.tsv \
+  --focus 1272656-1272656:1275656-1277656 \
+  --sites 1271656,1271656,1272656 \
+  --group-by-cell \
+  --output example.pdf
+```
 
 ![](imgs/cmd/group_by_cell.png)
     
@@ -348,7 +375,43 @@ These three parameters were used to disable legend, modify legend position and t
 
 By default, the position of legend and columns of legend were determined by [matplotlib](https://matplotlib.org/), and the further detailed legend configuration please check [matplotlib legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html).
 
-![](imgs/cmd/line_plot.png)
+**Example: `--hide-legend` **
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -o example/example_without_legend.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --barcode example/barcode_list.tsv \
+  --raster --density-by-strand \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv \
+  --hide-legend
+```
+
+![](imgs/cmd/example_without_legend.png)
+
+**Example: `--legend-position` and `--legend-ncol`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -o example/example_with_legend.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  -t 100000 \
+  --barcode example/barcode_list.tsv \
+  --raster --density-by-strand \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv \
+  --legend-position right \
+  --legend-ncol 2
+```
+
+![](imgs/cmd/example_with_legend.png)
 
 
 #### single cell bam related parameters
@@ -463,16 +526,15 @@ example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
 
 ```bash
 python main.py \
--e chr1:1200000-1300000:+ \
--r example/example.sorted.gtf.gz \
---interval example/interval_list.tsv \
---hic example/hic.2.tsv \
--o hic.2.pdf \
---dpi 300 \
---width 10 \
---height 1 \
---domain
-
+    -e chr1:1200000-1300000:+ \
+    -r example/example.sorted.gtf.gz \
+    --interval example/interval_list.tsv \
+    --hic example/hic.2.tsv \
+    -o hic.2.pdf \
+    --dpi 300 \
+    --width 10 \
+    --height 1 \
+    --domain
 ```
 here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
 
@@ -480,5 +542,22 @@ here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.exa
 ### Additional annotation
 
 We also provide multiple annotations, including indicator lines, focus, stroke and sequence.
+
+**Example: `--focus`, `--sites` and `--stroke`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  --focus 1272656-1272656:1275656-1277656 \
+  --stroke 1275656-1277656:1277856-1278656@blue \
+  --sites 1271656,1271656,1272656 \
+  -o example/example_additional.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --raster \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv
+```
 
 ![](imgs/cmd/additional.png)

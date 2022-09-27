@@ -41,7 +41,7 @@ def load_description():
 
 
 setup(
-    name='pysashimi',
+    name='sashimi.py',
     long_description=load_description(),
     long_description_content_type="text/markdown",
     packages=find_packages(),
@@ -51,11 +51,11 @@ setup(
     entry_points={
         'console_scripts':
             [
-                'pysashimi = sashimi.cli:main'
+                'sashimipy = sashimi.cli:main'
             ]
     },
     python_requires='>=3.8',
-    data_files=[(".", ['settings.ini'])],
+    data_files=[(".", ['README.md'])],
     install_requires=locate_packages(),
     version=__version__
 )

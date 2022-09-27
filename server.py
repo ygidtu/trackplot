@@ -11,6 +11,7 @@ import sys
 import traceback
 from glob import glob
 
+import click
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -190,19 +191,12 @@ async def delete(pid: str):
         os.remove(pk)
 
 
-if __name__ == '__main__':
-    import configparser
-
-    config = configparser.ConfigParser()
-
-    if not os.path.exists(os.path.join(__DIR__, 'settings.ini')):
-        print("settings.ini file not exists, using default settings")
-        config['ui']['host'] = '0.0.0.0'
-        config['ui']['port'] = "5000"
-    else:
-        config.read(os.path.join(__DIR__, 'settings.ini'))
-
-    host = config['ui'].get("host", "0.0.0.0")
-    port = config["ui"].get("port", "5000")
-
+@click.command(context_settings=dict(help_option_names=['--help']), )
+@click.option("-h", "--host", type=click.STRING, default="127.0.0.1", help="the ip address binding to")
+@click.option("-p", "--port", type=click.INT, default=5000, help="the port to listen on")
+def main(host: str, port: int):
     uvicorn.run(app='server:app', host=host, port=int(port), log_level="info", reload=False)
+
+
+if __name__ == '__main__':
+    main()
