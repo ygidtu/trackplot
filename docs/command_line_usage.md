@@ -155,6 +155,18 @@ Options:
                                   (optional), - 4th column is color of input
                                   files (optional) - 5th column is exon_id
                                   for sorting the reads (optional).
+    --m6a TEXT                    Sashimi.py will load location information
+                                  from the given tags and  then highlight
+                                  the RNA m6a modification cite at individual
+                                  reads.
+    --polya TEXT                  Sashimi.py will load length of poly(A) from
+                                  the given tags and  then visualize the
+                                  poly(A) part at end of each individual
+                                  reads.
+    --rs TEXT                     Sashimi.py will load real strand information
+                                  of each reads from the given tags and  the
+                                  strand information is necessary for
+                                  visualizing poly(A) part.
     --del-ratio-ignore FLOAT RANGE
                                   Ignore the deletion gap in nanopore or
                                   pacbio reads. if a deletion region was
@@ -426,6 +438,18 @@ SRR12503063.89603	16	1	14394	2	..	*	0	0	..	..	NM:i:220	ms:i:1064	AS:i:891	nn:i:0
 
 ```
 
+here is the command line,
+
+```bash
+ python main.py \
+    -e chr1:13362-29900:+ \
+    --igv example/igv.m6a.tsv \
+    -o igv.m6a.pdf \
+    --dpi 300 \
+    --width 5 \
+    --height 1 --rs rs --polya pa --m6a ma
+
+```
 In this picture, the red track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
 
