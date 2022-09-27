@@ -456,6 +456,20 @@ example/SRX9697989.corrected_reads.6.bed.gz	igv	bed6
 example/SRX9697989.corrected_reads.3.bed.gz	igv	bed3	red
 example/bams/0.bam	igv	bam
 ```
+
+here is the plotting command line
+```bash
+python main.py \
+  -e 1:10024601-10038168:+ \
+  -r example/example.sorted.gtf.gz \
+  --igv example/igv.tsv \
+  -o test_igv_plot.1.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1
+
+```
+
 ![](imgs/cmd/igv_plot.1.png)
 
 2. Sashimi.igv module load and visualize features from bam tags.
@@ -483,8 +497,23 @@ In this picture, the red track and blue dot represents the length of poly(A) and
 User could modify the config file as follows,
 
 ```bash
-#filepath	file_category	label	color exon_id
-SRX8994511.corrected_reads.bed.gz	igv	SRX8994511	black	43100453-43100519,43101366-43101432
+#filepath	file_category	label	color	focus_exon
+example/SRX8994511.example.bed.gz	igv	bed12	blue	43100453-43100519,43101366-43101432
+```
+
+here is the command line for plotting
+
+```bash
+python main.py \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -e 21:43092956-43107570:+ \
+  --igv example/igv.3.tsv \
+  --focus 43100453-43100519:43101366-43101432 \
+  -o test_igv_plot.3.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1
+
 ```
 
 ![](imgs/cmd/igv_plot.3.png)
@@ -498,6 +527,17 @@ Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https:
 ```bash
 # filepath  file_category   label   color  transform	depth
 example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
+```
+here is the plotting command line
+
+```bash
+python main.py \
+  -e X:2500000-3500000:+ \
+  --hic example/hic.tsv \
+  -o example.hic.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1
 ```
 
 for each hic track, a bigger `depth` means a higher y-axis.  
