@@ -7,10 +7,10 @@ Fetch CDS information from a gtf then mapping to genomic position
 from collections import defaultdict, namedtuple
 from typing import Optional
 
+from loguru import logger
 from pysam import asGTF
 from pysam.libctabix import Tabixfile
 
-from conf.logger import logger
 from sashimi.base.CoordinateMap import CoordinateMapper
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Transcript import Transcript
@@ -269,5 +269,7 @@ if __name__ == '__main__':
                     print(transcript_id,
                           sub_domain.gene,
                           sub_domain.domain, sub_domain.exon_list)
+
+
     test()
     pass

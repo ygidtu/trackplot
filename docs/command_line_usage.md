@@ -38,7 +38,7 @@ sashimipy --help
 Parameters:
 
 ```bash
-Usage: main.py [OPTIONS] ?12  python main.py -h                                                                                                                                             ✔  sashimi-Zgs4tuDQ Py │ base Py  16:49:18 
+Usage: main.py [OPTIONS]
 
   Welcome to use sashimi
 
@@ -72,9 +72,9 @@ Options:
                                   raster image (speed up rendering and produce
                                   smaller files), only affects pdf, svg and PS
     --height FLOAT                The height of output file, default adjust
-                                  image height by content  [default: 0]
+                                  image height by content  [default: 1]
     --width INTEGER RANGE         The width of output file, default adjust
-                                  image width by content  [default: 0; x>=0]
+                                  image width by content  [default: 10; x>=0]
     --backend TEXT                Recommended backend  [default: Cairo]
   Reference settings: 
     -r, --reference PATH          Path to gtf file, both transcript and exon
@@ -144,9 +144,12 @@ Options:
     --distance-metric [braycurtis|canberra|chebyshev|cityblock|correlation|cosine|dice|euclidean|hamming|jaccard|jensenshannon|kulsinski|kulczynski1|mahalanobis|matching|minkowski|rogerstanimoto|russellrao|seuclidean|sokalmichener|sokalsneath|sqeuclidean|yule]
                                   The distance metric for heatmap  [default:
                                   euclidean]
-    -T, --threshold-of-reads INTEGER RANGE
-                                  Threshold to filter low abundance reads for
-                                  stacked plot  [default: 0; x>=0]
+    --heatmap-scale               Do scale on heatmap matrix.
+    --heatmap-vmin INTEGER        Minimum value to anchor the colormap,
+                                  otherwise they are inferred from the data.
+    --heatmap-vmax INTEGER        Maximum value to anchor the colormap,
+                                  otherwise they are inferred from the data.
+    --show-row-names              Show row names of heatmap
   IGV settings: 
     --igv PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
@@ -187,7 +190,7 @@ Options:
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image
                                   [default: 0.25]
-  Overall settings: 
+  Overall settings:
     --font-size INTEGER RANGE     The font size of x, y-axis and so on  [x>=1]
     --reverse-minus               Whether to reverse strand of bam/reference
                                   file
@@ -197,7 +200,7 @@ Options:
     --log [0|2|10|zscore]         y axis log transformed, 0 -> not log
                                   transform; 2 -> log2; 10 -> log10
     --title TEXT                  Title
-    --font  TEXT                  Font
+    --font TEXT                   Fonts
   -h, --help                      Show this message and exit.
 ```
 
@@ -233,9 +236,14 @@ Then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 
 **known issues: ** 
 
-- the `Cairo` backend required `cairocffi` packages, which may have difficulty to install for some users, if then please try to use our docker image or use a alternative backend like Agg/PDF.
-- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image, so use as appropriate.
+- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image.
+- the `Cairo` backend required `cairocffi` packages, 
+  which may have difficulty to install for some users, 
+  if then please try to use our docker image or use an alternative backend like `Agg/PDF`.
+
 ![](imgs/cmd/1.svg)
+
+**Note:** `Cairo` backend may disable the heatmap rasterisation, so use as appropriate.
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
 
@@ -439,6 +447,23 @@ example/bws/0.bw    bw  bw  YlOrBr
 ```
 
 ![](imgs/cmd/heatmap.png)
+
+
+**Example: `--heatmap-scale`**
+
+> Raw value
+
+![](imgs/cmd/ICE1.png)
+
+> Scaled value
+
+![](imgs/cmd/ICE1_scale.png)
+
+
+**Example: `--heatmap-vmin` and `--heatmap-vmax` to uniform color map **
+
+![](imgs/cmd/ICE1_scale_v.png)
+
 
 ### Igv plot
 

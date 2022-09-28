@@ -9,15 +9,12 @@ changelog:
 """
 import gzip
 import os
-from copy import deepcopy
 from typing import Optional, Set
 
 import numpy as np
-import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Junction import Junction
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Readder import Reader
 from sashimi.file.File import SingleCell

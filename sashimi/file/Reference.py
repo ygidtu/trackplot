@@ -15,8 +15,8 @@ from typing import List, Union, Optional
 import filetype
 import matplotlib as mpl
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Protein import CdsProtein
 from sashimi.base.Readder import Reader

@@ -10,8 +10,8 @@ from typing import Optional, List, Dict, Union
 import numpy as np
 import pandas as pd
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader

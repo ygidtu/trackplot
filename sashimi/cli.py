@@ -7,20 +7,18 @@ This script contains all the command line parameters
 """
 import gzip
 import os
-
+import sys
 from multiprocessing import cpu_count
 from typing import Optional, Dict, Set, Tuple
 
 import click
 import matplotlib as mpl
 import matplotlib.font_manager
-
 from click_option_group import optgroup
+from loguru import logger
 
-from conf.logger import init_logger, logger
-from conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
+from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
 from sashimi.plot import Plot
-
 
 __version__ = "0.0.1a"
 
@@ -272,7 +270,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The height of output file, default adjust image height by content", show_default=True)
 @optgroup.option("--width", default=10, type=click.IntRange(min=0, clamp=True),
                  help="The width of output file, default adjust image width by content", show_default=True)
-@optgroup.option("--backend", type=click.STRING, default="Cairo", help="Recommended backend", show_default=True)
+@optgroup.option("--backend", type=click.STRING, default="Agg", help="Recommended backend", show_default=True)
 @optgroup.group("Reference settings")
 @optgroup.option("-r", "--reference", type=click.Path(exists=True),
                  help="Path to gtf file, both transcript and exon tags are necessary")
@@ -352,8 +350,12 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="The clustering method for heatmap")
 @optgroup.option("--distance-metric", type=click.Choice(DISTANCE_METRIC), default="euclidean",
                  show_default=True, help="The distance metric for heatmap")
-@optgroup.option("-T", "--threshold-of-reads", default=0, type=click.IntRange(min=0, clamp=True),
-                 show_default=True, help="Threshold to filter low abundance reads for stacked plot")
+@optgroup.option("--heatmap-scale", is_flag=True, show_default=True, help="Do scale on heatmap matrix.")
+@optgroup.option("--heatmap-vmin", type=click.INT, show_default=True,
+                 help="Minimum value to anchor the colormap, otherwise they are inferred from the data.")
+@optgroup.option("--heatmap-vmax", type=click.INT, show_default=True,
+                 help="Maximum value to anchor the colormap, otherwise they are inferred from the data.")
+@optgroup.option("--show-row-names", is_flag=True, show_default=True, help="Show row names of heatmap")
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
@@ -418,15 +420,31 @@ def main(**kwargs):
     Welcome to use sashimi
     \f
     """
-    init_logger("DEBUG" if kwargs["debug"] else "INFO")
+    # init_logger("DEBUG" if kwargs["debug"] else "INFO")
 
-    if kwargs["backend"].lower() == "cairo":
-        try:
-            mpl.use(kwargs["backend"])
-        except ImportError:
+    if not kwargs["debug"]:
+        logger.remove()
+        logger.add(sys.stderr, level="INFO")
+        logger.level("INFO")
+
+    # print warning info about backend
+    if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":
+        logger.warning(f"{kwargs['backend']} backend may have problems with small domain, "
+                       f"if there is any please try cairo backend instead.")
+
+    if kwargs["raster"] and kwargs["heatmap"] and kwargs["backend"].lower() == "cairo":
+        logger.warning(f"{kwargs['backend']} backend may have problems with rasterized heatmap, "
+                       f"if there is any, please try another backend instead.")
+
+    try:
+        mpl.use(kwargs["backend"])
+    except ImportError as err:
+        if kwargs["backend"].lower() == "cairo":
             logger.warning("Cairo backend required cairocffi installed")
-            logger.warning("Role back to Agg backend")
-            mpl.use("Agg")
+            logger.warning("Switch back to Agg backend")
+        else:
+            logger.warning(f"backend error, switch back to Agg: {err}")
+        mpl.use("Agg")
 
     mpl.rcParams['pdf.fonttype'] = 42
 
@@ -531,7 +549,10 @@ def main(**kwargs):
                                           clustering=kwargs["clustering"],
                                           clustering_method=kwargs["clustering_method"],
                                           distance_metric=kwargs["distance_metric"],
-                                          font_size=kwargs["font_size"])
+                                          font_size=kwargs["font_size"],
+                                          do_scale=kwargs["heatmap_scale"],
+                                          vmin=kwargs["heatmap_vmin"],
+                                          vmax=kwargs["heatmap_vmax"])
                     else:
                         p.add_heatmap(f.path,
                                       category=f.category,
@@ -546,7 +567,11 @@ def main(**kwargs):
                                       clustering=kwargs["clustering"],
                                       clustering_method=kwargs["clustering_method"],
                                       distance_metric=kwargs["distance_metric"],
-                                      font_size=kwargs["font_size"])
+                                      font_size=kwargs["font_size"],
+                                      show_row_names=kwargs["show_row_names"],
+                                      do_scale=kwargs["heatmap_scale"],
+                                      vmin=kwargs["heatmap_vmin"],
+                                      vmax=kwargs["heatmap_vmax"])
             elif key == "line":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category == "bam":

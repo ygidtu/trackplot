@@ -6,16 +6,16 @@ u"""
 Fetch protein information from uniprot website
 """
 import json
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 from xml.parsers.expat import ExpatError
 
 import numpy as np
 import requests as rq
 import xmltodict
+from loguru import logger
 
-from conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
-from conf.logger import logger
+from sashimi.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):
@@ -232,6 +232,7 @@ if __name__ == '__main__':
         print(trans_id_pep.domain)
         for i in trans_id_pep.domain:
             print(i.category, i.type, i.begin, i.end)
+
 
     test()
     pass

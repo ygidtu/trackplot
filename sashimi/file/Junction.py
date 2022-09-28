@@ -6,7 +6,6 @@ Handle the customized junction
 """
 import os
 import re
-
 from typing import Dict
 
 from sashimi.base.Junction import Junction

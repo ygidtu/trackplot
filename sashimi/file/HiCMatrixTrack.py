@@ -11,9 +11,9 @@ import itertools
 from typing import Optional
 
 import numpy as np
+from loguru import logger
 from scipy import sparse
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 

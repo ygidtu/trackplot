@@ -6,20 +6,17 @@ Created by ygidtu@gmail.com at 2019.12.06
 import io
 import math
 import os.path
-
 from copy import deepcopy
 from typing import List, Optional, Set, Union, Dict
 
 import matplotlib.pyplot as plt
+from loguru import logger
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
-from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
@@ -27,10 +24,12 @@ from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
+from sashimi.file.HiCMatrixTrack import HiCTrack
+from sashimi.file.Junction import load_custom_junction
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
     set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic
-from sashimi.file.Junction import load_custom_junction
 
 
 class PlotInfo(object):
@@ -492,6 +491,8 @@ class Plot(object):
                     clustering: bool = False,
                     clustering_method: str = "ward",
                     distance_metric: str = "euclidean",
+                    show_row_names: bool = False,
+                    vmin=None, vmax=None
                     ):
         u"""
         add multiple objects for a group of heatmap
@@ -517,6 +518,9 @@ class Plot(object):
                     'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
                     'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                     'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+        :param show_row_names:
+        :param vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+        :param vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -549,7 +553,9 @@ class Plot(object):
                 "do_scale": do_scale,
                 "clustering": clustering,
                 "clustering_method": clustering_method,
-                "distance_metric": distance_metric
+                "distance_metric": distance_metric,
+                "show_row_names": show_row_names,
+                "vmin": vmin, "vmax": vmax
             }
 
         return self
@@ -973,7 +979,7 @@ class Plot(object):
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 
         if output:
-            plt.savefig(output, transparent=True, bbox_inches='tight')
+            fig.savefig(output, transparent=True, bbox_inches='tight')
         elif return_image:
             output = io.BytesIO()
             if return_image == "png":
@@ -990,7 +996,7 @@ class Plot(object):
 
 if __name__ == '__main__':
     def test_plot():
-        from conf.logger import init_logger
+        from sashimi.conf import init_logger
         init_logger("INFO")
         Plot().set_reference(
             "../example/example.sorted.gtf.gz",

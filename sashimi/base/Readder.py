@@ -10,8 +10,8 @@ import os
 import numpy as np
 import pyBigWig
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 
 

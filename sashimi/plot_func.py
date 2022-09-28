@@ -16,12 +16,11 @@ from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
-from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
-from conf.logger import logger
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Stroke import Stroke
+from sashimi.conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from sashimi.file.File import File
 from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
@@ -261,7 +260,7 @@ def set_focus(
             fill_y = [y1, y1, y2, y2]
             ax.fill(fill_x, fill_y, alpha=0.1, color='grey')
         except IndexError as err:
-            logger.warning("focus region is out of bound: " + str(err))
+            logger_.warning("focus region is out of bound: " + str(err))
 
 
 def set_indicator_lines(
@@ -288,7 +287,7 @@ def set_indicator_lines(
                 lw=0.5
             )
         except IndexError as err:
-            logger.warning("Indicator line is out of bound: " + str(err))
+            logger_.warning("Indicator line is out of bound: " + str(err))
 
 
 def plot_stroke(
@@ -905,7 +904,9 @@ def plot_heatmap(
         clustering: bool = False,
         clustering_method: str = "ward",
         distance_metric: str = "euclidean",
-        raster: bool = True
+        raster: bool = True,
+        show_row_names: bool = False,
+        vmin=None, vmax=None
 ):
     u"""
 
@@ -927,6 +928,9 @@ def plot_heatmap(
                 'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                 'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
     :param raster: whether to draw image in raster mode
+    :param show_row_names:
+    :param vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+    :param vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
     """
     labels = list(data.keys())
     mtx = np.array([x.wiggle for x in data.values()])
@@ -949,18 +953,12 @@ def plot_heatmap(
         """
         mtx = zscore(mtx, axis=1)
 
-    if not show_y_label:
+    if not show_row_names:
         labels = False
 
-    sns.heatmap(
-        mtx,
-        ax=ax, cmap=color,
-        cbar_ax=cbar_ax,
-        xticklabels=False,
-        yticklabels=labels,
-        center=True,
-        rasterized=raster
-    )
+    sns.heatmap(mtx, ax=ax, cmap=color, cbar_ax=cbar_ax,
+                xticklabels=False, yticklabels=labels,
+                center=True, rasterized=raster, vmin=vmin, vmax=vmax)
 
     ax.tick_params(axis='both', which='major', labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)
@@ -974,8 +972,6 @@ def plot_heatmap(
         show_y_label=show_y_label,
         set_label_only=True
     )
-    if raster:
-        ax.set_rasterization_zorder(0)
 
 
 def plot_hic(
@@ -1005,9 +1001,8 @@ def plot_hic(
     if not y_label:
         y_label = obj.label
 
-    pc = ax.pcolormesh(obj.x - obj.region.start,
-                       obj.y, np.flipud(obj.matrix),
-                       cmap=color, rasterized=raster)
+    ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
+                  cmap=color, rasterized=raster)
     ax.set_xlim(0, len(obj.region))
 
     if show_legend:

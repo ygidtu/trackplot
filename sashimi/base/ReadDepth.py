@@ -7,7 +7,7 @@ Changelog:
     1. move several attributes and functions to corresponding file objects, turn this into pure data class
     2. add transform to log2, log10 or zscore transform the data while plotting
 """
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import numpy as np
 from scipy.stats import zscore
