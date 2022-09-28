@@ -364,6 +364,21 @@ def process_file_list(infile: str, category: str = "density"):
                  - 4th column is color of input files (optional),\b
                  - 5th column is exon_id for sorting the reads (optional).
                  """)
+@optgroup.option("--m6a", default=None, type=click.STRING,
+                 help="""
+                 Sashimi.py will load location information from the given tags and \b
+                  then highlight the RNA m6a modification cite at individual reads.
+                 """)
+@optgroup.option("--polya", default=None, type=click.STRING,
+                 help="""
+                 Sashimi.py will load length of poly(A) from the given tags and \b
+                  then visualize the poly(A) part at end of each individual reads.
+                 """)
+@optgroup.option("--rs", default=None, type=click.STRING,
+                 help="""
+                 Sashimi.py will load real strand information of each reads from the given tags and \b
+                  the strand information is necessary for visualizing poly(A) part.
+                 """)
 @optgroup.option("--del-ratio-ignore", default=1.0,
                  type=click.FloatRange(min=0.0, max=1.0, clamp=True),
                  help="""
@@ -591,11 +606,22 @@ def main(**kwargs):
                                    legend_ncol=kwargs["legend_ncol"])
             elif key == "igv":
                 for f in process_file_list(kwargs[key], "igv"):
+                    igv_features = {}
+                    if kwargs["m6a"]:
+                        igv_features.update({"m6a": kwargs["m6a"]})
+
+                    if kwargs["polya"] and kwargs["rs"]:
+                        igv_features.update({"real_strand": kwargs["rs"], "polya": kwargs["polya"]})
+
+                    if len(igv_features) == 0:
+                        igv_features = None
+
                     p.add_igv(f.path,
                               category=f.category,
                               label=f.label,
                               exon_color=f.color,
                               intron_color=f.color,
+                              features=igv_features,
                               font_size=kwargs["font_size"],
                               n_y_ticks=kwargs["n_y_ticks"],
                               show_y_label=not kwargs["hide_y_label"],
