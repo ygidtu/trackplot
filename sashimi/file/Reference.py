@@ -317,7 +317,7 @@ class Reference(File):
             output_gtf = input_gtf + ".gz"
 
         if not os.path.exists(output_gtf + ".tbi"):
-            logger.info("Create index for %s", input_gtf)
+            logger.info(f"Create index for {input_gtf}")
             try:
                 pysam.tabix_index(
                     output_gtf,

@@ -407,6 +407,9 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--stroke", type=click.STRING, show_default=True,
                  help="The stroke regions: start1-end1:start2-end2@color-label, "
                       "draw a stroke line at bottom, default color is red")
+@optgroup.option("--link", type=click.STRING, show_default=True,
+                 help="The link: start1-end1:start2-end2@color, "
+                      "draw a link between two site at bottom, default color is blue")
 @optgroup.option("--focus", type=click.STRING, show_default=True, help="The highlight regions: 100-200:300-400")
 @optgroup.group("Layout settings")
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
@@ -554,7 +557,7 @@ def main(**kwargs):
                                           category=f.category,
                                           label=f"{f.label} - {group}" if group else f.label,
                                           barcodes=bcs,
-                                          group=f.group,
+                                          group=f"{f.group} - {group}" if f.group else f.group,
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
@@ -676,6 +679,8 @@ def main(**kwargs):
             p.add_stroke(kwargs[key])
         elif key == "sites":
             p.add_sites(kwargs[key])
+        elif key == "link":
+            p.add_links(kwargs[key])
 
     if kwargs["group_by_cell"]:
         p.merge_by_cell()

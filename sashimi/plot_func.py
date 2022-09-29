@@ -15,6 +15,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
+from loguru import logger
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -240,9 +241,8 @@ def set_y_ticks(
     if show_y_label:
         ax.text(
             x=-1 * distance_between_label_axis * max(graph_coords),
-            y=max_used_y_val // 2, s=label,
-            fontsize=font_size,
-            ha="right"
+            y=abs(max_used_y_val - min_used_y_val) / 2,
+            s=label, fontsize=font_size, ha="right"
         )
 
 
@@ -260,7 +260,7 @@ def set_focus(
             fill_y = [y1, y1, y2, y2]
             ax.fill(fill_x, fill_y, alpha=0.1, color='grey')
         except IndexError as err:
-            logger_.warning("focus region is out of bound: " + str(err))
+            logger.warning("focus region is out of bound: " + str(err))
 
 
 def set_indicator_lines(
@@ -287,7 +287,7 @@ def set_indicator_lines(
                 lw=0.5
             )
         except IndexError as err:
-            logger_.warning("Indicator line is out of bound: " + str(err))
+            logger.warning("Indicator line is out of bound: " + str(err))
 
 
 def plot_stroke(
@@ -429,7 +429,7 @@ def plot_reference(
                 graph_coords[region.relative(transcript.start)],
                 graph_coords[region.relative(transcript.end)]
             ]
-            ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.5, rasterized=raster)
+            ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.5)
 
             # @2018.12.23 fix intron arrows issues
             # Draw intron arrows.
@@ -963,10 +963,11 @@ def plot_heatmap(
     ax.tick_params(axis='both', which='major', labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)
 
+    ymax, ymin = ax.get_ylim()
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=mtx.shape[0],
+        max_used_y_val=ymax, min_used_y_val=ymin,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
@@ -1236,6 +1237,29 @@ def plot_igv_like(
         font_size=font_size,
         show_y_label=show_y_label,
     )
+
+
+def plot_links(ax: mpl.axes.Axes,
+               data: List[Stroke],
+               graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+               max_y: int = -10):
+    for stroke in sorted(data):
+        leftss, rightss = graph_coords[stroke.start], graph_coords[stroke.end]
+
+        step = (rightss - leftss) / 4
+
+        pts = [
+            (leftss, 0),
+            (leftss + step, max_y),
+            (rightss - step, max_y),
+            (rightss, 0)
+        ]
+        a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
+        ax.add_patch(PathPatch(a, fc="none", ec=stroke.color, lw=1))
+
+    ax.set_xlim(0, max(graph_coords))
+    ax.set_ylim(max_y, 0)
+    ax.axis("off")
 
 
 if __name__ == '__main__':

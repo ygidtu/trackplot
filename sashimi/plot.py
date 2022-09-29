@@ -29,7 +29,7 @@ from sashimi.file.Junction import load_custom_junction
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
 
 
 class PlotInfo(object):
@@ -125,6 +125,7 @@ class Plot(object):
         self.plots = []
         self.params = {}
         self.junctions = {}
+        self.link = []
 
     @property
     def chrom(self) -> Optional[str]:
@@ -234,6 +235,31 @@ class Plot(object):
 
         if 0 < start < end:
             self.stroke.append(Stroke(start - self.start, end - self.end, color, label))
+        return self
+
+    def add_links(
+            self,
+            link: Optional[str] = None,
+            start: int = 0,
+            end: int = 0,
+            label: str = "",
+            color: str = "blue"
+    ):
+        u"""
+        add stroke to plot
+        :param link: string in 100-200@red;300-400 format
+        :param start: start site of stroke
+        :param end: end site of stroke
+        :param label: label of stroke
+        :param color: color of stroke
+        :return:
+        """
+        assert self.region is not None, f"please set plot region first."
+        if link:
+            self.link.append(Stroke.create(link, self.region, default_color=color))
+
+        if 0 < start < end:
+            self.link.append([Stroke(start - self.start, end - self.end, color, label)])
         return self
 
     def set_sequence(self, fasta: str):
@@ -816,6 +842,9 @@ class Plot(object):
         if self.stroke:
             plots_n_rows += int(max(len(self.stroke) * stroke_scale, 1))
 
+        if self.link:
+            plots_n_rows += len(self.link)
+
         if self.sequence is not None:
             logger.info("load sequence")
             self.sequence.load(self.region)
@@ -952,6 +981,12 @@ class Plot(object):
                 curr_idx += 1
             else:
                 curr_idx += p.len(reference_scale)
+
+        if self.link:
+            for link in self.link:
+                plot_links(ax=plt.subplot(gs[curr_idx:(curr_idx + 1), 0]),
+                           data=link, graph_coords=self.graph_coords)
+                curr_idx += 1
 
         # draw x label
         set_x_ticks(
