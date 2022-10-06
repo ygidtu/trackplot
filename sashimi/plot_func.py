@@ -340,27 +340,11 @@ def plot_reference(
         exon_width: float = .3,
         plot_domain: bool = False,
         show_exon_id: bool = False,
-        raster: bool = True
+        raster: bool = True,
+        distance_between_label_axis: float = 0.3
 ):
     u"""
     Plot the structure of reference
-    :param ax:
-    :param obj:
-    :param graph_coords:
-    :param font_size:
-    :param show_gene:
-    :param show_id:
-    :param transcripts:
-    :param remove_empty_transcripts:
-    :param color:
-    :param reverse_minus:
-    :param theme:
-    :param y_loc:
-    :param exon_width:
-    :param  plot_domain:
-    :param show_exon_id:
-    :param raster:
-    :return:
     """
     region = obj.region
 
@@ -391,13 +375,13 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text(x=-1, y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
-                    ax.text(x=-1, y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
-                    ax.text(x=-1, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc, s=transcript.gene + " | " + transcript.transcript,
                             fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
+                ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -958,7 +942,7 @@ def plot_heatmap(
 
     sns.heatmap(mtx, ax=ax, cmap=color, cbar_ax=cbar_ax,
                 xticklabels=False, yticklabels=labels,
-                center=True, rasterized=raster, vmin=vmin, vmax=vmax)
+                center=False, rasterized=raster, vmin=vmin, vmax=vmax)
 
     ax.tick_params(axis='both', which='major', labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)

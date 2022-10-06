@@ -19,6 +19,7 @@ from loguru import logger
 
 from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
 from sashimi.plot import Plot
+from sashimi.file.ATAC import ATAC
 
 __version__ = "0.0.1a"
 
@@ -114,7 +115,7 @@ def process_file_list(infile: str, category: str = "density"):
                     line = line.split()
                     path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
+                    if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac"]:
                         raise ValueError(f"{category} is not supported in density plot.")
 
                     if len(line) < 3:
@@ -137,8 +138,8 @@ def process_file_list(infile: str, category: str = "density"):
                     line = line.split()
                     path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth"]:
-                        raise ValueError(f"{category} is not supported in density plot.")
+                    if category not in ["bam", "bigwig", "bw", "depth", "atac"]:
+                        raise ValueError(f"{category} is not supported in heatmap plot.")
 
                     if len(line) < 3:
                         yield FileList(path=path, category=category, color=COLORMAP[0])
@@ -226,7 +227,6 @@ def process_file_list(infile: str, category: str = "density"):
                         yield FileList(path=path, category=category, )
                     else:
                         yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
-
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -308,7 +308,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 2nd column is the file category, \b
                  - 3rd column is input file alias (optional), \b
                  - 4th column is color of input files (optional),
-                 - 5th column is the library of input file (optional, only required by bam file). \b
+                 - 5th column is the library of input file (optional, only required by bam file). \n
                  """)
 @optgroup.option("--customized-junction", type=click.STRING, default=None, show_default=True,
                  help="Path to junction table column name needs to be bam name or bam alias.")
@@ -322,6 +322,8 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Which strand kept for site plot, default use all")
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
+@optgroup.option("--sc-density-height-ratio", type=float, default=1, show_default=True,
+                 help="The relative height of single cell density plots")
 @optgroup.group("Line plot settings")
 @optgroup.option("--line", type=click.Path(exists=True),
                  help="""
@@ -356,6 +358,8 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--heatmap-vmax", type=click.INT, show_default=True,
                  help="Maximum value to anchor the colormap, otherwise they are inferred from the data.")
 @optgroup.option("--show-row-names", is_flag=True, show_default=True, help="Show row names of heatmap")
+@optgroup.option("--sc-heatmap-height-ratio", type=float, default=.2, show_default=True,
+                 help="The relative height of single cell heatmap plots")
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
@@ -385,7 +389,7 @@ def process_file_list(infile: str, category: str = "density"):
                  type=click.FloatRange(min=0.0, max=1.0, clamp=True),
                  help="""
                  Ignore the deletion gap in nanopore or pacbio reads. \b
-                 if a deletion region was smaller than (alginment length) * (del_ratio_ignore), \b
+                 if a deletion region was smaller than (alignment length) * (del_ratio_ignore), \b
                  then the deletion gap will be filled. \b
                  currently the del_ratio_ignore was 1.0.
                  """)
@@ -414,7 +418,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Layout settings")
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
                  help="The number of ticks of y-axis")
-@optgroup.option("--distance-ratio", type=click.FLOAT, default=0.3,
+@optgroup.option("--distance-ratio", type=click.FLOAT, default=0.1,
                  help="distance between transcript label and transcript line", show_default=True)
 @optgroup.option("--reference-scale", type=click.FLOAT, default=.25,
                  help="The size of reference plot in final plot", show_default=True)
@@ -486,6 +490,8 @@ def main(**kwargs):
     if kwargs.get("barcode") and os.path.exists(kwargs.get("barcode")):
         barcodes, sc_colors = load_barcodes(kwargs.get("barcode"))
 
+    size_factors = {}
+
     # add reference
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
@@ -508,8 +514,8 @@ def main(**kwargs):
                     p.add_interval(f.path, f.label)
             elif key == "density":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
-                        for group, bcs in barcodes[f.label].items():
+                    if barcodes and f.label in barcodes.keys() and f.category in ["bam", "atac"]:
+                        for group in barcodes[f.label].keys():
                             if kwargs["group_by_cell"] and group:
                                 label = group
                             elif group:
@@ -517,24 +523,29 @@ def main(**kwargs):
                             else:
                                 label = f.label
 
+                            if f.label not in size_factors.keys() and f.category == "atac":
+                                logger.info(f"Indexing {f.path}")
+                                size_factors[f.label] = ATAC.index(f.path, barcodes[f.label])
+
                             p.add_density(f.path,
                                           category=f.category,
                                           label=label,
-                                          barcodes=bcs,
+                                          barcode=group,
+                                          barcode_groups=barcodes[f.label],
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
+                                          size_factor=size_factors.get(f.label),
                                           color=sc_colors.get(group, f.color),
                                           font_size=kwargs["font_size"],
                                           show_junction_number=kwargs["show_junction_num"],
                                           n_y_ticks=kwargs["n_y_ticks"],
-                                          distance_between_label_axis=kwargs["distance_ratio"],
                                           show_y_label=not kwargs["hide_y_label"],
                                           show_site_plot=kwargs["show_site"],
                                           strand_choice=kwargs["site_strand"],
                                           density_by_strand=kwargs["density_by_strand"]
                                           )
-                    else:
+                    elif f.category != "atac":
                         p.add_density(f.path,
                                       category=f.category,
                                       label=f.label,
@@ -545,24 +556,28 @@ def main(**kwargs):
                                       font_size=kwargs["font_size"],
                                       show_junction_number=kwargs["show_junction_num"],
                                       n_y_ticks=kwargs["n_y_ticks"],
-                                      distance_between_label_axis=kwargs["distance_ratio"],
                                       show_y_label=not kwargs["hide_y_label"],
                                       show_site_plot=kwargs["show_site"],
                                       strand_choice=kwargs["site_strand"])
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
-                        for group, bcs in barcodes[f.label].items():
+                    if barcodes and f.label in barcodes.keys() and f.category in ["bam", "atac"]:
+                        if f.label not in size_factors.keys() and f.category == "atac":
+                            logger.info(f"Indexing {f.path}")
+                            size_factors[f.label] = ATAC.index(f.path, barcodes[f.label])
+
+                        for group in barcodes[f.label].keys():
                             p.add_heatmap(f.path,
                                           category=f.category,
                                           label=f"{f.label} - {group}" if group else f.label,
-                                          barcodes=bcs,
+                                          barcode=group,
+                                          barcode_groups=barcodes[f.label],
                                           group=f"{f.group} - {group}" if f.group else f.group,
                                           barcode_tag=kwargs["barcode_tag"],
+                                          size_factor=size_factors.get(f.label),
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
                                           color=f.color,
-                                          distance_between_label_axis=kwargs["distance_ratio"],
                                           show_y_label=not kwargs["hide_y_label"],
                                           clustering=kwargs["clustering"],
                                           clustering_method=kwargs["clustering_method"],
@@ -571,7 +586,7 @@ def main(**kwargs):
                                           do_scale=kwargs["heatmap_scale"],
                                           vmin=kwargs["heatmap_vmin"],
                                           vmax=kwargs["heatmap_vmax"])
-                    else:
+                    elif f.category != "atac":
                         p.add_heatmap(f.path,
                                       category=f.category,
                                       group=f.group,
@@ -580,7 +595,6 @@ def main(**kwargs):
                                       umi_tag=kwargs["umi_tag"],
                                       library=f.library,
                                       color=f.color,
-                                      distance_between_label_axis=kwargs["distance_ratio"],
                                       show_y_label=not kwargs["hide_y_label"],
                                       clustering=kwargs["clustering"],
                                       clustering_method=kwargs["clustering_method"],
@@ -593,7 +607,7 @@ def main(**kwargs):
             elif key == "line":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category == "bam":
-                        for group, bcs in barcodes[f.label].items():
+                        for group in barcodes[f.label].keys():
                             if kwargs["group_by_cell"] and group:
                                 label = group
                             elif group:
@@ -603,13 +617,13 @@ def main(**kwargs):
                             p.add_line(f.path,
                                        category=f.category,
                                        label=label,
-                                       barcodes=bcs,
+                                       barcode=group,
+                                       barcode_groups=barcodes,
                                        group=f.group,
                                        barcode_tag=kwargs["barcode_tag"],
                                        umi_tag=kwargs["umi_tag"],
                                        library=f.library,
                                        color=sc_colors.get(group, f.color),
-                                       distance_between_label_axis=kwargs["distance_ratio"],
                                        show_y_label=not kwargs["hide_y_label"],
                                        font_size=kwargs["font_size"],
                                        n_y_ticks=kwargs["n_y_ticks"],
@@ -625,7 +639,6 @@ def main(**kwargs):
                                    umi_tag=kwargs["umi_tag"],
                                    library=f.library,
                                    color=f.color,
-                                   distance_between_label_axis=kwargs["distance_ratio"],
                                    show_y_label=not kwargs["hide_y_label"],
                                    font_size=kwargs["font_size"],
                                    n_y_ticks=kwargs["n_y_ticks"],
@@ -655,7 +668,6 @@ def main(**kwargs):
                               show_y_label=not kwargs["hide_y_label"],
                               deletion_ignore=True if kwargs["del_ratio_ignore"] == 1.0 else False,
                               del_ratio_ignore=kwargs["del_ratio_ignore"],
-                              distance_between_label_axis=kwargs["distance_ratio"],
                               exon_focus=f.exon_focus
                               )
             elif key == "hic":
@@ -668,7 +680,6 @@ def main(**kwargs):
                         depth=f.depth,
                         color=f.color,
                         show_legend=not kwargs["hide_legend"],
-                        distance_between_label_axis=kwargs["distance_ratio"],
                         show_y_label=not kwargs["hide_y_label"],
                         font_size=kwargs["font_size"],
                         n_y_ticks=kwargs["n_y_ticks"]
@@ -698,6 +709,12 @@ def main(**kwargs):
         same_y=kwargs["same_y"],
         remove_duplicate_umi=kwargs["remove_duplicate_umi"],
         threshold=kwargs["threshold"],
+        sc_height_ratio={
+            "heatmap": kwargs["sc_heatmap_height_ratio"],
+            "density": kwargs["sc_density_height_ratio"]
+        },
+        distance_between_label_axis=kwargs["distance_ratio"],
+        barcodes=barcodes
     )
 
 

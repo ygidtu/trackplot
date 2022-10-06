@@ -15,6 +15,7 @@ class File(object):
         self.region = None
         self.log_trans = "0"
         self.title = ""
+        self.is_single_cell = False
 
     @property
     def chrom(self) -> str:
@@ -71,6 +72,7 @@ class SingleCell(File):
         self.barcodes = __set_barcodes__(barcodes)
         self.barcode_tag = barcode_tag
         self.umi_tag = umi_tag
+        self.is_single_cell = not self.empty_barcode()
 
     def has_barcode(self, barcode: str) -> bool:
         u"""

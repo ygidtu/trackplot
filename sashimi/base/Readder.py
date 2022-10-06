@@ -6,6 +6,7 @@ Created by ygidtu@gmail.com at 2022.05.11
 The scripts contain the object to handle all the pysam, pybigwig related reading
 """
 import os
+from typing import Optional
 
 import numpy as np
 import pyBigWig
@@ -35,7 +36,7 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
     Determine the strand of for each read.
     :param read: a pysam.AlignedSegment from the bam file.
     :param library: the method for preparing of the library,
-    value should be one of [frf: "fr-firststrand", frs: "fr-secondstrand", fru: "fr-unstrand"]
+        value should be one of [frf: "fr-firststrand", frs: "fr-secondstrand", fru: "fr-unstrand"]
     :return:
     """
     assert library in ["frf", "frs", "fru"], "Can't recognize the definition of library."
@@ -130,7 +131,7 @@ class Reader(object):
                 try:
                     iter_ = cls.__modify_chrom__(region, r, parser=pysam.asGTF() if not bed else pysam.asBed())
                 except ValueError as err:
-                    logger.warn("please check the input region and gtf files")
+                    logger.warning("please check the input region and gtf files")
                     logger.error(err)
                     raise err
 
@@ -181,7 +182,7 @@ class Reader(object):
                 yield from iter_
 
     @classmethod
-    def read_depth(cls, path: str, region: GenomicLoci):
+    def read_depth(cls, path: str, region: Optional[GenomicLoci] = None):
         if not os.path.exists(path + ".tbi"):
             logger.info(f"create tbi index for {path}")
             pysam.tabix_index(
@@ -191,15 +192,18 @@ class Reader(object):
             )
 
         with pysam.TabixFile(path) as r:
-            try:
-                iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asTuple())
-            except ValueError:
+            if not region:
+                iter_ = r.fetch()
+            else:
                 try:
-                    iter_ = cls.__modify_chrom__(region, r, parser=pysam.asTuple())
-                except ValueError as err:
-                    logger.warn("please check the input region and gtf files")
-                    logger.error(err)
-                    raise err
+                    iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asTuple())
+                except ValueError:
+                    try:
+                        iter_ = cls.__modify_chrom__(region, r, parser=pysam.asTuple())
+                    except ValueError as err:
+                        logger.warning("please check the input region and gtf files")
+                        logger.error(err)
+                        raise err
 
             for record in iter_:
                 yield record

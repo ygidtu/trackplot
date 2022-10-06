@@ -114,6 +114,11 @@ class ReadDepth(object):
             if self.minus is not None:
                 self.minus = -funcs[log_trans](np.abs(self.minus + 1))
 
+    def normalize(self, size_factor: float):
+        self.plus = np.divide(self.plus, size_factor) # * 100
+        if self.minus is not None:
+            self.minus = np.divide(self.minus, size_factor)
+
 
 if __name__ == '__main__':
     pass

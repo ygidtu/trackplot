@@ -193,7 +193,8 @@ add a density plot into track
                 # file loading parameters
                 label: Union[str, List[str]] = "",
                 title: str = "",
-                barcodes: Optional[Set[str]] = None,
+                barcode: str = "",
+                barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
                 library: str = "fr-unstrand",
@@ -221,7 +222,8 @@ add a density plot into track
 - show_site_plot: draw the density distribution of reads from different strand
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
@@ -254,7 +256,8 @@ def add_heatmap(self,
                 # file loading parameters
                 label: Union[str, List[str]] = "",
                 title: str = "",
-                barcodes: Optional[Set[str]] = None,
+                barcode: str = "",
+                barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
                 library: str = "fr-unstrand",
@@ -277,7 +280,8 @@ def add_heatmap(self,
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
@@ -313,7 +317,8 @@ def add_line(self,
              # file loading parameters
              label: Union[str, List[str]] = "",
              title: str = "",
-             barcodes: Optional[Set[str]] = None,
+             barcode: str = "",
+             barcode_groups: Dict[str, Set[str]] = None,
              barcode_tag: str = "BC",
              umi_tag: str = "UB",
              library: str = "fr-unstrand",
@@ -337,7 +342,8 @@ def add_line(self,
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
