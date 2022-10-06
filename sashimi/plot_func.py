@@ -1127,90 +1127,92 @@ def plot_igv_like(
 
     if not y_label:
         y_label = obj.label
-
     y_loc = 0.5
 
-    for c_ind_list in obj.get_index():
-        add_plot = False
-        for c_ind in c_ind_list:
-            c_data = obj.data[c_ind]
-            # skip truncated reads in the given region
-            if c_data.start < region.start or c_data.end > region.end:
-                continue
+    # Add this to skip zero coverage regions.
+    if obj.meta is not None:
 
-            for exon in c_data.exons:
-                s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
-                if e < 0 or s > len(region):
+        for c_ind_list in obj.get_index():
+            add_plot = False
+            for c_ind in c_ind_list:
+                c_data = obj.data[c_ind]
+                # skip truncated reads in the given region
+                if c_data.start < region.start or c_data.end > region.end:
                     continue
 
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
+                for exon in c_data.exons:
+                    s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
+                    if e < 0 or s > len(region):
+                        continue
 
-                x = [
-                    graph_coords[s], graph_coords[e],
-                    graph_coords[e], graph_coords[s]
-                ]
-                y = [
-                    y_loc - exon_width, y_loc - exon_width,
-                    y_loc + exon_width, y_loc + exon_width
-                ]
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
 
-                ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
-                add_plot = add_plot | True
+                    x = [
+                        graph_coords[s], graph_coords[e],
+                        graph_coords[e], graph_coords[s]
+                    ]
+                    y = [
+                        y_loc - exon_width, y_loc - exon_width,
+                        y_loc + exon_width, y_loc + exon_width
+                    ]
 
-            for intron in c_data.introns:
-                s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
+                    ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
+                    add_plot = add_plot | True
 
-                if e < 0 or s > len(region):
-                    continue
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
-                intron_sites = [
-                    graph_coords[s],
-                    graph_coords[e]
-                ]
-                ax.plot(intron_sites, [y_loc, y_loc],
-                        color="#4d4d4d" if not intron_color else intron_color,
-                        lw=0.2, rasterized=raster)
+                for intron in c_data.introns:
+                    s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
 
-            for feature in c_data.features:
-                if feature.start == -1:
-                    continue
+                    if e < 0 or s > len(region):
+                        continue
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
+                    intron_sites = [
+                        graph_coords[s],
+                        graph_coords[e]
+                    ]
+                    ax.plot(intron_sites, [y_loc, y_loc],
+                            color="#4d4d4d" if not intron_color else intron_color,
+                            lw=0.2, rasterized=raster)
 
-                s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
-                is_site = False
+                for feature in c_data.features:
+                    if feature.start == -1:
+                        continue
 
-                if s == e:
-                    s = s - 1
-                    is_site = True
+                    s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
+                    is_site = False
 
-                if e < 0 or s > len(region):
-                    continue
+                    if s == e:
+                        s = s - 1
+                        is_site = True
 
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
+                    if e < 0 or s > len(region):
+                        continue
 
-                x = [
-                    graph_coords[s], graph_coords[e],
-                    graph_coords[e], graph_coords[s]
-                ]
-                width_ratio = 0.75 if not is_site else 1.5
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
 
-                y = [
-                    y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
-                    y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
-                ]
-                ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
-                if is_site:
-                    ax.scatter(graph_coords[s],
-                               y_loc + exon_width * width_ratio,
-                               c='b' if not feature_color else feature_color,
-                               s=.5,
-                               linewidths=(0,),
-                               rasterized=raster
-                               )
-        if add_plot:
-            y_loc += 1
+                    x = [
+                        graph_coords[s], graph_coords[e],
+                        graph_coords[e], graph_coords[s]
+                    ]
+                    width_ratio = 0.75 if not is_site else 1.5
+
+                    y = [
+                        y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
+                        y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
+                    ]
+                    ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+                    if is_site:
+                        ax.scatter(graph_coords[s],
+                                   y_loc + exon_width * width_ratio,
+                                   c='b' if not feature_color else feature_color,
+                                   s=.5,
+                                   linewidths=(0,),
+                                   rasterized=raster
+                                   )
+            if add_plot:
+                y_loc += 1
 
     set_y_ticks(
         ax, label=y_label, theme=theme,

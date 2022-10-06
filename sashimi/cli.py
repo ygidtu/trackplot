@@ -373,7 +373,9 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--m6a", default=None, type=click.STRING,
                  help="""
                  Sashimi.py will load location information from the given tags and \b
-                  then highlight the RNA m6a modification cite at individual reads.
+                  then highlight the RNA m6a modification cite at individual reads. \b
+                  If there are multiple m6a modification site, please add tag as follow, \b
+                  234423,234450
                  """)
 @optgroup.option("--polya", default=None, type=click.STRING,
                  help="""
