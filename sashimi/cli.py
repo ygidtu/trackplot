@@ -296,6 +296,8 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
                  help="Which transcript to show, transcript name or id in gtf file, eg: transcript1,transcript2")
+@optgroup.option("--choose-primary", is_flag=True, type=click.BOOL, show_default=True,
+                 help="Whether choose primary transcript to plot.")
 @optgroup.option("--ref-color", default="black", type=click.STRING,
                  show_default=True, help="The color of exons")
 @optgroup.option("--intron-scale", type=click.FLOAT, default=0.5, help="The scale of intron", show_default=True)
@@ -503,6 +505,7 @@ def main(**kwargs):
                                 show_gene=not kwargs["no_gene"],
                                 color=kwargs["ref_color"],
                                 remove_empty_transcripts=kwargs["remove_empty"],
+                                choose_primary=kwargs["choose_primary"],
                                 font_size=kwargs["font_size"],
                                 show_id=kwargs["show_id"],
                                 reverse_minus=kwargs["reverse_minus"],

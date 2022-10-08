@@ -16,6 +16,7 @@ from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 from loguru import logger
+from collections import defaultdict
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -333,6 +334,7 @@ def plot_reference(
         show_id: bool = False,
         transcripts: Optional[List[str]] = None,
         remove_empty_transcripts: bool = False,
+        choose_primary: bool = False,
         color: Optional[str] = None,
         reverse_minus: bool = False,
         theme: str = "blank",
@@ -356,6 +358,24 @@ def plot_reference(
         graph_coords = init_graph_coords(region)
 
     color = "k" if not color else color
+
+    if choose_primary and (len(transcripts) == 0 or transcripts is None):
+        transcripts = []
+        # For each gene, you can choose only one transcript to plot.
+        genes = defaultdict(list)
+        for transcript in data:
+            if transcript.category == 'interval':
+                continue
+            genes[transcript.gene_id].append(transcript)
+
+        for _, transcripts_list in genes.items():
+            primary_transcripts = sorted(transcripts_list, key=lambda x: len(x), reverse=True)[0]
+            transcripts.append(primary_transcripts.transcript_id)
+    elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
+        logger.warning("--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
+    else:
+        pass
+
     """
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
@@ -363,9 +383,10 @@ def plot_reference(
 
     for transcript in obj.data:
         # ignore the unwanted transcript
-        if transcripts and not (set(transcripts) & transcript.ids()):
+        if transcripts and not (set(transcripts) & set(transcript.ids())):
             continue
-
+        print(transcripts)
+        print(set(transcript.ids()))
         # ignore transcripts without any exons
         if remove_empty_transcripts and not transcript.exons:
             continue
@@ -1277,7 +1298,8 @@ if __name__ == '__main__':
         fig, ax = plt.subplots()
         ref = Reference.create(
             "../example/example.sorted.gtf.gz",
-            add_domain=True)
+            primary=True,
+            add_domain=False)
         ref.load(region)
 
         ref.add_interval(
@@ -1443,5 +1465,5 @@ if __name__ == '__main__':
 
     # test_igv_plot()
     # test_igv_plot2()
-    test_hic_plot()
+    test_ref()
     # test_ref()

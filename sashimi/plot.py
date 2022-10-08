@@ -283,6 +283,7 @@ class Plot(object):
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
                       remove_empty_transcripts: bool = False,
+                      choose_primary: bool = False,
                       color: Optional[str] = "black",
 
                       # transcripts related parameters
@@ -304,6 +305,7 @@ class Plot(object):
         :param font_size: the size of transcript id, name
         :param transcripts: the list of name or ids of transcripts to draw
         :param remove_empty_transcripts: whether to remove transcripts without any exons
+        :param choose_primary: whether to choose primary transcript for each gene
         :param color: the color of exons
         :param show_gene: whether to show gene name/id
         :param show_id: show gene id or gene name
@@ -326,6 +328,7 @@ class Plot(object):
         self.params["reference"] = {
             "transcripts": transcripts,
             "remove_empty_transcripts": remove_empty_transcripts,
+            "choose_primary": choose_primary,
             "color": color,
             "font_size": font_size,
             "show_gene": show_gene,
