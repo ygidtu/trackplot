@@ -605,6 +605,18 @@ hicConvertFormat -m ENCFF121YPY.hic --inputFormat hic --outputFormat cool -o ENC
 hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
 ```
 
+If you met UnicodeDecodeError when converting hic into h5 format, you can download pairs format file from ENCODE.
+
+Here is an example, 
+
+```bash
+wget https://www.encodeproject.org/files/ENCFF931NQV/@@download/ENCFF931NQV.pairs.gz
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+pairix ENCFF931NQV.pairs.gz
+cooler cload pairix -p 16 hg38.chrom.sizes:1000 ENCFF931NQV.pairs.gz ENCFF931NQV_1kb.cool
+hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
+```
+
 2. prepare the config file
 
 ```bash
