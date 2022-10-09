@@ -834,7 +834,6 @@ class Plot(object):
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
              distance_between_label_axis: float = .3,
-             barcodes=None,
              *args, **kwargs):
         u"""
         draw image
@@ -950,6 +949,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
                     distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
             elif p.type == "hic":
@@ -958,6 +958,7 @@ class Plot(object):
                     cbar_ax=plt.subplot(gs[curr_idx, 1]),
                     obj=p.obj,
                     distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
             elif p.type == "site-plot":
@@ -967,6 +968,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
                     distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
 

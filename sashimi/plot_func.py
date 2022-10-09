@@ -4,19 +4,19 @@ u"""
 This script contains the functions to draw different images
 """
 import math
+from collections import defaultdict
 from copy import deepcopy
 from typing import Dict, Optional, List, Union
 
 import matplotlib as mpl
 import numpy as np
 import seaborn as sns
+from loguru import logger
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
-from loguru import logger
-from collections import defaultdict
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
@@ -385,8 +385,8 @@ def plot_reference(
         # ignore the unwanted transcript
         if transcripts and not (set(transcripts) & set(transcript.ids())):
             continue
-        print(transcripts)
-        print(set(transcript.ids()))
+        # print(transcripts)
+        # print(set(transcript.ids()))
         # ignore transcripts without any exons
         if remove_empty_transcripts and not transcript.exons:
             continue
@@ -396,13 +396,17 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc + 0.25,
+                            s=transcript.gene_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.25,
+                            s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc, s=transcript.gene + " | " + transcript.transcript,
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc,
+                            s=transcript.gene + " | " + transcript.transcript,
                             fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
+                ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.1, s=transcript.transcript,
+                        fontsize=font_size, ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -576,6 +580,7 @@ def plot_density(
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
         density_by_plot: bool = False,
+        raster: bool = False,
         **kwargs
 ):
     u"""
@@ -640,7 +645,7 @@ def plot_density(
             compressed_wiggle.append(wiggle[i])
             compressed_x.append(graph_coords[i])
 
-        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post", rasterized=raster)
 
     else:
         wiggle = data.wiggle
@@ -665,9 +670,11 @@ def plot_density(
                 compressed_x.append(graph_coords[i])
 
             if idx == "-" and density_by_plot:
-                ax.fill_between(compressed_x, [-1 * x for x in compressed_wiggle], y2=0, color=color, lw=0, step="post")
+                ax.fill_between(compressed_x, [-1 * x for x in compressed_wiggle], y2=0, color=color, lw=0, step="post",
+                                rasterized=raster)
             else:
-                ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+                ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post",
+                                rasterized=raster)
 
     if jxns:
         # sort the junctions by intron length for better plotting look

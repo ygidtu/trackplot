@@ -476,10 +476,6 @@ def main(**kwargs):
 
     if kwargs["font"]:
         mpl.rcParams['font.family'] = kwargs["font"]
-    else:
-        for f in matplotlib.font_manager.fontManager.ttflist:
-            if "Arial" in f.name:
-                mpl.rcParams['font.family'] = f.name
 
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
@@ -718,8 +714,7 @@ def main(**kwargs):
             "heatmap": kwargs["sc_heatmap_height_ratio"],
             "density": kwargs["sc_density_height_ratio"]
         },
-        distance_between_label_axis=kwargs["distance_ratio"],
-        barcodes=barcodes
+        distance_between_label_axis=kwargs["distance_ratio"]
     )
 
 
