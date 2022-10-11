@@ -182,14 +182,15 @@ def set_y_ticks(
         label: str,
         graph_coords: Union[Dict, np.array],
         max_used_y_val: Union[int, float],
-        min_used_y_val: Optional[Union[int, float]] = 0,
+        min_used_y_val: Optional[Union[int, float]] = None,
         distance_between_label_axis: float = .1,
         n_y_ticks: int = 4,
         theme: str = "ticks",
         font_size: int = 5,
         show_y_label: bool = True,
         set_label_only: bool = False,
-        y_axis_skip_zero: bool = True
+        y_axis_skip_zero: bool = True,
+        **kwargs
 ):
     u"""
     The y ticks are formatted here
@@ -197,6 +198,9 @@ def set_y_ticks(
     """
     # set y ticks, y label and label
     Theme.set_theme(ax, theme)
+
+    if min_used_y_val is None:
+        min_used_y_val, _ = ax.get_ylim()
 
     if not set_label_only:
         ax.set_xlim(0, max(graph_coords))
@@ -343,7 +347,8 @@ def plot_reference(
         plot_domain: bool = False,
         show_exon_id: bool = False,
         raster: bool = True,
-        distance_between_label_axis: float = 0.3
+        distance_between_label_axis: float = 0.3,
+        **kwargs
 ):
     u"""
     Plot the structure of reference
@@ -918,7 +923,8 @@ def plot_heatmap(
         distance_metric: str = "euclidean",
         raster: bool = True,
         show_row_names: bool = False,
-        vmin=None, vmax=None
+        vmin=None, vmax=None,
+        **kwargs
 ):
     u"""
 
@@ -1000,7 +1006,8 @@ def plot_hic(
         theme: str = "ticks",
         y_label: str = "",
         n_y_ticks: int = 4,
-        raster: bool = True
+        raster: bool = True,
+        **kwargs
 ):
     assert len(obj) == 1, "HiC plot only support one file"
 
@@ -1057,6 +1064,7 @@ def plot_line(
         legend_position: str = "upper right",
         legend_ncol: int = 0,
         max_used_y_val: Optional[float] = None,
+        **kwargs
 ):
     u"""
 
@@ -1105,7 +1113,7 @@ def plot_line(
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
-        n_y_ticks=n_y_ticks
+        n_y_ticks=n_y_ticks, **kwargs
     )
 
 
@@ -1123,7 +1131,8 @@ def plot_igv_like(
         distance_between_label_axis: float = .1,
         show_y_label: bool = True,
         theme: str = "ticks_blank",
-        raster: bool = False
+        raster: bool = False,
+        **kwargs
 ):
     u"""
 
@@ -1256,7 +1265,7 @@ def plot_igv_like(
 def plot_links(ax: mpl.axes.Axes,
                data: List[Stroke],
                graph_coords: Optional[Union[Dict, np.ndarray]] = None,
-               max_y: int = -10):
+               max_y: int = -10, **kwargs):
     for stroke in sorted(data):
         leftss, rightss = graph_coords[stroke.start], graph_coords[stroke.end]
 

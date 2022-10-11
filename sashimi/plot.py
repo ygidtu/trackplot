@@ -4,12 +4,14 @@ u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
 import io
+import logging
 import math
 import os.path
 from copy import deepcopy
 from typing import List, Optional, Set, Union, Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 from loguru import logger
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -20,6 +22,7 @@ from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Stroke import Stroke
 from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
+from sashimi.file.BedGraph import Bedgraph
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
@@ -30,6 +33,9 @@ from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
     set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
+
+
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 
 class PlotInfo(object):
@@ -407,14 +413,17 @@ class Plot(object):
                 trans=trans,
                 depth=depth
             )
-
         elif category == "bigwig" or category == "bw":
             category = "bw"
             obj = Bigwig.create(path, label=label, title=title)
+        elif category == "bedgraph" or category == "bg":
+            category = "bg"
+            obj = Bedgraph.create(path=path, label=label, title=title)
         elif category == "depth":
             obj = Depth.create(path, label=label, title=title)
         else:
-            raise ValueError(f"the category should be one of [bam, bigwig, bw, depth], instead of {category}")
+            raise ValueError(
+                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg], instead of {category}")
         return obj, category
 
     def add_customized_junctions(self, path: str):
@@ -798,6 +807,46 @@ class Plot(object):
 
         return self
 
+    def add_manual(self,
+                   data: np.array,
+                   image_type: str = "line",
+                   label: str = "",
+                   group: str = "",
+                   color: str = "blue",
+                   font_size: int = 8,
+                   n_y_ticks: int = 1,
+                   show_y_label: bool = True,
+                   theme: str = "ticks_blank",
+                   **kwargs
+                   ):
+        obj = File("")
+        obj.label = label
+        obj.data = ReadDepth(data)
+        info = PlotInfo(obj=obj, category="manual", type_=image_type, group=group)
+
+        exists = False
+        if group:
+            for p in self.plots:
+                if p.group == group and p.type == image_type:
+                    p.add(obj=obj, category="manual", type_=image_type)
+                    self.params[p]["line_attrs"][obj.label] = {"color": color}
+                    exists = True
+                    break
+
+        if not exists:
+            self.plots.append(info)
+            self.params[info] = {
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "color": color,
+                "line_attrs": {obj.label: {"color": color}}
+            }
+            self.params[info].update(kwargs)
+
+        return self
+
     def merge_by_cell(self):
 
         plots = {}
@@ -846,6 +895,7 @@ class Plot(object):
         :param raster: plot rasterizer site plot
         :param sc_height_ratio: adjust the relative height of single cell plots
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
+        :param figure: figures to create sub figure
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
@@ -904,6 +954,7 @@ class Plot(object):
         )
 
         height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
+
         if fig_width and fig_height:
             fig = plt.figure(figsize=[fig_width, fig_height * sum(height_ratio)], dpi=dpi)
         else:
