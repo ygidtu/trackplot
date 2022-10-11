@@ -27,7 +27,8 @@ class HiCTrack:
                  matrix: Optional[np.ndarray] = None,
                  x_coord: Optional[np.ndarray] = None,
                  y_coord: Optional[np.ndarray] = None,
-                 region: Optional[GenomicLoci] = None
+                 region: Optional[GenomicLoci] = None,
+                 is_single_cell: bool = False
                  ):
         self.path = path
         self.matrix = matrix
@@ -37,6 +38,7 @@ class HiCTrack:
         self.trans = trans
         self.label = label
         self.region = region
+        self.is_single_cell = is_single_cell
 
     @classmethod
     def create(cls,
