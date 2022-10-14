@@ -18,7 +18,7 @@ class Stroke(object):
         return (self.end + self.start) / 2
 
     @classmethod
-    def create(cls, stroke: str, region: GenomicLoci):
+    def create(cls, stroke: str, region: GenomicLoci, default_color: str = "red"):
         res = []
         for i in stroke.split(":"):
             i = i.split("@")
@@ -29,7 +29,7 @@ class Stroke(object):
             if sites[-1] > len(region):
                 sites[-1] = len(region)
 
-            color = "red"
+            color = default_color
             label = ""
             if len(i) > 1:
                 i = i[-1].split("-")

@@ -25,35 +25,39 @@ class ReadDepth(object):
     def __init__(self,
                  wiggle: np.array,
                  junctions_dict: Optional[Dict[Junction, int]] = None,
-                 side_plus: Optional[np.array] = None,
-                 side_minus: Optional[np.array] = None,
-                 plus: Optional[np.array] = None,
+                 site_plus: Optional[np.array] = None,
+                 site_minus: Optional[np.array] = None,
                  minus: Optional[np.array] = None,
                  junction_dict_plus: Optional[np.array] = None,
                  junction_dict_minus: Optional[np.array] = None,
                  strand_aware: bool = False):
         u"""
         init this class
-        :param wiggle: a numpy.ndarray object represented the whole read coverage, should be summation of plus and minus
+        :param wiggle: a numpy.ndarray object represented the whole read coverage,
+                       should be summation of plus and minus or plus
         :param junctions_dict: a dict represented the coordinate of each intron as well as frequency
-        :param side_plus: a numpy.ndarray object represented the forward site coverage
-        :param side_minus: a numpy.ndarray object represented the reverse site coverage
-        :param plus: a numpy.ndarray object represented the forward strand read coverage
+        :param site_plus: a numpy.ndarray object represented the forward site coverage
+        :param site_minus: a numpy.ndarray object represented the reverse site coverage
         :param minus: a numpy.ndarray object represented the reverse strand read coverage
         :param strand_aware: strand specific depth
         :param junction_dict_plus: these splice junction from plus strand
         :param junction_dict_minus: these splice junction from minus strand
         """
-        self.wiggle = wiggle
+        self.plus = wiggle
         self.junctions_dict = junctions_dict
         self.strand_aware = strand_aware
-        self.max = max(self.wiggle)
-        self.plus = plus
         self.minus = minus * -1 if minus is not None else minus
+        self.max = max(self.wiggle, default=0)
         self.junction_dict_plus = junction_dict_plus
         self.junction_dict_minus = junction_dict_minus
-        self.side_plus = side_plus
-        self.side_minus = side_minus * -1 if side_minus is not None else side_minus
+        self.site_plus = site_plus
+        self.site_minus = site_minus * -1 if site_minus is not None else site_minus
+
+    @property
+    def wiggle(self) -> np.array:
+        if self.minus is not None:
+            return self.plus + np.abs(self.minus)
+        return self.plus
 
     def __add__(self, other):
 
@@ -76,7 +80,6 @@ class ReadDepth(object):
             return ReadDepth(
                 self.wiggle + other.wiggle,
                 junctions_dict=junctions,
-                plus=self.plus + other.plus,
                 minus=self.minus + other.minus
             )
 
@@ -105,13 +108,16 @@ class ReadDepth(object):
         funcs = {"10": np.log10, "2": np.log2, "zscore": zscore}
 
         if log_trans in funcs.keys():
-            self.wiggle = funcs[log_trans](self.wiggle + 1)
-
             if self.plus is not None:
                 self.plus = funcs[log_trans](self.plus + 1)
 
             if self.minus is not None:
                 self.minus = -funcs[log_trans](np.abs(self.minus + 1))
+
+    def normalize(self, size_factor: float):
+        self.plus = np.divide(self.plus, size_factor) # * 100
+        if self.minus is not None:
+            self.minus = np.divide(self.minus, size_factor)
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ plot.set_reference(
     path="../example/bams/1.bam",
     category="bam",
     color="blue",
-    show_side_plot=True,
+    show_site_plot=True,
 ).add_density(
     path="../example/bws/2.bw",
     category="bw",
@@ -193,10 +193,12 @@ add a density plot into track
                 # file loading parameters
                 label: Union[str, List[str]] = "",
                 title: str = "",
-                barcodes: Optional[Set[str]] = None,
+                barcode: str = "",
+                barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
                 library: str = "fr-unstrand",
+                density_by_strand: bool = False,
 
                 # plotting parameters
                 color="blue",
@@ -209,21 +211,23 @@ add a density plot into track
                 y_label: str = "",
                 theme: str = "ticks_blank",
 
-                # side plot parameters
-                show_side_plot: bool = False,
+                # site plot parameters
+                show_site_plot: bool = False,
                 strand_choice: Optional[str] = None,
                 )
 ```
 
 - path: the path to input file
 - category: the input file type
-- show_side_plot: draw the density distribution of reads from different strand
+- show_site_plot: draw the density distribution of reads from different strand
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
+- density_by_strand: whether to draw density plot in strand-specific manner.
 - font_size: the font size for ticks, y-axis label and title
 - show_junction_number: whether to show the number of junctions
 - distance_between_label_axis: distance between y-axis label and y-axis ticks
@@ -233,7 +237,7 @@ add a density plot into track
 - show_y_label: whether to show y-axis label
 - y_label: the text of y-axis title
 - theme: the theme name
-- strand_choice: the strand to draw on side plot
+- strand_choice: the strand to draw on site plot
 
 Returns `Plot`
 
@@ -252,7 +256,8 @@ def add_heatmap(self,
                 # file loading parameters
                 label: Union[str, List[str]] = "",
                 title: str = "",
-                barcodes: Optional[Set[str]] = None,
+                barcode: str = "",
+                barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
                 library: str = "fr-unstrand",
@@ -275,7 +280,8 @@ def add_heatmap(self,
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
@@ -311,7 +317,8 @@ def add_line(self,
              # file loading parameters
              label: Union[str, List[str]] = "",
              title: str = "",
-             barcodes: Optional[Set[str]] = None,
+             barcode: str = "",
+             barcode_groups: Dict[str, Set[str]] = None,
              barcode_tag: str = "BC",
              umi_tag: str = "UB",
              library: str = "fr-unstrand",
@@ -335,7 +342,8 @@ def add_line(self,
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
-- barcodes: list of required barcodes
+- barcode: key of barcode barcode_groups
+- barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
 - library: fr-unstrand
@@ -532,5 +540,5 @@ def plot(self,
 - dpi: the dpi of saved plot
 - fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
 - fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
-- raster: plot rasterizer side plot
+- raster: plot rasterizer site plot
 

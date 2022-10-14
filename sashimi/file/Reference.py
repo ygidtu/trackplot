@@ -15,8 +15,8 @@ from typing import List, Union, Optional
 import filetype
 import matplotlib as mpl
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Protein import CdsProtein
 from sashimi.base.Readder import Reader
@@ -317,7 +317,7 @@ class Reference(File):
             output_gtf = input_gtf + ".gz"
 
         if not os.path.exists(output_gtf + ".tbi"):
-            logger.info("Create index for %s", input_gtf)
+            logger.info(f"Create index for {input_gtf}")
             try:
                 pysam.tabix_index(
                     output_gtf,

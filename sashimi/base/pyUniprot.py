@@ -6,16 +6,16 @@ u"""
 Fetch protein information from uniprot website
 """
 import json
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 from xml.parsers.expat import ExpatError
 
 import numpy as np
 import requests as rq
 import xmltodict
+from loguru import logger
 
-from conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
-from conf.logger import logger
+from sashimi.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):
@@ -209,30 +209,29 @@ class Uniprot(object):
 
 if __name__ == '__main__':
     def test():
-        # trans_id = 'ENST00000339381'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
-
-        # trans_id = 'ENST00000379319'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
-
-        # trans_id = 'ENST00000486161'
-        # # # 5736 real, 4515 false
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
-
-        # trans_id = 'ENST00000378891'
-        # trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2085)
-
-        trans_id = 'ENST00000378888'
+        """
+        trans_id = 'ENST00000339381'
         trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2010)
+
+        trans_id = 'ENST00000379319'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=594)
+
+        trans_id = 'ENST00000486161'
+        # # 5736 real, 4515 false
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=4515)
+
+        trans_id = 'ENST00000378891'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=2085)
+
+        """
+
+        trans_id = 'ENST00000351718'
+        trans_id_pep = Uniprot(uniprot_id=trans_id, cds_len=3549)
 
         print(trans_id_pep.guessed_id)
         print(trans_id_pep.domain)
         for i in trans_id_pep.domain:
             print(i.category, i.type, i.begin, i.end)
-        # print(type(trans_id_pep.info))
-        # print(trans_id_pep.info)
-        # print('done')
-        # print(trans_id_pep.ensembl_info, trans_id_pep.__domain_info__)
 
 
     test()

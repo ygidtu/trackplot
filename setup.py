@@ -1,6 +1,7 @@
 import os
 
 from setuptools import setup, find_packages
+from sashimi.cli import __version__
 
 
 def locate_packages():
@@ -27,24 +28,34 @@ def locate_packages():
                             packages.append(f"{name}")
                         else:
                             packages.append(f"{name}, {version}")
-    print(packages)
     return packages
 
 
+def load_description():
+    __dir__ = os.path.dirname(os.path.abspath(__file__))
+    readme = os.path.join(__dir__, "README.md")
+    if os.path.exists(readme):
+        with open(readme) as r:
+            return r.read()
+    return "README"
+
+
 setup(
-    name='sashimi',
-    long_description=__doc__,
+    name='sashimi.py',
+    long_description=load_description(),
+    long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    url='',
+    url="https://github.com/ygidtu/pysashimi",
     entry_points={
         'console_scripts':
             [
-                'sashimi = sashimi.cli:main'
+                'sashimipy = sashimi.cli:main'
             ]
     },
     python_requires='>=3.8',
-    data_files=[(".", ['settings.ini'])],
+    data_files=[(".", ['README.md'])],
     install_requires=locate_packages(),
+    version=__version__
 )

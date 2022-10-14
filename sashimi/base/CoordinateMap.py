@@ -228,5 +228,7 @@ if __name__ == '__main__':
         domain_coord = coord.pep_to_cds(1, 3)
         print(domain_coord.se)
         # [(3216025, 3216033)]
+
+
     test()
     pass

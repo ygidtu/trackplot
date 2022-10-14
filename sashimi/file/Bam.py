@@ -9,13 +9,12 @@ changelog:
 """
 import gzip
 import os
-from copy import deepcopy
 from typing import Optional, Set
 
 import numpy as np
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Junction import Junction
 from sashimi.base.ReadDepth import ReadDepth
@@ -24,8 +23,11 @@ from sashimi.file.File import SingleCell
 
 
 class Bam(SingleCell):
-    def __init__(self, path: str, label: str = "", title: str = "", barcodes: Optional[Set[str]] = None,
-                 barcode_tag: str = "CB", umi_tag: str = "UB", library: str = "fru"):
+    def __init__(self,
+                 path: str, label: str = "",
+                 title: str = "", barcodes: Optional[Set[str]] = None,
+                 barcode_tag: str = "CB", umi_tag: str = "UB",
+                 library: str = "fru", density_by_strand: bool = False):
         u"""
         init this object
         :param label: the left axis label
@@ -35,11 +37,13 @@ class Bam(SingleCell):
         :param barcode_tag: the cell barcode tag, default is CB according to 10X Genomics
         :param umi_tag: the UMI barcode tag, default is UB according to 10X Genomics
         :param library: library for determining of read strand.
+        :param density_by_strand: whether to draw density plot in strand-specific manner.
         """
         super().__init__(path, barcodes, barcode_tag, umi_tag)
         self.title = title
         self.label = label if label else os.path.basename(path).replace(".bam", "")
         self.library = library
+        self.density_by_strand = density_by_strand
 
     @classmethod
     def create(cls,
@@ -143,13 +147,13 @@ class Bam(SingleCell):
         self.region = region
         self.log_trans = log_trans
         filtered_junctions = {}
-        depth_vector = np.zeros(len(region), dtype='f')
+
         spanned_junctions = kwargs.get("junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus = dict()
         spanned_junctions_minus = dict()
         plus, minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
-        side_plus, side_minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
+        site_plus, site_minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
 
         umis = {}
 
@@ -170,8 +174,9 @@ class Bam(SingleCell):
                     continue
 
                 # filter reads by 10x barcodes
+                # @20220924, add `not` before has_barcode and skip these reads without umi tag.
                 if self.barcodes:
-                    if not read.has_tag(self.barcode_tag) or self.has_barcode(read.get_tag(self.barcode_tag)):
+                    if not read.has_tag(self.barcode_tag) or not self.has_barcode(read.get_tag(self.barcode_tag)):
                         continue
 
                     if remove_duplicate_umi:
@@ -180,7 +185,7 @@ class Bam(SingleCell):
                             umis[barcode] = {}
 
                         # filter reads with duplicate umi by barcode
-                        if not read.has_tag(self.umi_tag):
+                        if read.has_tag(self.umi_tag):
                             umi = read.get_tag(self.umi_tag)
 
                             if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
@@ -188,6 +193,8 @@ class Bam(SingleCell):
 
                             if len(umis[barcode]) == 0:
                                 umis[barcode][umi] = hash(read.query_name)
+                        else:
+                            continue
 
                 start = read.reference_start
                 if required_strand and strand != required_strand:
@@ -213,7 +220,6 @@ class Bam(SingleCell):
                         for i in range(length):
                             if region.start <= start + i + 1 <= region.end:
                                 try:
-                                    depth_vector[start + i + 1 - region.start] += 1
                                     if strand == "+":
                                         plus[start + i + 1 - region.start] += 1
                                     elif strand == "-":
@@ -236,16 +242,6 @@ class Bam(SingleCell):
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
-                            if strand == "+":
-                                if junction_name not in spanned_junctions_plus:
-                                    spanned_junctions_plus[junction_name] = -1
-                                else:
-                                    spanned_junctions_plus[junction_name] += -1
-                            elif strand == "-":
-                                if junction_name not in spanned_junctions_minus:
-                                    spanned_junctions_minus[junction_name] = -1
-                                else:
-                                    spanned_junctions_minus[junction_name] += -1
 
                             spanned_junctions[junction_name] = spanned_junctions[junction_name] + 1
                         except ValueError as err:
@@ -254,13 +250,24 @@ class Bam(SingleCell):
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
                 if strand == "+" and 0 <= start - region.start < len(plus):
-                    side_plus[start - region.start] += 1
+                    site_plus[end - region.start] += 1
                 elif strand == "-" and 0 <= end - region.start < len(minus):
-                    side_minus[end - region.start] += 1
+                    site_minus[start - region.start] += 1
 
             for k, v in spanned_junctions.items():
                 if v >= threshold:
                     filtered_junctions[k] = v
+
+                    if k.strand == "+":
+                        if k not in spanned_junctions_plus:
+                            spanned_junctions_plus[k] = -1
+                        else:
+                            spanned_junctions_plus[k] += -1
+                    elif k.strand == "-":
+                        if k not in spanned_junctions_minus:
+                            spanned_junctions_minus[k] = -1
+                        else:
+                            spanned_junctions_minus[k] += -1
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)
@@ -269,14 +276,13 @@ class Bam(SingleCell):
             logger.error(err)
 
         self.data = ReadDepth(
-            depth_vector,
+            plus,
             junctions_dict=filtered_junctions,
-            side_plus=side_plus,
-            side_minus=side_minus,
-            plus=plus,
+            site_plus=site_plus,
+            site_minus=site_minus,
             minus=minus,
-            junction_dict_plus={k: spanned_junctions_plus[k] for k in filtered_junctions if k in spanned_junctions_plus},
-            junction_dict_minus={k: spanned_junctions_minus[k] for k in filtered_junctions if k in spanned_junctions_minus},
+            junction_dict_plus=spanned_junctions_plus,
+            junction_dict_minus=spanned_junctions_minus,
             strand_aware=False if self.library == "fru" else True)
         return self
 
@@ -293,6 +299,6 @@ if __name__ == '__main__':
     print(bam.data.junctions_dict)
     print(max(bam.data.plus))
     print(min(bam.data.minus))
-    print(max(bam.data.side_plus))
-    print(min(bam.data.side_minus))
+    print(max(bam.data.site_plus))
+    print(min(bam.data.site_minus))
     pass

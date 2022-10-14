@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-rich = "*"
 pysam = "*"
 seaborn = "*"
 matplotlib = "*"
@@ -18,6 +17,7 @@ pandas = "*"
 click-option-group = "*"
 cairocffi = "*"
 hicmatrix = "*"
+loguru = "*"
 
 [dev-packages]
 

@@ -6,13 +6,14 @@ Generate object for processing HiC matrix information
 pre-process code was re-wrote based
 https://github.com/deeptools/pyGenomeTracks/blob/c42e74e725d22269c33718d9f5df11e0c45c7378/pygenometracks/tracks/HiCMatrixTrack.py#L13
 """
+
 import itertools
 from typing import Optional
 
 import numpy as np
+from loguru import logger
 from scipy import sparse
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 
@@ -26,7 +27,8 @@ class HiCTrack:
                  matrix: Optional[np.ndarray] = None,
                  x_coord: Optional[np.ndarray] = None,
                  y_coord: Optional[np.ndarray] = None,
-                 region: Optional[GenomicLoci] = None
+                 region: Optional[GenomicLoci] = None,
+                 is_single_cell: bool = False
                  ):
         self.path = path
         self.matrix = matrix
@@ -36,6 +38,7 @@ class HiCTrack:
         self.trans = trans
         self.label = label
         self.region = region
+        self.is_single_cell = is_single_cell
 
     @classmethod
     def create(cls,
@@ -49,7 +52,7 @@ class HiCTrack:
         :param path: the HiC file which could be one of [h5, cool / mcool / scool, hicpro, homer]
         :param label: the label of the given HiC data
         :param depth: the depth of the given HiC data, a bigger depth means big y-axis
-        :param trans: log1p, log2 or log10 tranform
+        :param trans: log1p, log2 or log10 transform
         :return:
         """
         return cls(

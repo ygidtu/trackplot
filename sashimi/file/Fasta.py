@@ -6,8 +6,8 @@ u"""
 import os
 
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.file.File import File
 

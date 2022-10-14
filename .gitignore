@@ -279,6 +279,9 @@ new_run.sh
 example.sorted.sorted.gtf
 example.sorted.sorted.gtf.gz
 example.sorted.sorted.gtf.gz.tbi
+
+.vscode/
+
 docs/_*
 plots/
 ui

@@ -3,15 +3,19 @@
 
 download source code using git
 ```bash
-git clone from https://github.com/ygidtu/sashimi
+git clone from https://github.com/ygidtu/sashimi.py sashimi
 cd sashimi
 ```
 
 ### Run as command line tools
 
 ```bash
+pip install sashimipy
+
+# or install from source
 python setup.py install
-sashimi --help
+
+sashimipy --help
 ```
 
 ### Run as script
@@ -41,7 +45,7 @@ But:
 
 ## Using docker image
 
-For users who wish to running this program on `Windows` or `macOS (Apple Silicon)`, we strongly recommend docker image.
+For users who wish to running this program on `Windows` or `macOS (Apple Silicon)`, we **strongly** recommend docker image.
 
 ### Pull from docker hub
 ```bash
@@ -51,7 +55,7 @@ docker run --rm ygidtu/sashimi --help
 
 ### Build docker image from source
 ```bash
-git clone from https://github.com/ygidtu/sashimi
+git clone from https://github.com/ygidtu/sashimi.py sashimi
 cd sashimi
 docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
@@ -76,7 +80,7 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 2. **Users could change the server ip and port by modify the settings.ini**
 
 ```bash
-git clone https://github.com/ygidtu/sashimi
+git clone https://github.com/ygidtu/sashimi.py sashimi
 cd sashimi/web
 
 # build the frontend static files
@@ -84,9 +88,9 @@ npm install -g vue-cli vite && npm install
 vite build
 
 # prepare the backend server
-pip fastapi pydantic jinja2 uvicorn
+pip install fastapi pydantic jinja2 uvicorn
 
-python server.py
+python server.py --help
 ```
 
 

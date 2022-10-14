@@ -4,33 +4,38 @@ u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
 import io
+import logging
 import math
 import os.path
-
 from copy import deepcopy
 from typing import List, Optional, Set, Union, Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
+from loguru import logger
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from conf.logger import logger
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
-from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.ReadSegments import ReadSegment
 from sashimi.base.Stroke import Stroke
 from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
+from sashimi.file.BedGraph import Bedgraph
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
 from sashimi.file.File import File
+from sashimi.file.HiCMatrixTrack import HiCTrack
+from sashimi.file.Junction import load_custom_junction
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_side_plot, plot_hic
-from sashimi.file.Junction import load_custom_junction
+    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
+
+
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 
 class PlotInfo(object):
@@ -67,6 +72,10 @@ class PlotInfo(object):
         return self
 
     @property
+    def is_single_cell(self):
+        return self.obj[0].is_single_cell
+
+    @property
     def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
         data = {}
         for obj in self.obj:
@@ -82,7 +91,7 @@ class PlotInfo(object):
         n = 0
         if not self.category:
             pass
-        elif self.type == "side-plot" and self.category[0] == "bam":
+        elif self.type == "site-plot" and self.category[0] == "bam":
             n += 2
         elif self.type == "igv":
             n += self.obj[0].len(scale / 8)
@@ -126,6 +135,7 @@ class Plot(object):
         self.plots = []
         self.params = {}
         self.junctions = {}
+        self.link = []
 
     @property
     def chrom(self) -> Optional[str]:
@@ -237,6 +247,31 @@ class Plot(object):
             self.stroke.append(Stroke(start - self.start, end - self.end, color, label))
         return self
 
+    def add_links(
+            self,
+            link: Optional[str] = None,
+            start: int = 0,
+            end: int = 0,
+            label: str = "",
+            color: str = "blue"
+    ):
+        u"""
+        add stroke to plot
+        :param link: string in 100-200@red;300-400 format
+        :param start: start site of stroke
+        :param end: end site of stroke
+        :param label: label of stroke
+        :param color: color of stroke
+        :return:
+        """
+        assert self.region is not None, f"please set plot region first."
+        if link:
+            self.link.append(Stroke.create(link, self.region, default_color=color))
+
+        if 0 < start < end:
+            self.link.append([Stroke(start - self.start, end - self.end, color, label)])
+        return self
+
     def set_sequence(self, fasta: str):
         u"""
         set sequence info for
@@ -254,6 +289,7 @@ class Plot(object):
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
                       remove_empty_transcripts: bool = False,
+                      choose_primary: bool = False,
                       color: Optional[str] = "black",
 
                       # transcripts related parameters
@@ -275,6 +311,7 @@ class Plot(object):
         :param font_size: the size of transcript id, name
         :param transcripts: the list of name or ids of transcripts to draw
         :param remove_empty_transcripts: whether to remove transcripts without any exons
+        :param choose_primary: whether to choose primary transcript for each gene
         :param color: the color of exons
         :param show_gene: whether to show gene name/id
         :param show_id: show gene id or gene name
@@ -297,6 +334,7 @@ class Plot(object):
         self.params["reference"] = {
             "transcripts": transcripts,
             "remove_empty_transcripts": remove_empty_transcripts,
+            "choose_primary": choose_primary,
             "color": color,
             "font_size": font_size,
             "show_gene": show_gene,
@@ -322,7 +360,8 @@ class Plot(object):
                             category: str = "bam",
                             label: Union[str, List[str]] = "",
                             title: str = "",
-                            barcodes: Optional[Set[str]] = None,
+                            barcode: str = "",
+                            barcode_groups: Dict[str, Set[str]] = None,
                             barcode_tag: str = "BC",
                             umi_tag: str = "UB",
                             library: str = "fru",
@@ -330,26 +369,32 @@ class Plot(object):
                             deletion_ignore: Optional[int] = True,
                             del_ratio_ignore: float = .5,
                             exon_focus: Optional[str] = None,
+
                             # for hic plot
                             trans: Optional[str] = None,
-                            depth: Optional[int] = 30000
+                            depth: Optional[int] = 30000,
+
+                            # for ATAC
+                            size_factor=None
                             ):
         if category == "bam":
             obj = Bam.create(
                 path,
                 label=label,
                 title=title,
-                barcodes=barcodes,
+                barcodes=barcode_groups.get(barcode) if barcode_groups else None,
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
-                library=library
+                library=library,
             )
         elif category == "atac":
             obj = ATAC.create(
                 path,
                 label=label,
                 title=title,
-                barcodes=barcodes
+                barcode=barcode,
+                barcode_groups=barcode_groups,
+                size_factors=size_factor
             )
         elif category == "igv":
             obj = ReadSegment.create(
@@ -368,14 +413,17 @@ class Plot(object):
                 trans=trans,
                 depth=depth
             )
-
         elif category == "bigwig" or category == "bw":
             category = "bw"
             obj = Bigwig.create(path, label=label, title=title)
+        elif category == "bedgraph" or category == "bg":
+            category = "bg"
+            obj = Bedgraph.create(path=path, label=label, title=title)
         elif category == "depth":
             obj = Depth.create(path, label=label, title=title)
         else:
-            raise ValueError(f"the category should be one of [bam, bigwig, bw, depth], instead of {category}")
+            raise ValueError(
+                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg], instead of {category}")
         return obj, category
 
     def add_customized_junctions(self, path: str):
@@ -385,14 +433,17 @@ class Plot(object):
     def add_density(self,
                     path: str,
                     category: str = "bam",
+                    size_factor=None,
 
                     # file loading parameters
                     label: Union[str, List[str]] = "",
                     title: str = "",
-                    barcodes: Optional[Set[str]] = None,
+                    barcode: str = "",
+                    barcode_groups: Dict[str, Set[str]] = None,
                     barcode_tag: str = "BC",
                     umi_tag: str = "UB",
                     library: str = "fru",
+                    density_by_strand: bool = False,
 
                     # plotting parameters
                     color="blue",
@@ -400,36 +451,37 @@ class Plot(object):
                     show_junction_number: bool = True,
                     junction_number_font_size: int = 5,
                     n_y_ticks: int = 4,
-                    distance_between_label_axis: float = .1,
                     show_y_label: bool = True,
                     y_label: str = "",
                     theme: str = "ticks_blank",
 
-                    # side plot parameters
-                    show_side_plot: bool = False,
+                    # site plot parameters
+                    show_site_plot: bool = False,
                     strand_choice: Optional[str] = None,
                     ):
         u"""
         add density object to plot
         :param path: the path to input file
         :param category: the input file type
-        :param show_side_plot: draw the density distribution of reads from different strand
+        :param show_site_plot: draw the density distribution of reads from different strand
         :param label: the label of input file
         :param title: the title of input file
-        :param barcodes: list of required barcodes
+        :param size_factor
+        :param barcode: key of barcode barcode_groups
+        :param barcode_groups:
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
+        :param density_by_strand: whether to draw density plot in strand-specific manner.
         :param library: should be one of [frf: "fr-firststrand", frs:"fr-secondstrand", fru:"fr-unstrand"], default: fru
         :param font_size: the font size for ticks, y-axis label and title
         :param show_junction_number: whether to show the number of junctions
-        :param distance_between_label_axis: distance between y-axis label and y-axis ticks
         :param n_y_ticks: number of y ticks
         :param junction_number_font_size:
         :param color: color for this density plot
         :param show_y_label: whether to show y-axis label
         :param y_label: the text of y-axis title
         :param theme: the theme name
-        :param strand_choice: the strand to draw on side plot
+        :param strand_choice: the strand to draw on site plot
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -437,17 +489,19 @@ class Plot(object):
             category=category,
             label=label,
             title=title,
-            barcodes=barcodes,
+            barcode=barcode,
+            barcode_groups=barcode_groups,
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
-            library=library
+            library=library,
+            size_factor=size_factor
         )
 
         type_ = "density"
-        if show_side_plot and category == "bam":
-            type_ = "side-plot"
-        elif show_side_plot:
-            logger.warning("show_side_plot only works with bam files")
+        if show_site_plot and category == "bam":
+            type_ = "site-plot"
+        elif show_site_plot:
+            logger.warning("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
         self.plots.append(info)
@@ -457,11 +511,11 @@ class Plot(object):
             "color": color,
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
-            "distance_between_label_axis": distance_between_label_axis,
             "show_y_label": show_y_label,
             "y_label": y_label,
             "theme": theme,
-            "strand_choice": strand_choice
+            "strand_choice": strand_choice,
+            "density_by_strand": density_by_strand
         }
         return self
 
@@ -469,11 +523,13 @@ class Plot(object):
                     path: str,
                     group: str = "",
                     category: str = "bam",
+                    size_factor=None,
 
                     # file loading parameters
                     label: Union[str, List[str]] = "",
                     title: str = "",
-                    barcodes: Optional[Set[str]] = None,
+                    barcode: str = "",
+                    barcode_groups: Dict[str, Set[str]] = None,
                     barcode_tag: str = "BC",
                     umi_tag: str = "UB",
                     library: str = "fru",
@@ -481,13 +537,14 @@ class Plot(object):
                     # plotting parameters
                     color="viridis",
                     font_size: int = 8,
-                    distance_between_label_axis: float = .1,
                     show_y_label: bool = True,
                     theme: str = "ticks",
                     do_scale: bool = False,
                     clustering: bool = False,
                     clustering_method: str = "ward",
                     distance_metric: str = "euclidean",
+                    show_row_names: bool = False,
+                    vmin=None, vmax=None
                     ):
         u"""
         add multiple objects for a group of heatmap
@@ -495,8 +552,10 @@ class Plot(object):
         :param group: the heatmap group
         :param category: file category corresponding to input file
         :param label: the label of input file
+        :param size_factor: only used by atac
         :param title: the title of input file
-        :param barcodes: list of required barcodes
+        :param barcode: key of barcode barcode_groups
+        :param barcode_groups:
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
         :param library: fru: fr-unstrand
@@ -504,7 +563,6 @@ class Plot(object):
         :param show_y_label: whether to show y-axis label
         :param theme: the theme name
         :param font_size:
-        :param distance_between_label_axis:
         :param do_scale: whether to scale the matrix
         :param clustering: whether reorder matrix by clustering
         :param clustering_method: same as  scipy.cluster.hierarchy.linkage
@@ -513,6 +571,9 @@ class Plot(object):
                     'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
                     'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                     'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+        :param show_row_names:
+        :param vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+        :param vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -520,10 +581,12 @@ class Plot(object):
             category=category,
             label=label,
             title=title,
-            barcodes=barcodes,
+            barcode=barcode,
+            barcode_groups=barcode_groups,
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
-            library=library
+            library=library,
+            size_factor=size_factor
         )
 
         exists = False
@@ -539,13 +602,14 @@ class Plot(object):
             self.params[info] = {
                 "color": color,
                 "font_size": font_size,
-                "distance_between_label_axis": distance_between_label_axis,
                 "show_y_label": show_y_label,
                 "theme": theme,
                 "do_scale": do_scale,
                 "clustering": clustering,
                 "clustering_method": clustering_method,
-                "distance_metric": distance_metric
+                "distance_metric": distance_metric,
+                "show_row_names": show_row_names,
+                "vmin": vmin, "vmax": vmax
             }
 
         return self
@@ -558,7 +622,8 @@ class Plot(object):
                  # file loading parameters
                  label: Union[str, List[str]] = "",
                  title: str = "",
-                 barcodes: Optional[Set[str]] = None,
+                 barcode: str = "",
+                 barcode_groups: Dict[str, Set[str]] = None,
                  barcode_tag: str = "BC",
                  umi_tag: str = "UB",
                  library: str = "fru",
@@ -566,7 +631,6 @@ class Plot(object):
                  # plotting parameters
                  color="blue",
                  font_size: int = 8,
-                 distance_between_label_axis: float = .1,
                  show_y_label: bool = True,
                  line_attrs: Optional[Dict] = None,
                  theme: str = "ticks_blank",
@@ -582,11 +646,11 @@ class Plot(object):
         :param category: file category corresponding to input file
         :param label: the label of input file
         :param title: the title of input file
-        :param barcodes: list of required barcodes
+        :param barcode: key of barcode barcode_groups
+        :param barcode_groups:
         :param barcode_tag: cell barcode tag
         :param umi_tag: umi barcode tag
         :param library: fru: fr-unstrand
-        :param distance_between_label_axis: distance between y-axis label and y-axis ticks
         :param n_y_ticks: number of y ticks
         :param color: color for this density plot
         :param show_y_label: whether to show y-axis label
@@ -603,7 +667,8 @@ class Plot(object):
             category=category,
             label=label,
             title=title,
-            barcodes=barcodes,
+            barcode=barcode,
+            barcode_groups=barcode_groups,
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
             library=library
@@ -629,7 +694,6 @@ class Plot(object):
                 "show_legend": show_legend,
                 "font_size": font_size,
                 "n_y_ticks": n_y_ticks,
-                "distance_between_label_axis": distance_between_label_axis,
                 "show_y_label": show_y_label,
                 "theme": theme,
                 "legend_position": legend_position,
@@ -649,7 +713,6 @@ class Plot(object):
             depth: int = 30000,
             font_size: int = 8,
             n_y_ticks: int = 4,
-            distance_between_label_axis: float = .1,
             show_y_label: bool = True,
             theme: str = "ticks"
     ):
@@ -669,7 +732,6 @@ class Plot(object):
             "y_label": label,
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
-            "distance_between_label_axis": distance_between_label_axis,
             "show_y_label": show_y_label,
             "theme": theme
         }
@@ -696,7 +758,6 @@ class Plot(object):
             exon_width: float = .3,
             font_size: int = 8,
             n_y_ticks: int = 1,
-            distance_between_label_axis: float = .1,
             show_y_label: bool = True,
             theme: str = "ticks_blank"
     ):
@@ -716,7 +777,6 @@ class Plot(object):
         :param exon_width:
         :param font_size:
         :param n_y_ticks:
-        :param distance_between_label_axis:
         :param show_y_label:
         :param theme:
         :return:
@@ -741,10 +801,49 @@ class Plot(object):
             "exon_width": exon_width,
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
-            "distance_between_label_axis": distance_between_label_axis,
             "show_y_label": show_y_label,
             "theme": theme
         }
+
+        return self
+
+    def add_manual(self,
+                   data: np.array,
+                   image_type: str = "line",
+                   label: str = "",
+                   group: str = "",
+                   color: str = "blue",
+                   font_size: int = 8,
+                   n_y_ticks: int = 1,
+                   show_y_label: bool = True,
+                   theme: str = "ticks_blank",
+                   **kwargs
+                   ):
+        obj = File("")
+        obj.label = label
+        obj.data = ReadDepth(data)
+        info = PlotInfo(obj=obj, category="manual", type_=image_type, group=group)
+
+        exists = False
+        if group:
+            for p in self.plots:
+                if p.group == group and p.type == image_type:
+                    p.add(obj=obj, category="manual", type_=image_type)
+                    self.params[p]["line_attrs"][obj.label] = {"color": color}
+                    exists = True
+                    break
+
+        if not exists:
+            self.plots.append(info)
+            self.params[info] = {
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "color": color,
+                "line_attrs": {obj.label: {"color": color}}
+            }
+            self.params[info].update(kwargs)
 
         return self
 
@@ -782,6 +881,8 @@ class Plot(object):
              fig_height: Union[int, float] = 0,
              raster: bool = False,
              return_image: Optional[str] = None,
+             sc_height_ratio: Optional[Dict[str, float]] = None,
+             distance_between_label_axis: float = .3,
              *args, **kwargs):
         u"""
         draw image
@@ -791,13 +892,20 @@ class Plot(object):
         :param dpi: the dpi of saved plot
         :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
         :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
-        :param raster: plot rasterizer side plot
+        :param raster: plot rasterizer site plot
+        :param sc_height_ratio: adjust the relative height of single cell plots
+        :param distance_between_label_axis: distance between y-axis label and y-axis ticks
+        :param figure: figures to create sub figure
         :param return_image: used for interactive ui
         """
+        if sc_height_ratio is None:
+            sc_height_ratio = {"density": .2, "heatmap": .2}
         assert self.region is not None, f"please set the plotting region first."
 
         plots_n_rows = 1
         plots_n_cols = 1
+
+        height_ratio = []
         if self.reference is not None:
             logger.info("load reference")
             self.reference.load(self.region, *args, **kwargs)
@@ -805,6 +913,9 @@ class Plot(object):
 
         if self.stroke:
             plots_n_rows += int(max(len(self.stroke) * stroke_scale, 1))
+
+        if self.link:
+            plots_n_rows += len(self.link)
 
         if self.sequence is not None:
             logger.info("load sequence")
@@ -823,10 +934,10 @@ class Plot(object):
             if p.type in ["heatmap", "hic"]:
                 plots_n_cols = 2
 
-        if fig_width and fig_height:
-            fig = plt.figure(figsize=[fig_width, fig_height * plots_n_rows], dpi=dpi)
-        else:
-            fig = plt.figure(dpi=dpi)
+            if p.is_single_cell:
+                height_ratio.append(sc_height_ratio.get(p.type, 1))
+            else:
+                height_ratio.append(1)
 
         logger.debug(f"plots n_rows={plots_n_rows}; n_cols = {plots_n_cols}")
         logger.info("init graph_coords")
@@ -842,15 +953,26 @@ class Plot(object):
             intron_scale=intron_scale
         )
 
-        if plots_n_cols > 1:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, width_ratios=(.99, .01), wspace=0.01, hspace=.15)
+        height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
+
+        if fig_width and fig_height:
+            fig = plt.figure(figsize=[fig_width, fig_height * sum(height_ratio)], dpi=dpi)
         else:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, wspace=.7, hspace=.15)
+            fig = plt.figure(dpi=dpi)
+
+        if plots_n_cols > 1:
+            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols,
+                                   height_ratios=height_ratio,
+                                   width_ratios=(.99, .01), wspace=0.01, hspace=.15)
+        else:
+            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols,
+                                   height_ratios=height_ratio,
+                                   wspace=.7, hspace=.15)
 
         max_used_y_val = None
         if kwargs.get("same_y"):
             for p in self.plots:
-                if p.type in ["density", "side-plot", "line"]:
+                if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
                         y = max(obj.data.wiggle)
 
@@ -877,6 +999,8 @@ class Plot(object):
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
+                    distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
             elif p.type == "hic":
@@ -884,23 +1008,28 @@ class Plot(object):
                     ax=ax_var,
                     cbar_ax=plt.subplot(gs[curr_idx, 1]),
                     obj=p.obj,
+                    distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
-            elif p.type == "side-plot":
+            elif p.type == "site-plot":
                 plot_density(
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
+                    distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
                     **self.params[p]
                 )
 
-                side_ax = plt.subplot(gs[curr_idx + 1, 0])
+                site_ax = plt.subplot(gs[curr_idx + 1, 0])
 
-                plot_side_plot(
-                    side_ax, p.obj[0],
+                plot_site_plot(
+                    site_ax, p.obj[0],
                     graph_coords=self.graph_coords,
                     raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
                 curr_idx += 1
@@ -912,6 +1041,7 @@ class Plot(object):
                     y_label=p.group,
                     graph_coords=self.graph_coords,
                     raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
             elif p.type == "line":
@@ -921,6 +1051,7 @@ class Plot(object):
                     y_label=p.group,
                     max_used_y_val=max_used_y_val,
                     graph_coords=self.graph_coords,
+                    distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
             elif p.type == "igv":
@@ -929,6 +1060,7 @@ class Plot(object):
                     obj=p.data,
                     graph_coords=self.graph_coords,
                     raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
             else:
@@ -942,6 +1074,12 @@ class Plot(object):
                 curr_idx += 1
             else:
                 curr_idx += p.len(reference_scale)
+
+        if self.link:
+            for link in self.link:
+                plot_links(ax=plt.subplot(gs[curr_idx:(curr_idx + 1), 0]),
+                           data=link, graph_coords=self.graph_coords)
+                curr_idx += 1
 
         # draw x label
         set_x_ticks(
@@ -957,6 +1095,7 @@ class Plot(object):
             plot_reference(ax=ax_var, obj=self.reference,
                            graph_coords=self.graph_coords,
                            plot_domain=self.reference.add_domain,
+                           distance_between_label_axis=distance_between_label_axis,
                            **self.params["reference"])
 
             # adjust indicator lines and focus background
@@ -965,11 +1104,11 @@ class Plot(object):
             curr_idx += self.reference.len(scale=reference_scale)
 
         if self.stroke:
-            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
+            ax_var = plt.subplot(gs[curr_idx:plots_n_rows, 0])
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 
         if output:
-            plt.savefig(output, transparent=True, bbox_inches='tight')
+            fig.savefig(output, transparent=True, bbox_inches='tight')
         elif return_image:
             output = io.BytesIO()
             if return_image == "png":
@@ -986,7 +1125,7 @@ class Plot(object):
 
 if __name__ == '__main__':
     def test_plot():
-        from conf.logger import init_logger
+        from sashimi.conf import init_logger
         init_logger("INFO")
         Plot().set_reference(
             "../example/example.sorted.gtf.gz",
@@ -1004,7 +1143,7 @@ if __name__ == '__main__':
             path="../example/bams/1.bam",
             category="bam",
             color="blue",
-            show_side_plot=True,
+            show_site_plot=True,
         ).add_density(
             path="../example/bws/2.bw",
             category="bw",

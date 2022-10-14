@@ -10,8 +10,8 @@ from typing import Optional, List, Dict, Union
 import numpy as np
 import pandas as pd
 import pysam
+from loguru import logger
 
-from conf.logger import logger
 from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
@@ -499,17 +499,18 @@ class ReadSegment(File):
                 polya_length = -1
                 if self.features:
                     if read.has_tag(self.features["m6a"]):
-                        m6a_loci = int(read.get_tag(self.features["m6a"]))
-                        assert read.reference_start <= m6a_loci <= read.reference_end, \
-                            f"{read.query_name}'s m6a loci was out of mapped region"
-
-                        features_list.append(GenomicLoci(
-                            chromosome=self.region.chromosome,
-                            start=m6a_loci,
-                            end=m6a_loci,
-                            strand="*",
-                            name="m6a"
-                        ))
+                        # multiple m6a support
+                        m6a_loci_list = list(
+                            map(float, [loci.strip() for loci in read.get_tag(self.features["m6a"]).split(',')])
+                        )
+                        for m6a_loci in m6a_loci_list:
+                            features_list.append(GenomicLoci(
+                                chromosome=self.region.chromosome,
+                                start=m6a_loci,
+                                end=m6a_loci,
+                                strand="*",
+                                name="m6a"
+                            ))
 
                     if read.has_tag(self.features["real_strand"]) and read.has_tag(self.features["polya"]):
                         polya_length = float(read.get_tag(self.features["polya"]))

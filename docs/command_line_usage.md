@@ -9,7 +9,7 @@ python main.py \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
-  --show-side \
+  --show-site \
   --focus 1272656-1272656:1275656-1277656 \
   --stroke 1275656-1277656:1277856-1278656@blue \
   --sites 1271656,1271656,1272656 \
@@ -32,7 +32,7 @@ List all the parameters
 ```bash
 python main.py --help
 # Or
-sashimi --help
+sashimipy --help
 ```
 
 Parameters:
@@ -46,7 +46,7 @@ Options:
   --version                       Show the version and exit.
   --debug                         enable debug level log
   -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
-  Common input files configuration:
+  Common input files configuration: 
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
                                   NOTE: LUAD|red -> LUAD while be labeled in
                                   plots and red while be the fill color
@@ -61,35 +61,31 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=48]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
     --group-by-cell               Group by cell types in density/line plot
-  Output settings:
+    --remove-duplicate-umi        Drop duplicated UMIs by barcode
+  Output settings: 
     -o, --output PATH             Path to output graph file
     -d, --dpi INTEGER RANGE       The resolution of output file  [default:
                                   300; x>=1]
-    --raster                      The would convert heatmap and side plot to
+    --raster                      The would convert heatmap and site plot to
                                   raster image (speed up rendering and produce
                                   smaller files), only affects pdf, svg and PS
-                                  [default: False]
     --height FLOAT                The height of output file, default adjust
-                                  image height by content  [default: 0]
+                                  image height by content  [default: 1]
     --width INTEGER RANGE         The width of output file, default adjust
-                                  image width by content  [default: 0; x>=0]
+                                  image width by content  [default: 10; x>=0]
     --backend TEXT                Recommended backend  [default: Cairo]
-  Reference settings:
+  Reference settings: 
     -r, --reference PATH          Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
                                   column is the label [optional]
-    --show-id                     Whether show gene id or gene name  [default:
-                                  False]
-    --show-exon-id                Whether show gene id or gene name  [default:
-                                  False]
+    --show-id                     Whether show gene id or gene name
+    --show-exon-id                Whether show gene id or gene name
     --no-gene                     Do not show gene id next to transcript id
-                                  [default: False]
     --domain                      Add domain information into reference track
-                                  [default: False]
     --proxy TEXT                  The http or https proxy for EBI/Uniprot
                                   requests,if `--domain` is True, eg:
                                   http://127.0.0.1:1080
@@ -98,14 +94,13 @@ Options:
     --local-domain TEXT           Load local domain folder and load into
                                   reference track, download from https://hgdow
                                   nload.soe.ucsc.edu/gbdb/hg38/uniprot/
-    --remove-empty                Whether to plot empty transcript  [default:
-                                  False]
+    --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
     --exon-scale FLOAT            The scale of exon  [default: 1]
-  Density plot settings:
+  Density plot settings: 
     --density PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -113,19 +108,18 @@ Options:
                                   (optional), - 4th column is color of input
                                   files (optional), - 5th column is the
                                   library of input file (optional, only
-                                  required by bam file).
+                                  required by bam file). 
     --customized-junction TEXT    Path to junction table column name needs to
                                   be bam name or bam alias.
     -t, --threshold INTEGER RANGE
                                   Threshold to filter low abundance junctions
                                   [default: 0; x>=0]
-    --show-side                   Whether to draw additional side plot
-                                  [default: False]
-    --side-strand [all|+|-]       Which strand kept for side plot, default use
+    --density-by-strand           Whether to draw density plot by strand
+    --show-site                   Whether to draw additional site plot
+    --site-strand [all|+|-]       Which strand kept for site plot, default use
                                   all  [default: all]
     --show-junction-num           Whether to show the number of junctions
-                                  [default: False]
-  Line plot settings:
+  Line plot settings: 
     --line PATH                   The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -136,25 +130,27 @@ Options:
     --hide-legend                 Whether to hide legend
     --legend-position TEXT        The legend position
     --legend-ncol INTEGER RANGE   The number of columns of legend  [x>=0]
-  Heatmap plot settings:
+  Heatmap plot settings: 
     --heatmap PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file group
                                   (optional), - 4th column is color platte
                                   of corresponding group.
-    --clustering                  Enable clustering of the heatmap  [default:
-                                  False]
+    --clustering                  Enable clustering of the heatmap
     --clustering-method [single|complete|average|weighted|centroid|median|ward]
                                   The clustering method for heatmap  [default:
                                   ward]
     --distance-metric [braycurtis|canberra|chebyshev|cityblock|correlation|cosine|dice|euclidean|hamming|jaccard|jensenshannon|kulsinski|kulczynski1|mahalanobis|matching|minkowski|rogerstanimoto|russellrao|seuclidean|sokalmichener|sokalsneath|sqeuclidean|yule]
                                   The distance metric for heatmap  [default:
                                   euclidean]
-    -T, --threshold-of-reads INTEGER RANGE
-                                  Threshold to filter low abundance reads for
-                                  stacked plot  [default: 0; x>=0]
-  IGV settings:
+    --heatmap-scale               Do scale on heatmap matrix.
+    --heatmap-vmin INTEGER        Minimum value to anchor the colormap,
+                                  otherwise they are inferred from the data.
+    --heatmap-vmax INTEGER        Maximum value to anchor the colormap,
+                                  otherwise they are inferred from the data.
+    --show-row-names              Show row names of heatmap
+  IGV settings: 
     --igv PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -162,6 +158,18 @@ Options:
                                   (optional), - 4th column is color of input
                                   files (optional) - 5th column is exon_id
                                   for sorting the reads (optional).
+    --m6a TEXT                    Sashimi.py will load location information
+                                  from the given tags and  then highlight
+                                  the RNA m6a modification cite at individual
+                                  reads.
+    --polya TEXT                  Sashimi.py will load length of poly(A) from
+                                  the given tags and  then visualize the
+                                  poly(A) part at end of each individual
+                                  reads.
+    --rs TEXT                     Sashimi.py will load real strand information
+                                  of each reads from the given tags and  the
+                                  strand information is necessary for
+                                  visualizing poly(A) part.
     --del-ratio-ignore FLOAT RANGE
                                   Ignore the deletion gap in nanopore or
                                   pacbio reads. if a deletion region was
@@ -169,7 +177,7 @@ Options:
                                   (del_ratio_ignore), then the deletion gap
                                   will be filled. currently the
                                   del_ratio_ignore was 1.0.  [0.0<=x<=1.0]
-  HiC settings:
+  HiC settings: 
     --hic PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -178,7 +186,7 @@ Options:
                                   files (optional) - 5th column is data
                                   transform for HiC matrix, eg log1p, log2,
                                   log10 (optional).
-  Additional annotation:
+  Additional annotation: 
     -f, --genome PATH             Path to genome fasta
     --sites TEXT                  Where to plot additional indicator lines,
                                   comma separated int
@@ -186,7 +194,7 @@ Options:
                                   start1-end1:start2-end2@color-label, draw a
                                   stroke line at bottom, default color is red
     --focus TEXT                  The highlight regions: 100-200:300-400
-  Layout settings:
+  Layout settings: 
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        distance between transcript label and
                                   transcript line  [default: 0.3]
@@ -204,6 +212,7 @@ Options:
     --log [0|2|10|zscore]         y axis log transformed, 0 -> not log
                                   transform; 2 -> log2; 10 -> log10
     --title TEXT                  Title
+    --font TEXT                   Fonts
   -h, --help                      Show this message and exit.
 ```
 
@@ -239,9 +248,14 @@ Then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 
 **known issues: ** 
 
-- the `Cairo` backend required `cairocffi` packages, which may have difficulty to install for some users, if then please try to use our docker image or use a alternative backend like Agg/PDF.
-- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image, so use as appropriate.
+- the `Agg`, `PDF`, etc. backends may cause the small protein domains missing in final output image.
+- the `Cairo` backend required `cairocffi` packages, 
+  which may have difficulty to install for some users, 
+  if then please try to use our docker image or use an alternative backend like `Agg/PDF`.
+
 ![](imgs/cmd/1.svg)
+
+**Note:** `Cairo` backend may disable the heatmap rasterisation, so use as appropriate.
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
 
@@ -308,9 +322,22 @@ chr1:1000-20000 100 200
 - the columns corresponding to input files in file list.
 - the table were filled with junction counts.
 
-2. `--show-side` and `--show-strand`
+2. `--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
+
+**Example: `--show-site`, `--focus` and `--sites` **
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --show-site \
+  --focus 1272656-1272656:1275656-1277656 \
+  --sites 1271656,1271656,1272656 \
+  --output example.pdf
+```
 
 ![](imgs/cmd/2.png)
 
@@ -330,7 +357,6 @@ sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
 sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 ```
 
-
 2. `--barocde-tag` and `--umi-tag`
 
 3. The tag to extract barcode and umi from each reads record, here we take the 10x Genomics bam format as default.
@@ -338,6 +364,20 @@ sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
 4. `--group-by-cell`
 
 Group by cell types in density/line plot.
+
+**Example: `--barcode` and `--group-by-cell`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --barcode example/barcode_list.tsv \
+  --focus 1272656-1272656:1275656-1277656 \
+  --sites 1271656,1271656,1272656 \
+  --group-by-cell \
+  --output example.pdf
+```
 
 ![](imgs/cmd/group_by_cell.png)
     
@@ -355,7 +395,43 @@ These three parameters were used to disable legend, modify legend position and t
 
 By default, the position of legend and columns of legend were determined by [matplotlib](https://matplotlib.org/), and the further detailed legend configuration please check [matplotlib legend](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html).
 
-![](imgs/cmd/line_plot.png)
+**Example: `--hide-legend` **
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -o example/example_without_legend.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --barcode example/barcode_list.tsv \
+  --raster --density-by-strand \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv \
+  --hide-legend
+```
+
+![](imgs/cmd/example_without_legend.png)
+
+**Example: `--legend-position` and `--legend-ncol`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -o example/example_with_legend.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  -t 100000 \
+  --barcode example/barcode_list.tsv \
+  --raster --density-by-strand \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv \
+  --legend-position right \
+  --legend-ncol 2
+```
+
+![](imgs/cmd/example_with_legend.png)
 
 
 #### single cell bam related parameters
@@ -384,6 +460,23 @@ example/bws/0.bw    bw  bw  YlOrBr
 
 ![](imgs/cmd/heatmap.png)
 
+
+**Example: `--heatmap-scale`**
+
+> Raw value
+
+![](imgs/cmd/ICE1.png)
+
+> Scaled value
+
+![](imgs/cmd/ICE1_scale.png)
+
+
+**Example: `--heatmap-vmin` and `--heatmap-vmax` to uniform color map **
+
+![](imgs/cmd/ICE1_scale_v.png)
+
+
 ### Igv plot
 
 
@@ -400,6 +493,20 @@ example/SRX9697989.corrected_reads.6.bed.gz	igv	bed6
 example/SRX9697989.corrected_reads.3.bed.gz	igv	bed3	red
 example/bams/0.bam	igv	bam
 ```
+
+here is the plotting command line
+```bash
+python main.py \
+  -e 1:10024601-10038168:+ \
+  -r example/example.sorted.gtf.gz \
+  --igv example/igv.tsv \
+  -o test_igv_plot.1.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1
+
+```
+
 ![](imgs/cmd/igv_plot.1.png)
 
 2. Sashimi.igv module load and visualize features from bam tags.
@@ -419,6 +526,18 @@ SRR12503063.89603	16	1	14394	2	..	*	0	0	..	..	NM:i:220	ms:i:1064	AS:i:891	nn:i:0
 
 ```
 
+here is the command line,
+
+```bash
+ python main.py \
+    -e chr1:13362-29900:+ \
+    --igv example/igv.m6a.tsv \
+    -o igv.m6a.pdf \
+    --dpi 300 \
+    --width 5 \
+    --height 1 --rs rs --polya pa --m6a ma
+
+```
 In this picture, the red track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
 
@@ -427,8 +546,23 @@ In this picture, the red track and blue dot represents the length of poly(A) and
 User could modify the config file as follows,
 
 ```bash
-#filepath	file_category	label	color exon_id
-SRX8994511.corrected_reads.bed.gz	igv	SRX8994511	black	43100453-43100519,43101366-43101432
+#filepath	file_category	label	color	focus_exon
+example/SRX8994511.example.bed.gz	igv	bed12	blue	43100453-43100519,43101366-43101432
+```
+
+here is the command line for plotting
+
+```bash
+python main.py \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -e 21:43092956-43107570:+ \
+  --igv example/igv.3.tsv \
+  --focus 43100453-43100519:43101366-43101432 \
+  -o test_igv_plot.3.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1
+
 ```
 
 ![](imgs/cmd/igv_plot.3.png)
@@ -442,6 +576,17 @@ Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https:
 ```bash
 # filepath  file_category   label   color  transform	depth
 example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
+```
+here is the plotting command line
+
+```bash
+python main.py \
+  -e X:2500000-3500000:+ \
+  --hic example/hic.tsv \
+  -o example.hic.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1
 ```
 
 for each hic track, a bigger `depth` means a higher y-axis.  
@@ -460,6 +605,18 @@ hicConvertFormat -m ENCFF121YPY.hic --inputFormat hic --outputFormat cool -o ENC
 hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
 ```
 
+If you met UnicodeDecodeError when converting hic into h5 format, you can download pairs format file from ENCODE.
+
+Here is an example, 
+
+```bash
+wget https://www.encodeproject.org/files/ENCFF931NQV/@@download/ENCFF931NQV.pairs.gz
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+pairix ENCFF931NQV.pairs.gz
+cooler cload pairix -p 16 hg38.chrom.sizes:1000 ENCFF931NQV.pairs.gz ENCFF931NQV_1kb.cool
+hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
+```
+
 2. prepare the config file
 
 ```bash
@@ -470,16 +627,15 @@ example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
 
 ```bash
 python main.py \
--e chr1:1200000-1300000:+ \
--r example/example.sorted.gtf.gz \
---interval example/interval_list.tsv \
---hic example/hic.2.tsv \
--o hic.2.pdf \
---dpi 300 \
---width 10 \
---height 1 \
---domain
-
+    -e chr1:1200000-1300000:+ \
+    -r example/example.sorted.gtf.gz \
+    --interval example/interval_list.tsv \
+    --hic example/hic.2.tsv \
+    -o hic.2.pdf \
+    --dpi 300 \
+    --width 10 \
+    --height 1 \
+    --domain
 ```
 here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
 
@@ -487,5 +643,22 @@ here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.exa
 ### Additional annotation
 
 We also provide multiple annotations, including indicator lines, focus, stroke and sequence.
+
+**Example: `--focus`, `--sites` and `--stroke`**
+
+```bash
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  --focus 1272656-1272656:1275656-1277656 \
+  --stroke 1275656-1277656:1277856-1278656@blue \
+  --sites 1271656,1271656,1272656 \
+  -o example/example_additional.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --raster \
+  -r example/example.sorted.gtf.gz \
+  --line example/line_list.tsv
+```
 
 ![](imgs/cmd/additional.png)

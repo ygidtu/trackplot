@@ -4,29 +4,28 @@ u"""
 This script contains the functions to draw different images
 """
 import math
+from collections import defaultdict
 from copy import deepcopy
 from typing import Dict, Optional, List, Union
 
 import matplotlib as mpl
 import numpy as np
 import seaborn as sns
+from loguru import logger
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
-from conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
-from conf.logger import logger
 from sashimi.anno.theme import Theme
-from sashimi.file.Bam import Bam
-from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.ReadSegments import ReadSegment
-from sashimi.base.Stroke import Stroke
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
+from sashimi.base.Stroke import Stroke
+from sashimi.conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
 from sashimi.file.File import File
+from sashimi.file.HiCMatrixTrack import HiCTrack
+from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 
 
@@ -183,14 +182,15 @@ def set_y_ticks(
         label: str,
         graph_coords: Union[Dict, np.array],
         max_used_y_val: Union[int, float],
-        min_used_y_val: Optional[Union[int, float]] = 0,
+        min_used_y_val: Optional[Union[int, float]] = None,
         distance_between_label_axis: float = .1,
         n_y_ticks: int = 4,
         theme: str = "ticks",
         font_size: int = 5,
         show_y_label: bool = True,
         set_label_only: bool = False,
-        y_axis_skip_zero: bool = True
+        y_axis_skip_zero: bool = True,
+        **kwargs
 ):
     u"""
     The y ticks are formatted here
@@ -198,6 +198,9 @@ def set_y_ticks(
     """
     # set y ticks, y label and label
     Theme.set_theme(ax, theme)
+
+    if min_used_y_val is None:
+        min_used_y_val, _ = ax.get_ylim()
 
     if not set_label_only:
         ax.set_xlim(0, max(graph_coords))
@@ -243,9 +246,8 @@ def set_y_ticks(
     if show_y_label:
         ax.text(
             x=-1 * distance_between_label_axis * max(graph_coords),
-            y=max_used_y_val // 2, s=label,
-            fontsize=font_size,
-            ha="right"
+            y=abs(max_used_y_val - min_used_y_val) / 2,
+            s=label, fontsize=font_size, ha="right"
         )
 
 
@@ -336,6 +338,7 @@ def plot_reference(
         show_id: bool = False,
         transcripts: Optional[List[str]] = None,
         remove_empty_transcripts: bool = False,
+        choose_primary: bool = False,
         color: Optional[str] = None,
         reverse_minus: bool = False,
         theme: str = "blank",
@@ -343,27 +346,12 @@ def plot_reference(
         exon_width: float = .3,
         plot_domain: bool = False,
         show_exon_id: bool = False,
-        raster: bool = True
+        raster: bool = True,
+        distance_between_label_axis: float = 0.3,
+        **kwargs
 ):
     u"""
     Plot the structure of reference
-    :param ax:
-    :param obj:
-    :param graph_coords:
-    :param font_size:
-    :param show_gene:
-    :param show_id:
-    :param transcripts:
-    :param remove_empty_transcripts:
-    :param color:
-    :param reverse_minus:
-    :param theme:
-    :param y_loc:
-    :param exon_width:
-    :param  plot_domain:
-    :param show_exon_id:
-    :param raster:
-    :return:
     """
     region = obj.region
 
@@ -375,6 +363,24 @@ def plot_reference(
         graph_coords = init_graph_coords(region)
 
     color = "k" if not color else color
+
+    if choose_primary and (len(transcripts) == 0 or transcripts is None):
+        transcripts = []
+        # For each gene, you can choose only one transcript to plot.
+        genes = defaultdict(list)
+        for transcript in data:
+            if transcript.category == 'interval':
+                continue
+            genes[transcript.gene_id].append(transcript)
+
+        for _, transcripts_list in genes.items():
+            primary_transcripts = sorted(transcripts_list, key=lambda x: len(x), reverse=True)[0]
+            transcripts.append(primary_transcripts.transcript_id)
+    elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
+        logger.warning("--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
+    else:
+        pass
+
     """
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
@@ -382,9 +388,10 @@ def plot_reference(
 
     for transcript in obj.data:
         # ignore the unwanted transcript
-        if transcripts and not (set(transcripts) & transcript.ids()):
+        if transcripts and not (set(transcripts) & set(transcript.ids())):
             continue
-
+        # print(transcripts)
+        # print(set(transcript.ids()))
         # ignore transcripts without any exons
         if remove_empty_transcripts and not transcript.exons:
             continue
@@ -394,13 +401,17 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text(x=-1, y=y_loc + 0.25, s=transcript.gene_id, fontsize=font_size, ha="right")
-                    ax.text(x=-1, y=y_loc - 0.25, s=transcript.transcript_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc + 0.25,
+                            s=transcript.gene_id, fontsize=font_size, ha="right")
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.25,
+                            s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
-                    ax.text(x=-1, y=y_loc, s=transcript.gene + " | " + transcript.transcript,
+                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc,
+                            s=transcript.gene + " | " + transcript.transcript,
                             fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
+                ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.1, s=transcript.transcript,
+                        fontsize=font_size, ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -432,7 +443,7 @@ def plot_reference(
                 graph_coords[region.relative(transcript.start)],
                 graph_coords[region.relative(transcript.end)]
             ]
-            ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.5, rasterized=raster)
+            ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.5)
 
             # @2018.12.23 fix intron arrows issues
             # Draw intron arrows.
@@ -573,6 +584,8 @@ def plot_density(
         y_label: str = "",
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
+        density_by_plot: bool = False,
+        raster: bool = False,
         **kwargs
 ):
     u"""
@@ -593,6 +606,8 @@ def plot_density(
     :param y_label: the text of y-axis title
     :param theme: the theme name
     :param max_used_y_val: used to set same max y axis
+    :param density_by_plot: whether to draw density plot in strand-specific manner.
+    :param kwargs:
     :return:
     """
     if obj:
@@ -612,7 +627,7 @@ def plot_density(
 
     jxns = data.junctions_dict
 
-    if not data.strand_aware:
+    if not data.strand_aware and not density_by_plot:
         wiggle = data.wiggle
 
         if max_used_y_val is None:
@@ -635,7 +650,7 @@ def plot_density(
             compressed_wiggle.append(wiggle[i])
             compressed_x.append(graph_coords[i])
 
-        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post", rasterized=raster)
 
     else:
         wiggle = data.wiggle
@@ -648,8 +663,8 @@ def plot_density(
         y_max = max_used_y_val
         y_min = min_used_y_val
 
-        # Reduce memory footprint by using incremented graphcoords.
-        for current_dat in [data.minus, data.plus]:
+        # Reduce memory footprint by using incremented graph_coords.
+        for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
             if sum(current_dat) == 0:
                 continue
             compressed_x = []
@@ -659,7 +674,12 @@ def plot_density(
                 compressed_wiggle.append(current_dat[i])
                 compressed_x.append(graph_coords[i])
 
-            ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post")
+            if idx == "-" and density_by_plot:
+                ax.fill_between(compressed_x, [-1 * x for x in compressed_wiggle], y2=0, color=color, lw=0, step="post",
+                                rasterized=raster)
+            else:
+                ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post",
+                                rasterized=raster)
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -677,6 +697,12 @@ def plot_density(
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
+            # @2022.09.26
+            # Skip these too short span junction for avoiding plotting junction number
+            overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
+            if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
+                continue
+
             # @2018.12.19
             # set junctions coordinate here
             # the junction out of boundaries, set the boundaries as coordinate
@@ -689,7 +715,7 @@ def plot_density(
             """
             ss1 = graph_coords[ss1_idx]
             ss2 = graph_coords[ss2_idx]
-            if not data.strand_aware:
+            if not data.strand_aware and not density_by_plot:
                 # draw junction on bottom
                 if plotted_count % 2 == 0:
 
@@ -788,7 +814,7 @@ def plot_density(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
         max_used_y_val=max(abs(y_min), y_max) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else 0,
+        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else -abs(y_min),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
@@ -797,7 +823,7 @@ def plot_density(
     )
 
 
-def plot_side_plot(
+def plot_site_plot(
         ax: mpl.axes.Axes,
         obj: File,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
@@ -840,7 +866,7 @@ def plot_side_plot(
     if not show_y_label:
         y_label = ""
 
-    plus, minus = data.side_plus, data.side_minus
+    plus, minus = data.site_plus, data.site_minus
 
     max_height = max(plus)
     min_height = min(minus)
@@ -860,12 +886,10 @@ def plot_side_plot(
             continue
 
         fit_value = fit_value / fit_value.max()
-        if label == 'plus':
-            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
-            ax.plot(graph_coords, fit_value * array_plot.max(), c=color, lw=1)
-        else:
-            ax.bar(range(len(graph_coords)), array_plot, color=color, rasterized=raster)
-            ax.plot(graph_coords, fit_value * array_plot.min(), c=color, lw=1)
+        ax.bar(graph_coords, array_plot, color=color, rasterized=raster)
+        ax.plot(graph_coords,
+                fit_value * array_plot.max() if label == 'plus' else fit_value * array_plot.min(),
+                c=color, lw=1)
 
     # set the y limit
     # set y ticks, y label and label
@@ -897,7 +921,10 @@ def plot_heatmap(
         clustering: bool = False,
         clustering_method: str = "ward",
         distance_metric: str = "euclidean",
-        raster: bool = True
+        raster: bool = True,
+        show_row_names: bool = False,
+        vmin=None, vmax=None,
+        **kwargs
 ):
     u"""
 
@@ -919,6 +946,9 @@ def plot_heatmap(
                 'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                 'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
     :param raster: whether to draw image in raster mode
+    :param show_row_names:
+    :param vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+    :param vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
     """
     labels = list(data.keys())
     mtx = np.array([x.wiggle for x in data.values()])
@@ -941,33 +971,26 @@ def plot_heatmap(
         """
         mtx = zscore(mtx, axis=1)
 
-    if not show_y_label:
+    if not show_row_names:
         labels = False
 
-    sns.heatmap(
-        mtx,
-        ax=ax, cmap=color,
-        cbar_ax=cbar_ax,
-        xticklabels=False,
-        yticklabels=labels,
-        center=True,
-        rasterized=raster
-    )
+    sns.heatmap(mtx, ax=ax, cmap=color, cbar_ax=cbar_ax,
+                xticklabels=False, yticklabels=labels,
+                center=False, rasterized=raster, vmin=vmin, vmax=vmax)
 
     ax.tick_params(axis='both', which='major', labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)
 
+    ymax, ymin = ax.get_ylim()
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=mtx.shape[0],
+        max_used_y_val=ymax, min_used_y_val=ymin,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
         set_label_only=True
     )
-    if raster:
-        ax.set_rasterization_zorder(0)
 
 
 def plot_hic(
@@ -983,7 +1006,8 @@ def plot_hic(
         theme: str = "ticks",
         y_label: str = "",
         n_y_ticks: int = 4,
-        raster: bool = True
+        raster: bool = True,
+        **kwargs
 ):
     assert len(obj) == 1, "HiC plot only support one file"
 
@@ -997,9 +1021,8 @@ def plot_hic(
     if not y_label:
         y_label = obj.label
 
-    pc = ax.pcolormesh(obj.x - obj.region.start,
-                       obj.y, np.flipud(obj.matrix),
-                       cmap=color, rasterized=raster)
+    ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
+                  cmap=color, rasterized=raster)
     ax.set_xlim(0, len(obj.region))
 
     if show_legend:
@@ -1041,6 +1064,7 @@ def plot_line(
         legend_position: str = "upper right",
         legend_ncol: int = 0,
         max_used_y_val: Optional[float] = None,
+        **kwargs
 ):
     u"""
 
@@ -1089,7 +1113,7 @@ def plot_line(
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
-        n_y_ticks=n_y_ticks
+        n_y_ticks=n_y_ticks, **kwargs
     )
 
 
@@ -1107,7 +1131,8 @@ def plot_igv_like(
         distance_between_label_axis: float = .1,
         show_y_label: bool = True,
         theme: str = "ticks_blank",
-        raster: bool = False
+        raster: bool = False,
+        **kwargs
 ):
     u"""
 
@@ -1139,90 +1164,92 @@ def plot_igv_like(
 
     if not y_label:
         y_label = obj.label
-
     y_loc = 0.5
 
-    for c_ind_list in obj.get_index():
-        add_plot = False
-        for c_ind in c_ind_list:
-            c_data = obj.data[c_ind]
-            # skip truncated reads in the given region
-            if c_data.start < region.start or c_data.end > region.end:
-                continue
+    # Add this to skip zero coverage regions.
+    if obj.meta is not None:
 
-            for exon in c_data.exons:
-                s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
-                if e < 0 or s > len(region):
+        for c_ind_list in obj.get_index():
+            add_plot = False
+            for c_ind in c_ind_list:
+                c_data = obj.data[c_ind]
+                # skip truncated reads in the given region
+                if c_data.start < region.start or c_data.end > region.end:
                     continue
 
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
+                for exon in c_data.exons:
+                    s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
+                    if e < 0 or s > len(region):
+                        continue
 
-                x = [
-                    graph_coords[s], graph_coords[e],
-                    graph_coords[e], graph_coords[s]
-                ]
-                y = [
-                    y_loc - exon_width, y_loc - exon_width,
-                    y_loc + exon_width, y_loc + exon_width
-                ]
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
 
-                ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
-                add_plot = add_plot | True
+                    x = [
+                        graph_coords[s], graph_coords[e],
+                        graph_coords[e], graph_coords[s]
+                    ]
+                    y = [
+                        y_loc - exon_width, y_loc - exon_width,
+                        y_loc + exon_width, y_loc + exon_width
+                    ]
 
-            for intron in c_data.introns:
-                s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
+                    ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
+                    add_plot = add_plot | True
 
-                if e < 0 or s > len(region):
-                    continue
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
-                intron_sites = [
-                    graph_coords[s],
-                    graph_coords[e]
-                ]
-                ax.plot(intron_sites, [y_loc, y_loc],
-                        color="#4d4d4d" if not intron_color else intron_color,
-                        lw=0.2, rasterized=raster)
+                for intron in c_data.introns:
+                    s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
 
-            for feature in c_data.features:
-                if feature.start == -1:
-                    continue
+                    if e < 0 or s > len(region):
+                        continue
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
+                    intron_sites = [
+                        graph_coords[s],
+                        graph_coords[e]
+                    ]
+                    ax.plot(intron_sites, [y_loc, y_loc],
+                            color="#4d4d4d" if not intron_color else intron_color,
+                            lw=0.2, rasterized=raster)
 
-                s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
-                is_site = False
+                for feature in c_data.features:
+                    if feature.start == -1:
+                        continue
 
-                if s == e:
-                    s = s - 1
-                    is_site = True
+                    s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
+                    is_site = False
 
-                if e < 0 or s > len(region):
-                    continue
+                    if s == e:
+                        s = s - 1
+                        is_site = True
 
-                s = 0 if s < 0 else s
-                e = len(region) - 1 if e >= len(region) else e
+                    if e < 0 or s > len(region):
+                        continue
 
-                x = [
-                    graph_coords[s], graph_coords[e],
-                    graph_coords[e], graph_coords[s]
-                ]
-                width_ratio = 0.75 if not is_site else 1.5
+                    s = 0 if s < 0 else s
+                    e = len(region) - 1 if e >= len(region) else e
 
-                y = [
-                    y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
-                    y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
-                ]
-                ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
-                if is_site:
-                    ax.scatter(graph_coords[s],
-                               y_loc + exon_width * width_ratio,
-                               c='b' if not feature_color else feature_color,
-                               s=.5,
-                               linewidths=(0,),
-                               rasterized=raster
-                               )
-        if add_plot:
-            y_loc += 1
+                    x = [
+                        graph_coords[s], graph_coords[e],
+                        graph_coords[e], graph_coords[s]
+                    ]
+                    width_ratio = 0.75 if not is_site else 1.5
+
+                    y = [
+                        y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
+                        y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
+                    ]
+                    ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+                    if is_site:
+                        ax.scatter(graph_coords[s],
+                                   y_loc + exon_width * width_ratio,
+                                   c='b' if not feature_color else feature_color,
+                                   s=.5,
+                                   linewidths=(0,),
+                                   rasterized=raster
+                                   )
+            if add_plot:
+                y_loc += 1
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
@@ -1233,6 +1260,29 @@ def plot_igv_like(
         font_size=font_size,
         show_y_label=show_y_label,
     )
+
+
+def plot_links(ax: mpl.axes.Axes,
+               data: List[Stroke],
+               graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+               max_y: int = -10, **kwargs):
+    for stroke in sorted(data):
+        leftss, rightss = graph_coords[stroke.start], graph_coords[stroke.end]
+
+        step = (rightss - leftss) / 4
+
+        pts = [
+            (leftss, 0),
+            (leftss + step, max_y),
+            (rightss - step, max_y),
+            (rightss, 0)
+        ]
+        a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
+        ax.add_patch(PathPatch(a, fc="none", ec=stroke.color, lw=1))
+
+    ax.set_xlim(0, max(graph_coords))
+    ax.set_ylim(max_y, 0)
+    ax.axis("off")
 
 
 if __name__ == '__main__':
@@ -1264,7 +1314,8 @@ if __name__ == '__main__':
         fig, ax = plt.subplots()
         ref = Reference.create(
             "../example/example.sorted.gtf.gz",
-            add_domain=True)
+            primary=True,
+            add_domain=False)
         ref.load(region)
 
         ref.add_interval(
@@ -1430,5 +1481,5 @@ if __name__ == '__main__':
 
     # test_igv_plot()
     # test_igv_plot2()
-    test_hic_plot()
+    test_ref()
     # test_ref()
