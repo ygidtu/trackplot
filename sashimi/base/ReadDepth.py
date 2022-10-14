@@ -47,7 +47,7 @@ class ReadDepth(object):
         self.junctions_dict = junctions_dict
         self.strand_aware = strand_aware
         self.minus = minus * -1 if minus is not None else minus
-        self.max = max(self.wiggle)
+        self.max = max(self.wiggle, default=0)
         self.junction_dict_plus = junction_dict_plus
         self.junction_dict_minus = junction_dict_minus
         self.site_plus = site_plus
