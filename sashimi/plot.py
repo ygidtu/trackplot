@@ -877,8 +877,8 @@ class Plot(object):
              reference_scale: Union[int, float] = .25,
              stroke_scale: Union[int, float] = .25,
              dpi: int = 300,
-             fig_width: Union[int, float] = 0,
-             fig_height: Union[int, float] = 0,
+             width: Union[int, float] = 0,
+             height: Union[int, float] = 0,
              raster: bool = False,
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
@@ -890,12 +890,11 @@ class Plot(object):
         :param reference_scale: to adjust the size of reference plot
         :param stroke_scale: to adjust the size of stroke plot
         :param dpi: the dpi of saved plot
-        :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
-        :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
+        :param width: the width of figure, if width == 0, the let matplotlib decide the size of image
+        :param height: the height of figure, if height == 0, the let matplotlib decide the size of image
         :param raster: plot rasterizer site plot
         :param sc_height_ratio: adjust the relative height of single cell plots
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
-        :param figure: figures to create sub figure
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
@@ -955,8 +954,8 @@ class Plot(object):
 
         height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
 
-        if fig_width and fig_height:
-            fig = plt.figure(figsize=[fig_width, fig_height * sum(height_ratio)], dpi=dpi)
+        if width and height:
+            fig = plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi)
         else:
             fig = plt.figure(dpi=dpi)
 

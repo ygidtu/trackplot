@@ -13,7 +13,6 @@ from typing import Optional, Dict, Set, Tuple
 
 import click
 import matplotlib as mpl
-import matplotlib.font_manager
 from click_option_group import optgroup
 from loguru import logger
 
@@ -21,7 +20,10 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.plot import Plot
 from sashimi.file.ATAC import ATAC
 
-__version__ = "0.0.1a"
+
+__version__ = "0.0.2a1"
+__author__ = "ygidtu"
+__email__ = "ygidtu@gmail.com"
 
 
 def decode_region(region: str):
@@ -446,8 +448,6 @@ def main(**kwargs):
     Welcome to use sashimi
     \f
     """
-    # init_logger("DEBUG" if kwargs["debug"] else "INFO")
-
     if not kwargs["debug"]:
         logger.remove()
         logger.add(sys.stderr, level="INFO")
@@ -699,8 +699,8 @@ def main(**kwargs):
 
     p.plot(
         kwargs["output"],
-        fig_width=kwargs["width"],
-        fig_height=kwargs["height"],
+        width=kwargs["width"],
+        height=kwargs["height"],
         dpi=kwargs["dpi"],
         raster=kwargs["raster"],
         intron_scale=kwargs["intron_scale"],
