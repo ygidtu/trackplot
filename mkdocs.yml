@@ -5,7 +5,7 @@ site_author: Yiming Zhang & Ran Zhou
 nav:
   - 'index.md'
   - 'installation.md'
-  - 'command_line_usage.md'
+  - 'command.md'
   - 'interactive.md'
   - 'web.md'
 theme: 'readthedocs'

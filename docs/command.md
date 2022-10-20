@@ -46,7 +46,7 @@ Options:
   --version                       Show the version and exit.
   --debug                         enable debug level log
   -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
-  Common input files configuration: 
+  Common input files configuration:
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
                                   NOTE: LUAD|red -> LUAD while be labeled in
                                   plots and red while be the fill color
@@ -64,7 +64,7 @@ Options:
     -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
     --group-by-cell               Group by cell types in density/line plot
     --remove-duplicate-umi        Drop duplicated UMIs by barcode
-  Output settings: 
+  Output settings:
     -o, --output PATH             Path to output graph file
     -d, --dpi INTEGER RANGE       The resolution of output file  [default:
                                   300; x>=1]
@@ -75,8 +75,8 @@ Options:
                                   image height by content  [default: 1]
     --width INTEGER RANGE         The width of output file, default adjust
                                   image width by content  [default: 10; x>=0]
-    --backend TEXT                Recommended backend  [default: Cairo]
-  Reference settings: 
+    --backend TEXT                Recommended backend  [default: Agg]
+  Reference settings:
     -r, --reference PATH          Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
@@ -97,10 +97,11 @@ Options:
     --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
+    --choose-primary              Whether choose primary transcript to plot.
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
     --exon-scale FLOAT            The scale of exon  [default: 1]
-  Density plot settings: 
+  Density plot settings:
     --density PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -108,7 +109,7 @@ Options:
                                   (optional), - 4th column is color of input
                                   files (optional), - 5th column is the
                                   library of input file (optional, only
-                                  required by bam file). 
+                                  required by bam file).
     --customized-junction TEXT    Path to junction table column name needs to
                                   be bam name or bam alias.
     -t, --threshold INTEGER RANGE
@@ -119,7 +120,10 @@ Options:
     --site-strand [all|+|-]       Which strand kept for site plot, default use
                                   all  [default: all]
     --show-junction-num           Whether to show the number of junctions
-  Line plot settings: 
+    --sc-density-height-ratio FLOAT
+                                  The relative height of single cell density
+                                  plots  [default: 1]
+  Line plot settings:
     --line PATH                   The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -130,7 +134,7 @@ Options:
     --hide-legend                 Whether to hide legend
     --legend-position TEXT        The legend position
     --legend-ncol INTEGER RANGE   The number of columns of legend  [x>=0]
-  Heatmap plot settings: 
+  Heatmap plot settings:
     --heatmap PATH                The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -150,7 +154,10 @@ Options:
     --heatmap-vmax INTEGER        Maximum value to anchor the colormap,
                                   otherwise they are inferred from the data.
     --show-row-names              Show row names of heatmap
-  IGV settings: 
+    --sc-heatmap-height-ratio FLOAT
+                                  The relative height of single cell heatmap
+                                  plots  [default: 0.2]
+  IGV settings:
     --igv PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -161,7 +168,9 @@ Options:
     --m6a TEXT                    Sashimi.py will load location information
                                   from the given tags and  then highlight
                                   the RNA m6a modification cite at individual
-                                  reads.
+                                  reads.  If there are multiple m6a
+                                  modification site, please add tag as follow,
+                                   234423,234450
     --polya TEXT                  Sashimi.py will load length of poly(A) from
                                   the given tags and  then visualize the
                                   poly(A) part at end of each individual
@@ -173,11 +182,11 @@ Options:
     --del-ratio-ignore FLOAT RANGE
                                   Ignore the deletion gap in nanopore or
                                   pacbio reads. if a deletion region was
-                                  smaller than (alginment length) *
+                                  smaller than (alignment length) *
                                   (del_ratio_ignore), then the deletion gap
                                   will be filled. currently the
                                   del_ratio_ignore was 1.0.  [0.0<=x<=1.0]
-  HiC settings: 
+  HiC settings:
     --hic PATH                    The path to list of input files, a tab
                                   separated text file,  - 1st column is path
                                   to input file, - 2nd column is the file
@@ -186,18 +195,29 @@ Options:
                                   files (optional) - 5th column is data
                                   transform for HiC matrix, eg log1p, log2,
                                   log10 (optional).
-  Additional annotation: 
+  Additional annotation:
     -f, --genome PATH             Path to genome fasta
     --sites TEXT                  Where to plot additional indicator lines,
                                   comma separated int
     --stroke TEXT                 The stroke regions:
                                   start1-end1:start2-end2@color-label, draw a
                                   stroke line at bottom, default color is red
+    --link TEXT                   The link: start1-end1:start2-end2@color,
+                                  draw a link between two site at bottom,
+                                  default color is blue
     --focus TEXT                  The highlight regions: 100-200:300-400
-  Layout settings: 
+  Motif settings:
+    --motif PATH                  The path to customized bedGraph file, first
+                                  three columns is chrom, start and end site,
+                                  the following 4 columns is the weight of
+                                  ATCG.
+    --motif-region TEXT           The region of motif to plot in start-end
+                                  format
+    --motif-width FLOAT           The width of ATCG characters  [default: 0.8]
+  Layout settings:
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        distance between transcript label and
-                                  transcript line  [default: 0.3]
+                                  transcript line  [default: 0.1]
     --reference-scale FLOAT       The size of reference plot in final plot
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image

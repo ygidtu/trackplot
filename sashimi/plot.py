@@ -5,35 +5,22 @@ Created by ygidtu@gmail.com at 2019.12.06
 """
 import io
 import logging
-import math
 import os.path
-from copy import deepcopy
-from typing import List, Optional, Set, Union, Dict
+from typing import Set
 
 import matplotlib.pyplot as plt
-import numpy as np
-from loguru import logger
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.Stroke import Stroke
 from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
 from sashimi.file.BedGraph import Bedgraph
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
-from sashimi.file.File import File
-from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.Junction import load_custom_junction
-from sashimi.file.ReadSegments import ReadSegment
-from sashimi.file.Reference import Reference
-from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
-
+from sashimi.plot_func import *
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -73,7 +60,10 @@ class PlotInfo(object):
 
     @property
     def is_single_cell(self):
-        return self.obj[0].is_single_cell
+        try:
+            return self.obj[0].is_single_cell
+        except AttributeError:
+            return False
 
     @property
     def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
@@ -162,16 +152,18 @@ class Plot(object):
         if self.reference:
             return self.reference.exons
 
-    def set_region(self, chromosome: str, start: int, end: int, strand: str = "+"):
+    def set_region(self, chromosome: str = "",
+                   start: int = 0, end: int = 0,
+                   strand: str = "+",
+                   region: Optional[GenomicLoci] = None):
         u"""
         change the plot region
-        :param chromosome:
-        :param start:
-        :param end:
-        :param strand:
-        :return:
         """
-        self.region = GenomicLoci(chromosome, start=start, end=end, strand=strand)
+
+        if region:
+            self.region = region
+        elif chromosome and start and end:
+            self.region = GenomicLoci(chromosome, start=start, end=end, strand=strand)
         logger.info(f"set region to {self.region}")
         return self
 
@@ -807,6 +799,21 @@ class Plot(object):
 
         return self
 
+    def add_motif(self,
+                  path: str,
+                  category: str = "motif",
+                  motif_region: GenomicLoci = None,
+                  width: float = 0.8,
+                  theme: str = "blank",
+                  **kwargs):
+        obj = Motif.create(path, self.region)
+
+        info = PlotInfo(obj=obj, category=category, type_="motif")
+
+        self.plots.append(info)
+        self.params[info] = {"width": width, "theme": theme, "region": motif_region if motif_region else self.region}
+        return self
+
     def add_manual(self,
                    data: np.array,
                    image_type: str = "line",
@@ -1062,6 +1069,8 @@ class Plot(object):
                     distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
+            elif p.type == "motif":
+                plot_motif(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords, **self.params[p])
             else:
                 raise ValueError(f"unknown plot type {p.type}")
 

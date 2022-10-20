@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-__version__ = "0.0.2a1"
+__version__ = "0.0.3"
 __author__ = "ygidtu"
 __email__ = "ygidtu@gmail.com"
 

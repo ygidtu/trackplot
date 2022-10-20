@@ -9,12 +9,19 @@ from copy import deepcopy
 from typing import Dict, Optional, List, Union
 
 import matplotlib as mpl
+
+mpl.use("Agg")
+
 import numpy as np
 import seaborn as sns
 from loguru import logger
 from matplotlib import pylab
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from matplotlib.font_manager import FontProperties
+from matplotlib.textpath import TextPath
+import matplotlib.patches as patches
+from matplotlib.transforms import Affine2D
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
@@ -27,6 +34,7 @@ from sashimi.file.File import File
 from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
+from sashimi.file.Motif import Motif
 
 
 def get_limited_index(num, length):
@@ -1285,201 +1293,62 @@ def plot_links(ax: mpl.axes.Axes,
     ax.axis("off")
 
 
-if __name__ == '__main__':
-    from matplotlib import pyplot as plt
+def make_text_elements(text, x=0.0, y=0.0, width=1.0, height=1.0, color='blue', edgecolor="black",
+                       font=FontProperties(family='monospace')):
+    tp = TextPath((0.0, 0.0), text, size=1, prop=font)
+    bbox = tp.get_extents()
+    bwidth = bbox.x1 - bbox.x0
+    bheight = bbox.y1 - bbox.y0
+    trafo = Affine2D()
+    trafo.translate(-bbox.x0, -bbox.y0)
+    trafo.scale(1 / bwidth * width, 1 / bheight * height)
+    trafo.translate(x, y)
+    tp = tp.transformed(trafo)
+    return patches.PathPatch(tp, facecolor=color, edgecolor=edgecolor)
 
 
-    def test_density():
-        from sashimi.file.Bam import Bam
-        fig, ax = plt.subplots()
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
-        bam = Bam.create("../example/bams/1.bam")
-        bam.load(region, log_trans="2")
-        plot_density(ax, bam)
-        plt.savefig("plot_density_bam.png")
+def plot_motif(ax: mpl.axes.Axes,
+               obj,  # list of weighted text
+               graph_coords: Optional[Union[Dict, np.ndarray]] = None,
+               width: float = 0.8,
+               colors=None,
+               theme: str = "blank",
+               **kwargs):
+    Theme.set_theme(ax, theme)
+    data = obj.data
+    if colors is None:
+        colors = ['#008000', '#cc0000', '#0000cc', '#ffb300']
+        colors = {x: y for x, y in zip(["A", "T", "C", "G"], colors)}
 
-
-    def test_bw():
-        from sashimi.file.Bigwig import Bigwig
-
-        bw = Bigwig.create("../example/bws/1.bw", title="test")
-        bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
-        fig, ax = plt.subplots()
-        plot_density(ax, bw)
-        plt.savefig("plot_density_bw.png")
-
-
-    def test_ref():
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
-        fig, ax = plt.subplots()
-        ref = Reference.create(
-            "../example/example.sorted.gtf.gz",
-            primary=True,
-            add_domain=False)
-        ref.load(region)
-
-        ref.add_interval(
-            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
-            label="PolyASite"
-        )
-
-        ref.add_interval(
-            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
-            label="PolyASite_simple"
-        )
-
-        plot_reference(ax, ref,
-                       show_gene=True,
-                       show_id=True,
-                       plot_domain=True,
-                       show_exon_id=True
-                       )
-
-        plt.savefig("plot_reference.pdf")
-
-
-    def test_depth():
-        from sashimi.file.Depth import Depth
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
-        depth = Depth.create("../example/depth.bgz")
-        depth.load(region)
-        fig, ax = plt.subplots(nrows=len(depth))
-        idx = 0
-        for x, y in depth.items():
-            plot_density(ax[idx], region=region, data=y, y_label=x,
-                         theme="ticks_blank" if idx < len(depth) - 1 else "ticks")
-            idx += 1
-
-        plt.savefig("plot_density_depth.png")
-
-
-    def test_heatmap_and_line():
-        from matplotlib import gridspec
-        from sashimi.file.Bam import Bam
-
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
+    region = obj.region
+    if graph_coords is None:
         graph_coords = init_graph_coords(region)
-        data = {}
-        attrs = {}
-        colors = ["red", "blue", "yellow", "green", "grey"]
-        for i in range(1, 5):
-            bam = Bam.create(f"../example/bams/{i}.bam")
-            bam.load(region)
-            data[str(i)] = bam.data
-            attrs[str(i)] = {"color": colors[i]}
 
-        gs = gridspec.GridSpec(1, 2, width_ratios=(.99, .01), wspace=0.01, hspace=.15)
-        ax_var = plt.subplot(gs[:, 0]),
-        cbar_ax = plt.subplot(gs[:, 1])
-        plot_heatmap(ax_var[0], cbar_ax, data, do_scale=True, clustering=True)
-        plt.savefig("plot_heatmap.png")
+    ymin, ymax = 0, 0
+    for site, vals in data.items():
+        site = graph_coords[site - region.start]
 
-        fig, ax = plt.subplots()
-        plot_line(ax, data, line_attrs=attrs, graph_coords=graph_coords)
-        plt.savefig("plot_line.png")
+        init_height_pos = 0
+        init_height_neg = 0
+        for text, height in vals.items():
+            text_shape = make_text_elements(text,
+                                            x=site + (1 - width) / 2,
+                                            y=init_height_neg if height < 0 else init_height_pos,
+                                            width=width, height=height,
+                                            color=colors.get(text, "blue"),
+                                            edgecolor=colors.get(text, "blue"))
 
+            if height > 0:
+                init_height_pos += height
+            else:
+                init_height_neg += height
+            ax.add_patch(text_shape)
+        ymin = min(ymin, init_height_neg)
+        ymax = max(ymax, init_height_pos)
 
-    def test_graph_coord():
-        from matplotlib import gridspec
-        region = GenomicLoci(chromosome="1", start=100, end=800, strand="+")
-        exon_width = .5
-        exons = [
-            [150, 300], [320, 450],
-            [460, 500], [470, 500],
-            [470, 600], [700, 800],
-        ]
-
-        gs = gridspec.GridSpec(2, 1)
-        ax = plt.subplot(gs[0, 0])
-        for ind, exon in enumerate(exons):
-            s, e, strand = exon[0], exon[1], "+"
-            x = [s, e, e, s]
-            x = [i - region.start for i in x]
-            y = [
-                ind - exon_width / 2, ind - exon_width / 2,
-                ind + exon_width / 2, ind + exon_width / 2
-            ]
-            ax.fill(x, y, 'k', lw=.5, zorder=20)
-
-        ax.set_xbound(0, len(region))
-        graph_coords = init_graph_coords(region, exons, intron_scale=.5)
-
-        ax = plt.subplot(gs[1, 0])
-        for ind, exon in enumerate(exons):
-            s, e, strand = exon[0] - region.start, exon[1] - region.start, "+"
-            x = [graph_coords[s], graph_coords[e], graph_coords[e], graph_coords[s]]
-            y = [
-                ind - exon_width / 2, ind - exon_width / 2,
-                ind + exon_width / 2, ind + exon_width / 2
-            ]
-            ax.fill(x, y, 'k', lw=.5, zorder=20)
-        ax.set_xbound(0, len(region))
-        plt.savefig("plot_graph_coords.png")
+    ax.set_xlim(min(graph_coords), max(graph_coords))
+    ax.set_ylim(ymin, ymax)
 
 
-    def test_set_x_ticks():
-        region = GenomicLoci(chromosome="1", start=100, end=120, strand="+")
-        fig, ax = plt.subplots()
-
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        ax.tick_params(left=False)
-        set_x_ticks(ax, region, font_size=10, sequence={110: "A", 106: "C"})
-        plt.savefig("plot_x_ticks.png")
-
-
-    def test_igv_plot():
-        from sashimi.file.ReadSegments import ReadSegment
-        fig, ax = plt.subplots()
-        region = GenomicLoci("chr1", 13362, 29900, "+")
-
-        rs = ReadSegment.create("../example/bams/WASH7P.bam",
-                                features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
-        rs.load(region)
-        plot_igv_like(ax, {'full': rs}, y_label="fl")
-        plt.savefig("test_igv_plot.pdf")
-
-
-    def test_igv_plot2():
-        from sashimi.file.ReadSegments import ReadSegment
-        fig, ax = plt.subplots()
-        region = GenomicLoci("chr1", 1270656, 1284730, "+")
-
-        rs = ReadSegment.create("../example/bams/0.bam",
-                                features={"m6a": "ma", "real_strand": "rs", "polya": "pa"})
-        rs.load(region)
-        plot_igv_like(ax, {'full': rs}, y_label="fl")
-        plt.savefig("test_igv_plot.2.pdf")
-
-
-    def test_igv_plot3():
-        from sashimi.file.ReadSegments import ReadSegment
-        fig, ax = plt.subplots()
-        # 1: 10024601 - 10038168
-        region = GenomicLoci("1", 10024601, 10038168, "+")
-        rs = ReadSegment.create("../example/test.bed.gz")
-        rs.load(region)
-        plot_igv_like(ax, {'full': rs}, y_label="fl")
-        plt.savefig("test_igv_plot.3.pdf")
-
-
-    def test_hic_plot():
-        from sashimi.file.HiCMatrixTrack import HiCTrack
-        fig, ax = plt.subplots()
-        region = GenomicLoci("X", 2500000, 2600000, "*")
-        hic = HiCTrack.create(path="../example/Li_et_al_2015.h5", label="Li",
-                              depth=30000,
-                              trans="log2"
-                              )
-        hic.load(
-            region=region
-        )
-        plot_hic(ax, {hic.label: hic}, y_label=hic.label)
-        plt.savefig("test_hic.pdf")
-
-
-    # test_igv_plot()
-    # test_igv_plot2()
-    test_ref()
-    # test_ref()
+if __name__ == '__main__':
+    pass
