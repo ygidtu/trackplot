@@ -34,7 +34,6 @@ from sashimi.file.Reference import Reference
 from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
     set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
 
-
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 
