@@ -324,6 +324,8 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="Whether to draw additional site plot")
 @optgroup.option("--site-strand", type=click.Choice(["all", "+", "-"]), default="all", show_default=True,
                  help="Which strand kept for site plot, default use all")
+@optgroup.option("--included-junctions", type=click.STRING, default=None,
+                 help="The junction id for including, chr1:1-100", show_default=True)
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
 @optgroup.option("--sc-density-height-ratio", type=float, default=1, show_default=True,
@@ -487,6 +489,11 @@ def main(**kwargs):
 
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
+
+    if kwargs["included_junctions"] is not None:
+        included_junctions = set([sj.strip() for sj in kwargs["included_junctions"].split(',')])
+    else:
+        included_junctions = {}
 
     p = Plot()
 
@@ -734,7 +741,8 @@ def main(**kwargs):
             "heatmap": kwargs["sc_heatmap_height_ratio"],
             "density": kwargs["sc_density_height_ratio"]
         },
-        distance_between_label_axis=kwargs["distance_ratio"]
+        distance_between_label_axis=kwargs["distance_ratio"],
+        included_junctions=included_junctions
     )
 
 
