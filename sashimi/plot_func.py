@@ -10,8 +10,6 @@ from typing import Dict, Optional, List, Union
 
 import matplotlib as mpl
 
-mpl.use("Agg")
-
 import numpy as np
 import seaborn as sns
 from loguru import logger
@@ -20,8 +18,8 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
-import matplotlib.patches as patches
 from matplotlib.transforms import Affine2D
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import gaussian_kde, zscore
 
@@ -65,8 +63,7 @@ def cubic_bezier(pts, t):
     p1 = np.array(p1)
     p2 = np.array(p2)
     p3 = np.array(p3)
-    return p0 * (1 - t) ** 3 + 3 * t * p1 * (1 - t) ** 2 + \
-           3 * t ** 2 * (1 - t) * p2 + t ** 3 * p3
+    return p0 * (1 - t) ** 3 + 3 * t * p1 * (1 - t) ** 2 + 3 * t ** 2 * (1 - t) * p2 + t ** 3 * p3
 
 
 def __merge_exons__(exons: List[List[int]]):
@@ -232,7 +229,7 @@ def set_y_ticks(
         curr_y_tick_labels = []
 
         for lab in universal_y_ticks:
-            if y_axis_skip_zero and lab <= 0:
+            if y_axis_skip_zero and abs(lab - 0) < 0.0000000001:
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
             else:
@@ -241,7 +238,6 @@ def set_y_ticks(
         @2019.01.04
         If there is no bam file, draw a blank y-axis 
         """
-
         ax.set_yticks(universal_y_ticks)
         ax.set_yticklabels(curr_y_tick_labels, fontsize=font_size)
         ax.yaxis.set_ticks_position('left')
@@ -254,7 +250,7 @@ def set_y_ticks(
     if show_y_label:
         ax.text(
             x=-1 * distance_between_label_axis * max(graph_coords),
-            y=abs(max_used_y_val - min_used_y_val) / 2,
+            y=(max_used_y_val + min_used_y_val) / 2,
             s=label, fontsize=font_size, ha="right"
         )
 
@@ -382,7 +378,7 @@ def plot_reference(
             genes[transcript.gene_id].append(transcript)
 
         for _, transcripts_list in genes.items():
-            primary_transcripts = sorted(transcripts_list, key=lambda x: len(x), reverse=True)[0]
+            primary_transcripts = sorted(transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
             transcripts.append(primary_transcripts.transcript_id)
     elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
         logger.warning("--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
@@ -502,12 +498,12 @@ def plot_reference(
                         ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
 
                     # @2022.05.13
-                    intron_relative_s = region.relative(min(map(lambda x: x.end, sub_exon)))
+                    intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
                     if intron_relative_s > len(region):
                         continue
 
-                    intron_relative_e = region.relative(max(map(lambda x: x.start, sub_exon)))
+                    intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
                     intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
                     if intron_relative_e <= 0:
                         continue
@@ -550,12 +546,12 @@ def plot_reference(
                         ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
 
                     # @2022.05.13
-                    intron_relative_s = region.relative(min(map(lambda x: x.end, sub_exon)))
+                    intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
                     if intron_relative_s > len(region):
                         continue
 
-                    intron_relative_e = region.relative(max(map(lambda x: x.start, sub_exon)))
+                    intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
                     intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
                     if intron_relative_e <= 0:
                         continue
@@ -615,6 +611,7 @@ def plot_density(
     :param theme: the theme name
     :param max_used_y_val: used to set same max y axis
     :param density_by_plot: whether to draw density plot in strand-specific manner.
+    :param raster:
     :param kwargs:
     :return:
     """
@@ -635,16 +632,18 @@ def plot_density(
 
     jxns = data.junctions_dict
 
+    wiggle = data.wiggle
+    if max_used_y_val is None:
+        max_used_y_val = max(data.plus)
+        if max_used_y_val % 2 == 1:
+            max_used_y_val += 1
+
+    min_used_y_val = min(data.minus) if data.minus else min(wiggle)
+    y_max = max_used_y_val
+    y_min = min_used_y_val
+
     if not data.strand_aware and not density_by_plot:
-        wiggle = data.wiggle
-
-        if max_used_y_val is None:
-            max_used_y_val = max(wiggle)
-            if max_used_y_val % 2 == 1:
-                max_used_y_val += 1
-
-        y_max = max_used_y_val
-        y_min = -.5 * y_max
+        y_min = min(-.5 * y_max, min(wiggle))
         # Reduce memory footprint by using incremented graphcoords.
         compressed_x = []
         compressed_wiggle = []
@@ -661,16 +660,6 @@ def plot_density(
         ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post", rasterized=raster)
 
     else:
-        wiggle = data.wiggle
-        if max_used_y_val is None:
-            max_used_y_val = max(data.plus)
-            if max_used_y_val % 2 == 1:
-                max_used_y_val += 1
-
-        min_used_y_val = min(data.minus)
-        y_max = max_used_y_val
-        y_min = min_used_y_val
-
         # Reduce memory footprint by using incremented graph_coords.
         for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
             if sum(current_dat) == 0:
@@ -812,7 +801,7 @@ def plot_density(
     if obj and obj.title:
         ax.text(
             max(graph_coords) - len(obj.title),
-            max_used_y_val,
+            y_max,
             obj.title,
             color=color,
             fontsize=font_size
@@ -1304,7 +1293,7 @@ def make_text_elements(text, x=0.0, y=0.0, width=1.0, height=1.0, color='blue', 
     trafo.scale(1 / bwidth * width, 1 / bheight * height)
     trafo.translate(x, y)
     tp = tp.transformed(trafo)
-    return patches.PathPatch(tp, facecolor=color, edgecolor=edgecolor)
+    return PathPatch(tp, facecolor=color, edgecolor=edgecolor)
 
 
 def plot_motif(ax: mpl.axes.Axes,
@@ -1324,9 +1313,15 @@ def plot_motif(ax: mpl.axes.Axes,
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
-    ymin, ymax = 0, 0
+    ymin, ymax, xmin, xmax = 0, 0, 0, 0
     for site, vals in data.items():
         site = graph_coords[site - region.start]
+
+        if site < xmin:
+            xmin = site
+
+        if site > xmax:
+            xmax = site
 
         init_height_pos = 0
         init_height_neg = 0
@@ -1343,11 +1338,51 @@ def plot_motif(ax: mpl.axes.Axes,
             else:
                 init_height_neg += height
             ax.add_patch(text_shape)
-        ymin = min(ymin, init_height_neg)
-        ymax = max(ymax, init_height_pos)
+        ymin, ymax = min(ymin, init_height_neg),  max(ymax, init_height_pos)
+    xmin, xmax = max(xmin, min(graph_coords)), min(xmax + (1 + width) / 2, max(graph_coords))
+
+    print(max(graph_coords) - min(graph_coords))
+    # draw scaled text
+    axins = inset_axes(ax, width="40%", height="100%", loc='center left',
+                       bbox_to_anchor=(0.2, 0, 1, 1),
+                       bbox_transform=ax.transAxes)
+
+    start_site = min(list(data.keys()))
+    site = 0
+    for idx, vals in data.items():
+        site = idx - start_site
+        init_height_pos, init_height_neg = 0, 0
+        for text, height in vals.items():
+            text_shape = make_text_elements(text,
+                                            x=site + (1 - width) / 2,
+                                            y=init_height_neg if height < 0 else init_height_pos,
+                                            width=width, height=height,
+                                            color=colors.get(text, "blue"),
+                                            edgecolor=colors.get(text, "blue"))
+
+            if height > 0:
+                init_height_pos += height
+            else:
+                init_height_neg += height
+            axins.add_patch(text_shape)
+    axins.set_xlim(0, site + (1 + width) / 2)
+    axins.tick_params(bottom=False, top=False, left=False, right=False)
+    axins.set_xticklabels([])
+    axins.set_yticklabels([])
+
+    # draw box
+    sx = [xmin, xmax, xmax, xmin, xmin]
+    sy = [ymin, ymin, ymax, ymax, ymin]
+    ax.plot(sx, sy, "black")
 
     ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(ymin, ymax)
+
+    # add two lines
+    # 画两条线
+    pos = (max(graph_coords) - min(graph_coords)) * .2 + min(graph_coords)
+    ax.plot([xmax, pos], [ymin, ymin], c="black")
+    ax.plot([xmax, pos], [ymax, ymax], c="black")
 
 
 if __name__ == '__main__':

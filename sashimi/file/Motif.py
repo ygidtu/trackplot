@@ -33,7 +33,7 @@ class Motif(object):
         for record in Reader.read_depth(self.path, region):
             start = record[1]
 
-            data[int(start)] = {x: float(y) for x, y in zip(keys, record[3:7])}
+            data[int(start)] = {x: abs(float(y)) for x, y in zip(keys, record[3:7])}
         self.data = data
 
 

@@ -16,11 +16,10 @@ import matplotlib as mpl
 from click_option_group import optgroup
 from loguru import logger
 
-from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
-from sashimi.plot import Plot
-from sashimi.file.ATAC import ATAC
 from sashimi.base.GenomicLoci import GenomicLoci
-
+from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
+from sashimi.file.ATAC import ATAC
+from sashimi.plot import Plot
 
 __version__ = "0.0.3"
 __author__ = "ygidtu"
@@ -696,7 +695,6 @@ def main(**kwargs):
                         n_y_ticks=kwargs["n_y_ticks"]
                     )
             elif key == "motif":
-                print("motif")
                 motif_region = None
                 if kwargs["motif_region"]:
                     start, end = [int(x) for x in kwargs["motif_region"].split("-")]
