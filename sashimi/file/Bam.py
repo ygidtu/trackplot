@@ -149,6 +149,7 @@ class Bam(SingleCell):
         filtered_junctions = {}
 
         spanned_junctions = kwargs.get("junctions", {})
+        included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus = dict()
         spanned_junctions_minus = dict()
@@ -239,6 +240,8 @@ class Bam(SingleCell):
                     if cigar == 3:  # N
                         try:
                             junction_name = Junction(region.chromosome, cur_start, cur_end)
+                            if str(junction_name) not in included_junctions and len(included_junctions) != 0:
+                                continue
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
