@@ -261,12 +261,12 @@ class Bam(SingleCell):
                 if v >= threshold:
                     filtered_junctions[k] = v
 
-                    if k.strand == "+":
+                    if k.strand == "-":
                         if k not in spanned_junctions_plus:
                             spanned_junctions_plus[k] = -1
                         else:
                             spanned_junctions_plus[k] += -1
-                    elif k.strand == "-":
+                    elif k.strand == "+":
                         if k not in spanned_junctions_minus:
                             spanned_junctions_minus[k] = -1
                         else:
