@@ -638,7 +638,7 @@ def plot_density(
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = min(data.minus) if data.minus else min(wiggle)
+    min_used_y_val = min(data.minus) if data.minus is not None else min(wiggle)
     y_max = max_used_y_val
     y_min = min_used_y_val
 
