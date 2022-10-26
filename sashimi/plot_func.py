@@ -6,33 +6,32 @@ This script contains the functions to draw different images
 import math
 from collections import defaultdict
 from copy import deepcopy
-from typing import Dict, Optional, List, Union
+from typing import Dict, List, Optional, Union
 
 import matplotlib as mpl
-
 import numpy as np
 import seaborn as sns
 from loguru import logger
 from matplotlib import pylab
+from matplotlib.font_manager import FontProperties
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.stats import gaussian_kde, zscore
 
 from sashimi.anno.theme import Theme
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Stroke import Stroke
-from sashimi.conf.config import DISTANCE_METRIC, CLUSTERING_METHOD
+from sashimi.conf.config import CLUSTERING_METHOD, DISTANCE_METRIC
 from sashimi.file.File import File
 from sashimi.file.HiCMatrixTrack import HiCTrack
+from sashimi.file.Motif import Motif
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
-from sashimi.file.Motif import Motif
 
 
 def get_limited_index(num, length):
@@ -112,17 +111,14 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 intron = [exons[i - 1][1], exons[i][0]]
 
                 for j in range(intron[0], intron[1]):
-                    graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                            j - intron[0] + 1) * intron_scale
+                    graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (j - intron[0] + 1) * intron_scale
 
             for j in range(exon[0], exon[1] + 1):
-                graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (
-                        j - exon[0] + 1) * exon_scale
+                graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (j - exon[0] + 1) * exon_scale
 
         intron = [exons[-1][-1], region.end]
         for i in range(intron[0], intron[1]):
-            graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                    i - intron[0] + 1) * intron_scale
+            graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (i - intron[0] + 1) * intron_scale
     else:
         # if there is not any exons, just init graph_coords by region
         for i, j in enumerate(range(region.start, region.end + 1)):
@@ -157,14 +153,16 @@ def set_x_ticks(
         x_label = f"{x_label}, y axis is {log_trans} transformed"
 
     ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
-    ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
+    ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8,  s=x_label, fontsize=font_size, ha="center", va="top")
 
     bk = 1
-    if not sequence:
-        bk = len(graph_coords) // nx_ticks
+    if not sequence and nx_ticks > 1:
+        bk = len(graph_coords) // (nx_ticks - 1)
     line_space = {}
     for i in range(0, len(graph_coords), bk):
         line_space[graph_coords[i]] = i + region.start
+    line_space[graph_coords[i]] = region.end
+
     if sequence:
         for i, seq in sequence.items():
             relative_i = graph_coords[i - region.start]
@@ -381,10 +379,12 @@ def plot_reference(
             genes[transcript.gene_id].append(transcript)
 
         for _, transcripts_list in genes.items():
-            primary_transcripts = sorted(transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
+            primary_transcripts = sorted(
+                transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
             transcripts.append(primary_transcripts.transcript_id)
     elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
-        logger.warning("--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
+        logger.warning(
+            "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
     else:
         pass
 
@@ -424,7 +424,8 @@ def plot_reference(
         # @2022.05.13
         # add index to avoid label overlapping of neighbor exon
         for ind, exon in enumerate(transcript.exons):
-            s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
+            s, e, strand = region.relative(
+                exon.start), region.relative(exon.end), exon.strand
             x = [
                 graph_coords[s], graph_coords[e],
                 graph_coords[e], graph_coords[s]
@@ -462,7 +463,8 @@ def plot_reference(
                 spread = .2 * length / narrows
 
                 for i in range(narrows):
-                    loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
+                    loc = float(i) * length / narrows + \
+                        graph_coords[region.relative(transcript.start)]
                     if strand == '+' or reverse_minus:
                         x = [loc - spread, loc, loc - spread]
                     else:
@@ -483,7 +485,8 @@ def plot_reference(
                 for sub_exon in sub_current_domain.exons:
 
                     for exon in sub_exon:
-                        s, e = region.relative(exon.start), region.relative(exon.end)
+                        s, e = region.relative(
+                            exon.start), region.relative(exon.end)
                         if e <= 0 or s > len(region):
                             continue
                         s = 0 if s < 0 else s
@@ -497,22 +500,28 @@ def plot_reference(
                             y_loc - exon_width / 4, y_loc - exon_width / 4,
                             y_loc + exon_width / 4, y_loc + exon_width / 4
                         ]
-                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
+                        ax.fill(x, y, color, lw=.5,
+                                zorder=20, rasterized=raster)
 
                     # @2022.05.13
-                    intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
+                    intron_relative_s = region.relative(
+                        min(map(lambda x_: x_.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
                     if intron_relative_s > len(region):
                         continue
 
-                    intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
-                    intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+                    intron_relative_e = region.relative(
+                        max(map(lambda x_: x_.start, sub_exon)))
+                    intron_relative_e = len(
+                        region) - 1 if intron_relative_e > len(region) else intron_relative_e
                     if intron_relative_e <= 0:
                         continue
 
-                    intron_sites = [graph_coords[intron_relative_s], graph_coords[intron_relative_e]]
+                    intron_sites = [graph_coords[intron_relative_s],
+                                    graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
+                        ax.plot(intron_sites, [y_loc, y_loc],
+                                color=color, lw=0.2, rasterized=raster)
 
                 ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript_id}",
                         fontsize=font_size / 2, ha="right")
@@ -531,7 +540,8 @@ def plot_reference(
                 for sub_exon in sub_current_domain.exons:
 
                     for exon in sub_exon:
-                        s, e = region.relative(exon.start), region.relative(exon.end)
+                        s, e = region.relative(
+                            exon.start), region.relative(exon.end)
                         if e <= 0 or s > len(region):
                             continue
                         s = 0 if s < 0 else s
@@ -545,22 +555,28 @@ def plot_reference(
                             y_loc - exon_width / 4, y_loc - exon_width / 4,
                             y_loc + exon_width / 4, y_loc + exon_width / 4
                         ]
-                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
+                        ax.fill(x, y, color, lw=.5,
+                                zorder=20, rasterized=raster)
 
                     # @2022.05.13
-                    intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
+                    intron_relative_s = region.relative(
+                        min(map(lambda x_: x_.end, sub_exon)))
                     intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
                     if intron_relative_s > len(region):
                         continue
 
-                    intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
-                    intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+                    intron_relative_e = region.relative(
+                        max(map(lambda x_: x_.start, sub_exon)))
+                    intron_relative_e = len(
+                        region) - 1 if intron_relative_e > len(region) else intron_relative_e
                     if intron_relative_e <= 0:
                         continue
 
-                    intron_sites = [graph_coords[intron_relative_s], graph_coords[intron_relative_e]]
+                    intron_sites = [graph_coords[intron_relative_s],
+                                    graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
+                        ax.plot(intron_sites, [y_loc, y_loc],
+                                color=color, lw=0.2, rasterized=raster)
 
                 ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{base_name}",
                         fontsize=font_size / 2, ha="right")
@@ -640,7 +656,8 @@ def plot_density(
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = -1 * max(data.minus) if data.minus is not None else min(wiggle)
+    min_used_y_val = -1 * \
+        max(data.minus) if data.minus is not None else min(wiggle)
 
     # Reduce memory footprint by using incremented graph_coords.
     for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
@@ -648,7 +665,7 @@ def plot_density(
             continue
 
         if idx == "-":
-            current_dat = -1 * current_dat
+            current_dat = -current_dat
 
         compressed_x = []
         compressed_wiggle = []
@@ -657,11 +674,13 @@ def plot_density(
             compressed_wiggle.append(current_dat[i])
             compressed_x.append(graph_coords[i])
 
-        ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post", rasterized=raster)
+        ax.fill_between(compressed_x, compressed_wiggle, y2=0,
+                        color=color, lw=0, step="post", rasterized=raster)
 
     if jxns:
         # sort the junctions by intron length for better plotting look
-        jxns_sorted_list = sorted(jxns.keys(), key=lambda x: x.end - x.start, reverse=True)
+        jxns_sorted_list = sorted(
+            jxns.keys(), key=lambda x: x.end - x.start, reverse=True)
 
         if not jxns:
             max_junction_count, min_junction_count = 0, 0
@@ -677,15 +696,18 @@ def plot_density(
 
             # @2022.09.26
             # Skip these too short span junction for avoiding plotting junction number
-            overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
+            overlap_length = min(rightss, region.end) - \
+                max(leftss, region.start) + 1
             if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
                 continue
 
             # @2018.12.19
             # set junctions coordinate here
             # the junction out of boundaries, set the boundaries as coordinate
-            ss1_idx, ss1_modified = get_limited_index(leftss - region.start, len(graph_coords))
-            ss2_idx, ss2_modified = get_limited_index(rightss - region.start, len(graph_coords))
+            ss1_idx, ss1_modified = get_limited_index(
+                leftss - region.start, len(graph_coords))
+            ss2_idx, ss2_modified = get_limited_index(
+                rightss - region.start, len(graph_coords))
 
             u"""
             @2019.01.14
@@ -717,7 +739,8 @@ def plot_density(
                     If there is no bam, lower half of y axis as the height of junctions
                     """
                     pts = [
-                        (ss1, left_dens if not ss1_modified else left_dens + current_height),
+                        (ss1, left_dens if not ss1_modified else left_dens +
+                         current_height),
                         (ss1, left_dens + current_height),
                         (ss2, right_dens + current_height),
                         (ss2, right_dens if not ss2_modified else right_dens + current_height)
@@ -730,11 +753,13 @@ def plot_density(
                 plot splice junction with strand information
                 """
                 if jxn in data.junction_dict_minus:
-                    current_wiggle = data.minus
-                    current_height = -3 / 8 * max(abs(min_used_y_val), max_used_y_val)
+                    current_wiggle = -data.minus
+                    current_height = -3 / 8 * \
+                        max(abs(min_used_y_val), max_used_y_val)
                 else:
                     current_wiggle = data.plus
-                    current_height = 3 / 8 * max(abs(min_used_y_val), max_used_y_val)
+                    current_height = 3 / 8 * \
+                        max(abs(min_used_y_val), max_used_y_val)
 
                 left_dens = current_wiggle[ss1_idx]
                 right_dens = current_wiggle[ss2_idx]
@@ -773,11 +798,13 @@ def plot_density(
             scale the junctions line width
             """
             if junction_count_gap > 0:
-                line_width = (jxns[jxn] - min_junction_count) / junction_count_gap
+                line_width = (jxns[jxn] - min_junction_count) / \
+                    junction_count_gap
             else:
                 line_width = 0
 
-            ax.add_patch(PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
+            ax.add_patch(
+                PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
 
     if obj and obj.title:
         ax.text(
@@ -791,8 +818,11 @@ def plot_density(
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -abs(min_used_y_val),
+        max_used_y_val=max(
+            abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
+        min_used_y_val=-
+        max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -
+        abs(min_used_y_val),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
@@ -1006,7 +1036,8 @@ def plot_hic(
     if show_legend:
         cbar = pylab.colorbar(
             mappable=mpl.cm.ScalarMappable(
-                norm=mpl.colors.Normalize(vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)),
+                norm=mpl.colors.Normalize(
+                    vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)),
                 cmap=color),
             cax=cbar_ax)
         cbar.ax.tick_params(labelsize=font_size)
@@ -1156,7 +1187,8 @@ def plot_igv_like(
                     continue
 
                 for exon in c_data.exons:
-                    s, e, strand = region.relative(exon.start), region.relative(exon.end), exon.strand
+                    s, e, strand = region.relative(
+                        exon.start), region.relative(exon.end), exon.strand
                     if e < 0 or s > len(region):
                         continue
 
@@ -1172,11 +1204,13 @@ def plot_igv_like(
                         y_loc + exon_width, y_loc + exon_width
                     ]
 
-                    ax.fill(x, y, 'k' if not exon_color else exon_color, lw=.5, zorder=20)
+                    ax.fill(x, y, 'k' if not exon_color else exon_color,
+                            lw=.5, zorder=20)
                     add_plot = add_plot | True
 
                 for intron in c_data.introns:
-                    s, e, strand = region.relative(intron.start), region.relative(intron.end), intron.strand
+                    s, e, strand = region.relative(
+                        intron.start), region.relative(intron.end), intron.strand
 
                     if e < 0 or s > len(region):
                         continue
@@ -1194,7 +1228,8 @@ def plot_igv_like(
                     if feature.start == -1:
                         continue
 
-                    s, e, strand = region.relative(feature.start), region.relative(feature.end), feature.strand
+                    s, e, strand = region.relative(feature.start), region.relative(
+                        feature.end), feature.strand
                     is_site = False
 
                     if s == e:
@@ -1217,7 +1252,8 @@ def plot_igv_like(
                         y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
                         y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
                     ]
-                    ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+                    ax.fill(
+                        x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
                     if is_site:
                         ax.scatter(graph_coords[s],
                                    y_loc + exon_width * width_ratio,
@@ -1320,7 +1356,7 @@ def plot_motif(ax: mpl.axes.Axes,
                 init_height_neg += height
             ax.add_patch(text_shape)
         ymin, ymax = min(ymin, init_height_neg),  max(ymax, init_height_pos)
-    xmin, xmax = max(xmin, min(graph_coords)), min(xmax + (1 + width) / 2, max(graph_coords))
+    xmin, xmax = max(xmin, min(graph_coords)), min( xmax + (1 + width) / 2, max(graph_coords))
 
     # draw scaled text
     axins = inset_axes(ax, width="40%", height="100%", loc='center left',
