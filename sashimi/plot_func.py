@@ -1336,33 +1336,9 @@ def plot_motif(ax: mpl.axes.Axes,
         graph_coords = init_graph_coords(region)
 
     # 在原始坐标轴上画motif
-    ymin, ymax, xmin, xmax = 0, 0, -1, -1
-    for site, vals in data.items():
-        site = graph_coords[site - region.start]
-
-        if site < xmin or xmin < 0:
-            xmin = site
-
-        if site > xmax or xmax < 0:
-            xmax = site
-
-        init_height_pos = 0
-        init_height_neg = 0
-        for text, height in vals.items():
-            text_shape = make_text_elements(text,
-                                            x=site + (1 - width) / 2,
-                                            y=init_height_neg if height < 0 else init_height_pos,
-                                            width=width, height=height,
-                                            color=colors.get(text, "blue"),
-                                            edgecolor=colors.get(text, "blue"))
-
-            if height > 0:
-                init_height_pos += height
-            else:
-                init_height_neg += height
-            ax.add_patch(text_shape)
-        ymin, ymax = min(ymin, init_height_neg), max(ymax, init_height_pos)
-    xmin, xmax = max(xmin, min(graph_coords)), min(xmax + (1 + width) / 2, max(graph_coords))
+    ymin, ymax, xmin, xmax = 0, 0, \
+                             graph_coords[min(data.keys()) - region.start], \
+                             graph_coords[max(data.keys()) - region.start] + (1 + width) / 2
 
     # 在放大区画motif
     axin_width = width_per_character * (xmax - xmin) / len(graph_coords)
@@ -1394,6 +1370,7 @@ def plot_motif(ax: mpl.axes.Axes,
                 init_height_pos += height
             else:
                 init_height_neg += height
+            ymin, ymax = min(ymin, init_height_neg), max(ymax, init_height_pos)
             axins.add_patch(text_shape)
     axins.set_xlim(0, site + (1 + width) / 2)
     axins.set_ylim(ymin, ymax)
@@ -1402,11 +1379,17 @@ def plot_motif(ax: mpl.axes.Axes,
     axins.set_yticklabels([])
 
     # draw box
-    ax.plot([xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin], "black")
+    y_height = ymax - ymin
+    y_center = (ymax + ymin) / 2
+    y_scale = .25
+    ax.plot(
+        [xmin, xmax, xmax, xmin, xmin],
+        [ymin, ymin, ymin + y_height * y_scale, ymin + y_height * y_scale, ymin],
+        "black")
+
     ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(ymin, ymax)
 
-    # add two lines
     # 画两条线
     if draw_left:
         pos = len(graph_coords) * ((bbox_to_left+axin_width) * 100 + 5) / 100
@@ -1414,7 +1397,9 @@ def plot_motif(ax: mpl.axes.Axes,
     else:
         pos = len(graph_coords) * bbox_to_left
         x = xmax
-    ax.arrow(x, (ymax + ymin) / 2, pos - x, 0, head_width=1, fc='k', ec='k')
+    ax.arrow(x, ymin + y_height * y_scale / 2,
+             pos - x, y_center - (ymin + y_height * y_scale),
+             head_width=1, fc='k', ec='k', rasterize=True)
 
 
 if __name__ == '__main__':

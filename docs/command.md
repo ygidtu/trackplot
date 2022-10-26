@@ -660,6 +660,33 @@ python main.py \
 here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
 
 
+## Motif plot
+
+```bash
+python main.py \
+  -e chr1:1270656-1270776:+ \
+  --density example/density_list.tsv \
+  -o example/motif.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --raster \
+  -r example/example.sorted.gtf.gz \
+  --motif example/motif.bed.gz \
+  --motif-region 1270756-1270760
+```
+The motif weight matrix should be customized bedGraph format as follows:
+```bash
+# chromosome  start end A_weight T_weight C_weight G_weight
+chr1  100 101 0.1 0.2 -0.3  -0.4 
+```
+
+Then, bgzipped && tabix indexed
+
+here is the [results](imgs/cmd/motif.png).
+
+
+
 ### Additional annotation
 
 We also provide multiple annotations, including indicator lines, focus, stroke and sequence.
