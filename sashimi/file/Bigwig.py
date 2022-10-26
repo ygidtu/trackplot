@@ -35,10 +35,19 @@ class Bigwig(File):
 
     def load(self, region: GenomicLoci, **kwargs):
         self.region = region
-        self.data = ReadDepth(np.nan_to_num(
+
+        vals = np.nan_to_num(
             Reader.read_bigwig(self.path, region),
             copy=True, nan=0.0, posinf=None, neginf=None
-        ))
+        )
+        plus, minus = np.zeros(len(vals)), np.zeros(len(vals))
+        for idx, val in enumerate(vals):
+            if val > 0:
+                plus[idx] = val
+            else:
+                minus[idx] = abs(val)
+
+        self.data = ReadDepth(plus, minus=minus)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ class ReadDepth(object):
         self.plus = wiggle
         self.junctions_dict = junctions_dict
         self.strand_aware = strand_aware
-        self.minus = minus * -1 if minus is not None else minus
+        self.minus = abs(minus) if minus is not None else minus
         self.max = max(self.wiggle, default=0)
         self.junction_dict_plus = junction_dict_plus
         self.junction_dict_minus = junction_dict_minus
@@ -55,8 +55,10 @@ class ReadDepth(object):
 
     @property
     def wiggle(self) -> np.array:
-        if self.minus is not None:
-            return self.plus + np.abs(self.minus)
+        if self.plus is None or np.sum(self.plus) == 0:
+            return self.minus
+        elif self.minus is None or np.sum(self.minus) == 0:
+            return self.plus
         return self.plus
 
     def __add__(self, other):
@@ -71,14 +73,15 @@ class ReadDepth(object):
         """
 
         if len(self.wiggle) == len(other.wiggle):
-            junctions = self.junctions_dict
-            for i, j in other.junctions_dict.items():
-                if i in junctions.keys():
-                    junctions[i] += j
-                else:
-                    junctions[i] = j
+            junctions = self.junctions_dict if self.junctions_dict else {}
+            if other.junctions_dict:
+                for i, j in other.junctions_dict.items():
+                    if i in junctions.keys():
+                        junctions[i] += j
+                    else:
+                        junctions[i] = j
             return ReadDepth(
-                self.wiggle + other.wiggle,
+                self.plus + other.plus,
                 junctions_dict=junctions,
                 minus=self.minus + other.minus
             )

@@ -261,8 +261,8 @@ def set_focus(
         focus: Dict[int, int]
 ):
     for left, right in focus.items():
-        left, right = graph_coords[left], graph_coords[right]
         try:
+            left, right = graph_coords[left], graph_coords[right]
             fill_x = [left, right, right, left]
 
             y1, y2 = ax.get_ylim()
@@ -315,18 +315,21 @@ def plot_stroke(
     strokes = sorted(data, key=lambda x: [x.start, x.end])
 
     for i, stroke in enumerate(strokes):
-        ax.hlines(
-            y=i,
-            xmin=graph_coords[stroke.start],
-            xmax=graph_coords[stroke.end],
-            color=stroke.color, lw=2)
-        ax.text(
-            -1 * distance_between_label_axis * max(graph_coords),
-            i + .2,
-            stroke.label,
-            fontsize=font_size,
-            color=stroke.color
-        )
+        try:
+            ax.hlines(
+                y=i,
+                xmin=graph_coords[stroke.start],
+                xmax=graph_coords[stroke.end],
+                color=stroke.color, lw=2)
+            ax.text(
+                -1 * distance_between_label_axis * max(graph_coords),
+                i + .2,
+                stroke.label,
+                fontsize=font_size,
+                color=stroke.color
+            )
+        except IndexError as err:
+            logger.warning(f"stroke is out of bound: {err}")
 
     Theme.set_theme(ax, theme)
     ax.set_xlim(left=0, right=max(graph_coords))
@@ -394,8 +397,7 @@ def plot_reference(
         # ignore the unwanted transcript
         if transcripts and not (set(transcripts) & set(transcript.ids())):
             continue
-        # print(transcripts)
-        # print(set(transcript.ids()))
+
         # ignore transcripts without any exons
         if remove_empty_transcripts and not transcript.exons:
             continue
@@ -632,51 +634,30 @@ def plot_density(
 
     jxns = data.junctions_dict
 
-    wiggle = data.wiggle
+    wiggle = data.plus
     if max_used_y_val is None:
         max_used_y_val = max(data.plus)
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = min(data.minus) if data.minus is not None else min(wiggle)
-    y_max = max_used_y_val
-    y_min = min_used_y_val
+    min_used_y_val = -1 * max(data.minus) if data.minus is not None else min(wiggle)
 
-    if not data.strand_aware and not density_by_plot:
-        y_min = min(-.5 * y_max, min(wiggle))
-        # Reduce memory footprint by using incremented graphcoords.
+    # Reduce memory footprint by using incremented graph_coords.
+    for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
+        if current_dat is None:
+            continue
+
+        if idx == "-":
+            current_dat = -1 * current_dat
+
         compressed_x = []
         compressed_wiggle = []
 
-        u"""
-        @2019.01.04
-        If there is no bam file, use half of y axis as the upper bound of exon 
-        And draw a white point to maintain the height of the y axis
-        """
         for i in range(len(graph_coords)):
-            compressed_wiggle.append(wiggle[i])
+            compressed_wiggle.append(current_dat[i])
             compressed_x.append(graph_coords[i])
 
         ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post", rasterized=raster)
-
-    else:
-        # Reduce memory footprint by using incremented graph_coords.
-        for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
-            if sum(current_dat) == 0:
-                continue
-            compressed_x = []
-            compressed_wiggle = []
-
-            for i in range(len(graph_coords)):
-                compressed_wiggle.append(current_dat[i])
-                compressed_x.append(graph_coords[i])
-
-            if idx == "-" and density_by_plot:
-                ax.fill_between(compressed_x, [-1 * x for x in compressed_wiggle], y2=0, color=color, lw=0, step="post",
-                                rasterized=raster)
-            else:
-                ax.fill_between(compressed_x, compressed_wiggle, y2=0, color=color, lw=0, step="post",
-                                rasterized=raster)
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -689,7 +670,7 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
-        current_height = -3 * y_min / 4
+        current_height = -3 * min_used_y_val / 4
 
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
@@ -750,10 +731,10 @@ def plot_density(
                 """
                 if jxn in data.junction_dict_minus:
                     current_wiggle = data.minus
-                    current_height = -3 / 8 * max(abs(y_min), y_max)
+                    current_height = -3 / 8 * max(abs(min_used_y_val), max_used_y_val)
                 else:
                     current_wiggle = data.plus
-                    current_height = 3 / 8 * max(abs(y_min), y_max)
+                    current_height = 3 / 8 * max(abs(min_used_y_val), max_used_y_val)
 
                 left_dens = current_wiggle[ss1_idx]
                 right_dens = current_wiggle[ss2_idx]
@@ -801,7 +782,7 @@ def plot_density(
     if obj and obj.title:
         ax.text(
             max(graph_coords) - len(obj.title),
-            y_max,
+            max_used_y_val,
             obj.title,
             color=color,
             fontsize=font_size
@@ -810,8 +791,8 @@ def plot_density(
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max(abs(y_min), y_max) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(y_min), y_max) if data.strand_aware else -abs(y_min),
+        max_used_y_val=max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
+        min_used_y_val=-max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -abs(min_used_y_val),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
@@ -1341,7 +1322,6 @@ def plot_motif(ax: mpl.axes.Axes,
         ymin, ymax = min(ymin, init_height_neg),  max(ymax, init_height_pos)
     xmin, xmax = max(xmin, min(graph_coords)), min(xmax + (1 + width) / 2, max(graph_coords))
 
-    print(max(graph_coords) - min(graph_coords))
     # draw scaled text
     axins = inset_axes(ax, width="40%", height="100%", loc='center left',
                        bbox_to_anchor=(0.2, 0, 1, 1),

@@ -49,7 +49,7 @@ class PlotInfo(object):
     def __hash__(self) -> int:
         if self.type in ["heatmap", "line"]:
             return hash(self.group)
-        return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
+        return hash((tuple([obj.label for obj in self.obj]), self.group, self.type, tuple(self.category)))
 
     def __add__(self, other):
         if self.category == ["heatmap", "line"]:
@@ -102,6 +102,16 @@ class PlotInfo(object):
     def load(self, region: GenomicLoci, *args, **kwargs):
         for obj in self.obj:
             obj.load(region=region, *args, **kwargs)
+
+        if self.type == "density":
+            if len(self.obj) > 1:
+                data = self.obj[0].data
+                for obj in self.obj[1:]:
+                    data += obj.data
+
+                for obj in self.obj:
+                    obj.data = data
+
         return self
 
 
@@ -496,19 +506,34 @@ class Plot(object):
             logger.warning("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
-        self.plots.append(info)
-        self.params[info] = {
-            "show_junction_number": show_junction_number,
-            "junction_number_font_size": junction_number_font_size,
-            "color": color,
-            "font_size": font_size,
-            "n_y_ticks": n_y_ticks,
-            "show_y_label": show_y_label,
-            "y_label": y_label,
-            "theme": theme,
-            "strand_choice": strand_choice,
-            "density_by_strand": density_by_strand
-        }
+
+        new_obj = True
+        for p in self.plots:
+            if p.category == info.category:
+                for obj_ in p.obj:
+                    if obj_.label == label and label:
+                        param = self.params.pop(p)
+                        p.obj.append(obj)
+                        new_obj = False
+                        self.params[p] = param
+                        break
+            if not new_obj:
+                break
+
+        if new_obj:
+            self.plots.append(info)
+            self.params[info] = {
+                "show_junction_number": show_junction_number,
+                "junction_number_font_size": junction_number_font_size,
+                "color": color,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "y_label": y_label,
+                "theme": theme,
+                "strand_choice": strand_choice,
+                "density_by_strand": density_by_strand
+            }
         return self
 
     def add_heatmap(self,
