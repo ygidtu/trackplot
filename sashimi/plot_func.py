@@ -1032,6 +1032,7 @@ def plot_hic(
     ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
                   cmap=color, rasterized=raster)
     ax.set_xlim(0, len(obj.region))
+    ax.set_ylim(0, obj.matrix.shape[1])
 
     if show_legend:
         cbar = pylab.colorbar(

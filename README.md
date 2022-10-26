@@ -32,8 +32,19 @@ The output will be a pdf and other image file formats, and each track on output 
 ## Usage
 
 The sashimi.py is written in Python, and user could install it in a variety of ways as follows
+1. install from pipy
 
-1. install as command line tools
+   ```bash
+   pip install sashimipy
+   
+   # or install from source
+   python setup.py install
+   
+   sashimipy --help
+   
+   ```
+
+2. install as command line tools
 
     ```bash
     git clone https://github.com/ygidtu/sashimi.py
@@ -41,8 +52,24 @@ The sashimi.py is written in Python, and user could install it in a variety of w
     python setup.py install
     sashimipy --help
     ```
-   
-2. running from source
+3. running from a local webserver
+    
+   ```bash
+    git clone https://github.com/ygidtu/sashimi.py sashimi
+    cd sashimi/web
+
+    # build the frontend static files
+    npm install -g vue-cli vite && npm install
+    vite build
+
+    # prepare the backend server
+    pip install fastapi pydantic jinja2 uvicorn
+
+    python server.py --help
+
+    ```
+
+4. running from source
 
     ```bash
     git clone https://github.com/ygidtu/sashimi.py
@@ -51,7 +78,7 @@ The sashimi.py is written in Python, and user could install it in a variety of w
     python main.py --help
     ```
    
-3. for `pipenv` users
+5. for `pipenv` users
 
     ```bash
     git clone https://github.com/ygidtu/sashimi.py
@@ -61,13 +88,19 @@ The sashimi.py is written in Python, and user could install it in a variety of w
     python main.py --help
     ```
 
-4. using docker image
+6. using docker image
+    ```bash
+    docker pull ygidtu/sashimi
+    docker run --rm ygidtu/sashimi --help
+   
+    ```
+   or 
 
     ```bash
-    git clone https://github.com/ygidtu/sashimi.py
-    cd sashimi.py
-    docker build --rm -t ygidtu/sashimi.py .
-    docker run --rm ygditu/sashimi.py --help
+    git clone from https://github.com/ygidtu/sashimi.py sashimi
+    cd sashimi
+    docker build -t ygidtu/docker .
+    docker run --rm ygidtu/sashimi --help
     ```
 
 
