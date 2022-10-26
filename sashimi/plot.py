@@ -20,6 +20,7 @@ from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
 from sashimi.file.Junction import load_custom_junction
+from sashimi.file.Motif import Motif
 from sashimi.plot_func import *
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
@@ -956,7 +957,8 @@ class Plot(object):
         for p in self.plots:
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             try:
-                p.load(region=self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                p.load(region=self.region if p.type != "motif" else self.params[p]["region"],
+                       junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err

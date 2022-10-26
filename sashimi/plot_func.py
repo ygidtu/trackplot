@@ -29,7 +29,6 @@ from sashimi.base.Stroke import Stroke
 from sashimi.conf.config import CLUSTERING_METHOD, DISTANCE_METRIC
 from sashimi.file.File import File
 from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.Motif import Motif
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
 
@@ -111,14 +110,17 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 intron = [exons[i - 1][1], exons[i][0]]
 
                 for j in range(intron[0], intron[1]):
-                    graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (j - intron[0] + 1) * intron_scale
+                    graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (
+                                j - intron[0] + 1) * intron_scale
 
             for j in range(exon[0], exon[1] + 1):
-                graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (j - exon[0] + 1) * exon_scale
+                graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (
+                            j - exon[0] + 1) * exon_scale
 
         intron = [exons[-1][-1], region.end]
         for i in range(intron[0], intron[1]):
-            graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (i - intron[0] + 1) * intron_scale
+            graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (
+                        i - intron[0] + 1) * intron_scale
     else:
         # if there is not any exons, just init graph_coords by region
         for i, j in enumerate(range(region.start, region.end + 1)):
@@ -153,7 +155,7 @@ def set_x_ticks(
         x_label = f"{x_label}, y axis is {log_trans} transformed"
 
     ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
-    ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8,  s=x_label, fontsize=font_size, ha="center", va="top")
+    ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
 
     bk = 1
     if not sequence and nx_ticks > 1:
@@ -464,7 +466,7 @@ def plot_reference(
 
                 for i in range(narrows):
                     loc = float(i) * length / narrows + \
-                        graph_coords[region.relative(transcript.start)]
+                          graph_coords[region.relative(transcript.start)]
                     if strand == '+' or reverse_minus:
                         x = [loc - spread, loc, loc - spread]
                     else:
@@ -657,7 +659,7 @@ def plot_density(
             max_used_y_val += 1
 
     min_used_y_val = -1 * \
-        max(data.minus) if data.minus is not None else min(wiggle)
+                     max(data.minus) if data.minus is not None else min(wiggle)
 
     # Reduce memory footprint by using incremented graph_coords.
     for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
@@ -697,7 +699,7 @@ def plot_density(
             # @2022.09.26
             # Skip these too short span junction for avoiding plotting junction number
             overlap_length = min(rightss, region.end) - \
-                max(leftss, region.start) + 1
+                             max(leftss, region.start) + 1
             if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
                 continue
 
@@ -740,7 +742,7 @@ def plot_density(
                     """
                     pts = [
                         (ss1, left_dens if not ss1_modified else left_dens +
-                         current_height),
+                                                                 current_height),
                         (ss1, left_dens + current_height),
                         (ss2, right_dens + current_height),
                         (ss2, right_dens if not ss2_modified else right_dens + current_height)
@@ -755,11 +757,11 @@ def plot_density(
                 if jxn in data.junction_dict_minus:
                     current_wiggle = -data.minus
                     current_height = -3 / 8 * \
-                        max(abs(min_used_y_val), max_used_y_val)
+                                     max(abs(min_used_y_val), max_used_y_val)
                 else:
                     current_wiggle = data.plus
                     current_height = 3 / 8 * \
-                        max(abs(min_used_y_val), max_used_y_val)
+                                     max(abs(min_used_y_val), max_used_y_val)
 
                 left_dens = current_wiggle[ss1_idx]
                 right_dens = current_wiggle[ss2_idx]
@@ -799,7 +801,7 @@ def plot_density(
             """
             if junction_count_gap > 0:
                 line_width = (jxns[jxn] - min_junction_count) / \
-                    junction_count_gap
+                             junction_count_gap
             else:
                 line_width = 0
 
@@ -1299,7 +1301,8 @@ def plot_links(ax: mpl.axes.Axes,
     ax.axis("off")
 
 
-def make_text_elements(text, x=0.0, y=0.0, width=1.0, height=1.0, color='blue', edgecolor="black",
+def make_text_elements(text, x=0.0, y=0.0, width=1.0, height=1.0,
+                       color='blue', edgecolor="black",
                        font=FontProperties(family='monospace')):
     tp = TextPath((0.0, 0.0), text, size=1, prop=font)
     bbox = tp.get_extents()
@@ -1318,6 +1321,7 @@ def plot_motif(ax: mpl.axes.Axes,
                graph_coords: Optional[Union[Dict, np.ndarray]] = None,
                width: float = 0.8,
                colors=None,
+               width_per_character: float = 3.5,
                theme: str = "blank",
                **kwargs):
     Theme.set_theme(ax, theme)
@@ -1330,14 +1334,15 @@ def plot_motif(ax: mpl.axes.Axes,
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
-    ymin, ymax, xmin, xmax = 0, 0, 0, 0
+    # 在原始坐标轴上画motif
+    ymin, ymax, xmin, xmax = 0, 0, -1, -1
     for site, vals in data.items():
         site = graph_coords[site - region.start]
 
-        if site < xmin:
+        if site < xmin or xmin < 0:
             xmin = site
 
-        if site > xmax:
+        if site > xmax or xmax < 0:
             xmax = site
 
         init_height_pos = 0
@@ -1355,12 +1360,20 @@ def plot_motif(ax: mpl.axes.Axes,
             else:
                 init_height_neg += height
             ax.add_patch(text_shape)
-        ymin, ymax = min(ymin, init_height_neg),  max(ymax, init_height_pos)
-    xmin, xmax = max(xmin, min(graph_coords)), min( xmax + (1 + width) / 2, max(graph_coords))
+        ymin, ymax = min(ymin, init_height_neg), max(ymax, init_height_pos)
+    xmin, xmax = max(xmin, min(graph_coords)), min(xmax + (1 + width) / 2, max(graph_coords))
 
-    # draw scaled text
-    axins = inset_axes(ax, width="40%", height="100%", loc='center left',
-                       bbox_to_anchor=(0.2, 0, 1, 1),
+    # 在放大区画motif
+    axin_width = width_per_character * (xmax - xmin) / len(graph_coords)
+    bbox_to_left = (xmax * 2 - xmin) / len(graph_coords)
+    draw_left = False
+    if axin_width + bbox_to_left > 1:
+        bbox_to_left = max(xmin / len(graph_coords) - axin_width - .1, 0)
+        draw_left = True
+
+    axins = inset_axes(ax, width=f"{axin_width * 100}%", height="100%",
+                       loc='center left',
+                       bbox_to_anchor=(bbox_to_left, 0, 1, 1),
                        bbox_transform=ax.transAxes)
 
     start_site = min(list(data.keys()))
@@ -1382,23 +1395,25 @@ def plot_motif(ax: mpl.axes.Axes,
                 init_height_neg += height
             axins.add_patch(text_shape)
     axins.set_xlim(0, site + (1 + width) / 2)
+    axins.set_ylim(ymin, ymax)
     axins.tick_params(bottom=False, top=False, left=False, right=False)
     axins.set_xticklabels([])
     axins.set_yticklabels([])
 
     # draw box
-    sx = [xmin, xmax, xmax, xmin, xmin]
-    sy = [ymin, ymin, ymax, ymax, ymin]
-    ax.plot(sx, sy, "black")
-
+    ax.plot([xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin], "black")
     ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(ymin, ymax)
 
     # add two lines
     # 画两条线
-    pos = (max(graph_coords) - min(graph_coords)) * .2 + min(graph_coords)
-    ax.plot([xmax, pos], [ymin, ymin], c="black")
-    ax.plot([xmax, pos], [ymax, ymax], c="black")
+    if draw_left:
+        pos = len(graph_coords) * ((bbox_to_left+axin_width) * 100 + 5) / 100
+        x = xmin
+    else:
+        pos = len(graph_coords) * bbox_to_left
+        x = xmax
+    ax.arrow(x, (ymax + ymin) / 2, pos - x, 0, head_width=1, fc='k', ec='k')
 
 
 if __name__ == '__main__':
