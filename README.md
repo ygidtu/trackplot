@@ -35,20 +35,19 @@ The sashimi.py is written in Python, and user could install it in a variety of w
 1. install from pipy
 
    ```bash
-   pip install sashimipy
+   pip install sashimi.py
    
    # or install from source
    python setup.py install
    
    sashimipy --help
-   
    ```
 
 2. install as command line tools
 
     ```bash
-    git clone https://github.com/ygidtu/sashimi.py
-    cd sashimi.py
+    git clone https://github.com/ygidtu/sashimi.py sashimi
+    cd sashimi
     python setup.py install
     sashimipy --help
     ```
@@ -66,14 +65,13 @@ The sashimi.py is written in Python, and user could install it in a variety of w
     pip install fastapi pydantic jinja2 uvicorn
 
     python server.py --help
-
     ```
 
 4. running from source
 
     ```bash
-    git clone https://github.com/ygidtu/sashimi.py
-    cd sashimi.py
+    git clone https://github.com/ygidtu/sashimi.py sashimi
+    cd sashimi
     pip install -r requirements.txt
     python main.py --help
     ```
@@ -92,7 +90,6 @@ The sashimi.py is written in Python, and user could install it in a variety of w
     ```bash
     docker pull ygidtu/sashimi
     docker run --rm ygidtu/sashimi --help
-   
     ```
    or 
 
