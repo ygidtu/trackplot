@@ -5,35 +5,23 @@ Created by ygidtu@gmail.com at 2019.12.06
 """
 import io
 import logging
-import math
 import os.path
-from copy import deepcopy
-from typing import List, Optional, Set, Union, Dict
+from typing import Set
 
 import matplotlib.pyplot as plt
-import numpy as np
-from loguru import logger
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.Stroke import Stroke
 from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
 from sashimi.file.BedGraph import Bedgraph
 from sashimi.file.Bigwig import Bigwig
 from sashimi.file.Depth import Depth
 from sashimi.file.Fasta import Fasta
-from sashimi.file.File import File
-from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.Junction import load_custom_junction
-from sashimi.file.ReadSegments import ReadSegment
-from sashimi.file.Reference import Reference
-from sashimi.plot_func import plot_line, plot_density, plot_reference, plot_heatmap, init_graph_coords, set_x_ticks, \
-    set_indicator_lines, set_focus, plot_stroke, plot_igv_like, plot_site_plot, plot_hic, plot_links
-
+from sashimi.file.Motif import Motif
+from sashimi.plot_func import *
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -62,7 +50,7 @@ class PlotInfo(object):
     def __hash__(self) -> int:
         if self.type in ["heatmap", "line"]:
             return hash(self.group)
-        return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
+        return hash((tuple([obj.label for obj in self.obj]), self.group, self.type, tuple(self.category)))
 
     def __add__(self, other):
         if self.category == ["heatmap", "line"]:
@@ -73,7 +61,10 @@ class PlotInfo(object):
 
     @property
     def is_single_cell(self):
-        return self.obj[0].is_single_cell
+        try:
+            return self.obj[0].is_single_cell
+        except AttributeError:
+            return False
 
     @property
     def data(self) -> Dict[str, Union[ReadDepth, ReadSegment]]:
@@ -112,6 +103,16 @@ class PlotInfo(object):
     def load(self, region: GenomicLoci, *args, **kwargs):
         for obj in self.obj:
             obj.load(region=region, *args, **kwargs)
+
+        if self.type == "density":
+            if len(self.obj) > 1:
+                data = self.obj[0].data
+                for obj in self.obj[1:]:
+                    data += obj.data
+
+                for obj in self.obj:
+                    obj.data = data
+
         return self
 
 
@@ -162,16 +163,18 @@ class Plot(object):
         if self.reference:
             return self.reference.exons
 
-    def set_region(self, chromosome: str, start: int, end: int, strand: str = "+"):
+    def set_region(self, chromosome: str = "",
+                   start: int = 0, end: int = 0,
+                   strand: str = "+",
+                   region: Optional[GenomicLoci] = None):
         u"""
         change the plot region
-        :param chromosome:
-        :param start:
-        :param end:
-        :param strand:
-        :return:
         """
-        self.region = GenomicLoci(chromosome, start=start, end=end, strand=strand)
+
+        if region:
+            self.region = region
+        elif chromosome and start and end:
+            self.region = GenomicLoci(chromosome, start=start, end=end, strand=strand)
         logger.info(f"set region to {self.region}")
         return self
 
@@ -458,6 +461,8 @@ class Plot(object):
                     # site plot parameters
                     show_site_plot: bool = False,
                     strand_choice: Optional[str] = None,
+
+                    only_customized_junction: bool = False
                     ):
         u"""
         add density object to plot
@@ -482,6 +487,7 @@ class Plot(object):
         :param y_label: the text of y-axis title
         :param theme: the theme name
         :param strand_choice: the strand to draw on site plot
+        :param only_customized_junction: only draw customized junctions
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -504,19 +510,35 @@ class Plot(object):
             logger.warning("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
-        self.plots.append(info)
-        self.params[info] = {
-            "show_junction_number": show_junction_number,
-            "junction_number_font_size": junction_number_font_size,
-            "color": color,
-            "font_size": font_size,
-            "n_y_ticks": n_y_ticks,
-            "show_y_label": show_y_label,
-            "y_label": y_label,
-            "theme": theme,
-            "strand_choice": strand_choice,
-            "density_by_strand": density_by_strand
-        }
+
+        new_obj = True
+        for p in self.plots:
+            if p.category == info.category:
+                for obj_ in p.obj:
+                    if obj_.label == label and label:
+                        param = self.params.pop(p)
+                        p.obj.append(obj)
+                        new_obj = False
+                        self.params[p] = param
+                        break
+            if not new_obj:
+                break
+
+        if new_obj:
+            self.plots.append(info)
+            self.params[info] = {
+                "show_junction_number": show_junction_number,
+                "junction_number_font_size": junction_number_font_size,
+                "color": color,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "y_label": y_label,
+                "theme": theme,
+                "strand_choice": strand_choice,
+                "density_by_strand": density_by_strand,
+                "only_customized_junction": only_customized_junction
+            }
         return self
 
     def add_heatmap(self,
@@ -807,6 +829,21 @@ class Plot(object):
 
         return self
 
+    def add_motif(self,
+                  path: str,
+                  category: str = "motif",
+                  motif_region: GenomicLoci = None,
+                  width: float = 0.8,
+                  theme: str = "blank",
+                  **kwargs):
+        obj = Motif.create(path, self.region)
+
+        info = PlotInfo(obj=obj, category=category, type_="motif")
+
+        self.plots.append(info)
+        self.params[info] = {"width": width, "theme": theme, "region": motif_region if motif_region else self.region}
+        return self
+
     def add_manual(self,
                    data: np.array,
                    image_type: str = "line",
@@ -877,8 +914,8 @@ class Plot(object):
              reference_scale: Union[int, float] = .25,
              stroke_scale: Union[int, float] = .25,
              dpi: int = 300,
-             fig_width: Union[int, float] = 0,
-             fig_height: Union[int, float] = 0,
+             width: Union[int, float] = 0,
+             height: Union[int, float] = 0,
              raster: bool = False,
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
@@ -890,12 +927,11 @@ class Plot(object):
         :param reference_scale: to adjust the size of reference plot
         :param stroke_scale: to adjust the size of stroke plot
         :param dpi: the dpi of saved plot
-        :param fig_width: the width of figure, if width == 0, the let matplotlib decide the size of image
-        :param fig_height: the height of figure, if height == 0, the let matplotlib decide the size of image
+        :param width: the width of figure, if width == 0, the let matplotlib decide the size of image
+        :param height: the height of figure, if height == 0, the let matplotlib decide the size of image
         :param raster: plot rasterizer site plot
         :param sc_height_ratio: adjust the relative height of single cell plots
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
-        :param figure: figures to create sub figure
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
@@ -925,7 +961,8 @@ class Plot(object):
         for p in self.plots:
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             try:
-                p.load(region=self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                p.load(region=self.region if p.type != "motif" else self.params[p]["region"],
+                       junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err
@@ -955,8 +992,8 @@ class Plot(object):
 
         height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
 
-        if fig_width and fig_height:
-            fig = plt.figure(figsize=[fig_width, fig_height * sum(height_ratio)], dpi=dpi)
+        if width and height:
+            fig = plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi)
         else:
             fig = plt.figure(dpi=dpi)
 
@@ -1063,6 +1100,8 @@ class Plot(object):
                     distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
+            elif p.type == "motif":
+                plot_motif(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords, **self.params[p])
             else:
                 raise ValueError(f"unknown plot type {p.type}")
 
@@ -1124,86 +1163,4 @@ class Plot(object):
 
 
 if __name__ == '__main__':
-    def test_plot():
-        from sashimi.conf import init_logger
-        init_logger("INFO")
-        Plot().set_reference(
-            "../example/example.sorted.gtf.gz",
-            add_domain=True,
-            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",
-            interval_label="polyA",
-            show_gene=True,
-            color="pink",
-        ).add_interval(
-            interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",
-            interval_label="polyAS"
-        ).set_region(
-            "chr1", 1270656, 1284730, "+"
-        ).add_density(
-            path="../example/bams/1.bam",
-            category="bam",
-            color="blue",
-            show_site_plot=True,
-        ).add_density(
-            path="../example/bws/2.bw",
-            category="bw",
-            color="green"
-        ).add_line(
-            path="../example/bams/1.bam",
-            category="bam",
-            group="1",
-            line_attrs={"lw": 3}
-        ).add_line(
-            path="../example/bams/2.bam",
-            category="bam",
-            group="2",
-            color="red",
-            line_attrs={"linestyle": "dashed"}
-        ).add_heatmap(
-            path="../example/bams/1.bam",
-            category="bam",
-            group="1",
-        ).add_heatmap(
-            path="../example/bams/2.bam",
-            category="bam",
-            group="1"
-        ).add_hic(
-            path="../example/Li_et_al_2015.h5",
-            category="hic",
-            trans="log2",
-            depth=30000
-        ).add_igv(
-            path="../example/bams/3.bam",
-            features={
-                "m6a": "ma",
-                "real_strand": "rs",
-                "polya": "pa"
-            },
-            category="igv",
-            label="igv"
-        ).add_igv(
-            path="../example/SRX9697989.corrected_reads.bed.gz",
-            category="igv",
-            label="bed12"
-        ).add_sites(
-            1270656 + 1000
-        ).add_sites(
-            1270656 + 1000
-        ).add_sites(
-            1270656 + 2000
-        ).add_focus(
-            f"{1270656 + 2000}-{1270656 + 3000}"
-        ).add_focus(
-            f"{1270656 + 5000}-{1270656 + 7000}"
-        ).add_stroke(
-            f"{1270656 + 5000}-{1270656 + 7000}:{1270656 + 7200}-{1270656 + 8000}@blue"
-        ).add_stroke(
-            start=1270656 + 7500,
-            end=1270656 + 8200,
-            color="green",
-            label="test"
-        ).plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
-
-
-    test_plot()
     pass

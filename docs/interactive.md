@@ -214,6 +214,8 @@ add a density plot into track
                 # site plot parameters
                 show_site_plot: bool = False,
                 strand_choice: Optional[str] = None,
+                 
+                only_customized_junction: bool = False
                 )
 ```
 
@@ -238,6 +240,7 @@ add a density plot into track
 - y_label: the text of y-axis title
 - theme: the theme name
 - strand_choice: the strand to draw on site plot
+- only_customized_junction: only work with bam files, only draw customized junctions
 
 Returns `Plot`
 
@@ -495,6 +498,37 @@ Returns `Plot`
 ```python
 def add_interval(self, interval: str, interval_label: str)
 ```
+
+---
+
+### add_manual
+
+draw line or density plot based on manually added data.
+
+```python
+def add_manual(self, data: np.array, image_type: str = "line", 
+               label: str = "", group: str = "", color: str = "blue", 
+               font_size: int = 8, n_y_ticks: int = 1, 
+               show_y_label: bool = True, theme: str = "ticks_blank",)
+```
+
+
+
+---
+
+### add_motif
+
+draw motif based on bedGraph file
+
+```python
+def add_motif(self, path: str, category: str = "motif", motif_region: GenomicLoci = None,
+              width: float = 0.8, theme: str = "blank")
+```
+
+- path: the path to tabix indexed bedGraph file, first 3 columns is chromosome, start and end site, the rest 4 columns is scores for ATCG.
+- motif_region: to specify the position of motif
+- width: the width of characters
+
 
 ### merge_by_cell
 

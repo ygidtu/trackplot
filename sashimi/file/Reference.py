@@ -22,10 +22,7 @@ from sashimi.base.Protein import CdsProtein
 from sashimi.base.Readder import Reader
 from sashimi.base.Transcript import Transcript
 from sashimi.file.File import File
-
-# Put here to avoid outline stroke of font for this moment
-mpl.rcParams['pdf.fonttype'] = 42
-mpl.rcParams["font.family"] = 'Arial'
+from sashimi.base.CoordinateMap import Coordinate
 
 
 class Reference(File):
@@ -40,7 +37,7 @@ class Reference(File):
         init func
         :param path: path to input file
         """
-        categories = ["gtf", "bam"]
+        categories = ["gtf", "bam", "bed"]
         assert category in categories, f"category should be one of {categories}, instead of {category}"
 
         super().__init__(path=self.index_gtf(path) if category == "gtf" else path)
@@ -447,6 +444,66 @@ class Reference(File):
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
+    def __load_bed__(self, region: GenomicLoci)-> List[Transcript]:
+        transcripts = []
+        try:
+            for rec in Reader.read_gtf(self.path, region=region, bed=True):
+                exon_bound = []
+                intron_bound = []
+                current_start = int(rec[1])
+                current_end = int(rec[2])
+                if len(rec) > 3:
+                    current_id = rec[3]
+                else:
+                    current_id = "NoID"
+
+                if len(rec) != 12:
+                    exon_bound.append(
+                        GenomicLoci(
+                            chromosome=self.region.chromosome,
+                            start=current_start + 1,
+                            end=current_end,
+                            strand=self.region.strand,
+                            name="exon"
+                        )
+                    )
+                else:
+
+                    block_sizes = [int(x) for x in rec[10].split(",") if x]
+                    block_starts = [int(x) for x in rec[11].split(",") if x]
+
+                    for i in range(len(block_starts)):
+                        exon_bound.append(
+                            GenomicLoci(
+                                chromosome=self.region.chromosome,
+                                start=current_start + 1 + block_starts[i],
+                                end=current_start + 1 + block_starts[i] + block_sizes[i] - 1,
+                                strand=self.region.strand,
+                                name="exon"
+                            )
+                        )
+
+                read = Transcript(
+                    chromosome=self.region.chromosome,
+                    start=min(map(lambda x: x.start, exon_bound)),
+                    end=max(map(lambda x: x.end, exon_bound)),
+                    strand=self.region.strand,
+                    transcript_id=current_id,
+                    exons=exon_bound,
+                )
+                if read.start < self.region.start or read.end > self.region.end:
+                    continue
+
+                transcripts.append(read)
+
+        except IOError as err:
+            logger.error('There is no .bed file at {0}'.format(self.path))
+            logger.error(err)
+        except ValueError as err:
+            logger.error(self.path)
+            logger.error(err)
+        return transcripts
+
     def load(self, region: GenomicLoci, threshold_of_reads: int = 0, **kwargs):
         u"""
         Load transcripts inside of region
@@ -463,8 +520,10 @@ class Reference(File):
 
             if self.add_domain:
                 self.__add_domain__()
-        else:
+        elif self.category == "bam":
             self.data = self.__load_bam__(region, threshold_of_reads)
+        elif self.category == "bed":
+            self.data = self.__load_bed__(region)
 
         for interval_file, interval_label in self.interval_file.items():
             try:

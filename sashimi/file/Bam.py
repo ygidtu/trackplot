@@ -149,6 +149,7 @@ class Bam(SingleCell):
         filtered_junctions = {}
 
         spanned_junctions = kwargs.get("junctions", {})
+        included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus = dict()
         spanned_junctions_minus = dict()
@@ -239,6 +240,8 @@ class Bam(SingleCell):
                     if cigar == 3:  # N
                         try:
                             junction_name = Junction(region.chromosome, cur_start, cur_end)
+                            if str(junction_name) not in included_junctions and len(included_junctions) != 0:
+                                continue
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
@@ -258,12 +261,12 @@ class Bam(SingleCell):
                 if v >= threshold:
                     filtered_junctions[k] = v
 
-                    if k.strand == "+":
+                    if k.strand == "-":
                         if k not in spanned_junctions_plus:
                             spanned_junctions_plus[k] = -1
                         else:
                             spanned_junctions_plus[k] += -1
-                    elif k.strand == "-":
+                    elif k.strand == "+":
                         if k not in spanned_junctions_minus:
                             spanned_junctions_minus[k] = -1
                         else:
@@ -274,6 +277,9 @@ class Bam(SingleCell):
         except ValueError as err:
             logger.error(self.path)
             logger.error(err)
+
+        if kwargs.get("only_customized_junction"):
+            spanned_junctions_plus, spanned_junctions_minus = {}, {}
 
         self.data = ReadDepth(
             plus,

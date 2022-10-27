@@ -13,15 +13,17 @@ from typing import Optional, Dict, Set, Tuple
 
 import click
 import matplotlib as mpl
-import matplotlib.font_manager
 from click_option_group import optgroup
 from loguru import logger
 
+from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
-from sashimi.plot import Plot
 from sashimi.file.ATAC import ATAC
+from sashimi.plot import Plot
 
-__version__ = "0.0.1a"
+__version__ = "0.0.3"
+__author__ = "ygidtu"
+__email__ = "ygidtu@gmail.com"
 
 
 def decode_region(region: str):
@@ -33,7 +35,7 @@ def decode_region(region: str):
         strand = regions[-1]
 
     sites = [int(x) for x in regions[1].split("-")]
-    return regions[0], sites[0], sites[1], strand
+    return GenomicLoci(regions[0], sites[0], sites[1], strand)
 
 
 class FileList(object):
@@ -314,6 +316,7 @@ def process_file_list(infile: str, category: str = "density"):
                  """)
 @optgroup.option("--customized-junction", type=click.STRING, default=None, show_default=True,
                  help="Path to junction table column name needs to be bam name or bam alias.")
+@optgroup.option("--only-customized-junction", is_flag=True, show_default=True, help="Only used customized junctions.")
 @optgroup.option("-t", "--threshold", default=0, type=click.IntRange(min=0, clamp=True),
                  show_default=True, help="Threshold to filter low abundance junctions")
 @optgroup.option("--density-by-strand", is_flag=True, type=click.BOOL,
@@ -322,6 +325,8 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="Whether to draw additional site plot")
 @optgroup.option("--site-strand", type=click.Choice(["all", "+", "-"]), default="all", show_default=True,
                  help="Which strand kept for site plot, default use all")
+@optgroup.option("--included-junctions", type=click.STRING, default=None,
+                 help="The junction id for including, chr1:1-100", show_default=True)
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
 @optgroup.option("--sc-density-height-ratio", type=float, default=1, show_default=True,
@@ -419,6 +424,14 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The link: start1-end1:start2-end2@color, "
                       "draw a link between two site at bottom, default color is blue")
 @optgroup.option("--focus", type=click.STRING, show_default=True, help="The highlight regions: 100-200:300-400")
+@optgroup.group("Motif settings")
+@optgroup.option("--motif", type=click.Path(exists=True),
+                 help="The path to customized bedGraph file, first three columns is chrom, start and end site, "
+                      "the following 4 columns is the weight of ATCG.")
+@optgroup.option("--motif-region", type=click.STRING, default="",
+                 help="The region of motif to plot in start-end format", show_default=True)
+@optgroup.option("--motif-width", type=click.FLOAT, default=0.8,
+                 help="The width of ATCG characters", show_default=True)
 @optgroup.group("Layout settings")
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
                  help="The number of ticks of y-axis")
@@ -446,8 +459,6 @@ def main(**kwargs):
     Welcome to use sashimi
     \f
     """
-    # init_logger("DEBUG" if kwargs["debug"] else "INFO")
-
     if not kwargs["debug"]:
         logger.remove()
         logger.add(sys.stderr, level="INFO")
@@ -480,10 +491,15 @@ def main(**kwargs):
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
 
+    if kwargs["included_junctions"] is not None:
+        included_junctions = set([sj.strip() for sj in kwargs["included_junctions"].split(',')])
+    else:
+        included_junctions = {}
+
     p = Plot()
 
-    chrom, start, end, strand = decode_region(kwargs["event"])
-    p.set_region(chrom, start, end, strand)
+    region = decode_region(kwargs["event"])
+    p.set_region(region=region)
     p.add_customized_junctions(kwargs["customized_junction"])
 
     barcodes, sc_colors = {}, {}
@@ -494,6 +510,7 @@ def main(**kwargs):
 
     # add reference
     for key in kwargs.keys():
+        # print(key)
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
             logger.debug(f"add {key} {kwargs[key]}")
             if key == "reference":
@@ -544,7 +561,8 @@ def main(**kwargs):
                                           show_y_label=not kwargs["hide_y_label"],
                                           show_site_plot=kwargs["show_site"],
                                           strand_choice=kwargs["site_strand"],
-                                          density_by_strand=kwargs["density_by_strand"]
+                                          density_by_strand=kwargs["density_by_strand"],
+                                          only_customized_junction=kwargs["only_customized_junction"]
                                           )
                     elif f.category != "atac":
                         p.add_density(f.path,
@@ -685,6 +703,17 @@ def main(**kwargs):
                         font_size=kwargs["font_size"],
                         n_y_ticks=kwargs["n_y_ticks"]
                     )
+            elif key == "motif":
+                motif_region = None
+                if kwargs["motif_region"]:
+                    start, end = [int(x) for x in kwargs["motif_region"].split("-")]
+                    motif_region = GenomicLoci(
+                        region.chromosome,
+                        max(start, region.start),
+                        min(region.end, end),
+                        region.strand)
+
+                p.add_motif(kwargs[key], motif_region=motif_region, width=kwargs["motif_width"])
         elif key == "focus":
             p.add_focus(kwargs[key])
         elif key == "stroke":
@@ -699,8 +728,8 @@ def main(**kwargs):
 
     p.plot(
         kwargs["output"],
-        fig_width=kwargs["width"],
-        fig_height=kwargs["height"],
+        width=kwargs["width"],
+        height=kwargs["height"],
         dpi=kwargs["dpi"],
         raster=kwargs["raster"],
         intron_scale=kwargs["intron_scale"],
@@ -714,7 +743,8 @@ def main(**kwargs):
             "heatmap": kwargs["sc_heatmap_height_ratio"],
             "density": kwargs["sc_density_height_ratio"]
         },
-        distance_between_label_axis=kwargs["distance_ratio"]
+        distance_between_label_axis=kwargs["distance_ratio"],
+        included_junctions=included_junctions
     )
 
 
