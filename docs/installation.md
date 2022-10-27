@@ -3,14 +3,14 @@
 
 download source code using git
 ```bash
-git clone from https://github.com/ygidtu/sashimi.py sashimi
+git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 ```
 
 ### Run as command line tools
 
 ```bash
-pip install sashimipy
+pip install sashimi.py
 
 # or install from source
 python setup.py install
@@ -55,7 +55,7 @@ docker run --rm ygidtu/sashimi --help
 
 ### Build docker image from source
 ```bash
-git clone from https://github.com/ygidtu/sashimi.py sashimi
+git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
@@ -80,7 +80,7 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 2. **Users could change the server ip and port by modify the settings.ini**
 
 ```bash
-git clone https://github.com/ygidtu/sashimi.py sashimi
+git clone https://github.com/ygidtu/sashimipy sashimi
 cd sashimi/web
 
 # build the frontend static files

@@ -1,9 +1,12 @@
 FROM python:3.9-buster
 
 ENV ROOT_DIR=/opt/sashimi
+ENV PYPI=https://pypi.douban.com/simple
 RUN mkdir $ROOT_DIR
 COPY . $ROOT_DIR
 
-RUN cd $ROOT_DIR && pip install fastapi uvicorn pydantic jinja2 && pip install -r requirements.txt && ls -l $ROOT_DIR
+RUN cd $ROOT_DIR && \
+    pip install -i $PYPI fastapi uvicorn pydantic jinja2 && \
+    pip install -r requirements.txt && ls -l $ROOT_DIR
 
 ENTRYPOINT ["python", "/opt/sashimi/server.py"]
