@@ -112,6 +112,7 @@ Options:
                                   required by bam file).
     --customized-junction TEXT    Path to junction table column name needs to
                                   be bam name or bam alias.
+    --only-customized-junction    Only used customized junctions.
     -t, --threshold INTEGER RANGE
                                   Threshold to filter low abundance junctions
                                   [default: 0; x>=0]
@@ -119,6 +120,7 @@ Options:
     --show-site                   Whether to draw additional site plot
     --site-strand [all|+|-]       Which strand kept for site plot, default use
                                   all  [default: all]
+    --included-junctions TEXT     The junction id for including, chr1:1-100
     --show-junction-num           Whether to show the number of junctions
     --sc-density-height-ratio FLOAT
                                   The relative height of single cell density

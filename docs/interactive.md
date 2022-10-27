@@ -214,6 +214,8 @@ add a density plot into track
                 # site plot parameters
                 show_site_plot: bool = False,
                 strand_choice: Optional[str] = None,
+                 
+                only_customized_junction: bool = False
                 )
 ```
 
@@ -238,6 +240,7 @@ add a density plot into track
 - y_label: the text of y-axis title
 - theme: the theme name
 - strand_choice: the strand to draw on site plot
+- only_customized_junction: only work with bam files, only draw customized junctions
 
 Returns `Plot`
 

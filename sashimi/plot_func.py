@@ -111,16 +111,16 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
 
                 for j in range(intron[0], intron[1]):
                     graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                                j - intron[0] + 1) * intron_scale
+                            j - intron[0] + 1) * intron_scale
 
             for j in range(exon[0], exon[1] + 1):
                 graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (
-                            j - exon[0] + 1) * exon_scale
+                        j - exon[0] + 1) * exon_scale
 
         intron = [exons[-1][-1], region.end]
         for i in range(intron[0], intron[1]):
             graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                        i - intron[0] + 1) * intron_scale
+                    i - intron[0] + 1) * intron_scale
     else:
         # if there is not any exons, just init graph_coords by region
         for i, j in enumerate(range(region.start, region.end + 1)):
@@ -360,6 +360,9 @@ def plot_reference(
     u"""
     Plot the structure of reference
     """
+    Theme.set_theme(ax, theme)
+    ax.set_xlim(0, max(graph_coords))
+
     region = obj.region
 
     data = sorted(obj.data)
@@ -465,8 +468,7 @@ def plot_reference(
                 spread = .2 * length / narrows
 
                 for i in range(narrows):
-                    loc = float(i) * length / narrows + \
-                          graph_coords[region.relative(transcript.start)]
+                    loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
                     if strand == '+' or reverse_minus:
                         x = [loc - spread, loc, loc - spread]
                     else:
@@ -585,11 +587,8 @@ def plot_reference(
 
             y_loc += 1
 
-    # @2022.05.13
-    # Set y lim using y_loc value.
-    Theme.set_theme(ax, theme)
+    # @2022.05.13 Set y lim using y_loc value.
     ax.set_ylim(-.5, y_loc + .5)
-    ax.set_xlim(0, max(graph_coords))
 
 
 def plot_density(
@@ -658,8 +657,7 @@ def plot_density(
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = -1 * \
-                     max(data.minus) if data.minus is not None else min(wiggle)
+    min_used_y_val = -1 * max(data.minus) if data.minus is not None else min(wiggle)
 
     # Reduce memory footprint by using incremented graph_coords.
     for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
@@ -681,8 +679,7 @@ def plot_density(
 
     if jxns:
         # sort the junctions by intron length for better plotting look
-        jxns_sorted_list = sorted(
-            jxns.keys(), key=lambda x: x.end - x.start, reverse=True)
+        jxns_sorted_list = sorted(jxns.keys(), key=lambda x: x.end - x.start, reverse=True)
 
         if not jxns:
             max_junction_count, min_junction_count = 0, 0
@@ -691,25 +688,21 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
-        current_height = -3 * min_used_y_val / 4
-
+        current_height = -3 * (max_used_y_val - min_used_y_val) / 4
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
             # @2022.09.26
             # Skip these too short span junction for avoiding plotting junction number
-            overlap_length = min(rightss, region.end) - \
-                             max(leftss, region.start) + 1
+            overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
             if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
                 continue
 
             # @2018.12.19
             # set junctions coordinate here
             # the junction out of boundaries, set the boundaries as coordinate
-            ss1_idx, ss1_modified = get_limited_index(
-                leftss - region.start, len(graph_coords))
-            ss2_idx, ss2_modified = get_limited_index(
-                rightss - region.start, len(graph_coords))
+            ss1_idx, ss1_modified = get_limited_index(leftss - region.start, len(graph_coords))
+            ss2_idx, ss2_modified = get_limited_index(rightss - region.start, len(graph_coords))
 
             u"""
             @2019.01.14
@@ -720,7 +713,6 @@ def plot_density(
             if not data.strand_aware and not density_by_plot:
                 # draw junction on bottom
                 if plotted_count % 2 == 0:
-
                     pts = [
                         (ss1, 0 if not ss1_modified else -current_height),
                         (ss1, -current_height),
@@ -731,7 +723,6 @@ def plot_density(
 
                 # draw junction on top
                 else:
-
                     left_dens = wiggle[ss1_idx]
                     right_dens = wiggle[ss2_idx]
 
@@ -741,8 +732,7 @@ def plot_density(
                     If there is no bam, lower half of y axis as the height of junctions
                     """
                     pts = [
-                        (ss1, left_dens if not ss1_modified else left_dens +
-                                                                 current_height),
+                        (ss1, left_dens if not ss1_modified else left_dens + current_height),
                         (ss1, left_dens + current_height),
                         (ss2, right_dens + current_height),
                         (ss2, right_dens if not ss2_modified else right_dens + current_height)
@@ -756,12 +746,10 @@ def plot_density(
                 """
                 if jxn in data.junction_dict_minus:
                     current_wiggle = -data.minus
-                    current_height = -3 / 8 * \
-                                     max(abs(min_used_y_val), max_used_y_val)
+                    current_height = -3 / 8 * max(abs(min_used_y_val), max_used_y_val)
                 else:
                     current_wiggle = data.plus
-                    current_height = 3 / 8 * \
-                                     max(abs(min_used_y_val), max_used_y_val)
+                    current_height = 3 / 8 * max(abs(min_used_y_val), max_used_y_val)
 
                 left_dens = current_wiggle[ss1_idx]
                 right_dens = current_wiggle[ss2_idx]
@@ -800,8 +788,7 @@ def plot_density(
             scale the junctions line width
             """
             if junction_count_gap > 0:
-                line_width = (jxns[jxn] - min_junction_count) / \
-                             junction_count_gap
+                line_width = (jxns[jxn] - min_junction_count) / junction_count_gap
             else:
                 line_width = 0
 
@@ -1392,7 +1379,7 @@ def plot_motif(ax: mpl.axes.Axes,
 
     # 画两条线
     if draw_left:
-        pos = len(graph_coords) * ((bbox_to_left+axin_width) * 100 + 5) / 100
+        pos = len(graph_coords) * ((bbox_to_left + axin_width) * 100 + 5) / 100
         x = xmin
     else:
         pos = len(graph_coords) * bbox_to_left

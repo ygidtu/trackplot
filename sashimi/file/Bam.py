@@ -278,6 +278,9 @@ class Bam(SingleCell):
             logger.error(self.path)
             logger.error(err)
 
+        if kwargs.get("only_customized_junction"):
+            spanned_junctions_plus, spanned_junctions_minus = {}, {}
+
         self.data = ReadDepth(
             plus,
             junctions_dict=filtered_junctions,

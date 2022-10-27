@@ -316,6 +316,7 @@ def process_file_list(infile: str, category: str = "density"):
                  """)
 @optgroup.option("--customized-junction", type=click.STRING, default=None, show_default=True,
                  help="Path to junction table column name needs to be bam name or bam alias.")
+@optgroup.option("--only-customized-junction", is_flag=True, show_default=True, help="Only used customized junctions.")
 @optgroup.option("-t", "--threshold", default=0, type=click.IntRange(min=0, clamp=True),
                  show_default=True, help="Threshold to filter low abundance junctions")
 @optgroup.option("--density-by-strand", is_flag=True, type=click.BOOL,
@@ -560,7 +561,8 @@ def main(**kwargs):
                                           show_y_label=not kwargs["hide_y_label"],
                                           show_site_plot=kwargs["show_site"],
                                           strand_choice=kwargs["site_strand"],
-                                          density_by_strand=kwargs["density_by_strand"]
+                                          density_by_strand=kwargs["density_by_strand"],
+                                          only_customized_junction=kwargs["only_customized_junction"]
                                           )
                     elif f.category != "atac":
                         p.add_density(f.path,

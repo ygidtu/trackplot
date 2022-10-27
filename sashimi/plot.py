@@ -461,6 +461,8 @@ class Plot(object):
                     # site plot parameters
                     show_site_plot: bool = False,
                     strand_choice: Optional[str] = None,
+
+                    only_customized_junction: bool = False
                     ):
         u"""
         add density object to plot
@@ -485,6 +487,7 @@ class Plot(object):
         :param y_label: the text of y-axis title
         :param theme: the theme name
         :param strand_choice: the strand to draw on site plot
+        :param only_customized_junction: only draw customized junctions
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -533,7 +536,8 @@ class Plot(object):
                 "y_label": y_label,
                 "theme": theme,
                 "strand_choice": strand_choice,
-                "density_by_strand": density_by_strand
+                "density_by_strand": density_by_strand,
+                "only_customized_junction": only_customized_junction
             }
         return self
 
