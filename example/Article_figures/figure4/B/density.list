@@ -1,0 +1,4 @@
+#/NAS/zym/sashimi/data/scATAC/pbmc_granulocyte_sorted_10k_atac_cut_sites.bigwig  bigwig  Sites
+pbmc_granulocyte_sorted_10k_atac_possorted_bam.bam bam ATAC
+#/NAS/zym/sashimi/data/scATAC/pbmc_granulocyte_sorted_10k_atac_fragments.tsv.gz atac ATAC
+pbmc_granulocyte_sorted_10k_gex_possorted_bam.bam  bam RNA
