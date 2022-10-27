@@ -804,20 +804,19 @@ def plot_density(
             fontsize=font_size
         )
 
+    ymin, ymax = ax.get_ylim()  # update y limit after added junctions
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max(
-            abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-
-        max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -
-        abs(min_used_y_val),
+        max_used_y_val=max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
+        min_used_y_val=-max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -abs(min_used_y_val),
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
         y_axis_skip_zero=False if data.strand_aware else True
     )
+    ax.set_ylim(ymin, ymax)
 
 
 def plot_site_plot(
