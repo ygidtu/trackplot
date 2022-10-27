@@ -1,0 +1,11 @@
+ENCFF556EQK.bigWig	bw	control_clip	#db5f57
+ENCFF476HFB.bigWig	bw	control_clip	#db5f57
+ENCFF936SHU.bigWig	bw	PTBP1_clip_1	#91db57
+ENCFF363UDO.bigWig	bw	PTBP1_clip_1	#91db57
+ENCFF051PIE.bigWig	bw	PTBP1_clip_2	#91db57
+ENCFF245YUN.bigWig	bw	PTBP1_clip_2	#91db57
+ENCFF709LHN.bam	bam	PTBP1_ctrl_1	#a157db	frf
+ENCFF613CGT.bam	bam	PTBP1_ctrl_2	#a157db	frf
+ENCFF125RUG.bam	bam	PTBP1_KD_1	#0084d1	frf
+ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
+hg38.phastCons470way.bw	bw	phastCons470way
