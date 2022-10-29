@@ -13,7 +13,7 @@ aria2c -x 8 https://encode-public.s3.amazonaws.com/2021/10/28/6f0cc163-86c7-4a68
 
 ```
 
-First you should install [cooler](https://github.com/open2c/cooler), [pairix](https://github.com/4dn-dcic/pairix) and [HiCExplorer](https://github.com/deeptools/HiCExplorer), then convert pairs format into naive Hi-C matrix
+Then you should install [cooler](https://github.com/open2c/cooler), [pairix](https://github.com/4dn-dcic/pairix) and [HiCExplorer](https://github.com/deeptools/HiCExplorer), and convert pairs format into naive Hi-C matrix
 
 ```bash
 cooler cload pairix -p 16 /mnt/raid61/Ref/HomSap/release101/hg38.chrom.sizes:1000 ENCFF931NQV.pairs.gz ENCFF931NQV_1kb.cool
@@ -24,5 +24,20 @@ hicConvertFormat -m ENCFF931NQV_1kb.cool --inputFormat cool --outputFormat h5 -o
 pairix ENCFF931NQV.pairs.gz 'chr19' | bgzip > ENCFF931NQV.chr19.pairs.gz
 cooler cload pairix -p 16 /mnt/raid61/Ref/HomSap/release101/hg38.chrom.sizes:1000 ENCFF931NQV.chr19.pairs.gz ENCFF931NQV.chr19_1kb.cool
 hicConvertFormat -m ENCFF931NQV.chr19_1kb.cool --inputFormat cool --outputFormat h5 -o ENCFF931NQV.chr19_1kb.h5
+
+```
+
+The command line for generating the plot,
+```bash
+
+python sashimi.py/main.py \
+  --hic hic.tsv \
+  --barcode Tcell_barcode_sub.list \
+  --density density.list \
+  --dpi 300 --output scrna.tcell.pdf \
+  -e chr19:35600000-35800000:+ \
+  -r /mnt/raid61/Ref/HomSap/release101/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --raster --width 3 -t 1000000 --choose-primary
+
 
 ```

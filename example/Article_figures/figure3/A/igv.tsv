@@ -1,2 +1,2 @@
 #filepath	file_category	label	color	focus_exon
-SRX8994511.example.bed.gz	igv	cerebral_organoid	#d15d55	43100453-43100519,43101366-43101432
+data/SRX8994511.example.bed.gz	igv	cerebral_organoid	#d15d55	43100453-43100519,43101366-43101432
