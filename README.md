@@ -1,4 +1,5 @@
 # sashimi.py
+![](example/diagram.png)
 
 [See more example](https://sashimi.readthedocs.io/en/latest/)
 
@@ -126,8 +127,8 @@ python main.py \
   --barcode example/barcode_list.tsv \
   --domain --remove-duplicate-umi
 ```
+here is the [output file](https://github.com/ygidtu/sashimi.py/example/example.png).
 
-![](example/example.png)
 
 ## Questions
 
