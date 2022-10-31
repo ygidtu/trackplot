@@ -564,7 +564,8 @@ def main(**kwargs):
                                       n_y_ticks=kwargs["n_y_ticks"],
                                       show_y_label=not kwargs["hide_y_label"],
                                       show_site_plot=kwargs["show_site"],
-                                      strand_choice=kwargs["site_strand"])
+                                      strand_choice=kwargs["site_strand"],
+                                      density_by_strand=kwargs["density_by_strand"],)
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.label in barcodes.keys() and f.category in ["bam", "atac"]:

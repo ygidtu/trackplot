@@ -60,7 +60,7 @@ export default {
   data() {
     return {
       image: {
-        type: ["Density", "Line", "Heatmap", "IGV"],
+        type: ["Density", "Line", "Heatmap", "IGV", "HiC", "Motif"],
         select: "Density"
       },
       dialog: {

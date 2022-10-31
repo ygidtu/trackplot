@@ -53,7 +53,8 @@ class Bam(SingleCell):
                barcodes: Optional[Set[str]] = None,
                barcode_tag: str = "CB",
                umi_tag: str = "UB",
-               library: str = "fru"
+               library: str = "fru",
+               density_by_strand: bool = False
                ):
         u"""
 
@@ -88,7 +89,8 @@ class Bam(SingleCell):
             barcodes=barcode,
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
-            library=library
+            library=library,
+            density_by_strand=density_by_strand
         )
 
     def __hash__(self):
@@ -282,11 +284,11 @@ class Bam(SingleCell):
             spanned_junctions_plus, spanned_junctions_minus = {}, {}
 
         self.data = ReadDepth(
-            plus,
+            plus if self.density_by_strand else plus + minus,
             junctions_dict=filtered_junctions,
             site_plus=site_plus,
             site_minus=site_minus,
-            minus=minus,
+            minus=minus if self.density_by_strand else None,
             junction_dict_plus=spanned_junctions_plus,
             junction_dict_minus=spanned_junctions_minus,
             strand_aware=False if self.library == "fru" else True)

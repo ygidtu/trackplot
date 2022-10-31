@@ -1,9 +1,10 @@
-import { createApp, h, ref } from 'vue'
+import { createApp, ref } from 'vue'
 import App from './App.vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import VueCookies from 'vue-cookies'
 import { createRouter, createWebHashHistory } from 'vue-router'
+import {ElNotification} from "element-plus";
 
 import Home from "./pages/Home.vue";
 import Plot from "./pages/Plot.vue";
@@ -21,7 +22,7 @@ const router = createRouter({
 })
 
 const app = createApp(App);
-app.use(h)
+app.use(ElNotification)
 app.use(ref)
 app.use(VueAxios, axios)
 app.use(VueCookies)
