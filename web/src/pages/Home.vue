@@ -28,8 +28,8 @@ export default {
   name: 'Home',
   data() {
     return {
-      msg: "Wellcome to your Sashimi App",
-      example: `${urls.static}/assets/example.png`
+      msg: "Welcome to your Sashimi App",
+      example: `${urls.static}/example.png`
     }
   }
 }

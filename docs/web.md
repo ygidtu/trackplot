@@ -6,7 +6,9 @@
 
 #### 1. requirements
 
-Except the sashimi, we still required `fastapi`, `uvicorn` and `pydantic`
+Except the sashimi, we required `fastapi`, `uvicorn` and `pydantic` and `nodejs`
+
+The deployment please check the [Build Web interface from source](./installation.md)
 
 ## Usage
 

@@ -607,7 +607,6 @@ def plot_density(
         y_label: str = "",
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
-        density_by_plot: bool = False,
         raster: bool = False,
         **kwargs
 ):
@@ -628,8 +627,7 @@ def plot_density(
     :param show_y_label: whether to show y-axis label
     :param y_label: the text of y-axis title
     :param theme: the theme name
-    :param max_used_y_val: used to set same max y axis
-    :param density_by_plot: whether to draw density plot in strand-specific manner.
+    :param max_used_y_val: used to set same max y-axis
     :param raster:
     :param kwargs:
     :return:

@@ -85,7 +85,7 @@ export default {
       dialog: {
         reference: false
       },
-      image: ["Density", "Line", "Heatmap", "IGV"],
+      image: ["Density", "Line", "Heatmap", "IGV", "HiC", "Motif"],
       options: {
         references: []
       },
@@ -140,7 +140,7 @@ export default {
         ElNotification({
           type: 'error',
           title: `Error Status: ${error.response.status}`,
-          message: h('i', { style: 'color: teal' }, error.response.data.detail)
+          message: error.response.data.detail
         })
       })
     },
@@ -154,7 +154,8 @@ export default {
     if (this.$cookies.isKey("plot")) {
       this.axios.get(`${urls.del}?pid=${this.$cookies.get("plot")}`)
     }
-    this.$cookies.set("plot", (Math.random() + 1).toString(36).substring(7)) //
+    this.$cookies.set("plot", (Math.random() + 1).toString(36).substring(7))
+    // this.$cookies.set("plot", "test")
   }
 }
 </script>

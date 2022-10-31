@@ -372,6 +372,7 @@ class Plot(object):
                             deletion_ignore: Optional[int] = True,
                             del_ratio_ignore: float = .5,
                             exon_focus: Optional[str] = None,
+                            density_by_strand: bool = False,
 
                             # for hic plot
                             trans: Optional[str] = None,
@@ -389,6 +390,7 @@ class Plot(object):
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
                 library=library,
+                density_by_strand=density_by_strand
             )
         elif category == "atac":
             obj = ATAC.create(
@@ -500,7 +502,8 @@ class Plot(object):
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
             library=library,
-            size_factor=size_factor
+            size_factor=size_factor,
+            density_by_strand=density_by_strand
         )
 
         type_ = "density"
@@ -515,7 +518,7 @@ class Plot(object):
         for p in self.plots:
             if p.category == info.category:
                 for obj_ in p.obj:
-                    if obj_.label == label and label:
+                    if obj_.label == label and label and not barcode:
                         param = self.params.pop(p)
                         p.obj.append(obj)
                         new_obj = False

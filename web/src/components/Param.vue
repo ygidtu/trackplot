@@ -106,17 +106,11 @@ export default {
           })
         }
       }).catch(error => {
-        let fr = new FileReader();
-        fr.onload = function() {
-          let msg = JSON.parse(this.result)
-          ElNotification({
-            type: 'error',
-            title: `Error Status: ${error.response.status}`,
-            message: h('i', { style: 'color: teal' }, msg.detail)
-          })
-        };
-
-        fr.readAsText(error.response.data);
+        ElNotification({
+          type: 'error',
+          title: `Error Status: ${error.response.status}`,
+          message: error.response.data.detail
+        })
       })
     },
     save() {
@@ -137,17 +131,11 @@ export default {
         let filename = headers["content-disposition"]
         saveAs(data, filename)
       }).catch(error => {
-        let fr = new FileReader();
-        fr.onload = function() {
-          let msg = JSON.parse(this.result)
-          ElNotification({
-            type: 'error',
-            title: `Error Status: ${error.response.status}`,
-            message: h('i', { style: 'color: teal' }, msg.detail)
-          })
-        };
-
-        fr.readAsText(error.response.data);
+        ElNotification({
+          type: 'error',
+          title: `Error Status: ${error.response.status}`,
+          message: error.response.data.detail
+        })
       })
     },
   },
