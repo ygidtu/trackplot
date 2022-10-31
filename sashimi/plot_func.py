@@ -163,7 +163,7 @@ def set_x_ticks(
     line_space = {}
     for i in range(0, len(graph_coords), bk):
         line_space[graph_coords[i]] = i + region.start
-    line_space[graph_coords[i]] = region.end
+    line_space[max(graph_coords)] = region.end
 
     if sequence:
         for i, seq in sequence.items():
@@ -679,7 +679,7 @@ def plot_density(
 
     if jxns:
         # sort the junctions by intron length for better plotting look
-        jxns_sorted_list = sorted(jxns.keys(), key=lambda x: x.end - x.start, reverse=True)
+        jxns_sorted_list = sorted(jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True)
 
         if not jxns:
             max_junction_count, min_junction_count = 0, 0
@@ -688,7 +688,7 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
-        current_height = -3 * (max_used_y_val - min_used_y_val) / 4
+        current_height = abs(3 * (max_used_y_val - min_used_y_val) / 4)
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
@@ -708,66 +708,25 @@ def plot_density(
             @2019.01.14
             add two new variables to make it clear which one is index, which one is genomic site 
             """
-            ss1 = graph_coords[ss1_idx]
-            ss2 = graph_coords[ss2_idx]
-            if not data.strand_aware and not density_by_plot:
-                # draw junction on bottom
-                if plotted_count % 2 == 0:
-                    pts = [
-                        (ss1, 0 if not ss1_modified else -current_height),
-                        (ss1, -current_height),
-                        (ss2, -current_height),
-                        (ss2, 0 if not ss2_modified else -current_height)
-                    ]
-                    midpt = cubic_bezier(pts, .5)
-
-                # draw junction on top
-                else:
-                    left_dens = wiggle[ss1_idx]
-                    right_dens = wiggle[ss2_idx]
-
-                    """
-                    @2019.01.04
-        
-                    If there is no bam, lower half of y axis as the height of junctions
-                    """
-                    pts = [
-                        (ss1, left_dens if not ss1_modified else left_dens + current_height),
-                        (ss1, left_dens + current_height),
-                        (ss2, right_dens + current_height),
-                        (ss2, right_dens if not ss2_modified else right_dens + current_height)
-                    ]
-
-                    midpt = cubic_bezier(pts, .5)
+            ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
+            # draw junction on bottom
+            if plotted_count % 2 == 0:
+                pts = [
+                    (ss1, 0 if not ss1_modified else data.curr_min(ss1_idx)),
+                    (ss1, -current_height),
+                    (ss2, -current_height),
+                    (ss2, 0 if not ss2_modified else data.curr_min(ss2_idx))
+                ]
+            # draw junction on top
             else:
-                u"""
-                @2022.0723
-                plot splice junction with strand information
-                """
-                if jxn in data.junction_dict_minus:
-                    current_wiggle = -data.minus
-                    current_height = -3 / 8 * max(abs(min_used_y_val), max_used_y_val)
-                else:
-                    current_wiggle = data.plus
-                    current_height = 3 / 8 * max(abs(min_used_y_val), max_used_y_val)
-
-                left_dens = current_wiggle[ss1_idx]
-                right_dens = current_wiggle[ss2_idx]
-
-                """
-                @2019.01.04
-
-                If there is no bam, lower half of y axis as the height of junctions
-                """
-
+                left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
                 pts = [
                     (ss1, left_dens if not ss1_modified else left_dens + current_height),
                     (ss1, left_dens + current_height),
                     (ss2, right_dens + current_height),
                     (ss2, right_dens if not ss2_modified else right_dens + current_height)
                 ]
-
-                midpt = cubic_bezier(pts, .5)
+            midpt = cubic_bezier(pts, .5)
 
             if show_junction_number:
                 t = ax.text(
@@ -792,16 +751,12 @@ def plot_density(
             else:
                 line_width = 0
 
-            ax.add_patch(
-                PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
+            ax.add_patch(PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
 
     if obj and obj.title:
         ax.text(
-            max(graph_coords) - len(obj.title),
-            max_used_y_val,
-            obj.title,
-            color=color,
-            fontsize=font_size
+            max(graph_coords) - len(obj.title), max_used_y_val,
+            obj.title, color=color, fontsize=font_size
         )
 
     ymin, ymax = ax.get_ylim()  # update y limit after added junctions
@@ -864,8 +819,7 @@ def plot_site_plot(
 
     plus, minus = data.site_plus, data.site_minus
 
-    max_height = max(plus)
-    min_height = min(minus)
+    max_height, min_height = max(plus), min(minus)
     max_val = max(max_height, abs(min_height))
 
     for label, array_plot in zip(['plus', 'minus'], [plus, minus]):
@@ -876,7 +830,7 @@ def plot_site_plot(
         try:
             kde = gaussian_kde(array_hist)
             fit_value = kde.pdf(graph_coords)
-        except ValueError:
+        except (ValueError, np.linalg.LinAlgError):
             # logger.warning(err)
             # logger.warning(traceback.format_exc())
             continue
