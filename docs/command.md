@@ -61,7 +61,7 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=48]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=cpu_number]
     --group-by-cell               Group by cell types in density/line plot
     --remove-duplicate-umi        Drop duplicated UMIs by barcode
   Output settings:
