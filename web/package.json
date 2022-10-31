@@ -1,7 +1,7 @@
 {
   "name": "sashimi.py",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "element-plus": "^2.2.12",
     "file-saver": "^2.0.5",
     "vue": "^3.2.37",
+    "vue-axios": "^3.5.1",
     "vue-cookies": "^1.8.1",
     "vue-router": "4"
   },

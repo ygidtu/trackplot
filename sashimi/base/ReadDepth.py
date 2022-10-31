@@ -55,10 +55,12 @@ class ReadDepth(object):
 
     @property
     def wiggle(self) -> np.array:
-        if self.plus is None or np.sum(self.plus) == 0:
+        if (self.plus is None or np.sum(self.plus) == 0) and self.minus is not None:
             return self.minus
-        elif self.minus is None or np.sum(self.minus) == 0:
-            return self.plus
+
+        if self.plus is not None and self.minus is not None:
+            return self.plus + self.minus
+
         return self.plus
 
     def __add__(self, other):

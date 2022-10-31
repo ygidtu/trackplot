@@ -69,9 +69,9 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 
 - `-v`, `--volumn`: mount the working directory to docker container
 - `--user`: prevent docker read and write file using root privileges
-- the rest usage please check [Command line usage](./command_line_usage.md)
+- the rest usage please check [Command line usage](./command.md)
 
-**Note: ** detailed command line usage please check [Command line Usage](./command_line_usage.md)
+**Note: ** detailed command line usage please check [Command line Usage](./command.md)
 
 
 ## Build Web interface from source
@@ -101,6 +101,8 @@ python server.py --help
 ```bash
 docker pull ygidtu/sashimiweb
 
-export PORT=8080  # the port your are trying to exposed
-docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) -p $PORT:5000 ygidtu/sashimiweb
+docker run --name sashimiweb \
+  --rm -v $PWD:$PWD \
+  -p 5000:5000 \
+  ygidtu/sashimiweb 
 ```

@@ -9,4 +9,4 @@ RUN cd $ROOT_DIR && \
     pip install -i $PYPI fastapi uvicorn pydantic jinja2 && \
     pip install -r requirements.txt && ls -l $ROOT_DIR
 
-ENTRYPOINT ["python", "/opt/sashimi/server.py"]
+ENTRYPOINT ["python", "/opt/sashimi/server.py", "--host", "0.0.0.0"]

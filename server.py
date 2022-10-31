@@ -20,7 +20,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
+from sashimi.cli import load_barcodes
 from sashimi.plot import *
+
 
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")
@@ -133,6 +135,12 @@ async def params(target: Optional[str] = None):
         if param.name == "return_image":
             continue
 
+        if param.name == "sc_height_ratio":
+            continue
+
+        if param.name == "barcode":
+            continue
+
         res.append(Param(
             key=param.name,
             annotation=clean(str(param.annotation)),
@@ -174,7 +182,23 @@ async def plot(pid: str, param: PlotParam, func: str):
         elif func == "set_region":
             p.set_region(**kwargs)
         else:
-            getattr(p, func)(param.path, **kwargs)
+            if "barcode_groups" in kwargs.keys() and kwargs["barcode_groups"]:
+                barcodes, sc_colors = load_barcodes(kwargs["barcode_groups"])
+                kwargs["barcode_groups"] = barcodes
+                for group in barcodes[kwargs["label"]].keys():
+                    kwargs["barcode"] = group
+                    kwargs["color"] = sc_colors[group]
+                    kwargs["y_label"] = group
+                    getattr(p, func)(param.path, **kwargs)
+            else:
+                for tag in ["vmin", "vmax"]:
+                    if tag in kwargs.keys():
+                        try:
+                            kwargs[tag] = float(kwargs[tag])
+                        except Exception:
+                            kwargs[tag] = None
+
+                getattr(p, func)(param.path, **kwargs)
     except (AssertionError, OSError, TypeError) as err:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         raise HTTPException(status_code=404,
