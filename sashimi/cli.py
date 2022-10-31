@@ -101,6 +101,17 @@ def load_barcodes(barcode: str) -> Tuple[Dict[str, Dict[str, Set[str]]], Dict[st
     return res, colors
 
 
+def __read_iter__(path):
+    with open(path) as r:
+        for idx, line in enumerate(r):
+            if line.startswith("#"):
+                continue
+            line = line.split()
+            if not line:
+                continue
+            yield idx, line
+
+
 def process_file_list(infile: str, category: str = "density"):
     u"""
     Process and check the file list format
@@ -110,125 +121,101 @@ def process_file_list(infile: str, category: str = "density"):
 
     try:
         if category in ["density"]:
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    path, category = line[0], line[1]
+            for idx, line in __read_iter__(infile):
+                path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac"]:
-                        raise ValueError(f"{category} is not supported in density plot.")
+                if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac"]:
+                    raise ValueError(f"{category} is not supported in density plot.")
 
-                    if len(line) < 3:
-                        yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
-                    elif len(line) < 4:
-                        yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
-                    elif len(line) < 5:
-                        yield FileList(path=path, category=category, color=line[3], label=line[2])
-                    elif len(line) < 6:
-                        yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4])
-                    else:
-                        yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4],
-                                       depth=line[5])
+                if len(line) < 3:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                elif len(line) < 4:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
+                elif len(line) < 5:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2])
+                elif len(line) < 6:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4])
+                else:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4],
+                                   depth=line[5])
         elif category in ["heatmap"]:
             groups = {}
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    path, category = line[0], line[1]
+            for idx, line in __read_iter__(infile):
+                path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth", "atac"]:
-                        raise ValueError(f"{category} is not supported in heatmap plot.")
+                if category not in ["bam", "bigwig", "bw", "depth", "atac"]:
+                    raise ValueError(f"{category} is not supported in heatmap plot.")
 
-                    if len(line) < 3:
-                        yield FileList(path=path, category=category, color=COLORMAP[0])
-                    elif len(line) < 4:
-                        groups[line[2]] = 0
-                        yield FileList(path=path, category=category,
-                                       color=COLORMAP[len(groups) % len(COLORMAP)], group=line[2])
-                    else:
-                        groups[line[2]] = 0
-                        yield FileList(path=path, category=category,
-                                       color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru")
+                if len(line) < 3:
+                    yield FileList(path=path, category=category, color=COLORMAP[0])
+                elif len(line) < 4:
+                    groups[line[2]] = 0
+                    yield FileList(path=path, category=category,
+                                   color=COLORMAP[len(groups) % len(COLORMAP)], group=line[2])
+                else:
+                    groups[line[2]] = 0
+                    yield FileList(path=path, category=category,
+                                   color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru")
         elif category in ["line"]:
             groups = {}
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    path, category = line[0], line[1]
+            for idx, line in __read_iter__(infile):
+                path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth"]:
-                        raise ValueError(f"{category} is not supported in density plot.")
+                if category not in ["bam", "bigwig", "bw", "depth"]:
+                    raise ValueError(f"{category} is not supported in density plot.")
 
-                    if len(line) < 3:
-                        yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
-                    elif len(line) < 4:
-                        if line[2] not in groups:
-                            groups[line[2]] = 0
-                        groups[line[2]] += 1
-                        yield FileList(path=path, category=category,
-                                       color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
-                    elif len(line) < 5:
-                        if line[2] not in groups:
-                            groups[line[2]] = 0
-                        groups[line[2]] += 1
-                        yield FileList(path=path, category=category, label=line[3],
-                                       color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
-                    elif len(line) < 6:
-                        if line[2] not in groups:
-                            groups[line[2]] = 0
-                        groups[line[2]] += 1
-                        yield FileList(path=path, category=category, label=line[3],
-                                       color=line[4], group=line[2])
+                if len(line) < 3:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                elif len(line) < 4:
+                    if line[2] not in groups:
+                        groups[line[2]] = 0
+                    groups[line[2]] += 1
+                    yield FileList(path=path, category=category,
+                                   color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
+                elif len(line) < 5:
+                    if line[2] not in groups:
+                        groups[line[2]] = 0
+                    groups[line[2]] += 1
+                    yield FileList(path=path, category=category, label=line[3],
+                                   color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
+                elif len(line) < 6:
+                    if line[2] not in groups:
+                        groups[line[2]] = 0
+                    groups[line[2]] += 1
+                    yield FileList(path=path, category=category, label=line[3],
+                                   color=line[4], group=line[2])
         elif category in ["interval"]:
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    if len(line) < 2:
-                        yield FileList(path=line[0], category="interval")
-                    else:
-                        yield FileList(path=line[0], category="interval", label=line[1])
+            for idx, line in __read_iter__(infile):
+                if len(line) < 2:
+                    yield FileList(path=line[0], category="interval")
+                else:
+                    yield FileList(path=line[0], category="interval", label=line[1])
         elif category in ["igv"]:
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    path, category = line[0], line[1]
+            for idx, line in __read_iter__(infile):
+                path, category = line[0], line[1]
 
-                    if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
-                        raise ValueError(f"{category} is not supported in density plot.")
+                if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
+                    raise ValueError(f"{category} is not supported in density plot.")
 
-                    if len(line) < 3:
-                        yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
-                    elif len(line) < 4:
-                        yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
-                    elif len(line) < 5:
-                        yield FileList(path=path, category=category, color=line[3], label=line[2])
-                    else:
-                        yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
+                if len(line) < 3:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                elif len(line) < 4:
+                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
+                elif len(line) < 5:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2])
+                else:
+                    yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
         elif category in ["hic"]:
-            with open(infile) as r:
-                for idx, line in enumerate(r):
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    path, category = line[0], line[1]
-                    if len(line) < 3:
-                        yield FileList(path=path, category=category)
-                    elif len(line) < 4:
-                        yield FileList(path=path, category=category, label=line[2])
-                    elif len(line) < 5:
-                        yield FileList(path=path, category=category, )
-                    else:
-                        yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
+            for idx, line in __read_iter__(infile):
+                path, category = line[0], line[1]
+                if len(line) < 3:
+                    yield FileList(path=path, category=category)
+                elif len(line) < 4:
+                    yield FileList(path=path, category=category, label=line[2])
+                elif len(line) < 5:
+                    yield FileList(path=path, category=category, )
+                else:
+                    yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)

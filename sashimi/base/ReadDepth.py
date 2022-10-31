@@ -86,6 +86,17 @@ class ReadDepth(object):
                 minus=self.minus + other.minus
             )
 
+    def curr_height(self, pos: int) -> float:
+        if self.minus is None:
+            return self.plus[pos]
+        return self.plus[pos] + self.minus[pos]
+
+    def curr_max(self, pos: int) -> float:
+        return self.plus[pos]
+
+    def curr_min(self, pos: int) -> float:
+        return self.minus[pos] if self.minus is not None else 0
+
     def add_customized_junctions(self, other):
         u"""
         Add customized junctions to plot
