@@ -6,6 +6,6 @@
 
 ---
 
-The full-featured example
+## Get started
 
-![](imgs/example.png)
+To learn Snakemake, please follow the [Tutorial](https://sashimi.readthedocs.io/en/latest/command/)

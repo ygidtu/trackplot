@@ -242,7 +242,7 @@ Options:
 
 ### Common options
 
-1. `--color-factor`: the index of column to set colors
+1.`--color-factor`: the index of column to set colors
 
 - basic usage: the input file list as follows,
 
@@ -265,8 +265,8 @@ Then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000"
 
 ### Output options
 
-1. `-o, --output`: the path to output file, the common image format such as pdf, png, jpg and svg are supported.
-2. `--backend`: the backend is used to switch matplotlib plotting backend,
+1.`-o, --output`: the path to output file, the common image format such as pdf, png, jpg and svg are supported.
+2.`--backend`: the backend is used to switch matplotlib plotting backend,
 
 **known issues: ** 
 
@@ -283,7 +283,7 @@ The recommended combination of backend and image formats please check [matplotli
 
 ### Reference plot
 
-1. `--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
+1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
 
 For each transcript, sashimi firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
 
@@ -292,7 +292,7 @@ The sashimi will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCE
 
 ![](imgs/cmd/domain.png)
 
-2. `--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
+2.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
 In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to sashimi with `--local-domain`.
 
@@ -300,7 +300,7 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 
 ![](imgs/cmd/local_domain.png)
 
-3. `--interval`: add additional feature track into reference.
+3.`--interval`: add additional feature track into reference.
 
 In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into reference track.
 And user could prepare and record custom annotation information into a config file, like this
@@ -330,7 +330,7 @@ example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc
 ```
 
-1. `--customized-junction` 
+1.`--customized-junction` 
 
 This parameter is used to add user defined junctions
 
@@ -344,7 +344,7 @@ chr1:1000-20000 100 200
 - the columns corresponding to input files in file list.
 - the table were filled with junction counts.
 
-2. `--show-site` and `--show-strand`
+2.`--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
@@ -366,24 +366,24 @@ python main.py \
 
 #### Single cell bam related parameters
 
-1. `--barcode`
+1.`--barcode`
+  
+  Provide a manually curated barcode list to separate bam files by cell types or other groups.
+     
+  This barcode list as follows:
+  
+  ```bash
+  #bam  barcode cell_type(optional) cell_type(optional)
+  sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
+  sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
+  sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
+  ```
 
-Provide a manually curated barcode list to separate bam files by cell types or other groups.
-   
-This barcode list as follows:
+2.`--barocde-tag` and `--umi-tag`
 
-```bash
-#bam  barcode cell_type(optional) cell_type(optional)
-sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
-sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
-sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
-```
+3.The tag to extract barcode and umi from each reads record, here we take the 10x Genomics bam format as default.
 
-2. `--barocde-tag` and `--umi-tag`
-
-3. The tag to extract barcode and umi from each reads record, here we take the 10x Genomics bam format as default.
-
-4. `--group-by-cell`
+4.`--group-by-cell`
 
 Group by cell types in density/line plot.
 
@@ -411,7 +411,7 @@ The line plot is simply another format of density plots.
 The input file list as same as density plots
 
 
-1. `--hide-legend`, `--legend-position` and `--legend-ncol`
+1.`--hide-legend`, `--legend-position` and `--legend-ncol`
 
 These three parameters were used to disable legend, modify legend position and the columns of legend separately.
 
@@ -502,9 +502,9 @@ example/bws/0.bw    bw  bw  YlOrBr
 ### Igv plot
 
 
-1. Sashimi.igv module support different format file as input.
+1.Sashimi.igv module support different format file as input.
 
-An Igv-like plot provides a landscape of aligned reads in a straight and convenient way. 
+A read-by-read plot provides a landscape of aligned reads in a straight and convenient way. 
 
 User could pass bed and bam file into Sashimi, and the input config file list as follows
 
@@ -531,7 +531,7 @@ python main.py \
 
 ![](imgs/cmd/igv_plot.1.png)
 
-2. Sashimi.igv module load and visualize features from bam tags.
+2.Sashimi.igv module load and visualize features from bam tags.
 
 In this topic, Sashimi.igv could load m6A modification (tag, ma:i) and length of polyA (tag, pa:f) tag from bam file, and then present it on each reads.
 
@@ -563,7 +563,7 @@ here is the command line,
 In this picture, the red track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
 
-3. Sashimi.igv module also allow sort these reads by specific alternative exon
+3.Sashimi.igv module also allow sort these reads by specific alternative exon
 
 User could modify the config file as follows,
 
@@ -619,7 +619,7 @@ for each hic track, a bigger `depth` means a higher y-axis.
 
 Because `Li_et_al_2015.h5` doesn't contain chromosome 1, user could download a new toy dataset and add into example picture.
 
-1. download hic file and convert into h5 format
+1.download hic file and convert into h5 format
 
 ```bash
 wget https://encode-public.s3.amazonaws.com/2016/12/01/a241cba5-df2e-45fb-9a8f-5af5587fb02a/ENCFF121YPY.hic
@@ -639,13 +639,13 @@ cooler cload pairix -p 16 hg38.chrom.sizes:1000 ENCFF931NQV.pairs.gz ENCFF931NQV
 hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
 ```
 
-2. prepare the config file
+2.prepare the config file
 
 ```bash
 # filepath  file_category   label   color  transform	depth
 example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
 ```
-3. run Sashimi
+3.run Sashimi
 
 ```bash
 python main.py \
@@ -660,6 +660,28 @@ python main.py \
     --domain
 ```
 here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
+
+## circRNA plot
+
+The linear and circRNA raw data were downloaded from [PRJNA541935](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA541935).
+
+
+The command for generating a circRNA coverage plot with highlight the back-splice junction
+
+```bash
+python sashimi.py/main.py \
+  -e chr1:925421-944308:+ \
+  --density example/circRNA.tsv \
+  --stroke 937113-937713@blue \
+  -o circRNA.pdf \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  -t 10 \
+  -r Homo_sapiens.GRCh38.101.gtf \
+  --link 925921-943808 
+```
+![](imgs/cmd/circRNA.png)
 
 
 ## Motif plot
@@ -678,6 +700,7 @@ python main.py \
   --motif-region 1270756-1270760
 ```
 The motif weight matrix should be customized bedGraph format as follows:
+
 ```bash
 # chromosome  start end A_weight T_weight C_weight G_weight
 chr1  100 101 0.1 0.2 -0.3  -0.4 
@@ -685,8 +708,7 @@ chr1  100 101 0.1 0.2 -0.3  -0.4
 
 Then, bgzipped && tabix indexed
 
-here is the [results](imgs/cmd/motif.png).
-
+here is the [result](imgs/cmd/motif.png).
 
 
 ### Additional annotation
