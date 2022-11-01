@@ -18,18 +18,32 @@ python setup.py install
 sashimipy --help
 ```
 
-### Run as script
-1. using pipenv
+or
+
 ```bash
-pipenv install
-pipenv run python main.py --help
+## via Conda
+conda install sashimi-py
+
+## via Docker
+docker pull quay.io/biocontainers/sashimi-py
+
+## via PyPI
+pip install sashimi.py
+
 ```
 
+### Run as script
+1. using pipenv
+    ```bash
+    pipenv install
+    pipenv run python main.py --help
+    ```
+
 2. using python
-```bash
-pip install -r requirements.txt
-python main.py
-```
+    ```bash
+    pip install -r requirements.txt
+    python main.py
+    ```
 
 ** Note: **
 If there is any problem with installation of `cairocffi`
