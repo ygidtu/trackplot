@@ -1,0 +1,6 @@
+example/circRNA_bam/SRR9029986.bam bam	Linear_RNA_rep1	#00AFBB
+example/circRNA_bam/SRR9029988.bam	bam	Linear_RNA_rep2	#00AFBB
+example/circRNA_bam/SRR9029992.bam	bam	Linear_RNA_rep3	#00AFBB
+example/circRNA_bam/SRR9029993.bam	bam	Circular_RNA_rep1	#FC4E07
+example/circRNA_bam/SRR9029994.bam	bam	Circular_RNA_rep2	#FC4E07
+example/circRNA_bam/SRR9029995.bam	bam	Circular_RNA_rep3	#FC4E07
