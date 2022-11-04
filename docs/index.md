@@ -8,4 +8,4 @@
 
 ## Get started
 
-To learn Snakemake, please follow the [Tutorial](https://sashimi.readthedocs.io/en/latest/command/)
+To learn Sashimi.py, please follow the [Tutorial](https://sashimi.readthedocs.io/en/latest/command/)
