@@ -82,10 +82,19 @@ class ReadDepth(object):
                         junctions[i] += j
                     else:
                         junctions[i] = j
+
+            minus = None
+            if self.minus is not None and other.minus is not None:
+                minus = self.minus + other.minus
+            elif self.minus is None and other.minus is not None:
+                minus = other.minus
+            elif self.minus is not None and other.minus is None:
+                minus = self.minus
+
             return ReadDepth(
                 self.plus + other.plus,
                 junctions_dict=junctions,
-                minus=self.minus + other.minus
+                minus=minus
             )
 
     def curr_height(self, pos: int) -> float:
