@@ -63,6 +63,10 @@ class FileList(object):
         self.trans = trans
         self.depth = depth
 
+    @property
+    def name(self) -> str:
+        return os.path.basename(self.path)
+
     def __str__(self):
         return f"path: {self.path} \nlabel: {self.label} \ngroup: {self.group} \n" \
                f"color: {self.color} \ncategory: {self.category} \nlibrary: {self.library}"
@@ -235,7 +239,7 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True)
 @optgroup.option("--barcode", type=click.Path(exists=True), show_default=True,
                  help="Path to barcode list file, At list two columns were required, "
-                      "- 1st The name of bam file; \b"
+                      "- 1st The name of bam file, not the alias of bam; \b"
                       "- 2nd the barcode; \b"
                       "- 3rd The group label, optional; \b"
                       "- 4th The color of each cell type, default using the color of corresponding bam file.\n")
@@ -519,8 +523,8 @@ def main(**kwargs):
                     p.add_interval(f.path, f.label)
             elif key == "density":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.label in barcodes.keys() and f.category in ["bam", "atac"]:
-                        for group in barcodes[f.label].keys():
+                    if barcodes and f.name in barcodes.keys() and f.category in ["bam", "atac"]:
+                        for group in barcodes[f.name].keys():
                             if kwargs["group_by_cell"] and group:
                                 label = group
                             elif group:
@@ -530,13 +534,13 @@ def main(**kwargs):
 
                             if f.label not in size_factors.keys() and f.category == "atac":
                                 logger.info(f"Indexing {f.path}")
-                                size_factors[f.label] = ATAC.index(f.path, barcodes[f.label])
+                                size_factors[f.label] = ATAC.index(f.path, barcodes[f.name])
 
                             p.add_density(f.path,
                                           category=f.category,
                                           label=label,
                                           barcode=group,
-                                          barcode_groups=barcodes[f.label],
+                                          barcode_groups=barcodes[f.name],
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
@@ -568,17 +572,17 @@ def main(**kwargs):
                                       density_by_strand=kwargs["density_by_strand"],)
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.label in barcodes.keys() and f.category in ["bam", "atac"]:
+                    if barcodes and f.name in barcodes.keys() and f.category in ["bam", "atac"]:
                         if f.label not in size_factors.keys() and f.category == "atac":
                             logger.info(f"Indexing {f.path}")
-                            size_factors[f.label] = ATAC.index(f.path, barcodes[f.label])
+                            size_factors[f.label] = ATAC.index(f.path, barcodes[f.name])
 
-                        for group in barcodes[f.label].keys():
+                        for group in barcodes[f.name].keys():
                             p.add_heatmap(f.path,
                                           category=f.category,
                                           label=f"{f.label} - {group}" if group else f.label,
                                           barcode=group,
-                                          barcode_groups=barcodes[f.label],
+                                          barcode_groups=barcodes[f.name],
                                           group=f"{f.group} - {group}" if f.group else f.group,
                                           barcode_tag=kwargs["barcode_tag"],
                                           size_factor=size_factors.get(f.label),
@@ -613,8 +617,8 @@ def main(**kwargs):
                                       vmax=kwargs["heatmap_vmax"])
             elif key == "line":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.label in barcodes.keys() and f.category == "bam":
-                        for group in barcodes[f.label].keys():
+                    if barcodes and f.name in barcodes.keys() and f.category == "bam":
+                        for group in barcodes[f.name].keys():
                             if kwargs["group_by_cell"] and group:
                                 label = group
                             elif group:
@@ -732,7 +736,8 @@ def main(**kwargs):
             "density": kwargs["sc_density_height_ratio"]
         },
         distance_between_label_axis=kwargs["distance_ratio"],
-        included_junctions=included_junctions
+        included_junctions=included_junctions,
+        n_jobs=kwargs.get("process", 1)
     )
 
 

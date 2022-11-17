@@ -47,7 +47,6 @@ class ReadDepth(object):
         self.junctions_dict = junctions_dict
         self.strand_aware = strand_aware
         self.minus = abs(minus) if minus is not None else minus
-        self.max = max(self.wiggle, default=0)
         self.junction_dict_plus = junction_dict_plus
         self.junction_dict_minus = junction_dict_minus
         self.site_plus = site_plus
@@ -55,13 +54,17 @@ class ReadDepth(object):
 
     @property
     def wiggle(self) -> np.array:
-        if (self.plus is None or np.sum(self.plus) == 0) and self.minus is not None:
+        if (self.plus is None or not self.plus.any()) and self.minus is not None:
             return self.minus
 
         if self.plus is not None and self.minus is not None:
             return self.plus + self.minus
 
         return self.plus
+
+    @property
+    def max(self) -> float:
+        return max(self.wiggle, default=0)
 
     def __add__(self, other):
 
@@ -74,28 +77,33 @@ class ReadDepth(object):
                 A new ReadDepth object containing the sum of the two original ReadDepth objects
         """
 
-        if len(self.wiggle) == len(other.wiggle):
-            junctions = self.junctions_dict if self.junctions_dict else {}
-            if other.junctions_dict:
-                for i, j in other.junctions_dict.items():
-                    if i in junctions.keys():
-                        junctions[i] += j
-                    else:
-                        junctions[i] = j
+        if self.wiggle is not None and other.wiggle is not None:
+            if len(self.wiggle) == len(other.wiggle):
+                junctions = self.junctions_dict if self.junctions_dict else {}
+                if other.junctions_dict:
+                    for i, j in other.junctions_dict.items():
+                        if i in junctions.keys():
+                            junctions[i] += j
+                        else:
+                            junctions[i] = j
 
-            minus = None
-            if self.minus is not None and other.minus is not None:
-                minus = self.minus + other.minus
-            elif self.minus is None and other.minus is not None:
-                minus = other.minus
-            elif self.minus is not None and other.minus is None:
-                minus = self.minus
+                minus = None
+                if self.minus is not None and other.minus is not None:
+                    minus = self.minus + other.minus
+                elif self.minus is None and other.minus is not None:
+                    minus = other.minus
+                elif self.minus is not None and other.minus is None:
+                    minus = self.minus
 
-            return ReadDepth(
-                self.plus + other.plus,
-                junctions_dict=junctions,
-                minus=minus
-            )
+                return ReadDepth(
+                    self.plus + other.plus,
+                    junctions_dict=junctions,
+                    minus=minus
+                )
+        elif self.wiggle is None:
+            return other
+        else:
+            return self
 
     def curr_height(self, pos: int) -> float:
         if self.minus is None:

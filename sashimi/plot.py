@@ -597,8 +597,10 @@ class Plot(object):
                     'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
                     'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
         :param show_row_names:
-        :param vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
-        :param vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+        :param vmin: Values to anchor the colormap,
+                     otherwise they are inferred from the data and other keyword arguments.
+        :param vmax: Values to anchor the colormap,
+                     otherwise they are inferred from the data and other keyword arguments.
         :return:
         """
         obj, category = self.__init_input_file__(
@@ -923,6 +925,7 @@ class Plot(object):
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
              distance_between_label_axis: float = .3,
+             n_jobs: int = 1,
              *args, **kwargs):
         u"""
         draw image
@@ -935,6 +938,7 @@ class Plot(object):
         :param raster: plot rasterizer site plot
         :param sc_height_ratio: adjust the relative height of single cell plots
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
+        :param n_jobs: load data in how many processes
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
@@ -965,7 +969,8 @@ class Plot(object):
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             try:
                 p.load(region=self.region if p.type != "motif" else self.params[p]["region"],
-                       junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                       junctions=self.junctions.get(p.obj[0].label, {}),
+                       n_jobs=n_jobs, *args, **kwargs)
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err
