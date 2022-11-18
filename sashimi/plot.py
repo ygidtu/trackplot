@@ -5,7 +5,7 @@ Created by ygidtu@gmail.com at 2019.12.06
 """
 import io
 import logging
-import os.path
+import os
 from typing import Set
 
 import matplotlib.pyplot as plt
@@ -381,6 +381,7 @@ class Plot(object):
                             # for ATAC
                             size_factor=None
                             ):
+        path = os.path.expanduser(path)
         if category == "bam":
             obj = Bam.create(
                 path,

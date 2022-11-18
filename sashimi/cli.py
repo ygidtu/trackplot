@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -49,6 +49,9 @@ class FileList(object):
                  library: str = "fru",
                  trans: Optional[str] = None,
                  depth: int = 30000):
+
+        if path.startswith("~"):
+            path = os.path.expanduser(path)
         self.path = os.path.abspath(path)
 
         if not os.path.exists(self.path):
@@ -118,7 +121,7 @@ def __read_iter__(path):
 
 def process_file_list(infile: str, category: str = "density"):
     u"""
-    Process and check the file list format
+    Process and check the file list format_
     :param infile: path to input file list
     :param category: the image type of file list used for
     """

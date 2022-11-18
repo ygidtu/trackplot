@@ -357,32 +357,17 @@ class Reference(File):
 
             if re.search(r"(rna|transcript|cds)", rec.feature, re.I):
                 if rec.transcript_id not in transcripts.keys():
-                    try:
-                        transcripts[rec.transcript_id] = Transcript(
-                            chromosome=rec.contig,
-                            start=start,
-                            end=end,
-                            strand=rec.strand,
-                            transcript_id=rec.transcript_id,
-                            gene_id=rec.gene_id,
-                            gene=rec.gene_name,
-                            transcript=rec.transcript_name,
-                            exons=[]
-                        )
-                    except KeyError as err:
-                        logger.warning(err)
-                        transcripts[rec.transcript_id] = Transcript(
-                            chromosome=rec.contig,
-                            start=start,
-                            end=end,
-                            strand=rec.strand,
-                            transcript_id=rec.transcript_id,
-                            gene_id=rec.gene_id,
-                            gene=rec.gene_name,
-                            transcript="",
-                            exons=[]
-                        )
-
+                    transcripts[rec.transcript_id] = Transcript(
+                        chromosome=rec.contig,
+                        start=start,
+                        end=end,
+                        strand=rec.strand,
+                        transcript_id=rec.transcript_id,
+                        gene_id=rec.gene_id,
+                        gene=rec.gene_name if "gene_name" in rec.attributes else "",
+                        transcript=rec.transcript_name if "transcript_name" in rec.attributes else "",
+                        exons=[]
+                    )
             elif re.search(r"(exon)", rec.feature, re.I):
                 if rec.transcript_id not in exons.keys():
                     exons[rec.transcript_id] = []
