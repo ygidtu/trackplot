@@ -13,7 +13,6 @@ from collections import namedtuple, defaultdict
 from typing import List, Union, Optional
 
 import filetype
-import matplotlib as mpl
 import pysam
 from loguru import logger
 
@@ -22,7 +21,6 @@ from sashimi.base.Protein import CdsProtein
 from sashimi.base.Readder import Reader
 from sashimi.base.Transcript import Transcript
 from sashimi.file.File import File
-from sashimi.base.CoordinateMap import Coordinate
 
 
 class Reference(File):
@@ -133,9 +131,7 @@ class Reference(File):
                 for record in Reader.read_bigbed(bb_file, region):
                     record = record[2].split("\t")
                     current_id = record[0]
-                    strand = record[2]
                     current_start = int(record[3])
-                    num_of_chunk = record[6]
                     block_sizes = [int(x) for x in record[7].split(",") if x]
                     block_starts = [int(x) for x in record[8].split(",") if x]
                     current_desc = record[17]
@@ -307,7 +303,6 @@ class Reference(File):
         gtf = cls.is_gtf(input_gtf)
         assert gtf % 10 == 1, f"{input_gtf} seems not be gtf format"
 
-        index = False
         if gtf // 10 > 0:
             output_gtf = input_gtf
         else:
@@ -369,11 +364,10 @@ class Reference(File):
                         strand=rec.strand,
                         transcript_id=rec.transcript_id,
                         gene_id=rec.gene_id,
-                        gene=rec.gene_name,
-                        transcript=rec.transcript_name,
+                        gene=rec.gene_name if "gene_name" in rec.attributes else "",
+                        transcript=rec.transcript_name if "transcript_name" in rec.attributes else "",
                         exons=[]
                     )
-
             elif re.search(r"(exon)", rec.feature, re.I):
                 if rec.transcript_id not in exons.keys():
                     exons[rec.transcript_id] = []
@@ -444,12 +438,11 @@ class Reference(File):
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
-    def __load_bed__(self, region: GenomicLoci)-> List[Transcript]:
+    def __load_bed__(self, region: GenomicLoci) -> List[Transcript]:
         transcripts = []
         try:
             for rec in Reader.read_gtf(self.path, region=region, bed=True):
                 exon_bound = []
-                intron_bound = []
                 current_start = int(rec[1])
                 current_end = int(rec[2])
                 if len(rec) > 3:
@@ -525,6 +518,7 @@ class Reference(File):
         elif self.category == "bed":
             self.data = self.__load_bed__(region)
 
+        rec, start, end, strand = None, None, None, None
         for interval_file, interval_label in self.interval_file.items():
             try:
                 if not os.path.exists(interval_file + ".tbi"):
@@ -562,7 +556,7 @@ class Reference(File):
                         )
                     )
 
-                if len(interval_target) != 0:
+                if len(interval_target) != 0 and rec is not None:
                     self.data.append(Transcript(
                         chromosome=rec.contig,
                         start=start,

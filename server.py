@@ -5,7 +5,6 @@ Web UI of sashimi
 """
 
 import inspect
-import os
 import pickle
 import sys
 import traceback

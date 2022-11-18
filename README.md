@@ -11,7 +11,7 @@
 
 ![](example/diagram.png)
 
-[See more example](https://sashimi.readthedocs.io/en/latest/)
+[Tutorials](https://sashimi.readthedocs.io/en/latest/)
 
 ## what is sashimi.py
 

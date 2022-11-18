@@ -38,6 +38,9 @@ class File(object):
     def load(self, *args, **kwargs):
         return None
 
+    def len(self, scale=1) -> int:
+        return len(self.data) / scale if self.data else 0
+
     def __hash__(self) -> int:
         return hash((self.path, self.label, self.title))
 
