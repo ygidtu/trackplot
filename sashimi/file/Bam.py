@@ -124,7 +124,6 @@ class Bam(SingleCell):
              threshold: int = 0,
              reads1: Optional[bool] = None,
              required_strand: Optional[str] = None,
-             log_trans: Optional[str] = None,
              **kwargs
              ):
         """
@@ -144,10 +143,8 @@ class Bam(SingleCell):
         :param threshold: minimums counts of the given splice junction for visualization
         :param reads1: None -> all reads, True -> only R1 kept; False -> only R2 kept
         :param required_strand: None -> all reads, else reads on specific strand
-        :param log_trans: should one of {"10": np.log10, "2": np.log2}
         """
         self.region = region
-        self.log_trans = log_trans
         filtered_junctions = {}
 
         spanned_junctions = kwargs.get("junctions", {})
@@ -296,17 +293,4 @@ class Bam(SingleCell):
 
 
 if __name__ == '__main__':
-    bam = Bam.create(
-        "../../example/bams/sc.bam",
-        library="frf")
-    bam.load(GenomicLoci("chr1", 1270656, 1284730, "+"), 10)
-
-    print(str(bam))
-    print(bam.to_csv())
-    print(max(bam.data.wiggle), min(bam.data.wiggle))
-    print(bam.data.junctions_dict)
-    print(max(bam.data.plus))
-    print(min(bam.data.minus))
-    print(max(bam.data.site_plus))
-    print(min(bam.data.site_minus))
     pass

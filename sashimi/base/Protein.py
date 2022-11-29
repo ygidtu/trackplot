@@ -182,7 +182,6 @@ class CdsProtein(GenomicLoci):
         )
 
         for current_transcript_id in self.cds.keys():
-            # print(current_transcript_id, len(self.cds[current_transcript_id]))
             current_pep = Uniprot(
                 uniprot_id=current_transcript_id,
                 cds_len=len(self.cds[current_transcript_id]),
@@ -227,9 +226,7 @@ class CdsProtein(GenomicLoci):
                     min(map(lambda x: x.start, i)) for i in domain_list
                 ])
 
-                end_site = max([
-                    max(map(lambda x: x.end, i)) for i in domain_list
-                ])
+                end_site = max([max(map(lambda x: x.end, i)) for i in domain_list])
 
                 protein_info[current_transcript_id].append(
                     Transcript(
@@ -250,26 +247,4 @@ class CdsProtein(GenomicLoci):
 
 
 if __name__ == '__main__':
-    def test():
-        import pysam
-        with pysam.Tabixfile("../../example/example.sorted.gtf.gz", 'r') as gtf_tabix:
-            cds_test = CdsProtein.__re_iter_gtf__(
-                gtf_tabix=gtf_tabix,
-                chromosome='chr1',
-                # transcript_id={'ENST00000421241'},
-                transcript_id={'ENST00000477196'},
-                gene_id={'ENSG00000131591'}
-            )
-            print(cds_test.pep)
-            for transcript_id, domains in cds_test.pep.items():
-                if len(domains) == 0:
-                    continue
-
-                for sub_domain in domains:
-                    print(transcript_id,
-                          sub_domain.gene,
-                          sub_domain.domain, sub_domain.exon_list)
-
-
-    test()
     pass

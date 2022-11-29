@@ -6,7 +6,10 @@ Created by ygidtu@gmail.com at 2019.12.06
 import io
 import logging
 import os
+import copy
+import faulthandler
 from typing import Set
+from multiprocessing import Pool
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -25,6 +28,17 @@ from sashimi.plot_func import *
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
+faulthandler.enable()
+
+class ObjectPointer(object):
+
+    def __init__(self, hash_id: id, label: str):
+        self.id = hash_id
+        self.label = label
+
+    def __hash__(self):
+        return hash(self.id)
+
 
 class PlotInfo(object):
     u"""
@@ -39,6 +53,7 @@ class PlotInfo(object):
         :param type_: the plot type
         :param group: group name of input file, only used to plots type_ == heatmap
         """
+        # self.pointers = [obj]
         self.obj = [obj]
         self.group = group
         self.type = type_
@@ -50,7 +65,7 @@ class PlotInfo(object):
     def __hash__(self) -> int:
         if self.type in ["heatmap", "line"]:
             return hash(self.group)
-        return hash((tuple([obj.label for obj in self.obj]), self.group, self.type, tuple(self.category)))
+        return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
 
     def __add__(self, other):
         if self.category == ["heatmap", "line"]:
@@ -116,6 +131,12 @@ class PlotInfo(object):
         return self
 
 
+def __load__(args):
+    p, args, kwargs = args
+    p.load(*args, **kwargs)
+    return p
+
+
 class Plot(object):
     u"""
     this class is the main framework of sashimi
@@ -137,6 +158,7 @@ class Plot(object):
         self.params = {}
         self.junctions = {}
         self.link = []
+        # self.__data__ = {}  # uuid -> File
 
     @property
     def chrom(self) -> Optional[str]:
@@ -358,8 +380,7 @@ class Plot(object):
         self.reference.add_interval(interval, interval_label)
         return self
 
-    @staticmethod
-    def __init_input_file__(path: str,
+    def __init_input_file__(self, path: str,
                             category: str = "bam",
                             label: Union[str, List[str]] = "",
                             title: str = "",
@@ -379,7 +400,9 @@ class Plot(object):
                             depth: Optional[int] = 30000,
 
                             # for ATAC
-                            size_factor=None
+                            size_factor=None,
+
+                            log_trans: Optional[str] = None,
                             ):
         path = os.path.expanduser(path)
         if category == "bam":
@@ -430,12 +453,15 @@ class Plot(object):
         else:
             raise ValueError(
                 f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg], instead of {category}")
+
+        obj.log_trans = log_trans
         return obj, category
 
     def add_customized_junctions(self, path: str):
         if path and os.path.exists(path) and os.path.isfile(path):
             self.junctions = load_custom_junction(path)
 
+    # TODO should be fine
     def add_density(self,
                     path: str,
                     category: str = "bam",
@@ -460,6 +486,7 @@ class Plot(object):
                     show_y_label: bool = True,
                     y_label: str = "",
                     theme: str = "ticks_blank",
+                    log_trans: Optional[str] = None,
 
                     # site plot parameters
                     show_site_plot: bool = False,
@@ -504,7 +531,8 @@ class Plot(object):
             umi_tag=umi_tag,
             library=library,
             size_factor=size_factor,
-            density_by_strand=density_by_strand
+            density_by_strand=density_by_strand,
+            log_trans=log_trans
         )
 
         type_ = "density"
@@ -519,7 +547,7 @@ class Plot(object):
         for p in self.plots:
             if p.category == info.category:
                 for obj_ in p.obj:
-                    if obj_.label == label and label and not barcode:
+                    if obj_.label == label and label:
                         param = self.params.pop(p)
                         p.obj.append(obj)
                         new_obj = False
@@ -570,7 +598,8 @@ class Plot(object):
                     clustering_method: str = "ward",
                     distance_metric: str = "euclidean",
                     show_row_names: bool = False,
-                    vmin=None, vmax=None
+                    vmin=None, vmax=None,
+                    log_trans: Optional[str] = None,
                     ):
         u"""
         add multiple objects for a group of heatmap
@@ -614,7 +643,8 @@ class Plot(object):
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
             library=library,
-            size_factor=size_factor
+            size_factor=size_factor,
+            log_trans=log_trans
         )
 
         exists = False
@@ -665,7 +695,8 @@ class Plot(object):
                  n_y_ticks: int = 4,
                  show_legend: bool = False,
                  legend_position: str = "upper right",
-                 legend_ncol: int = 0
+                 legend_ncol: int = 0,
+                 log_trans: Optional[str] = None,
                  ):
         u"""
         add multiple objects for a group of heatmap
@@ -699,7 +730,8 @@ class Plot(object):
             barcode_groups=barcode_groups,
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
-            library=library
+            library=library,
+            log_trans=log_trans
         )
 
         if not line_attrs:
@@ -965,13 +997,28 @@ class Plot(object):
             logger.info("load sequence")
             self.sequence.load(self.region)
 
-        logger.info(f"load data")
+        logger.info(f"load data of {len(self.plots)} plots")
+
+        # cmds = []
+        # for p in self.plots:
+        #     temp = copy.deepcopy(kwargs)
+        #     temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]
+        #     temp["junctions"] = self.junctions.get(p.obj[0].label, {})
+        #     cmds.append([p, args, temp])
+        #
+        # with Pool(max(1, min(n_jobs, len(self.plots)))) as p:
+        #     self.plots = p.map(__load__, cmds)
+
         for p in self.plots:
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             try:
                 p.load(region=self.region if p.type != "motif" else self.params[p]["region"],
                        junctions=self.junctions.get(p.obj[0].label, {}),
                        n_jobs=n_jobs, *args, **kwargs)
+
+                for obj in p.obj:
+                    obj.transform()
+
             except Exception as err:
                 logger.warning(f"failed to load data from {p}")
                 raise err
@@ -1007,12 +1054,10 @@ class Plot(object):
             fig = plt.figure(dpi=dpi)
 
         if plots_n_cols > 1:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols,
-                                   height_ratios=height_ratio,
+            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
                                    width_ratios=(.99, .01), wspace=0.01, hspace=.15)
         else:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols,
-                                   height_ratios=height_ratio,
+            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
                                    wspace=.7, hspace=.15)
 
         max_used_y_val = None
@@ -1021,16 +1066,6 @@ class Plot(object):
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
                         y = max(obj.data.wiggle)
-
-                        if obj.log_trans == "2":
-                            y = math.log2(y)
-                        elif obj.log_trans == "10":
-                            y = math.log10(y)
-                        elif obj.log_trans == "1p":
-                            y = math.log1p(y)
-                        elif obj.log_trans == "e":
-                            y = math.log(y)
-
                         max_used_y_val = y if max_used_y_val is None else max(y, max_used_y_val)
 
         curr_idx = 0

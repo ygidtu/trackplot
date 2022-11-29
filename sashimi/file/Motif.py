@@ -37,7 +37,4 @@ class Motif(object):
 
 
 if __name__ == '__main__':
-    motif = Motif.create("../../example/motif.bed.gz", GenomicLoci("chr1", 100, 105, "+"))
-    motif.load(GenomicLoci("chr1", 101, 103, "+"))
-    print(motif.data)
     pass

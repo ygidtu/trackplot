@@ -423,11 +423,6 @@ class Reference(File):
                     strand=strand,
                     exons=exons_in_read
                 )
-
-                # t.gene = str(t)
-                # t.transcript = str(t)
-                # t.gene_id = str(t)
-                # t.transcript_id = str(t)
                 transcripts[t] = transcripts.get(t, 0) + 1
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
@@ -578,25 +573,4 @@ class Reference(File):
 
 
 if __name__ == "__main__":
-    # region = GenomicLoci("chr1", 1270656, 1284730, "+")
-    # print(len(region))
-    # ref = Reference.create("../../example/example.gtf")
-    # ref.load(region)
-    # print(len(ref.data))
-    #
-    # ref1 = Reference.create("../../example/bams/1.bam", category="bam")
-    # ref1.load(region, 10)
-    # print(len(ref1.data))
-
-    loc = GenomicLoci(chromosome="chr1",
-                      start=1270656,
-                      end=1284730,
-                      strand="-")
-
-    gtf_ref = Reference("../../example/example.sorted.gtf.gz")
-    gtf_ref.load(loc, domain=True)
-    print(gtf_ref.domain)
-    # gene_id = set(map(lambda x: x.gene_id, gtf_ref.transcripts))
-    # transcript_id = set(map(lambda x: x.transcript_id, gtf_ref.transcripts))
-    # print(gene_id)
-    # print(transcript_id)
+    pass

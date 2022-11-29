@@ -211,15 +211,13 @@ def set_y_ticks(
         ax.set_xlim(0, max(graph_coords))
 
         max_ = max_used_y_val
-        minus = -0.5
         plus = 0.2
         while max_ > 10:
             max_ /= 10
-            minus /= 10
             plus /= 10
 
-            ax.set_ylim(plus * max_used_y_val, (1 + plus) * max_used_y_val)
-
+        plus = (max_used_y_val - min_used_y_val) * plus
+        ax.set_ylim(min_used_y_val - plus, plus + max_used_y_val)
         ax.spines["left"].set_bounds(min_used_y_val, max_used_y_val)
 
         universal_y_ticks = pylab.linspace(min_used_y_val, max_used_y_val, n_y_ticks + 1)
@@ -638,15 +636,14 @@ def plot_density(
         if graph_coords is None:
             graph_coords = init_graph_coords(region)
 
-        data = deepcopy(obj.data)
-        data.transform(obj.log_trans)
-
         if not y_label:
             y_label = obj.label
 
     elif not (region and data):
         raise ValueError("please input obj or region and data")
 
+    if data is None:
+        data = obj.data
     jxns = data.junctions_dict
 
     wiggle = data.plus
@@ -655,7 +652,7 @@ def plot_density(
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = -1 * max(data.minus) if data.minus is not None else min(wiggle)
+    min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
 
     # Reduce memory footprint by using incremented graph_coords.
     for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
@@ -757,7 +754,6 @@ def plot_density(
             obj.title, color=color, fontsize=font_size
         )
 
-    ymin, ymax = ax.get_ylim()  # update y limit after added junctions
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
@@ -769,8 +765,6 @@ def plot_density(
         show_y_label=show_y_label,
         y_axis_skip_zero=False if data.strand_aware else True
     )
-    ax.set_ylim(ymin, ymax)
-
 
 def plot_site_plot(
         ax: mpl.axes.Axes,
@@ -806,17 +800,13 @@ def plot_site_plot(
     if graph_coords is None:
         graph_coords = init_graph_coords(region)
 
-    data = deepcopy(obj.data)
-    data.transform(obj.log_trans)
-
     if not y_label:
         y_label = obj.label
 
     if not show_y_label:
         y_label = ""
 
-    plus, minus = data.site_plus, data.site_minus
-
+    plus, minus = obj.data.site_plus, obj.data.site_minus
     max_height, min_height = max(plus), min(minus)
     max_val = max(max_height, abs(min_height))
 
@@ -1337,7 +1327,7 @@ def plot_motif(ax: mpl.axes.Axes,
         x = xmax
     ax.arrow(x, ymin + y_height * y_scale / 2,
              pos - x, y_center - (ymin + y_height * y_scale),
-             head_width=1, fc='k', ec='k', rasterize=True)
+             head_width=1, fc='k', ec='k', rasterized=True)
 
 
 if __name__ == '__main__':

@@ -609,43 +609,4 @@ class ReadSegment(File):
 
 
 if __name__ == '__main__':
-    # test = ReadSegment.create(path='../../example/bams/0.bam')
-    #
-    # test.load(
-    #     region=GenomicLoci(
-    #         chromosome="chr1",
-    #         start=1270656,
-    #         end=1284730,
-    #         strand="+"),
-    #     features={
-    #         "m6a": "ma",
-    #         "real_strand": "rs",
-    #         "polya": "pa"
-    #     })
-    # print(test.meta)
-    # for i in test.get_index():
-    #     print(i)
-    #     break
-
-    test = ReadSegment.create(path='../../example/bams/WASH7P.bam',
-                              deletion_ignore=True,
-                              features={
-                                  "m6a": "ma",
-                                  "real_strand": "rs",
-                                  "polya": "pa"
-                              })
-    # chr1: 14362:29900
-    test.load(
-        region=GenomicLoci(
-            chromosome="chr1",
-            start=14362,
-            end=29900,
-            strand="+"))
-    print(test.meta)
-    for i in test.data:
-        if i.id == "SRR12503063.3994985":
-            print(i.exons[0].start, i.exons[0].end)
-
-            print('exon', i.exon_list)
-            print('intron', i.intron_list)
-    # break
+    pass

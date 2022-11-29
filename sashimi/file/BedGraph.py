@@ -47,7 +47,4 @@ class Bedgraph(File):
 
 
 if __name__ == "__main__":
-    bw = Bedgraph.create("../../example/bedgraph/ENCFF260QGF_lung_filter.bedgraph.gz")
-    bw.load(GenomicLoci("chr1", 120457967, 120459467, "+"))
-    print(bw.data.wiggle)
     pass

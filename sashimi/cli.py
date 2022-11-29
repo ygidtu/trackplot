@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -556,8 +556,8 @@ def main(**kwargs):
                                           show_site_plot=kwargs["show_site"],
                                           strand_choice=kwargs["site_strand"],
                                           density_by_strand=kwargs["density_by_strand"],
-                                          only_customized_junction=kwargs["only_customized_junction"]
-                                          )
+                                          only_customized_junction=kwargs["only_customized_junction"],
+                                          log_trans=kwargs["log"])
                     elif f.category != "atac":
                         p.add_density(f.path,
                                       category=f.category,
@@ -572,7 +572,8 @@ def main(**kwargs):
                                       show_y_label=not kwargs["hide_y_label"],
                                       show_site_plot=kwargs["show_site"],
                                       strand_choice=kwargs["site_strand"],
-                                      density_by_strand=kwargs["density_by_strand"],)
+                                      density_by_strand=kwargs["density_by_strand"],
+                                      log_trans=kwargs["log"])
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.name in barcodes.keys() and f.category in ["bam", "atac"]:
@@ -599,7 +600,8 @@ def main(**kwargs):
                                           font_size=kwargs["font_size"],
                                           do_scale=kwargs["heatmap_scale"],
                                           vmin=kwargs["heatmap_vmin"],
-                                          vmax=kwargs["heatmap_vmax"])
+                                          vmax=kwargs["heatmap_vmax"],
+                                          log_trans=kwargs["log"])
                     elif f.category != "atac":
                         p.add_heatmap(f.path,
                                       category=f.category,
@@ -617,7 +619,8 @@ def main(**kwargs):
                                       show_row_names=kwargs["show_row_names"],
                                       do_scale=kwargs["heatmap_scale"],
                                       vmin=kwargs["heatmap_vmin"],
-                                      vmax=kwargs["heatmap_vmax"])
+                                      vmax=kwargs["heatmap_vmax"],
+                                      log_trans=kwargs["log"])
             elif key == "line":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.name in barcodes.keys() and f.category == "bam":
@@ -643,7 +646,8 @@ def main(**kwargs):
                                        n_y_ticks=kwargs["n_y_ticks"],
                                        show_legend=not kwargs["hide_legend"],
                                        legend_position=kwargs["legend_position"],
-                                       legend_ncol=kwargs["legend_ncol"])
+                                       legend_ncol=kwargs["legend_ncol"],
+                                       log_trans=kwargs["log"])
                     else:
                         p.add_line(f.path,
                                    category=f.category,
@@ -658,7 +662,8 @@ def main(**kwargs):
                                    n_y_ticks=kwargs["n_y_ticks"],
                                    show_legend=not kwargs["hide_legend"],
                                    legend_position=kwargs["legend_position"],
-                                   legend_ncol=kwargs["legend_ncol"])
+                                   legend_ncol=kwargs["legend_ncol"],
+                                   log_trans=kwargs["log"])
             elif key == "igv":
                 for f in process_file_list(kwargs[key], "igv"):
                     igv_features = {}
@@ -742,6 +747,7 @@ def main(**kwargs):
         included_junctions=included_junctions,
         n_jobs=kwargs.get("process", 1)
     )
+    logger.info("DONE")
 
 
 if __name__ == '__main__':
