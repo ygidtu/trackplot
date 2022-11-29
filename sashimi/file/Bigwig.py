@@ -51,12 +51,4 @@ class Bigwig(File):
 
 
 if __name__ == "__main__":
-    bw = Bigwig.create("../../example/bws/1.bw")
-    bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
-
-    print(bw.data.wiggle)
-    print(max(bw.data.wiggle), min(bw.data.wiggle))
-    print(bw.data.junctions_dict)
-    print(bw.data.plus)
-    print(bw.data.minus)
     pass

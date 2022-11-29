@@ -47,6 +47,10 @@ class File(object):
     def __eq__(self, other):
         return self.path == other.path and self.label == other.label and self.title == other.title
 
+    def transform(self):
+        if self.data is not None:
+            self.data.transform(self.log_trans)
+
 
 def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
     u"""

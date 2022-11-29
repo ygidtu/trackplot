@@ -218,17 +218,4 @@ class CoordinateMapper(Coordinate):
 
 
 if __name__ == '__main__':
-    def test():
-        cds = [(3216025, 3216968),
-               (3421702, 3421901),
-               (3670552, 3671348)]
-
-        coord = CoordinateMapper(cds, "+")
-        domain_info = [(1, 3, "1XK-related protein 4;chain")]
-        domain_coord = coord.pep_to_cds(1, 3)
-        print(domain_coord.se)
-        # [(3216025, 3216033)]
-
-
-    test()
     pass

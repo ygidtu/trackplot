@@ -138,14 +138,14 @@ class ReadDepth(object):
         return new_junctions_dict
 
     def transform(self, log_trans: str):
-        funcs = {"10": np.log10, "2": np.log2, "zscore": zscore}
+        funcs = {"10": np.log10, "2": np.log2, "zscore": zscore, "e": np.log}
 
         if log_trans in funcs.keys():
             if self.plus is not None:
                 self.plus = funcs[log_trans](self.plus + 1)
 
             if self.minus is not None:
-                self.minus = -funcs[log_trans](np.abs(self.minus + 1))
+                self.minus = funcs[log_trans](self.minus + 1)
 
     def normalize(self, size_factor: float):
         self.plus = np.divide(self.plus, size_factor) # * 100

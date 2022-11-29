@@ -86,10 +86,4 @@ class Depth(File):
 
 
 if __name__ == '__main__':
-    depth = Depth.create("../../example/depth.bgz")
-    region = GenomicLoci(chromosome="chr1", start=1017198, end=1051741, strand="-")
-
-    depth.load(region)
-
-    for k, v in depth.data.items():
-        print(k, v)
+    pass

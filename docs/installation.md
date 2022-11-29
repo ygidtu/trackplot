@@ -1,4 +1,30 @@
 
+## Install with pypi, conda or docker
+
+###  via Conda
+```bash
+conda install sashimi-py
+
+# create conda env from local
+
+git clone from https://github.com/ygidtu/sashimipy sashimi
+cd sashimi
+
+conda create env -n sashimi meta.yaml
+```
+
+### via PyPI
+
+```bash
+pip install sashimi.py
+```
+
+### via Docker
+
+```bash
+docker pull ygidtu/sashimi
+```
+
 ## Install from source
 
 download source code using git
@@ -10,26 +36,14 @@ cd sashimi
 ### Run as command line tools
 
 ```bash
+## install from source
+
 pip install sashimi.py
 
 # or install from source
 python setup.py install
 
 sashimipy --help
-```
-
-or
-
-```bash
-## via Conda
-conda install sashimi-py
-
-## via Docker
-docker pull quay.io/biocontainers/sashimi-py
-
-## via PyPI
-pip install sashimi.py
-
 ```
 
 ### Run as script

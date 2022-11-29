@@ -157,8 +157,4 @@ class ATAC(SingleCell):
 
 
 if __name__ == '__main__':
-    bam = ATAC.create("../../example/bams/sc.bam")
-    bam.load(GenomicLoci("chr1", 1270656, 1284730, "+"), 10)
-
-    print(str(bam))
     pass
