@@ -37,6 +37,9 @@ and each track on output corresponds these datasets from config file.
 ## Usage
 
 The sashimi.py is written in Python, and user could install it in a variety of ways as follows
+
+__Note:__ if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
+
 1. install from PiPy
    
    ```bash
@@ -45,6 +48,10 @@ The sashimi.py is written in Python, and user could install it in a variety of w
 2. install from bioconda
    ```bash
    conda install -c bioconda sashimi-py
+   
+   # or
+   
+   conda create -n sashimi meta.yaml
    ```
 3. using docker image
     ```bash

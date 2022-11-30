@@ -3,13 +3,13 @@
 u"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
+import copy
+import faulthandler
 import io
 import logging
 import os
-import copy
-import faulthandler
-from typing import Set
 from multiprocessing import Pool
+from typing import Set
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -30,14 +30,11 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
 faulthandler.enable()
 
-class ObjectPointer(object):
 
-    def __init__(self, hash_id: id, label: str):
-        self.id = hash_id
-        self.label = label
-
-    def __hash__(self):
-        return hash(self.id)
+def __load__(args):
+    p, args, kwargs = args
+    p.load(*args, **kwargs)
+    return p
 
 
 class PlotInfo(object):
@@ -53,7 +50,6 @@ class PlotInfo(object):
         :param type_: the plot type
         :param group: group name of input file, only used to plots type_ == heatmap
         """
-        # self.pointers = [obj]
         self.obj = [obj]
         self.group = group
         self.type = type_
@@ -65,7 +61,13 @@ class PlotInfo(object):
     def __hash__(self) -> int:
         if self.type in ["heatmap", "line"]:
             return hash(self.group)
-        return hash((tuple(self.obj), self.group, self.type, tuple(self.category)))
+        return hash((tuple([hash(x) for x in self.obj]), self.group, self.type, tuple(self.category)))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __ne__(self, other):
+        return hash(self) != hash(other)
 
     def __add__(self, other):
         if self.category == ["heatmap", "line"]:
@@ -115,9 +117,15 @@ class PlotInfo(object):
         self.category.append(category)
         return self
 
-    def load(self, region: GenomicLoci, *args, **kwargs):
-        for obj in self.obj:
-            obj.load(region=region, *args, **kwargs)
+    def load(self, region: GenomicLoci, n_jobs: int = 0, *args, **kwargs):
+        if n_jobs <= -1:
+            for obj in self.obj:
+                obj.load(region=region, *args, **kwargs)
+        else:
+            with Pool(n_jobs) as p:
+                kwargs_ = deepcopy(kwargs)
+                kwargs_["region"] = region
+                self.obj = p.map(__load__, [[o, args, kwargs_] for o in self.obj])
 
         if self.type == "density":
             if len(self.obj) > 1:
@@ -131,12 +139,6 @@ class PlotInfo(object):
         return self
 
 
-def __load__(args):
-    p, args, kwargs = args
-    p.load(*args, **kwargs)
-    return p
-
-
 class Plot(object):
     u"""
     this class is the main framework of sashimi
@@ -146,6 +148,7 @@ class Plot(object):
         u"""
         init this class
         """
+        self.__n_objs__ = 0
         self.region = None
         self.sites = {}
         self.focus = {}
@@ -158,7 +161,6 @@ class Plot(object):
         self.params = {}
         self.junctions = {}
         self.link = []
-        # self.__data__ = {}  # uuid -> File
 
     @property
     def chrom(self) -> Optional[str]:
@@ -404,6 +406,7 @@ class Plot(object):
 
                             log_trans: Optional[str] = None,
                             ):
+        self.__n_objs__ += 1
         path = os.path.expanduser(path)
         if category == "bam":
             obj = Bam.create(
@@ -461,7 +464,6 @@ class Plot(object):
         if path and os.path.exists(path) and os.path.isfile(path):
             self.junctions = load_custom_junction(path)
 
-    # TODO should be fine
     def add_density(self,
                     path: str,
                     category: str = "bam",
@@ -999,29 +1001,30 @@ class Plot(object):
 
         logger.info(f"load data of {len(self.plots)} plots")
 
-        # cmds = []
-        # for p in self.plots:
-        #     temp = copy.deepcopy(kwargs)
-        #     temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]
-        #     temp["junctions"] = self.junctions.get(p.obj[0].label, {})
-        #     cmds.append([p, args, temp])
-        #
-        # with Pool(max(1, min(n_jobs, len(self.plots)))) as p:
-        #     self.plots = p.map(__load__, cmds)
-
+        cmds = []
         for p in self.plots:
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
-            try:
-                p.load(region=self.region if p.type != "motif" else self.params[p]["region"],
-                       junctions=self.junctions.get(p.obj[0].label, {}),
-                       n_jobs=n_jobs, *args, **kwargs)
+            # only enable the multiprocessing while n_jobs > 1
+            if self.__n_objs__ / len(self.plots) >= n_jobs > 1:
+                p.load(self.region, n_jobs, *args, **kwargs)
+            elif n_jobs > 1:
+                temp = copy.deepcopy(kwargs)
+                temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]
+                temp["junctions"] = self.junctions.get(p.obj[0].label, {})
+                cmds.append([p, args, temp])
 
-                for obj in p.obj:
-                    obj.transform()
+        if len(cmds) > 0:
+            with Pool(max(1, min(n_jobs, len(self.plots)))) as p:
+                self.plots = p.map(__load__, cmds)
 
-            except Exception as err:
-                logger.warning(f"failed to load data from {p}")
-                raise err
+        # count the plots size
+        for p in self.plots:
+
+            if n_jobs <= -1:
+                p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+
+            for obj in p.obj:
+                obj.transform()
 
             plots_n_rows += p.len(reference_scale)
             if p.type in ["heatmap", "hic"]:
