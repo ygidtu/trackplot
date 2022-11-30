@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -50,9 +50,7 @@ class FileList(object):
                  trans: Optional[str] = None,
                  depth: int = 30000):
 
-        if path.startswith("~"):
-            path = os.path.expanduser(path)
-        self.path = os.path.abspath(path)
+        self.path = os.path.abspath(os.path.expanduser(path))
 
         if not os.path.exists(self.path):
             raise FileNotFoundError(f"{self.path} not found.")
