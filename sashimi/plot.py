@@ -118,7 +118,7 @@ class PlotInfo(object):
         return self
 
     def load(self, region: GenomicLoci, n_jobs: int = 0, *args, **kwargs):
-        if n_jobs <= -1:
+        if n_jobs <= 1:
             for obj in self.obj:
                 obj.load(region=region, *args, **kwargs)
         else:
@@ -1019,8 +1019,7 @@ class Plot(object):
 
         # count the plots size
         for p in self.plots:
-
-            if n_jobs <= -1:
+            if n_jobs <= 1:
                 p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
             for obj in p.obj:
