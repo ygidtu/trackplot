@@ -51,7 +51,7 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
    
    # or
    
-   conda create -n sashimi meta.yaml
+   conda env create -n sashimi -f environment.yaml
    ```
 3. using docker image
     ```bash

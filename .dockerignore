@@ -4,3 +4,8 @@ example/
 Dockerfile
 WebDockerfile
 node_modules/
+plots/
+dist/
+build/
+*.egg-info/
+ui/

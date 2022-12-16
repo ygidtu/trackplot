@@ -10,7 +10,7 @@ conda install sashimi-py
 git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 
-conda create env -n sashimi meta.yaml
+conda env create -n sashimi -f environment.yaml
 ```
 
 ### via PyPI

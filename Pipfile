@@ -19,6 +19,7 @@ cairocffi = "*"
 hicmatrix = "*"
 loguru = "*"
 scipy = "*"
+adjusttext = "*"
 
 [dev-packages]
 

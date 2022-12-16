@@ -1,0 +1,25 @@
+channels:
+  - conda-forge
+  - bioconda
+  - default
+
+dependencies:
+  - python
+  - pysam
+  - filetype
+  - pybigwig
+  - click-option-group
+  - cairocffi
+  - hicmatrix
+  - matplotlib-base
+  - seaborn-base
+  - click
+  - numpy
+  - requests
+  - xmltodict
+  - pandas
+  - loguru
+  - adjusttext
+  - pip
+  - pip:
+      - -e .
