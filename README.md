@@ -1,4 +1,14 @@
 # sashimi.py
+
+[![PyPI version](https://badge.fury.io/py/sashimi-py.svg)](https://pypi.org/project/sashimi.py/)
+[![PyPI download](https://img.shields.io/pypi/dm/sashimi-py.svg)](https://pypi.org/project/sashimi.py/)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/sashimi-py/README.html)
+[![Documentation Status](https://readthedocs.org/projects/sashimi/badge/?version=latest)](https://sashimi.readthedocs.io/en/latest/)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%20v3-clause.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.11.02.514803%20-blue)](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
+
+---
+
 ![](example/diagram.png)
 
 [Tutorials](https://sashimi.readthedocs.io/en/latest/)
