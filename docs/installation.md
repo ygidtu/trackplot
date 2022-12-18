@@ -11,6 +11,9 @@ git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 
 conda env create -n sashimi -f environment.yaml
+# or
+conda env create -n sashimi -c conda-forge -c bioconda  -f requirements.txt
+conda activate sashimi && python setup.py install
 ```
 
 ### via PyPI

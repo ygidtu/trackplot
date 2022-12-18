@@ -1,48 +1,48 @@
-adjusttext>=0.7.3
-asciitree>=0.3.3
-cairocffi>=1.4.0
-certifi>=2022.12.7 ; python_version >= '3.6'
-cffi>=1.15.1
-charset-normalizer>=2.1.1 ; python_full_version >= '3.6.0'
-click>=8.1.3
-click-option-group>=0.5.5
-contourpy>=1.0.6 ; python_version >= '3.7'
-cooler>=0.8.11
-cycler>=0.11.0 ; python_version >= '3.6'
-cytoolz>=0.10.1
-dill>=0.3.6 ; python_version >= '3.7'
-filetype>=1.2.0
-fonttools>=4.38.0 ; python_version >= '3.7'
-h5py>=3.7.0 ; python_version >= '3.7'
-hicmatrix>=15
-idna>=3.4 ; python_version >= '3.5'
-intervaltree>=3.1.0
-kiwisolver>=1.4.4 ; python_version >= '3.7'
-loguru>=0.6.0
-matplotlib>=3.6.2
-multiprocess>=0.70.14 ; python_version >= '3.7'
-numexpr>=2.8.4 ; python_version >= '3.7'
-numpy>=1.23.5
-packaging>=22.0 ; python_version >= '3.7'
-pandas>=1.5.2
-pillow>=9.3.0 ; python_version >= '3.7'
-pybigwig>=0.3.18
-pycparser>=2.21
-pyfaidx>=0.7.1
-pypairix>=0.3.7
-pyparsing>=3.0.9 ; python_full_version >= '3.6.8'
-pysam>=0.20.0
-python-dateutil>=2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-pytz>=2022.6
-pyyaml>=6.0 ; python_version >= '3.6'
-requests>=2.28.1
-scipy>=1.9.3
-seaborn>=0.12.1
-setuptools>=65.6.3 ; python_version >= '3.7'
-simplejson>=3.18.0 ; python_version >= '2.5' and python_version not in '3.0, 3.1, 3.2, 3.3'
-six>=1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-sortedcontainers>=2.4.0
-tables>=3.7.0 ; python_version >= '3.6'
-toolz>=0.12.0 ; python_version >= '3.5'
-urllib3>=1.26.13 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
-xmltodict>=0.13.0
+adjusttext
+asciitree
+cairocffi
+certifi
+cffi
+charset-normalizer
+click
+click-option-group
+contourpy
+cooler
+cycler
+cytoolz
+dill
+filetype
+fonttools
+h5py
+hicmatrix
+idna
+intervaltree
+kiwisolver
+loguru
+matplotlib
+multiprocess
+numexpr
+numpy
+packaging
+pandas
+pillow
+pybigwig
+pycparser
+pyfaidx
+pypairix
+pyparsing
+pysam
+python-dateutil
+pytz
+pyyaml
+requests
+scipy
+seaborn
+setuptools
+simplejson
+six
+sortedcontainers
+tables
+toolz
+urllib3
+xmltodict
