@@ -24,7 +24,7 @@ class Junction(object):
         :param strand: the strand of the given junction.
         """
         self.chromosome = chromosome
-        self.start = int(start) + 1
+        self.start = int(start)
         self.end = int(end)
         self.strand = strand
 
@@ -61,7 +61,7 @@ class Junction(object):
         generate hash
         :return:
         """
-        return hash((self.chromosome, self.start, self.end))
+        return hash((self.chromosome, self.start, self.end, self.strand))
 
     def __str__(self):
         u"""

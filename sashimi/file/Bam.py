@@ -236,11 +236,9 @@ class Bam(SingleCell):
                     if cigar not in (1, 4, 5):  # I, S, H
                         start += length
 
-                    if cigar == 3:  # N
+                    if cigar == 3 and not kwargs.get("only_customized_junction"):  # N
                         try:
-                            junction_name = Junction(region.chromosome, cur_start, cur_end)
-                            if str(junction_name) not in included_junctions and len(included_junctions) != 0:
-                                continue
+                            junction_name = Junction(region.chromosome, cur_start, cur_end, strand)
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
@@ -257,6 +255,9 @@ class Bam(SingleCell):
                     site_minus[start - region.start] += 1
 
             for k, v in spanned_junctions.items():
+                if included_junctions and str(k) not in included_junctions:
+                    continue
+
                 if v >= threshold:
                     filtered_junctions[k] = v
 
@@ -276,9 +277,6 @@ class Bam(SingleCell):
         except ValueError as err:
             logger.error(self.path)
             logger.error(err)
-
-        if kwargs.get("only_customized_junction"):
-            spanned_junctions_plus, spanned_junctions_minus = {}, {}
 
         self.data = ReadDepth(
             plus if self.density_by_strand else plus + minus,

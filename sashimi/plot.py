@@ -594,7 +594,7 @@ class Plot(object):
                     color="viridis",
                     font_size: int = 8,
                     show_y_label: bool = True,
-                    theme: str = "ticks",
+                    theme: str = "ticks_blank",
                     do_scale: bool = False,
                     clustering: bool = False,
                     clustering_method: str = "ward",
@@ -1006,7 +1006,7 @@ class Plot(object):
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             # only enable the multiprocessing while n_jobs > 1
             if self.__n_objs__ / len(self.plots) >= n_jobs > 1:
-                p.load(self.region, n_jobs, *args, **kwargs)
+                p.load(self.region, n_jobs, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
             elif n_jobs > 1:
                 temp = copy.deepcopy(kwargs)
                 temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]

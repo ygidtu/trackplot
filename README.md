@@ -51,26 +51,32 @@ The sashimi.py is written in Python, and user could install it in a variety of w
 __Note:__ if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
 
 1. install from PiPy
-   
-   ```bash
-   pip install sashimi.py
-   ```
+
+    ```bash
+    pip install sashimi.py
+    ```
+
 2. install from bioconda
-   ```bash
-   conda install -c bioconda sashimi-py
+
+    ```bash
+    conda install -c bioconda sashimi-py
    
-   # or
-   
-   conda create -n sashimi meta.yaml
-   ```
+    # or
+    conda env create -n sashimi -f environment.yaml
+
+    # or
+    conda env create -n sashimi -c conda-forge -c bioconda  -f requirements.txt
+    conda activate sashimi && python setup.py install
+    ```
+
 3. using docker image
+
     ```bash
     docker pull ygidtu/sashimi
     docker run --rm ygidtu/sashimi --help
-    ```
-   or 
 
-    ```bash
+    # or 
+
     git clone from https://github.com/ygidtu/sashimi.py sashimi
     cd sashimi
     docker build -t ygidtu/docker .
@@ -88,9 +94,9 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
     # pr
     python main.py --help
     ```
-   
+
 5. running from a local webserver
-    
+
    ```bash
     git clone https://github.com/ygidtu/sashimi.py sashimi
     cd sashimi/web

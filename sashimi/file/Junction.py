@@ -25,18 +25,12 @@ def load_custom_junction(path: str) -> Dict[str, Dict[Junction, int]]:
                 if not header:
                     header = line
                 else:
-                    match = re.search(r"(?P<chrom>\w+):(?P<start>\d+)-(?P<end>\d+)", line[0])
-
-                    if match:
-                        match = match.groupdict()
-
-                        junc = Junction(match["chrom"], int(match["start"]), int(match["end"]))
-
-                        for i in range(1, len(header)):
-                            sample = header[i]
-                            if sample not in data.keys():
-                                data[sample] = {}
-                            data[sample][junc] = int(line[i])
+                    junc = Junction.create_junction(line[0])
+                    for i in range(1, len(header)):
+                        sample = header[i]
+                        if sample not in data.keys():
+                            data[sample] = {}
+                        data[sample][junc] = int(line[i])
 
     return data
 

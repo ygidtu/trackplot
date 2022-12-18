@@ -11,6 +11,8 @@ from typing import Dict, List, Optional, Union
 import matplotlib as mpl
 import numpy as np
 import seaborn as sns
+
+from adjustText import adjust_text
 from loguru import logger
 from matplotlib import pylab
 from matplotlib.font_manager import FontProperties
@@ -199,7 +201,7 @@ def set_y_ticks(
 ):
     u"""
     The y ticks are formatted here
-    @2019.03.31 add little check here to make sure the y axis shows the real value
+    @2019.03.31 add little check here to make sure the y-axis shows the real value
     """
     # set y ticks, y label and label
     Theme.set_theme(ax, theme)
@@ -646,7 +648,6 @@ def plot_density(
         data = obj.data
     jxns = data.junctions_dict
 
-    wiggle = data.plus
     if max_used_y_val is None:
         max_used_y_val = max(data.plus)
         if max_used_y_val % 2 == 1:
@@ -655,22 +656,13 @@ def plot_density(
     min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
 
     # Reduce memory footprint by using incremented graph_coords.
-    for idx, current_dat in zip(["+", "-"], [data.plus, data.minus]):
-        if current_dat is None:
-            continue
+    x, y1, y2 = [], [], []
+    for i in range(len(graph_coords)):
+        x.append(graph_coords[i])
+        y1.append(data.plus[i] if data.plus is not None else 0)
+        y2.append(-data.minus[i] if data.minus is not None else 0)
 
-        if idx == "-":
-            current_dat = -current_dat
-
-        compressed_x = []
-        compressed_wiggle = []
-
-        for i in range(len(graph_coords)):
-            compressed_wiggle.append(current_dat[i])
-            compressed_x.append(graph_coords[i])
-
-        ax.fill_between(compressed_x, compressed_wiggle, y2=0,
-                        color=color, lw=0, step="post", rasterized=raster)
+    ax.fill_between(x, y1, y2=y2, color=color, lw=0, step="post", rasterized=raster)
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -683,7 +675,7 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
-        current_height = abs(3 * (max_used_y_val - min_used_y_val) / 4)
+        jxn_numbers = []
         for plotted_count, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
 
@@ -698,7 +690,6 @@ def plot_density(
             # the junction out of boundaries, set the boundaries as coordinate
             ss1_idx, ss1_modified = get_limited_index(leftss - region.start, len(graph_coords))
             ss2_idx, ss2_modified = get_limited_index(rightss - region.start, len(graph_coords))
-
             u"""
             @2019.01.14
             add two new variables to make it clear which one is index, which one is genomic site 
@@ -706,14 +697,17 @@ def plot_density(
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
             # draw junction on bottom
             if plotted_count % 2 == 0:
+                current_height = abs(3 * min_used_y_val / 4)
+                left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
                 pts = [
-                    (ss1, 0 if not ss1_modified else data.curr_min(ss1_idx)),
+                    (ss1, -left_dens if not ss1_modified else -left_dens - current_height),
                     (ss1, -current_height),
                     (ss2, -current_height),
-                    (ss2, 0 if not ss2_modified else data.curr_min(ss2_idx))
+                    (ss2, -right_dens if not ss2_modified else -right_dens - current_height)
                 ]
             # draw junction on top
             else:
+                current_height = abs(3 * max_used_y_val / 4)
                 left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
                 pts = [
                     (ss1, left_dens if not ss1_modified else left_dens + current_height),
@@ -721,9 +715,10 @@ def plot_density(
                     (ss2, right_dens + current_height),
                     (ss2, right_dens if not ss2_modified else right_dens + current_height)
                 ]
-            midpt = cubic_bezier(pts, .5)
 
             if show_junction_number:
+                midpt = cubic_bezier(pts, .5)
+
                 t = ax.text(
                     midpt[0], midpt[1],
                     '{0}'.format(round(jxns[jxn], 2)),
@@ -734,6 +729,7 @@ def plot_density(
 
                 # @2018.12.19 transparent background
                 t.set_bbox(dict(alpha=0))
+                jxn_numbers.append(t)
 
             a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
 
@@ -748,23 +744,27 @@ def plot_density(
 
             ax.add_patch(PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
 
+        adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1), autoalign="y")
+
     if obj and obj.title:
-        ax.text(
-            max(graph_coords) - len(obj.title), max_used_y_val,
-            obj.title, color=color, fontsize=font_size
-        )
+        ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
+
+    if data.strand_aware:
+        max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
+        min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else max_used_y_val,
-        min_used_y_val=-max(abs(min_used_y_val), max_used_y_val) if data.strand_aware else -abs(min_used_y_val),
+        max_used_y_val=max_used_y_val,
+        min_used_y_val=min_used_y_val,
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
         y_axis_skip_zero=False if data.strand_aware else True
     )
+
 
 def plot_site_plot(
         ax: mpl.axes.Axes,
@@ -1024,8 +1024,6 @@ def plot_line(
     :param max_used_y_val:
     """
     max_y_val = 0
-    max_x_val = 0
-
     for ylab, val in data.items():
         attr = line_attrs.get(ylab, {}) if line_attrs else {}
 
@@ -1036,10 +1034,6 @@ def plot_line(
         ax.plot(x, y, label=ylab if show_y_label else "", **attr)
 
         max_y_val = max(max_y_val, max(val.wiggle))
-        max_x_val = max(max_x_val, len(val.wiggle))
-
-    ax.tick_params(axis='both', which='major', labelsize=font_size)
-    ax.tick_params(labelsize=font_size)
 
     if show_legend:
         ax.legend(loc=legend_position,

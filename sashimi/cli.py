@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -299,7 +299,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Density plot settings")
 @optgroup.option("--density", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b 
+                 The path to list of input files, a tab separated text file, \b
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file alias (optional), \b
@@ -326,11 +326,11 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Line plot settings")
 @optgroup.option("--line", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b 
+                 The path to list of input files, a tab separated text file, \b
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file group (optional), \b
-                 - 4th column is input file alias (optional), 
+                 - 4th column is input file alias (optional),
                  - 5th column is color platte of corresponding group (optional).
                  """)
 @optgroup.option("--hide-legend", default=False, is_flag=True, type=click.BOOL, help="Whether to hide legend")
@@ -340,7 +340,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Heatmap plot settings")
 @optgroup.option("--heatmap", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b 
+                 The path to list of input files, a tab separated text file, \b
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file group (optional), \b
@@ -362,7 +362,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b 
+                 The path to list of input files, a tab separated text file, \b
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file alias (optional), \b
@@ -397,7 +397,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("HiC settings")
 @optgroup.option("--hic", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b 
+                 The path to list of input files, a tab separated text file, \b
                  - 1st column is path to input file, \b
                  - 2nd column is the file category, \b
                  - 3rd column is input file alias (optional), \b
