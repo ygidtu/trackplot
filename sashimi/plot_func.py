@@ -664,6 +664,10 @@ def plot_density(
 
     ax.fill_between(x, y1, y2=y2, color=color, lw=0, step="post", rasterized=raster)
 
+    if data.strand_aware:
+        max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
+        min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
+
     if jxns:
         # sort the junctions by intron length for better plotting look
         jxns_sorted_list = sorted(jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True)
@@ -675,15 +679,22 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
+        recorded_pts = set()
         jxn_numbers = []
-        for plotted_count, jxn in enumerate(jxns_sorted_list):
+        for jxn in jxns_sorted_list:
+            logger.debug(f"junctions of {y_label}: {jxn} - {round(jxns[jxn], 2)}")
             leftss, rightss = jxn.start, jxn.end
+
+            # junction must at least have one anchor located in plotted region
+            if (leftss < region.start and rightss > region.end) or rightss < region.start or leftss > region.end:
+                logger.warning(f"junction {jxn} of {y_label} is is out of plotting region, skip")
+                continue
 
             # @2022.09.26
             # Skip these too short span junction for avoiding plotting junction number
-            overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
-            if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
-                continue
+            # overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
+            # if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
+            #     continue
 
             # @2018.12.19
             # set junctions coordinate here
@@ -695,26 +706,46 @@ def plot_density(
             add two new variables to make it clear which one is index, which one is genomic site 
             """
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
+
             # draw junction on bottom
-            if plotted_count % 2 == 0:
+            if jxn.strand == "-" and kwargs.get("density_by_strand"):
                 current_height = abs(3 * min_used_y_val / 4)
                 left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
                 pts = [
-                    (ss1, -left_dens if not ss1_modified else -left_dens - current_height),
-                    (ss1, -current_height),
-                    (ss2, -current_height),
-                    (ss2, -right_dens if not ss2_modified else -right_dens - current_height)
+                    -left_dens if not ss1_modified else -left_dens - current_height,
+                    -left_dens - current_height,
+                    -right_dens - current_height,
+                    -right_dens if not ss2_modified else -right_dens - current_height
                 ]
             # draw junction on top
             else:
                 current_height = abs(3 * max_used_y_val / 4)
                 left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
                 pts = [
-                    (ss1, left_dens if not ss1_modified else left_dens + current_height),
-                    (ss1, left_dens + current_height),
-                    (ss2, right_dens + current_height),
-                    (ss2, right_dens if not ss2_modified else right_dens + current_height)
+                    left_dens if not ss1_modified else left_dens + current_height,
+                    left_dens + current_height,
+                    right_dens + current_height,
+                    right_dens if not ss2_modified else right_dens + current_height
                 ]
+
+            pts_ = "_".join([str(x) for x in pts])
+            while pts_ in recorded_pts:
+                pts[1], pts[2] = pts[1] * 1.1, pts[2] * 1.1
+                pts_ = "_".join([str(x) for x in pts])
+            recorded_pts.add(pts_)
+
+            """
+            @2018.12.26
+            scale the junctions line width
+            """
+            if junction_count_gap > 0:
+                line_width = (jxns[jxn] - min_junction_count) / junction_count_gap
+            else:
+                line_width = 0
+
+            pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
+            ax.add_patch(PathPatch(Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
+                                   ec=color, lw=line_width + 0.2, fc='none'))
 
             if show_junction_number:
                 midpt = cubic_bezier(pts, .5)
@@ -731,33 +762,24 @@ def plot_density(
                 t.set_bbox(dict(alpha=0))
                 jxn_numbers.append(t)
 
-            a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
-
-            """
-            @2018.12.26
-            scale the junctions line width
-            """
-            if junction_count_gap > 0:
-                line_width = (jxns[jxn] - min_junction_count) / junction_count_gap
-            else:
-                line_width = 0
-
-            ax.add_patch(PathPatch(a, ec=color, lw=line_width + 0.2, fc='none'))
-
         adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1), autoalign="y")
 
     if obj and obj.title:
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
 
-    if data.strand_aware:
+    # update the y-axis actually used
+    min_used_y_val, max_used_y_val = ax.get_ylim()
+    if data.strand_aware and kwargs.get("density_by_strand"):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
-        min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
+        min_used_y_val = -max_used_y_val
+    elif not kwargs.get("density_by_strand"):
+        min_used_y_val = 0
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
         graph_coords=graph_coords,
-        max_used_y_val=max_used_y_val,
-        min_used_y_val=min_used_y_val,
+        max_used_y_val=max_used_y_val * 1.1,  # keep a buffer at top and bottom of junctions
+        min_used_y_val=min_used_y_val * 1.1,
         n_y_ticks=n_y_ticks,
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,

@@ -68,13 +68,7 @@ class Junction(object):
         convert junctions to string
         :return:
         """
-        return "{chrom}:{start}-{end}".format(
-            **{
-                "chrom": self.chromosome,
-                "start": self.start,
-                "end": self.end
-            }
-        )
+        return f"{self.chromosome}:{self.start}-{self.end}:{self.strand}"
 
     def __gt__(self, other):
         u"""
