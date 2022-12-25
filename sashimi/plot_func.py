@@ -681,7 +681,7 @@ def plot_density(
 
         recorded_pts = set()
         jxn_numbers = []
-        for jxn in jxns_sorted_list:
+        for jxn_idx, jxn in enumerate(jxns_sorted_list):
             logger.debug(f"junctions of {y_label}: {jxn} - {round(jxns[jxn], 2)}")
             leftss, rightss = jxn.start, jxn.end
 
@@ -708,17 +708,14 @@ def plot_density(
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
 
             # draw junction on bottom
-            if jxn.strand == "-" and kwargs.get("density_by_strand"):
-                current_height = abs(3 * min_used_y_val / 4)
-                left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
-                pts = [
-                    -left_dens if not ss1_modified else -left_dens - current_height,
-                    -left_dens - current_height,
-                    -right_dens - current_height,
-                    -right_dens if not ss2_modified else -right_dens - current_height
-                ]
-            # draw junction on top
+            if kwargs.get("density_by_strand"):
+                jxn_on_top = jxn.strand == "+"
             else:
+                jxn_on_top = jxn_idx % 2 == 0
+                if abs(min_used_y_val) < max_used_y_val:
+                    min_used_y_val = -max_used_y_val
+
+            if jxn_on_top:
                 current_height = abs(3 * max_used_y_val / 4)
                 left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
                 pts = [
@@ -727,12 +724,22 @@ def plot_density(
                     right_dens + current_height,
                     right_dens if not ss2_modified else right_dens + current_height
                 ]
+            else:
+                current_height = abs(3 * min_used_y_val / 4)
+                left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
+                pts = [
+                    -left_dens if not ss1_modified else -left_dens - current_height,
+                    -left_dens - current_height,
+                    -right_dens - current_height,
+                    -right_dens if not ss2_modified else -right_dens - current_height
+                ]
 
-            pts_ = "_".join([str(x) for x in pts])
-            while pts_ in recorded_pts:
-                pts[1], pts[2] = pts[1] * 1.1, pts[2] * 1.1
+            if sum(pts) > 0:
                 pts_ = "_".join([str(x) for x in pts])
-            recorded_pts.add(pts_)
+                while pts_ in recorded_pts:
+                    pts[1], pts[2] = pts[1] * 1.1, pts[2] * 1.1
+                    pts_ = "_".join([str(x) for x in pts])
+                recorded_pts.add(pts_)
 
             """
             @2018.12.26
@@ -772,7 +779,8 @@ def plot_density(
     if data.strand_aware and kwargs.get("density_by_strand"):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
         min_used_y_val = -max_used_y_val
-    elif not kwargs.get("density_by_strand"):
+    elif not kwargs.get("density_by_strand") and not jxns:
+        # if there is no any junctions, then just use the compressed y-axis
         min_used_y_val = 0
 
     set_y_ticks(
