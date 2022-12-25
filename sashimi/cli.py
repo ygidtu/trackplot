@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
