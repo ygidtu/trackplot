@@ -17,7 +17,11 @@ from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
 
-np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+
+try:
+    np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+except AttributeError as err:
+    pass
 
 
 class Reads(GenomicLoci):
