@@ -228,7 +228,7 @@ def process_file_list(infile: str, category: str = "density"):
     return None
 
 
-@click.command(context_settings=dict(help_option_names=['-h', '--help']), )
+@click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
 @click.version_option(__version__, message="Current version %(version)s")
 @click.option("--debug", is_flag=True, help="enable debug level log")
 @click.option("-e", "--event", type=click.STRING, required=True,
@@ -502,7 +502,6 @@ def main(**kwargs):
 
     # add reference
     for key in kwargs.keys():
-        # print(key)
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
             logger.debug(f"add {key} {kwargs[key]}")
             if key == "reference":

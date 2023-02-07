@@ -3,16 +3,15 @@
 
 ###  via Conda
 ```bash
-conda install sashimi-py
+conda install -c conda-forge -c bioconda sashimi-py
 
 # create conda env from local
-
 git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 
-conda env create -n sashimi -f environment.yaml
+conda create -n sashimi -f environment.yaml
 # or
-conda env create -n sashimi -c conda-forge -c bioconda  -f requirements.txt
+conda create -n sashimi -c conda-forge -c bioconda -f requirements.txt
 conda activate sashimi && python setup.py install
 ```
 

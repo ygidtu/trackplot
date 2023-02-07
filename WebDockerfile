@@ -1,6 +1,7 @@
 FROM ygidtu/sashimi
 
+ENV PYPI=https://pypi.douban.com/simple
 ENV ROOT_DIR=/opt/sashimi
-RUN cd $ROOT_DIR && pip install -i $PYPI fastapi uvicorn pydantic jinja2
+RUN cd $ROOT_DIR && pip install fastapi uvicorn pydantic jinja2  # -i $PYPI
 
 ENTRYPOINT ["python", "/opt/sashimi/server.py", "--host", "0.0.0.0"]

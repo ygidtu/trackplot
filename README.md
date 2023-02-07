@@ -59,14 +59,13 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
 2. install from bioconda
 
     ```bash
-    conda install -c bioconda sashimi-py
+    conda install -c bioconda -c conda-forge sashimi-py
    
     # or
     conda env create -n sashimi -f environment.yaml
 
     # or
-    conda env create -n sashimi -c conda-forge -c bioconda  -f requirements.txt
-    conda activate sashimi && python setup.py install
+    conda create -n sashimi -c bioconda -c conda-forge sashimi-py
     ```
 
 3. using docker image
@@ -122,7 +121,6 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
     sashimipy --help
     # pr
     python main.py --help
-
     ```
 
 
