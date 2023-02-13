@@ -23,6 +23,14 @@ class Uniprot(object):
     Get domain information from uniprot based uniprot id
     """
 
+    __slots__ = [
+        "ui", "cds_len", "fmt",
+        "database", "timeout",
+        "proxy", "domain",
+        "__valid_fmt", "__url",
+        "request_res", "guessed_id"
+    ]
+
     def __init__(self, uniprot_id: str, cds_len: int, fmt="xml", database="uniprot",
                  timeout: int = 10, proxy: Optional[str] = None):
         u"""

@@ -17,6 +17,8 @@ from sashimi.file.File import File
 
 class Bedgraph(File):
 
+    __slots__ = "label", "title"
+
     def __init__(self, path: str, label: str = "", title: str = ""):
         u"""
         :param path: the path to bam file

@@ -7,12 +7,10 @@ Changelog:
     1. move several attributes and functions to corresponding file objects, turn this into pure data class
     2. add transform to log2, log10 or zscore transform the data while plotting
 """
-from typing import Dict, Optional
+from typing import Optional
 
 import numpy as np
 from scipy.stats import zscore
-
-from sashimi.base.Junction import Junction
 
 
 class ReadDepth(object):
@@ -22,9 +20,14 @@ class ReadDepth(object):
     add a parent class to handle all the position comparison
     """
 
+    __slots__ = [
+        "junction_dict_plus", "junction_dict_minus",
+        "minus", "plus",
+        "strand_aware", "site_plus", "site_minus",
+    ]
+
     def __init__(self,
                  wiggle: np.array,
-                 junctions_dict: Optional[Dict[Junction, int]] = None,
                  site_plus: Optional[np.array] = None,
                  site_minus: Optional[np.array] = None,
                  minus: Optional[np.array] = None,
@@ -35,7 +38,6 @@ class ReadDepth(object):
         init this class
         :param wiggle: a numpy.ndarray object represented the whole read coverage,
                        should be summation of plus and minus or plus
-        :param junctions_dict: a dict represented the coordinate of each intron as well as frequency
         :param site_plus: a numpy.ndarray object represented the forward site coverage
         :param site_minus: a numpy.ndarray object represented the reverse site coverage
         :param minus: a numpy.ndarray object represented the reverse strand read coverage
@@ -44,7 +46,6 @@ class ReadDepth(object):
         :param junction_dict_minus: these splice junction from minus strand
         """
         self.plus = wiggle
-        self.junctions_dict = junctions_dict
         self.strand_aware = strand_aware
         self.minus = abs(minus) if minus is not None else minus
         self.junction_dict_plus = junction_dict_plus
@@ -63,11 +64,17 @@ class ReadDepth(object):
         return self.plus
 
     @property
+    def junctions_dict(self) -> dict:
+        res = {}
+        res.update(self.junction_dict_plus)
+        res.update(self.junction_dict_minus)
+        return res
+
+    @property
     def max(self) -> float:
         return max(self.wiggle, default=0)
 
     def __add__(self, other):
-
         """
             __add__ allows two ReadDepth objects to be added together using the + symbol
 
@@ -79,13 +86,14 @@ class ReadDepth(object):
 
         if self.wiggle is not None and other.wiggle is not None:
             if len(self.wiggle) == len(other.wiggle):
-                junctions = self.junctions_dict if self.junctions_dict else {}
-                if other.junctions_dict:
-                    for i, j in other.junctions_dict.items():
-                        if i in junctions.keys():
-                            junctions[i] += j
-                        else:
-                            junctions[i] = j
+                junc_plus, junc_minus = {}, {}
+
+                for i in [self.junction_dict_plus, other.junction_dict_plus]:
+                    if i:
+                        junc_plus.update(i)
+                for i in [self.junction_dict_minus, other.junction_dict_minus]:
+                    if i:
+                        junc_minus.update(i)
 
                 minus = None
                 if self.minus is not None and other.minus is not None:
@@ -96,9 +104,9 @@ class ReadDepth(object):
                     minus = self.minus
 
                 return ReadDepth(
-                    self.plus + other.plus,
-                    junctions_dict=junctions,
-                    minus=minus
+                    self.plus + other.plus, minus=minus,
+                    junction_dict_plus=junc_plus,
+                    junction_dict_minus=junc_minus
                 )
         elif self.wiggle is None:
             return other
@@ -122,20 +130,21 @@ class ReadDepth(object):
         :param other:
         :return:
         """
-        new_junctions_dict = {}
+        junc_plus, junc_minus = {}, {}
 
-        for key, value in self.junctions_dict.items():
-            if key in other.junctions_dict:
-                new_junctions_dict[key] = value + other.junctions_dict[key]
+        for key, value in other.junctions_dict.items():
+            if key in self.junctions_dict.keys():
+                if key.strand == "+":
+                    self.junction_dict_plus[key] = value + other.junctions_dict[key]
+                else:
+                    self.junction_dict_minus[key] = value + other.junctions_dict[key]
             else:
-                new_junctions_dict[key] = value
+                if key.strand == "+":
+                    self.junction_dict_plus[key] = other.junctions_dict[key]
+                else:
+                    self.junction_dict_minus[key] = other.junctions_dict[key]
 
-        for key, value in list(other.junctions_dict.items()):
-            if key not in self.junctions_dict:
-                new_junctions_dict[key] = value
-
-        self.junctions_dict = new_junctions_dict
-        return new_junctions_dict
+        return self.junctions_dict
 
     def transform(self, log_trans: str):
         funcs = {"10": np.log10, "2": np.log2, "zscore": zscore, "e": np.log}
@@ -147,10 +156,28 @@ class ReadDepth(object):
             if self.minus is not None:
                 self.minus = funcs[log_trans](self.minus + 1)
 
-    def normalize(self, size_factor: float):
-        self.plus = np.divide(self.plus, size_factor) # * 100
-        if self.minus is not None:
-            self.minus = np.divide(self.minus, size_factor)
+    def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 1):
+        u"""
+        Convert reads counts to cpm, fpkm or just scale with scale_factor
+
+        Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
+        """
+
+        if format_ == "rpkm":
+            # for rpkm the size_factor is total reads
+            self.plus = np.divide(self.plus, np.multiply((len(self.plus) - read_length + 1) * 1e3, size_factor / 1e6))
+            if self.minus is not None:
+                self.minus = np.divide(self.minus,
+                                       np.multiply((len(self.minus) - read_length + 1) * 1e3, size_factor / 1e6))
+        elif format_ == "cpm":
+            # for cpm the size_factor is total reads
+            self.plus = np.divide(self.plus, np.multiply(size_factor, 1e6))
+            if self.minus is not None:
+                self.minus = np.divide(self.minus, np.multiply(size_factor, 1e6))
+        else:
+            self.plus = np.divide(self.plus, size_factor)  # * 100
+            if self.minus is not None:
+                self.minus = np.divide(self.minus, size_factor)
 
 
 if __name__ == '__main__':

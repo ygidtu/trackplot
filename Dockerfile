@@ -1,4 +1,4 @@
-FROM python:3.9-buster
+FROM python:3.10-buster
 
 ENV PYPI=https://pypi.douban.com/simple
 ENV ROOT_DIR=/opt/sashimi

@@ -1,7 +1,8 @@
 import os
+from configparser import ConfigParser
 from setuptools import setup, find_packages
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -9,27 +10,18 @@ __email__ = "ygidtu@gmail.com"
 def locate_packages():
     __dir__ = os.path.dirname(os.path.abspath(__file__))
     pipfile = os.path.join(__dir__, "Pipfile")
+
+    conf = ConfigParser()
+    conf.read(pipfile)
+
     packages = []
-
-    kept = False
-    with open(pipfile) as r:
-        for line in r:
-            line = line.strip()
-
-            if line == "[packages]":
-                kept = True
-                continue
-            elif line.startswith("[") and line.endswith("]"):
-                kept = False
-
-            if kept:
-                if line:
-                    name, version = line.split(" = ")
-                    version = version.strip('"')
-                    if version == "*":
-                        packages.append(f"{name}")
-                    else:
-                        packages.append(f"{name}, {version}")
+    for name in conf["packages"]:
+        version = conf.get("packages", name)
+        version = version.strip('"').strip("'")
+        if version == "*":
+            packages.append(name)
+        else:
+            packages.append(f"{name}, {version}")
     return packages
 
 
@@ -56,7 +48,7 @@ setup(
                 'sashimipy = sashimi.cli:main'
             ]
     },
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     data_files=[(".", ['README.md', 'Pipfile', 'Pipfile.lock'])],
     install_requires=locate_packages(),
     version=__version__

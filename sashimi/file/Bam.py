@@ -19,10 +19,14 @@ from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Junction import Junction
 from sashimi.base.ReadDepth import ReadDepth
 from sashimi.base.Readder import Reader
+from sashimi.conf.config import NORMALIZATION
 from sashimi.file.File import SingleCell
 
 
 class Bam(SingleCell):
+
+    __slots__ = "title", "label", "library", "density_by_strand"
+
     def __init__(self,
                  path: str, label: str = "",
                  title: str = "", barcodes: Optional[Set[str]] = None,
@@ -124,6 +128,7 @@ class Bam(SingleCell):
              threshold: int = 0,
              reads1: Optional[bool] = None,
              required_strand: Optional[str] = None,
+             normalize_format: Optional[str] = None,
              **kwargs
              ):
         """
@@ -143,20 +148,20 @@ class Bam(SingleCell):
         :param threshold: minimums counts of the given splice junction for visualization
         :param reads1: None -> all reads, True -> only R1 kept; False -> only R2 kept
         :param required_strand: None -> all reads, else reads on specific strand
+        :param normalize_format: None -> raw counts; others fpkm and cpm
         """
         self.region = region
-        filtered_junctions = {}
 
         spanned_junctions = kwargs.get("junctions", {})
         included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus = dict()
         spanned_junctions_minus = dict()
-        plus, minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
-        site_plus, site_minus = np.zeros(len(region), dtype="f"), np.zeros(len(region), dtype="f")
+        plus, minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
+        site_plus, site_minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
 
         umis = {}
-
+        read_lens = []
         try:
             for read, strand in Reader.read_bam(path=self.path, region=region, library=self.library):
                 # make sure that the read can be used
@@ -172,6 +177,9 @@ class Bam(SingleCell):
 
                 if reads1 is False and not read.is_read2:
                     continue
+
+                if normalize_format != NORMALIZATION[0] and normalize_format is not None:
+                    read_lens.append(read.query_alignment_length)
 
                 # filter reads by 10x barcodes
                 # @20220924, add `not` before has_barcode and skip these reads without umi tag.
@@ -259,8 +267,6 @@ class Bam(SingleCell):
                     continue
 
                 if v >= threshold:
-                    filtered_junctions[k] = v
-
                     if k.strand == "-":
                         if k not in spanned_junctions_plus:
                             spanned_junctions_plus[k] = -1
@@ -280,13 +286,17 @@ class Bam(SingleCell):
 
         self.data = ReadDepth(
             plus if self.density_by_strand else plus + minus,
-            junctions_dict=filtered_junctions,
             site_plus=site_plus,
             site_minus=site_minus,
             minus=minus if self.density_by_strand else None,
             junction_dict_plus=spanned_junctions_plus,
             junction_dict_minus=spanned_junctions_minus,
             strand_aware=False if self.library == "fru" else True)
+
+        if normalize_format != NORMALIZATION[0] and normalize_format is not None:
+            logger.info(f"Counting total number of reads: {self.path}")
+            total_reads = Reader.total_reads_of_bam(self.path)
+            self.data.normalize(size_factor=total_reads, format_=normalize_format, read_length=np.mean(read_lens))
         return self
 
 

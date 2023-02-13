@@ -216,6 +216,18 @@ class Reader(object):
         hic = hm.hiCMatrix(path, f"{region.chromosome}:{region.start}-{region.end}")
         return hic
 
+    @classmethod
+    def total_reads_of_bam(cls, path: str):
+        if not os.path.exists(path + ".bai"):
+            logger.info(f"try to create index for {path}")
+            pysam.index(path)
+
+        total = 0
+        with pysam.AlignmentFile(path, 'rb') as bam_file:
+            for _ in bam_file:
+                total += 1
+        return total
+
 
 if __name__ == '__main__':
     pass

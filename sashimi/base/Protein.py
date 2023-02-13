@@ -22,6 +22,11 @@ class CdsProtein(GenomicLoci):
     Re-collect cds information
     """
 
+    __slots__ = [
+        "proxy", "timeout", "cds",
+        "pep", "gene_id", "transcript_id"
+    ]
+
     def __init__(
             self,
             chromosome: str,

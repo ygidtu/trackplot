@@ -7,9 +7,13 @@ import os
 
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
+from sashimi.file.File import File
 
 
-class Motif(object):
+class Motif(File):
+
+    __slots__ = "path", "region", "label", "data"
+
     def __init__(self,
                  path: str,
                  region: GenomicLoci,
@@ -17,9 +21,7 @@ class Motif(object):
         u"""
         the plot region
         """
-        self.path = path
-        self.region = region
-        self.label = ""
+        super().__init__(path, region=region)
         self.data = {}  # List[List[base, score]]
 
     @classmethod

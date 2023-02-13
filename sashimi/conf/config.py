@@ -29,6 +29,8 @@ DISTANCE_METRIC = [
 
 CLUSTERING_METHOD = ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
 
+NORMALIZATION = ["count", "cpm", "rpkm"]
+
 
 if __name__ == '__main__':
     pass

@@ -8,11 +8,14 @@ from typing import Optional, Set, List, Dict
 
 
 class File(object):
-    def __init__(self, path: str):
+
+    __slots__ = "path", "data", "label", "region", "log_trans", "title", "is_single_cell"
+
+    def __init__(self, path: str, region=None):
         self.path = path
         self.data = None
         self.label = ""
-        self.region = None
+        self.region = region
         self.log_trans = "0"
         self.title = ""
         self.is_single_cell = False

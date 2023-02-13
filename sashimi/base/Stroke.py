@@ -7,6 +7,8 @@ from sashimi.base.GenomicLoci import GenomicLoci
 
 
 class Stroke(object):
+
+    __slots__ = ["start", "end", "color", "label"]
     def __init__(self, start: int, end: int, color: str = "red", label: str = ""):
         self.start = start
         self.end = end

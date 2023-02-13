@@ -6,6 +6,9 @@ u"""
 
 
 class AxLabel(object):
+
+    __slots__ = ["Ax", "Label"]
+
     def __init__(self, ax, label):
         self.Ax = ax
         self.Label = label

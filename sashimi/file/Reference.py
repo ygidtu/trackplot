@@ -28,6 +28,9 @@ class Reference(File):
     The reference file, support gtf and gff format
     """
 
+    __slots__ = "category", "add_domain", "domain", \
+        "interval_file", "add_local_domain", "local_domain", "proxy", "timeout"
+
     def __init__(self, path: str, category: str = "gtf",
                  add_domain: bool = False, add_local_domain: Optional[str] = False,
                  proxy: Optional[str] = None, timeout: int = 10):

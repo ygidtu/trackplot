@@ -17,11 +17,11 @@ from click_option_group import optgroup
 from loguru import logger
 
 from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE
+from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.1.5"
+__version__ = "0.1.6b"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -225,8 +225,6 @@ def process_file_list(infile: str, category: str = "density"):
         logger.error(f"{infile} -> {err}")
         exit(1)
 
-    return None
-
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
 @click.version_option(__version__, message="Current version %(version)s")
@@ -296,6 +294,8 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="The color of exons")
 @optgroup.option("--intron-scale", type=click.FLOAT, default=0.5, help="The scale of intron", show_default=True)
 @optgroup.option("--exon-scale", type=click.FLOAT, default=1, help="The scale of exon", show_default=True)
+@optgroup.option("--normalize-format", type=click.Choice(NORMALIZATION), default="count",
+                 help="The normalize format for bam file", show_default=True)
 @optgroup.group("Density plot settings")
 @optgroup.option("--density", type=click.Path(exists=True),
                  help="""
@@ -742,7 +742,8 @@ def main(**kwargs):
         },
         distance_between_label_axis=kwargs["distance_ratio"],
         included_junctions=included_junctions,
-        n_jobs=kwargs.get("process", 1)
+        n_jobs=kwargs.get("process", 1),
+        normalize_format=kwargs.get("normalize_format")
     )
     logger.info("DONE")
 

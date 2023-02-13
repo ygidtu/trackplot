@@ -22,6 +22,8 @@ class Depth(File):
     2. tabix -s 2 -e 2 depth.bgz
     """
 
+    __slots__ = "label", "title", "region"
+
     def __init__(self, path: str, label: List[str] = None, title: str = ""):
         super().__init__(path)
         self.label = label

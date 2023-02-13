@@ -17,6 +17,8 @@ class Coordinate(object):
     A Coordinate object for genomic regions.
     """
 
+    __slots__ = ["strand", "se"]
+
     def __init__(self, coordinate_list: list, strand: str = "*"):
         u"""
         Set genomic coordinates
@@ -143,6 +145,7 @@ class Coordinate(object):
     def __group_consecutive_value__(location_list: np.ndarray, strand: str) -> list:
         u"""
         group the consecutive value into a list
+
         :param location_list: a list of location site
         :param strand: the strand of the current list to group
         :return:

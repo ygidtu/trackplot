@@ -19,6 +19,9 @@ from sashimi.base.Readder import Reader
 
 
 class HiCTrack:
+
+    __slots__ = "path", "matrix", "x", "y", "depth", "trans", "label", "region", "is_single_cell"
+
     def __init__(self,
                  path: str,
                  label: str = "",

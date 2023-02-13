@@ -42,6 +42,8 @@ class PlotInfo(object):
     this class is used to collect all the plot information.
     """
 
+    __slots__ = ["obj", "group", "type", "category"]
+
     def __init__(self, obj: File, category: str = "", type_: str = "", group: str = ""):
         u"""
         init this class
@@ -143,6 +145,13 @@ class Plot(object):
     u"""
     this class is the main framework of sashimi
     """
+
+    __slots__ = [
+        "__n_objs__", "region", "sites",
+        "focus", "stroke", "events",
+        "sequence", "reference", "graph_coords",
+        "plots", "params", "junctions", "link"
+    ]
 
     def __init__(self):
         u"""

@@ -6,6 +6,7 @@ This script contains the functions to draw different images
 import math
 from collections import defaultdict
 from copy import deepcopy
+from decimal import Decimal
 from typing import Dict, List, Optional, Union
 
 import matplotlib as mpl
@@ -222,18 +223,24 @@ def set_y_ticks(
         ax.set_ylim(min_used_y_val - plus, plus + max_used_y_val)
         ax.spines["left"].set_bounds(min_used_y_val, max_used_y_val)
 
-        universal_y_ticks = pylab.linspace(min_used_y_val, max_used_y_val, n_y_ticks + 1)
+        # assign number of ticks to minus and plus axis
+        assign_ticks_y = [int(x / (abs(min_used_y_val) + max_used_y_val) * n_y_ticks) for x in [abs(min_used_y_val), abs(max_used_y_val)]]
+        universal_y_ticks = pylab.linspace(min_used_y_val, 0, assign_ticks_y[0] + 1)
+        for i in pylab.linspace(0, max_used_y_val, assign_ticks_y[1] + 1):
+            universal_y_ticks = np.append(universal_y_ticks, i)
+
         # add zero into strand-aware plot
         universal_y_ticks = np.unique(np.append(universal_y_ticks, 0))
         universal_y_ticks = sorted(universal_y_ticks)
         curr_y_tick_labels = []
-
         for lab in universal_y_ticks:
-            if y_axis_skip_zero and abs(lab - 0) < 0.0000000001:
+            if y_axis_skip_zero and lab == 0:
                 # Exclude label for 0
                 curr_y_tick_labels.append("")
+            elif max_used_y_val < 1e-2:
+                curr_y_tick_labels.append(f"{Decimal(lab):.2E}")
             else:
-                curr_y_tick_labels.append("%.1f" % lab if lab % 1 != 0 else "%d" % lab)
+                curr_y_tick_labels.append(f"{lab:.1f}" if lab % 1 != 0 else f"{int(lab)}")
         u"""
         @2019.01.04
         If there is no bam file, draw a blank y-axis 
@@ -769,7 +776,10 @@ def plot_density(
                 t.set_bbox(dict(alpha=0))
                 jxn_numbers.append(t)
 
-        adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1), autoalign="y")
+        try:
+            adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1), autoalign="y")
+        except IndexError as err:
+            logger.warning(err)
 
     if obj and obj.title:
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)

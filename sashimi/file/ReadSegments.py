@@ -26,6 +26,8 @@ except AttributeError as err:
 
 class Reads(GenomicLoci):
 
+    __slots__ = "exons", "introns", "polya_length", "m6a", "features", "id"
+
     def __init__(self,
                  chromosome: str,
                  start: str,

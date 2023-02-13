@@ -20,6 +20,9 @@ from sashimi.file.File import SingleCell
 
 
 class ATAC(SingleCell):
+
+    __slots__ = "title", "label", "size_factor", "barcode_groups", "barcode"
+
     def __init__(self,
                  path: str, barcode_groups: Dict[str, Set[str]], barcode: str, size_factor,
                  label: str = "", title: str = ""):
