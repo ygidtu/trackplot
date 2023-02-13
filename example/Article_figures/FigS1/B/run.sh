@@ -1,6 +1,6 @@
 python sashimi/sashimi.py/main.py \
   -e chr9:112296343-112335026 \
-  -r /mnt/raid61/Ref/HomSap/release101/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
   -o PTBP3.pdf \
   --dpi 300 \

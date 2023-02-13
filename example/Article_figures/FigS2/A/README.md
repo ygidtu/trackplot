@@ -1,5 +1,5 @@
 
-## Figure 3A
+## FigS 2A
 
 Data was downloaded from [SRX8994511](https://www.ncbi.nlm.nih.gov/sra/SRX8994511). 
 After mapping to the corresponding genome using minimap2, we convert bam file into bed file. the detailed command line as follow,
@@ -8,7 +8,7 @@ After mapping to the corresponding genome using minimap2, we convert bam file in
 
 samtools view -u -F 2304 SRX8994511.example.bam \
 | bedtools bamtobed -bed12 -cigar \
-|bedtools sort -i /dev/stdin \
+| bedtools sort -i /dev/stdin \
 | bgzip > SRX8994511.bed.gz
 
 ```
@@ -18,7 +18,7 @@ the command line for generating the plots.
 ```bash
 
 python  sashimi.py/main.py \
-  -r /mnt/raid61/Ref/HomSap/release101/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   -e 21:43092956-43107570:+ \
   --density bam.tsv \
   --igv igv.tsv \
