@@ -5,102 +5,103 @@
 
 The interactive API could be used as normal functions or calling as process chain.
 
-1. init plot
+###### 1. init plot
 
-    ```python
-    from sashimi.plot import Plot
-   
-    plot = Plot()
-    ```
+```python
+from sashimi.plot import Plot
 
-2. set reference
+plot = Plot()
+```
 
-    ```python
-    plot.set_reference(
-        "../example/example.sorted.gtf.gz",                                             # path to gtf file
-        add_domain=True,                                                                # whether add domain information into reference track
-        interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",       # path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
-        interval_label="polyA",                                                         # the label of added interval
-        show_gene=True,                                                                 # show gene id
-        color="pink",                                                                   # the color of exons
-    )
-    ```
+###### 2. set reference
 
-3. setup plotting parameters
+```python
+plot.set_reference(
+    "../example/example.sorted.gtf.gz",                                             # path to gtf file
+    add_domain=True,                                                                # whether add domain information into reference track
+    interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",       # path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
+    interval_label="polyA",                                                         # the label of added interval
+    show_gene=True,                                                                 # show gene id
+    color="pink",                                                                   # the color of exons
+)
+```
 
-    ```python
-    plot.add_interval(
-        interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",          # path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
-        interval_label="polyAS"                                                                   # the label of added interval
-    ).set_region(
-        chromosome="chr1", start=1270656, end=1284730, strand="+"                                 # chromosome, start site, end site and strand were required
-    ).add_density(
-        path="../example/bams/1.bam",                                                             # path to input file
-        category="bam",                                                                           # the category of given file
-        color="blue",                                                                             # color of this density
-        show_site_plot=True,                                                                      # whether to show site plot
-    ).add_density(                                                                                # another density plot
-        path="../example/bws/2.bw",
-        category="bw",
-        color="green"
-    ).add_line(
-        path="../example/bams/1.bam",                                                             # path to input file
-        category="bam",                                                                           # the category of given file
-        group="1",                                                                                # the group of this line, used to control color etc.
-        color="blue",                                                                             # color of this line and other lines belong to group 1
-        line_attrs={"lw": 3}                                                                      # additional parameters in dict to control the layout of line
-    ).add_line(                                                                                   # another line
-        path="../example/bams/2.bam",
-        category="bam",
-        group="2",
-        color="red",
-        line_attrs={"linestyle": "dashed"}                                                        # additional parameters in dict to control the layout of line, for instance this changes the line style
-    ).add_heatmap(
-        path="../example/bams/1.bam",                                                             # path to input file
-        category="bam",                                                                           # the category of given file
-        group="1",                                                                                # the group of this file, only files belong to same group will be drawn in same heatmap.
-    ).add_heatmap(                                                                                # another file to heatmap 1
-        path="../example/bams/2.bam",
-        category="bam",
-        group="1"
-    ).add_igv(
-        path="../example/bams/3.bam",                                                             # path to input file
-        features={
-            "m6a": "ma",
-            "real_strand": "rs",
-            "polya": "pa"
-        },
-        category="igv",                                                                           # the category of given file
-        label="igv"                                                                               # the label of this plot
-    ).add_igv(
-        path="../example/SRX9697989.corrected_reads.bed.gz",
-        category="igv",
-        label="bed12"
-    ).add_sites(
-        1270656 + 1000                                                                            # the highlight site
-    ).add_sites(
-        1270656 + 1000                                                                            # the repeat highlight site will show in different color with normal highlight site
-    ).add_sites(
-        1270656 + 2000
-    ).add_focus(
-        f"{1270656 + 2000}-{1270656 + 3000}"                                                      # the focus region in start_site-end_site format
-    ).add_focus(
-        f"{1270656 + 5000}-{1270656 + 7000}"
-    ).add_stroke(
-        f"{1270656 + 5000}-{1270656 + 7000}:{1270656 + 7200}-{1270656 + 8000}@blue"               # the stroke in start_site-end_site:start_site-end_site@color format, this will add 2 strokes and the last on will be blue
-    ).add_stroke(                                                                                 # add stroke with named parameters
-        start=1270656 + 7500,                                                                     # the start site of added stroke
-        end=1270656 + 8200,                                                                       # the end site of added stroke
-        color="green",                                                                            # the color of added stroke
-        label="test"                                                                              # the label of added stroke
-    )
-    ```
+###### 3. setup plotting parameters
 
-4. save figures
-    ```python
-    plot.plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
-    # save plot into test_plot.png, with given fig width and height, the raster=True, will reduce layers in pdf or svg format
-    ```
+```python
+plot.add_interval(
+    interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz",          # path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
+    interval_label="polyAS"                                                                   # the label of added interval
+).set_region(
+    chromosome="chr1", start=1270656, end=1284730, strand="+"                                 # chromosome, start site, end site and strand were required
+).add_density(
+    path="../example/bams/1.bam",                                                             # path to input file
+    category="bam",                                                                           # the category of given file
+    color="blue",                                                                             # color of this density
+    show_site_plot=True,                                                                      # whether to show site plot
+).add_density(                                                                                # another density plot
+    path="../example/bws/2.bw",
+    category="bw",
+    color="green"
+).add_line(
+    path="../example/bams/1.bam",                                                             # path to input file
+    category="bam",                                                                           # the category of given file
+    group="1",                                                                                # the group of this line, used to control color etc.
+    color="blue",                                                                             # color of this line and other lines belong to group 1
+    line_attrs={"lw": 3}                                                                      # additional parameters in dict to control the layout of line
+).add_line(                                                                                   # another line
+    path="../example/bams/2.bam",
+    category="bam",
+    group="2",
+    color="red",
+    line_attrs={"linestyle": "dashed"}                                                        # additional parameters in dict to control the layout of line, for instance this changes the line style
+).add_heatmap(
+    path="../example/bams/1.bam",                                                             # path to input file
+    category="bam",                                                                           # the category of given file
+    group="1",                                                                                # the group of this file, only files belong to same group will be drawn in same heatmap.
+).add_heatmap(                                                                                # another file to heatmap 1
+    path="../example/bams/2.bam",
+    category="bam",
+    group="1"
+).add_igv(
+    path="../example/bams/3.bam",                                                             # path to input file
+    features={
+        "m6a": "ma",
+        "real_strand": "rs",
+        "polya": "pa"
+    },
+    category="igv",                                                                           # the category of given file
+    label="igv"                                                                               # the label of this plot
+).add_igv(
+    path="../example/SRX9697989.corrected_reads.bed.gz",
+    category="igv",
+    label="bed12"
+).add_sites(
+    1270656 + 1000                                                                            # the highlight site
+).add_sites(
+    1270656 + 1000                                                                            # the repeat highlight site will show in different color with normal highlight site
+).add_sites(
+    1270656 + 2000
+).add_focus(
+    f"{1270656 + 2000}-{1270656 + 3000}"                                                      # the focus region in start_site-end_site format
+).add_focus(
+    f"{1270656 + 5000}-{1270656 + 7000}"
+).add_stroke(
+    f"{1270656 + 5000}-{1270656 + 7000}:{1270656 + 7200}-{1270656 + 8000}@blue"               # the stroke in start_site-end_site:start_site-end_site@color format, this will add 2 strokes and the last on will be blue
+).add_stroke(                                                                                 # add stroke with named parameters
+    start=1270656 + 7500,                                                                     # the start site of added stroke
+    end=1270656 + 8200,                                                                       # the end site of added stroke
+    color="green",                                                                            # the color of added stroke
+    label="test"                                                                              # the label of added stroke
+)
+```
+
+###### 4. save figures
+
+```python
+plot.plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
+# save plot into test_plot.png, with given fig width and height, the raster=True, will reduce layers in pdf or svg format
+```
 
 ## API documentation
 
