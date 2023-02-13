@@ -141,6 +141,38 @@ Range (min … max):   10.127 s … 11.532 s    10 runs
 
 ### Prepare SplicePlot
 
+Setup [SlicePlot](https://github.com/wueric/SplicePlot)
+```bash
+conda create -n spliceplot -c conda-forge python=2.7
+
+conda activate spliceplot
+
+# install python requirements
+pip install pysam matplotlib scipy numpy pandas
+
+# install required command line tools
+conda install -c bioconda samtools tabix
+
+# setup SplicePlot scripts
+wget -c https://github.com/wueric/SplicePlot/archive/refs/tags/1.1.tar.gz
+tar -xzf 1.1.tar.gz && cd SplicePlot-1.1
+
+# test SplicePlot installation
+python check_module_availability.py && python plot.py -h
+
+conda deactivate
+```
+
+
+```bash
+# VCF required by SplicePlot
+wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/common_all_20180418.vcf.gz
+wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/common_all_20180418.vcf.gz.tbi
+
+wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/00-All.vcf.gz
+wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/00-All.vcf.tbi
+```
+
 The `SplicePlot-1.1/map_file.txt` as follows:
 
 ```bash

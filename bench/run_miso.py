@@ -60,13 +60,14 @@ class Files:
         self.plot = os.path.join(output, "plots")
 
 
-def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int, **kwargs):
+def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int, generate_gff: bool = False, **kwargs):
     bench = Bench()
 
     root = get_env(env)
     index_gff = "index_gff"
     miso = "miso"
     sashimi_plot = "sashimi_plot"
+    with_activate = False
     if root:
         print(f"Using conda env: {root}")
         index_gff = f"source activate {env} && index_gff"
@@ -75,10 +76,15 @@ def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int,
         activate = Bench()
         activate.add(f"source activate {env}")
         bench.set_init_time(activate)
+        with_activate = True
 
     f = Files(output)
-    generate_gff3(gff, f.gtf, event)
-    bench.add(f"{index_gff} --index {f.gtf} {f.index}", with_activate=True)
+    # print("generate_gff")
+    if generate_gff:
+        generate_gff3(gff, f.gtf, event)
+        bench.add(f"{index_gff} --index {f.gtf} {f.index}", with_activate=with_activate)
+    else:
+        bench.add(f"{index_gff} --index {gff} {f.index}", with_activate=with_activate)
 
     config = None
     bams = {}
@@ -100,7 +106,7 @@ def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int,
                     read_len = rec.infer_read_length()
                     break
 
-            bench.add(f"{miso} --run {f.index} {path} --output-dir {o} --read-len {read_len} -p {n_jobs}", with_activate=True)
+            bench.add(f"{miso} --run {f.index} {path} --output-dir {o} --read-len {read_len} -p {n_jobs}", with_activate=with_activate)
 
     config.write(f.conf)
 
@@ -116,8 +122,9 @@ def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int,
               help="Path to bam list, tab seperated list, 1st column is path to bam, "
                    "2nd column is alias of bam, 3rd is color.", required=True)
 @click.option("-o", "--output", type=click.Path(), help="Path to output dir.", required=True)
-@click.option("--env", type=str, help="Name of used conda env.", default="misopy")
+@click.option("--env", type=str, help="Name of used conda env.")
 @click.option("--n-jobs", type=int, default=1, help="The number of processes to use.", show_default=True)
+@click.option("-G", "--generate-gff", is_flag=True, help="Whether to generate smaller gff.", show_default=True)
 def main(**kwargs):
     if os.path.exists(kwargs["output"]):
         rmtree(kwargs["output"])

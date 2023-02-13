@@ -8,38 +8,38 @@ from cmdbench import benchmark_command, BenchmarkResults
 
 class Bench(object):
 
+    __slots__ = ["res", "debug", "n", "init_time", "time", "memory"]
+
     def __init__(self, debug: bool = False):
         self.res = BenchmarkResults()
         self.debug = debug
         self.n = 0
         self.init_time = 0
+        self.time = 0
+        self.memory = 0
 
     def set_init_time(self, bench):
-        for i in bench:
-            self.init_time = i[0]
+        self.init_time = bench.time
 
     def add(self, cmd, with_activate: bool = False):
-        print(cmd)
+        # print(cmd)
         if self.debug:
             check_call(cmd, shell=True)
         else:
             self.res.add_benchmark_result(benchmark_command(f"bash -c '{cmd}'", iterations_num=1))
+
+            if self.res.iterations[-1]["process"]["exit_code"] != 0:
+                print(self.res.iterations[-1]["process"]["stdout_data"])
+                print(self.res.iterations[-1]["process"]["stderr_data"])
+                raise ValueError(f"exit_code != 0: {cmd}")
+
+            self.time = self.time + self.res.iterations[-1]['process']['execution_time']
+            self.memory = max(self.memory, self.res.iterations[-1]['memory']['max'])
         if with_activate:
             self.n += 1
 
-    def __iter__(self):
-        for i in self.res.iterations:
-            yield i['process']["execution_time"] - self.init_time, i["memory"]
-
     def stats(self):
-        execution_time = 0
-        max_memory = 0
-        for t, m in self:
-            execution_time += t
-            max_memory = max(max_memory, m['max'])
-
-        execution_time -= self.init_time * self.n
-        return execution_time, max_memory
+        return self.time - self.init_time * self.n, self.memory
 
 
 def get_env(env: str):

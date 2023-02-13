@@ -48,7 +48,7 @@ def run_ggsashimi(event: str, output: str, gtf: str, bam: str, env: str, **kwarg
 @click.option("-b", "--bam", type=click.Path(exists=True),
               help="List of bams for ggsashimi.", required=True)
 @click.option("-o", "--output", type=click.Path(), help="Path to output dir.", required=True)
-@click.option("--env", type=str, help="Name of used conda env.", default="ggsashimi")
+@click.option("--env", type=str, help="Name of used conda env.")
 def main(**kwargs):
     if os.path.exists(kwargs["output"]):
         rmtree(kwargs["output"])

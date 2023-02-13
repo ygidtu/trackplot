@@ -19,7 +19,7 @@ def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
     with_activate = False
     if root:
         print(f"Using conda env: {root}")
-        sashimi_plot = f"source activate {env} && sashimipy"
+        sashimi_plot = f"source activate {env} && {sashimi_plot}"
         activate = Bench()
         activate.add(f"source activate {env}")
         bench.set_init_time(activate)
@@ -48,7 +48,7 @@ def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
 @click.option("-b", "--bam", type=click.Path(exists=True),
               help="List of bams for sashimipy.", required=True)
 @click.option("-o", "--output", type=click.Path(), help="Path to output dir.", required=True)
-@click.option("--env", type=str, help="Name of used conda env.", default="sashimipy")
+@click.option("--env", type=str, help="Name of used conda env.")
 @click.option("--n-jobs", type=int, default=1, help="The number of processes to use.", show_default=True)
 def main(**kwargs):
     if os.path.exists(kwargs["output"]):

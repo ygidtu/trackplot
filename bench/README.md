@@ -1,5 +1,11 @@
 # Benchmark pipeline
 
+This README.md documented how we perform speed and memory usage benchmark 
+between [sashimi.py](https://github.com/ygidtu/sashimi.py), [misopy](https://miso.readthedocs.io/en/fastmiso/) and [ggsashimi](https://github.com/guigolab/ggsashimi)
+
+In this comparision, we run miso in isoform-centric mode, 
+and test sashimi plots using the whole gene region with default parameters 
+
 ---
 
 ## Setup testing environments
@@ -19,6 +25,11 @@
   - [bedtools](https://bedtools.readthedocs.io/en/latest/)
 - For benchmark
   - time: required by cmdbench, please install through `sudo apt install time` or `sudo yum install time`
+- For plot
+  - [R](https://www.r-project.org)
+  - [ggplot2](https://ggplot2.tidyverse.org)
+  - [ggpubr](https://rpkgs.datanovia.com/ggpubr/)
+  - [cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html)
 
 ### Setup benchmark python environment
 
@@ -60,10 +71,14 @@ Options:
 
 1. Setup sashimi.py
    ```bash
-   conda create -n sashimipy -c bioconda -c conda-forge sashimi-py
+   conda create -n sashimipy -c conda-forge python=3.10
    
-   # activate and test sashimipy installation
-   conda activate sashimipy && sashimipy --version
+   # activate and install sashimipy
+   conda activate sashimipy
+   pip install sashimi.py
+   
+   # test sashimipy installation
+   sashimipy --version
    conda deactivate
    ```
 
@@ -78,7 +93,8 @@ Options:
 
 3. Setup [ggsashimi](https://github.com/guigolab/ggsashimi)
    ```bash
-   conda create -n ggsashimi -c conda-forge -c bioconda r-base python
+   # using python 3.10 to set same python verison with sashimipy
+   conda create -n ggsashimi -c conda-forge -c bioconda r-base python=3.10
    
    conda activate ggsashimi
    
@@ -94,30 +110,12 @@ Options:
    
    # test ggsashimi.py installation
    ggsashimi.py --version
+   Rscript -e "packageVersion('ggplot2')"
+   Rscript -e "packageVersion('data.table')"
+   Rscript -e "packageVersion('gridExtra')"
    conda deactivate
    ```
 
-4. Setup [SlicePlot](https://github.com/wueric/SplicePlot)
-   ```bash
-   conda create -n spliceplot -c conda-forge python=2.7
-   
-   conda activate spliceplot
-   
-   # install python requirements
-   pip install pysam matplotlib scipy numpy pandas
-   
-   # install required command line tools
-   conda install -c bioconda samtools tabix
-   
-   # setup SplicePlot scripts
-   wget -c https://github.com/wueric/SplicePlot/archive/refs/tags/1.1.tar.gz
-   tar -xzf 1.1.tar.gz && cd SplicePlot-1.1
-   
-   # test SplicePlot installation
-   python check_module_availability.py && python plot.py -h
-   
-   conda deactivate
-   ```
 
 ---
 
@@ -147,23 +145,16 @@ Options:
 2. Prepare reference and STAR index
    ```bash
    mkdir ref && cd ref
-   wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
-   wget -c https://ftp.ensembl.org/pub/release-101/gff3/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gff3.gz
-   wget -c https://ftp.ensembl.org/pub/release-101/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-   
-   # VCF required by SplicePlot
-   wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/common_all_20180418.vcf.gz
-   wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/common_all_20180418.vcf.gz.tbi
-   
-   wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/00-All.vcf.gz
-   wget -c https://ftp.ncbi.nih.gov/snp/organisms/human_9606_b151_GRCh38p7/VCF/00-All.vcf.tbi
+   axel -a -n 20 https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+   axel -a -n 20 https://ftp.ensembl.org/pub/release-101/gff3/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gff3.gz
+   axel -a -n 20 https://ftp.ensembl.org/pub/release-101/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
    
    # generate STAR index
    mkdir STAR_index
    zcat Homo_sapiens.GRCh38.101.chr.gtf.gz > Homo_sapiens.GRCh38.101.chr.gtf
    zcat Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > Homo_sapiens.GRCh38.dna.primary_assembly.fa
   
-   STAR --runThreadN 100 \
+   STAR --runThreadN 20 \
       --runMode genomeGenerate \
       --genomeDir STAR_index \
       --genomeFastaFiles Homo_sapiens.GRCh38.dna.primary_assembly.fa \
@@ -182,23 +173,25 @@ Options:
    cd ..
    ```
 
-3. Alignment to human genome (hg38, ensembl release 101)
-   ```bash
-   mkdir STAR
-   for i in $(ls fastq/*.fastq.gz);
-   do
-     echo $i
-   
-     STAR --runThreadN 20 \
-        --outSAMtype BAM SortedByCoordinate \
-        --outBAMcompression 9 \
-        --limitBAMsortRAM 100000000000 \
-        --readFilesCommand zcat \
-        --genomeDir ref/STAR_index \
-        --readFilesIn $i \
-        --outFileNamePrefix STAR/${$(basename $i)/.fastq.gz/""}.
-   done
-   ```
+3. Alignment to human genome (hg38, ensembl release 101) 
+    ```bash
+    mkdir STAR
+    STAR --genomeLoad LoadAndExit --genomeDir ref/STAR_index
+    for i in $(/bin/ls fastq/*.fastq.gz);
+    do
+        echo $i
+        fn=$(basename $i)
+        STAR --runThreadN 20 \
+            --outSAMtype BAM SortedByCoordinate \
+            --outBAMcompression 9 \
+            --limitBAMsortRAM 100000000000 \
+            --readFilesCommand zcat \
+            --genomeDir ref/STAR_index \
+            --genomeLoad LoadAndKeep --readFilesIn $i \
+            --outFileNamePrefix STAR/${fn/".fastq.gz"/""}.
+    done
+    STAR --genomeLoad Remove --genomeDir ref/STAR_index
+    ```
    
 4. To test whether all scripts and conda environments were properly setup
    
@@ -287,3 +280,34 @@ Options:
     ENSG0000022723  86.10000000000001       289869824       sashimipy       6       1
     ENSG0000022723  21.92999999999999       289869824       ggsashimi       6       1
     ```
+
+---
+
+### Generate benchmark results
+
+
+```bash
+event="ENSG00000139618,ENSG00000139618,ENSG00000139618,ENSG00000146535,ENSG00000146535,ENSG00000146535,ENSG00000133703,ENSG00000133703,ENSG00000133703,ENSG00000139719,ENSG00000139719,ENSG00000139719"
+gtf="./ref/Homo_sapiens.GRCh38.101.chr.sorted"
+for i in $(seq 5 5 30)
+do
+  echo $i
+  python main.py -i bam_list.txt -o benchmark_files/$i -g $gtf --repeat $i --n-jobs 1 --event $event
+done
+
+
+for i in 5 10 15 20
+do
+  echo $i
+  python main.py -i bam_list.txt -o benchmark_threads/$i -g $gtf --repeat 60 --n-jobs $i --event $event
+done
+
+
+for i in 5 10 15 20
+do
+  echo $i
+  python main.py -i bam_list.txt -o benchmark_threads/$i -g $gtf -a --repeat 60 --n-jobs $i --event $event
+done
+
+Rscript plot.R
+```

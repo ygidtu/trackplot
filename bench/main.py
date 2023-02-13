@@ -3,6 +3,7 @@
 import os
 
 import click
+import gzip
 
 from run_ggsashimi import run_ggsashimi
 from run_miso import run_miso
@@ -15,16 +16,23 @@ class ProjectStruct(object):
         os.makedirs(path, exist_ok=True)
         self.stats = os.path.join(path, "stats.txt")
 
-        self.path = {
-            "sashimipy": os.path.join(path, "sashimipy"),
-            "ggsashimi": os.path.join(path, "ggsashimi"),
-            "miso": os.path.join(path, "miso")
+        self.funcs = {
+            "sashimipy": run_sashimipy,
+            # "ggsashimi": run_ggsashimi,
+            # "miso": run_miso,
+            # "miso_orig_gff": run_miso,
         }
+
+        self.path = {x: os.path.join(path, x) for x in self.funcs.keys()}
 
         for i in self.path.values():
             os.makedirs(i, exist_ok=True)
 
         self.bam_lists = {k: os.path.join(v, "bam.list") for k, v in self.path.items()}
+
+    def __iter__(self):
+        for k, v in self.funcs.items():
+            yield k, v
 
     def output(self, key: str, event: str):
         return os.path.join(self.path[key], event)
@@ -84,12 +92,11 @@ class FileList(object):
               default=6, show_default=True)
 @click.option("-n", "--n-jobs", type=click.IntRange(min=1), help="How many processes to use.",
               default=1, show_default=True)
-def main(infile: str, output: str, repeat: int, n_jobs: int, reference: str, event: str):
+@click.option("-a", "--append", is_flag=True, help="Append new results to exist file.",
+              show_default=True)
+def main(infile: str, output: str, repeat: int, n_jobs: int, reference: str, event: str, append: bool):
     for postfix in [".gff3.gz", ".gff3.gz.tbi", ".gtf.gz", ".gtf.gz.tbi"]:
         assert os.path.exists(f"{reference}{postfix}"), f"{reference}{postfix} not exists"
-
-    # if os.path.exists(path):
-    #     rmtree(path)
 
     data = []
     with open(infile) as r:
@@ -103,26 +110,36 @@ def main(infile: str, output: str, repeat: int, n_jobs: int, reference: str, eve
             for i in range(repeat):
                 w.write(data[i % len(data)].to_str(ID=i, format_=key) + "\n")
 
-    with open(proj.stats, "w+") as w:
-        w.write("event\ttime\tmemory\tsoftware\tnum_of_files\tn_jobs\n")
-        for e in event.split(","):
+    events = {}
 
-            for key, func in {
-                "miso": run_miso,
-                "sashimipy": run_sashimipy,
-                "ggsashimi": run_ggsashimi
-            }.items():
+    if not os.path.exists(f"{reference}.gff3") and os.path.exists(f"{reference}.gff3.gz"):
+        with open(f"{reference}.gff3", "w+") as w:
+            with gzip.open(f"{reference}.gff3.gz", "rt") as r:
+                for line in r:
+                    w.write(line)
+
+    fcode = "a+" if append else "w+"
+    with open(proj.stats, fcode) as w:
+        if not append:
+            w.write("event\ttime\tmemory\tsoftware\tnum_of_files\tn_jobs\n")
+        for e in event.split(","):
+            e_id = 0
+            while f"{e}.{e_id}" in events.keys():
+                e_id += 1
+
+            for key, func in proj:
                 t, m = func(**{
-                    "event": e if key != "miso" else f"gene:{e}",
-                    "output": proj.output(key, e),
-                    "gff": f"{reference}.gff3.gz",
+                    "event": e if "miso" != key else f"gene:{e}",
+                    "output": proj.output(key, f"{e}.{e_id}"),
+                    "gff": f"{reference}.gff3.gz", # if key == "miso" else f"{reference}.gff3",
                     "gtf": f"{reference}.gtf.gz",
                     "bam": proj.bam_lists[key],
-                    "env": key if key != "miso" else "misopy",
-                    "n_jobs": n_jobs
+                    "env": key if "miso" != key else "misopy",
+                    "n_jobs": n_jobs, "generate_gff": key == "miso"
                 })
-
+                print(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}")
                 w.write(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}\n")
+                w.flush()
 
 
 if __name__ == '__main__':
