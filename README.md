@@ -133,7 +133,7 @@ python main.py \
   -r example/example.sorted.gtf.gz \
   --interval example/interval_list.tsv \
   --density example/density_list.tsv \
-  --show-side \
+  --show-site \
   --igv example/igv.tsv \
   --heatmap example/heatmap_list.tsv \
   --focus 1272656-1272656:1275656-1277656 \

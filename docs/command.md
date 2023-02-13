@@ -46,25 +46,28 @@ Options:
   --version                       Show the version and exit.
   --debug                         enable debug level log
   -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
-  Common input files configuration:
+  Common input files configuration: 
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
                                   NOTE: LUAD|red -> LUAD while be labeled in
                                   plots and red while be the fill color
                                   [default: 1; x>=1]
     --barcode PATH                Path to barcode list file, At list two
                                   columns were required, - 1st The name of bam
-                                  file;- 2nd the barcode;- 3rd The group
-                                  label, optional;- 4th The color of each
-                                  cell type, default using the color of
-                                  corresponding bam file.
+                                  file, not the alias of bam;- 2nd the
+                                  barcode;- 3rd The group label, optional;
+                                 - 4th The color of each cell type, default
+                                  using the color of corresponding bam file.
     --barcode-tag TEXT            The default cell barcode tag label
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=cpu_number]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
     --group-by-cell               Group by cell types in density/line plot
     --remove-duplicate-umi        Drop duplicated UMIs by barcode
-  Output settings:
+    --normalize-format [count|cpm|rpkm]
+                                  The normalize format for bam file  [default:
+                                  count]
+  Output settings: 
     -o, --output PATH             Path to output graph file
     -d, --dpi INTEGER RANGE       The resolution of output file  [default:
                                   300; x>=1]
@@ -76,7 +79,7 @@ Options:
     --width INTEGER RANGE         The width of output file, default adjust
                                   image width by content  [default: 10; x>=0]
     --backend TEXT                Recommended backend  [default: Agg]
-  Reference settings:
+  Reference settings: 
     -r, --reference PATH          Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
@@ -101,9 +104,9 @@ Options:
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
     --exon-scale FLOAT            The scale of exon  [default: 1]
-  Density plot settings:
+  Density plot settings: 
     --density PATH                The path to list of input files, a tab
-                                  separated text file,  - 1st column is path
+                                  separated text file, - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file alias
                                   (optional), - 4th column is color of input
@@ -125,20 +128,20 @@ Options:
     --sc-density-height-ratio FLOAT
                                   The relative height of single cell density
                                   plots  [default: 1]
-  Line plot settings:
+  Line plot settings: 
     --line PATH                   The path to list of input files, a tab
-                                  separated text file,  - 1st column is path
+                                  separated text file, - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file group
                                   (optional), - 4th column is input file
-                                  alias (optional),  - 5th column is color
+                                  alias (optional), - 5th column is color
                                   platte of corresponding group (optional).
     --hide-legend                 Whether to hide legend
     --legend-position TEXT        The legend position
     --legend-ncol INTEGER RANGE   The number of columns of legend  [x>=0]
-  Heatmap plot settings:
+  Heatmap plot settings: 
     --heatmap PATH                The path to list of input files, a tab
-                                  separated text file,  - 1st column is path
+                                  separated text file, - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file group
                                   (optional), - 4th column is color platte
@@ -159,9 +162,9 @@ Options:
     --sc-heatmap-height-ratio FLOAT
                                   The relative height of single cell heatmap
                                   plots  [default: 0.2]
-  IGV settings:
+  IGV settings: 
     --igv PATH                    The path to list of input files, a tab
-                                  separated text file,  - 1st column is path
+                                  separated text file, - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file alias
                                   (optional), - 4th column is color of input
@@ -188,16 +191,16 @@ Options:
                                   (del_ratio_ignore), then the deletion gap
                                   will be filled. currently the
                                   del_ratio_ignore was 1.0.  [0.0<=x<=1.0]
-  HiC settings:
+  HiC settings: 
     --hic PATH                    The path to list of input files, a tab
-                                  separated text file,  - 1st column is path
+                                  separated text file, - 1st column is path
                                   to input file, - 2nd column is the file
                                   category, - 3rd column is input file alias
                                   (optional), - 4th column is color of input
                                   files (optional) - 5th column is data
                                   transform for HiC matrix, eg log1p, log2,
                                   log10 (optional).
-  Additional annotation:
+  Additional annotation: 
     -f, --genome PATH             Path to genome fasta
     --sites TEXT                  Where to plot additional indicator lines,
                                   comma separated int
@@ -208,7 +211,7 @@ Options:
                                   draw a link between two site at bottom,
                                   default color is blue
     --focus TEXT                  The highlight regions: 100-200:300-400
-  Motif settings:
+  Motif settings: 
     --motif PATH                  The path to customized bedGraph file, first
                                   three columns is chrom, start and end site,
                                   the following 4 columns is the weight of
@@ -216,7 +219,7 @@ Options:
     --motif-region TEXT           The region of motif to plot in start-end
                                   format
     --motif-width FLOAT           The width of ATCG characters  [default: 0.8]
-  Layout settings:
+  Layout settings: 
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        distance between transcript label and
                                   transcript line  [default: 0.1]
@@ -224,7 +227,7 @@ Options:
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image
                                   [default: 0.25]
-  Overall settings:
+  Overall settings: 
     --font-size INTEGER RANGE     The font size of x, y-axis and so on  [x>=1]
     --reverse-minus               Whether to reverse strand of bam/reference
                                   file

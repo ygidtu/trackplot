@@ -250,6 +250,8 @@ def process_file_list(infile: str, category: str = "density"):
                  help="How many cpu to use")
 @optgroup.option("--group-by-cell", type=click.BOOL, is_flag=True, help="Group by cell types in density/line plot")
 @optgroup.option("--remove-duplicate-umi", type=click.BOOL, is_flag=True, help="Drop duplicated UMIs by barcode")
+@optgroup.option("--normalize-format", type=click.Choice(NORMALIZATION), default="count",
+                 help="The normalize format for bam file", show_default=True)
 @optgroup.group("Output settings")
 @optgroup.option("-o", "--output", type=click.Path(),
                  help="Path to output graph file", show_default=True)
@@ -294,8 +296,6 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True, help="The color of exons")
 @optgroup.option("--intron-scale", type=click.FLOAT, default=0.5, help="The scale of intron", show_default=True)
 @optgroup.option("--exon-scale", type=click.FLOAT, default=1, help="The scale of exon", show_default=True)
-@optgroup.option("--normalize-format", type=click.Choice(NORMALIZATION), default="count",
-                 help="The normalize format for bam file", show_default=True)
 @optgroup.group("Density plot settings")
 @optgroup.option("--density", type=click.Path(exists=True),
                  help="""

@@ -4,6 +4,7 @@ u"""
 The parent object of input files
 """
 from copy import deepcopy
+from loguru import logger
 from typing import Optional, Set, List, Dict
 
 
@@ -52,7 +53,15 @@ class File(object):
 
     def transform(self):
         if self.data is not None:
-            self.data.transform(self.log_trans)
+            if isinstance(self.data, list):
+                try:
+                    [x.transform(self.log_trans) for x in self.data]
+                except AttributeError as err:
+                    # should be Reads
+                    logger.debug(f"one of current data should be Reads: {err}: {[type(x) for x in self.data]}")
+                    pass
+            else:
+                self.data.transform(self.log_trans)
 
 
 def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
