@@ -615,6 +615,7 @@ def plot_density(
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
         raster: bool = False,
+        fill_step: str = "post",
         **kwargs
 ):
     u"""
@@ -636,6 +637,7 @@ def plot_density(
     :param theme: the theme name
     :param max_used_y_val: used to set same max y-axis
     :param raster:
+    :param fill_step:
     :param kwargs:
     :return:
     """
@@ -669,7 +671,7 @@ def plot_density(
         y1.append(data.plus[i] if data.plus is not None else 0)
         y2.append(-data.minus[i] if data.minus is not None else 0)
 
-    ax.fill_between(x, y1, y2=y2, color=color, lw=0, step="post", rasterized=raster)
+    ax.fill_between(x, y1, y2=y2, color=color, lw=0, step=fill_step, rasterized=raster)
 
     if data.strand_aware:
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
@@ -722,9 +724,14 @@ def plot_density(
                 if abs(min_used_y_val) < max_used_y_val:
                     min_used_y_val = -max_used_y_val
 
+            if fill_step == "post":
+                ss1_idx = max(0, ss1_idx - 1)
+            elif fill_step == "pre":
+                ss2_idx = min(ss2_idx + 1, len(graph_coords) - 1)
+
             if jxn_on_top:
-                current_height = abs(3 * max_used_y_val / 4)
                 left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
+                current_height = abs(3 * max_used_y_val / 4)
                 pts = [
                     left_dens if not ss1_modified else left_dens + current_height,
                     left_dens + current_height,
@@ -732,8 +739,8 @@ def plot_density(
                     right_dens if not ss2_modified else right_dens + current_height
                 ]
             else:
-                current_height = abs(3 * min_used_y_val / 4)
                 left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
+                current_height = abs(3 * min_used_y_val / 4)
                 pts = [
                     -left_dens if not ss1_modified else -left_dens - current_height,
                     -left_dens - current_height,
@@ -1108,25 +1115,6 @@ def plot_igv_like(
         raster: bool = False,
         **kwargs
 ):
-    u"""
-
-    :param show_y_label:
-    :param n_y_ticks:
-    :param feature_color:
-    :param distance_between_label_axis:
-    :param ax:
-    :param obj:
-    :param graph_coords:
-    :param y_label:
-    :param exon_color:
-    :param intron_color:
-    :param exon_width:
-    :param font_size:
-    :param theme:
-    :param raster:
-    :return:
-    """
-
     assert len(obj) == 1, "IGV-like plot only support one file"
 
     obj = list(obj.values())[0]

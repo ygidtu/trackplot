@@ -571,6 +571,7 @@ def plot(self,
             remove_duplicate_umi: bool = False,
             threshold: int = 10,
             included_junctions = ["chr1:1-100"],
+            fill_step: str = "post",
             return_image: Optional[str] = None,
             
             n_jobs: int = 1,
@@ -595,6 +596,11 @@ def plot(self,
 - remove_duplicate_umi: drop duplicated UMIs by barcode
 - threshold: threshold to filter low abundance junctions
 - included_junctions: the list of junctions to draw, the junction should be `chrom:start-end` format string
+- fill_step: define step if the filling should be a step function, i.e. constant in between x. 
+  The value determines where the step will occur:
+  - pre: The y value is continued constantly to the left from every x position, i.e. the interval (x[i-1], x[i]] has the value y[i].
+  - post: The y value is continued constantly to the right from every x position, i.e. the interval [x[i], x[i+1]) has the value y[i].
+  - mid': Steps occur half-way between the x positions.
 - return_image: used for interactive ui, this parameter takes `png` or `pdf`, then will return corresponding format of image in bytes array
 - n_jobs: the number of processes to use while loading data, recommended for huge number or size of input files
 - normalize_format: used to normalized input data, should be one of `count`[default], `cpm` or `rpkm`, only worked for bam file

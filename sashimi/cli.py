@@ -237,11 +237,11 @@ def process_file_list(infile: str, category: str = "density"):
                       "NOTE: LUAD|red -> LUAD while be labeled in plots and red while be the fill color",
                  show_default=True)
 @optgroup.option("--barcode", type=click.Path(exists=True), show_default=True,
-                 help="Path to barcode list file, At list two columns were required, "
-                      "- 1st The name of bam file, not the alias of bam; \b"
-                      "- 2nd the barcode; \b"
-                      "- 3rd The group label, optional; \b"
-                      "- 4th The color of each cell type, default using the color of corresponding bam file.\n")
+                 help="""Path to barcode list file, At list two columns were required,
+                      - 1st The name of bam file, not the alias of bam; \n
+                      - 2nd the barcode; \n
+                      - 3rd The group label, optional; \n
+                      - 4th The color of each cell type, default using the color of corresponding bam file.""")
 @optgroup.option("--barcode-tag", type=click.STRING, default="CB", show_default=True,
                  help="The default cell barcode tag label")
 @optgroup.option("--umi-tag", type=click.STRING, default="UB", show_default=True,
@@ -299,10 +299,10 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Density plot settings")
 @optgroup.option("--density", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file alias (optional), \b
+                 The path to list of input files, a tab separated text file, \n
+                 - 1st column is path to input file, \n
+                 - 2nd column is the file category, \n
+                 - 3rd column is input file alias (optional), \n
                  - 4th column is color of input files (optional),
                  - 5th column is the library of input file (optional, only required by bam file). \n
                  """)
@@ -321,16 +321,26 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The junction id for including, chr1:1-100", show_default=True)
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
+@optgroup.option("--fill-step", type=click.Choice(["pre", "post", "mid"]), default="post", show_default=True,
+                 help="""
+                 Define step if the filling should be a step function, i.e. constant in between x. 
+                 The value determines where the step will occur:\n
+                 - pre: The y value is continued constantly to the left from every x position, 
+                 i.e. the interval (x[i-1], x[i]] has the value y[i].\n
+                 - post: The y value is continued constantly to the right from every x position, 
+                 i.e. the interval [x[i], x[i+1]) has the value y[i].\n
+                 - mid: Steps occur half-way between the x positions."
+                 """)
 @optgroup.option("--sc-density-height-ratio", type=float, default=1, show_default=True,
                  help="The relative height of single cell density plots")
 @optgroup.group("Line plot settings")
 @optgroup.option("--line", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file group (optional), \b
-                 - 4th column is input file alias (optional),
+                 The path to list of input files, a tab separated text file, \n
+                 - 1st column is path to input file, \n
+                 - 2nd column is the file category, \n
+                 - 3rd column is input file group (optional), \n
+                 - 4th column is input file alias (optional),\n
                  - 5th column is color platte of corresponding group (optional).
                  """)
 @optgroup.option("--hide-legend", default=False, is_flag=True, type=click.BOOL, help="Whether to hide legend")
@@ -340,10 +350,10 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Heatmap plot settings")
 @optgroup.option("--heatmap", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file group (optional), \b
+                 The path to list of input files, a tab separated text file, \n
+                 - 1st column is path to input file, \n
+                 - 2nd column is the file category, \n
+                 - 3rd column is input file group (optional), \n
                  - 4th column is color platte of corresponding group.
                  """)
 @optgroup.option("--clustering", is_flag=True, show_default=True, help="Enable clustering of the heatmap")
@@ -362,46 +372,46 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("IGV settings")
 @optgroup.option("--igv", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file alias (optional), \b
-                 - 4th column is color of input files (optional),\b
+                 The path to list of input files, a tab separated text file, \n
+                 - 1st column is path to input file, \n
+                 - 2nd column is the file category, \n
+                 - 3rd column is input file alias (optional), \n
+                 - 4th column is color of input files (optional),\n
                  - 5th column is exon_id for sorting the reads (optional).
                  """)
 @optgroup.option("--m6a", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load location information from the given tags and \b
-                  then highlight the RNA m6a modification cite at individual reads. \b
-                  If there are multiple m6a modification site, please add tag as follow, \b
+                 Sashimi.py will load location information from the given tags and
+                  then highlight the RNA m6a modification cite at individual reads.
+                  If there are multiple m6a modification site, please add tag as follow,
                   234423,234450
                  """)
 @optgroup.option("--polya", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load length of poly(A) from the given tags and \b
-                  then visualize the poly(A) part at end of each individual reads.
+                 Sashimi.py will load length of poly(A) from the given tags and
+                 then visualize the poly(A) part at end of each individual reads.
                  """)
 @optgroup.option("--rs", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load real strand information of each reads from the given tags and \b
+                 Sashimi.py will load real strand information of each reads from the given tags and \n
                   the strand information is necessary for visualizing poly(A) part.
                  """)
 @optgroup.option("--del-ratio-ignore", default=1.0,
                  type=click.FloatRange(min=0.0, max=1.0, clamp=True),
                  help="""
-                 Ignore the deletion gap in nanopore or pacbio reads. \b
-                 if a deletion region was smaller than (alignment length) * (del_ratio_ignore), \b
-                 then the deletion gap will be filled. \b
+                 Ignore the deletion gap in nanopore or pacbio reads. \n
+                 if a deletion region was smaller than (alignment length) * (del_ratio_ignore), \n
+                 then the deletion gap will be filled. \n
                  currently the del_ratio_ignore was 1.0.
                  """)
 @optgroup.group("HiC settings")
 @optgroup.option("--hic", type=click.Path(exists=True),
                  help="""
-                 The path to list of input files, a tab separated text file, \b
-                 - 1st column is path to input file, \b
-                 - 2nd column is the file category, \b
-                 - 3rd column is input file alias (optional), \b
-                 - 4th column is color of input files (optional),\b
+                 The path to list of input files, a tab separated text file, \n
+                 - 1st column is path to input file, \n
+                 - 2nd column is the file category, \n
+                 - 3rd column is input file alias (optional), \n
+                 - 4th column is color of input files (optional),\n
                  - 5th column is data transform for HiC matrix, eg log1p, log2, log10 (optional).
                  """)
 @optgroup.group("Additional annotation")
@@ -443,7 +453,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--same-y", default=False, is_flag=True, type=click.BOOL,
                  help="Whether different sashimi/line plots shared same y-axis boundaries")
 @optgroup.option('--log', type=click.Choice(["0", "2", "10", "zscore"]), default="0",
-                 help="y axis log transformed, 0 -> not log transform; 2 -> log2; 10 -> log10")
+                 help="y axis log transformed, 0 -> not log transform;2 -> log2;10 -> log10")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
 @optgroup.option("--font", type=click.STRING, default=None, help="Fonts", show_default=True)
 def main(**kwargs):
@@ -741,7 +751,8 @@ def main(**kwargs):
         distance_between_label_axis=kwargs["distance_ratio"],
         included_junctions=included_junctions,
         n_jobs=kwargs.get("process", 1),
-        normalize_format=kwargs.get("normalize_format")
+        normalize_format=kwargs.get("normalize_format"),
+        fill_step=kwargs.get("fill_step", "post")
     )
     logger.info("DONE")
 

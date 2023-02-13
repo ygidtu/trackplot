@@ -12,10 +12,13 @@ import pandas as pd
 import pysam
 from loguru import logger
 
+from scipy.cluster.hierarchy import dendrogram, linkage
+
 from sashimi.base.CoordinateMap import Coordinate
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
+
 
 
 try:
@@ -294,74 +297,6 @@ class ReadSegment(File):
             strand=strand
         )
 
-    @staticmethod
-    def df_sort(dfs: pd.DataFrame) -> Optional[pd.DataFrame]:
-        u"""
-        sorting the dataframe to generate plot index,
-        copy from jinbu jia
-        :param dfs: a pd.DataFrame object
-        :return: pd.DataFrame
-        """
-
-        y_loci = []
-        have_overlap_regions = []
-        now_max_x = 0
-        height = 1
-        y_min = 1
-        dfs_lst = []
-        for _, df in dfs.groupby('exon_group'):
-            for index, row in df.iterrows():
-                start = row["start"]
-                end = row["end"]
-
-                if start > now_max_x:
-                    if y_min != 0:
-                        y_min += 1
-                    y_max = height
-                    now_max_x = end
-                    have_overlap_regions = [[1, y_max, now_max_x]]
-                else:
-                    for d in have_overlap_regions:
-                        if d[2] < start:
-                            d[2] = start - 1
-                    if len(have_overlap_regions) > 1:
-                        new_have_overlap_regions = [have_overlap_regions[0]]
-                        for d in have_overlap_regions[1:]:
-                            if d[2] == new_have_overlap_regions[-1][2]:
-                                new_have_overlap_regions[-1][1] = d[1]
-                            else:
-                                new_have_overlap_regions.append(d)
-                        have_overlap_regions = new_have_overlap_regions
-                    have_insert = False
-                    for (i, d) in enumerate(have_overlap_regions):
-                        x1, x2, x3 = d
-                        if x3 < start and (x2 - x1 + 1) >= height:
-                            have_insert = True
-                            y_min = x1
-                            y_max = y_min + height - 1
-                            if y_max != x3:
-                                d[0] = y_max + 1
-                                have_overlap_regions.insert(i, [x1, y_max, end])
-                            else:
-                                d[2] = end
-                            break
-                    if not have_insert:
-                        y_min = have_overlap_regions[-1][1] + 1 if have_overlap_regions else 1
-                        y_max = y_min + height - 1
-                        have_overlap_regions.append([y_min, y_max, end])
-                    if end > now_max_x:
-                        now_max_x = end
-                y_loci.append(y_min)
-            df["y_loci"] = y_loci
-            dfs_lst.append(df)
-            y_loci = []
-
-        if len(dfs_lst) <= 0:
-            logger.error(f"There is no any read segments")
-            return None
-
-        return pd.concat(dfs_lst)
-
     def load_bed(self):
         try:
             for rec in Reader.read_gtf(self.path, region=self.region, bed=True):
@@ -507,7 +442,7 @@ class ReadSegment(File):
                     if read.has_tag(self.features["m6a"]):
                         # multiple m6a support
                         m6a_loci_list = list(
-                            map(float, [loci.strip() for loci in read.get_tag(self.features["m6a"]).split(',')])
+                            map(float, [loci.strip() for loci in str(read.get_tag(self.features["m6a"])).split(',')])
                         )
                         for m6a_loci in m6a_loci_list:
                             features_list.append(GenomicLoci(
@@ -571,6 +506,23 @@ class ReadSegment(File):
             logger.error(self.path)
             logger.error(err)
 
+    def __order_data__(self):
+        if len(self.data) <= 1:
+            return
+
+        mtx = np.zeros((len(self.data), len(self.region)))
+        for i, data in enumerate(self.data):
+            for e_start, e_end in data.exon_list:
+                mtx[i, (e_start - self.region.start + 1):(e_end - self.region.start + 1)] = 1
+
+        # "single", "complete", "average", "weighted", "centroid", "median", "ward"
+        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"))
+
+        data = []
+        for i in order["leaves"]:
+            data.append(self.data[i])
+        self.data = data
+
     def load(
             self,
             region: GenomicLoci,
@@ -590,9 +542,9 @@ class ReadSegment(File):
         else:
             self.load_bam()
 
-        tmp_df = pd.DataFrame(
-            map(lambda x: x.to_dict(), self.data)
-        )
+        self.__order_data__()
+
+        tmp_df = pd.DataFrame(map(lambda x: x.to_dict(), self.data))
         tmp_df["list_index"] = range(len(self.data))
         if self.exon_focus:
             e_f_use = []
@@ -604,7 +556,8 @@ class ReadSegment(File):
             tmp_df["exon_group"] = e_f_use
         else:
             tmp_df["exon_group"] = "0"
-        self.meta = self.df_sort(tmp_df)
+        tmp_df["y_loci"] = range(tmp_df.shape[0])
+        self.meta = tmp_df
 
     def len(self, scale: Union[int, float] = 0.005) -> int:
         u"""

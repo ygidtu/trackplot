@@ -274,9 +274,9 @@ class Bam(SingleCell):
                             spanned_junctions_plus[k] += -1
                     elif k.strand == "+":
                         if k not in spanned_junctions_minus:
-                            spanned_junctions_minus[k] = -1
+                            spanned_junctions_minus[k] = 1
                         else:
-                            spanned_junctions_minus[k] += -1
+                            spanned_junctions_minus[k] += 1
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)

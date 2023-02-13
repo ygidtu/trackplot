@@ -1,7 +1,14 @@
 
 ## Install with pypi, conda or docker
 
-###  via Conda
+### PyPI
+
+```bash
+pip install sashimi.py
+```
+
+### Conda
+
 ```bash
 conda install -c conda-forge -c bioconda sashimi-py
 
@@ -15,13 +22,7 @@ conda create -n sashimi -c conda-forge -c bioconda -f requirements.txt
 conda activate sashimi && python setup.py install
 ```
 
-### via PyPI
-
-```bash
-pip install sashimi.py
-```
-
-### via Docker
+### Docker
 
 ```bash
 docker pull ygidtu/sashimi

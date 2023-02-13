@@ -969,7 +969,7 @@ class Plot(object):
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
              distance_between_label_axis: float = .3,
-             n_jobs: int = 1,
+             n_jobs: int = 1, fill_step: str = "post",
              *args, **kwargs):
         u"""
         draw image
@@ -983,6 +983,7 @@ class Plot(object):
         :param sc_height_ratio: adjust the relative height of single cell plots
         :param distance_between_label_axis: distance between y-axis label and y-axis ticks
         :param n_jobs: load data in how many processes
+        :param fill_step: post, pre or mid
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
@@ -1093,6 +1094,7 @@ class Plot(object):
                     max_used_y_val=max_used_y_val,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
+                    fill_step=fill_step,
                     **self.params[p]
                 )
             elif p.type == "hic":
