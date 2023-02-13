@@ -451,10 +451,8 @@ def main(**kwargs):
     Welcome to use sashimi
     \f
     """
-    if not kwargs["debug"]:
-        logger.remove()
-        logger.add(sys.stderr, level="INFO")
-        logger.level("INFO")
+    logger.remove()
+    logger.add(sys.stderr, level="INFO" if not kwargs["debug"] else "DEBUG")
 
     # print warning info about backend
     if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":
@@ -732,7 +730,7 @@ def main(**kwargs):
         intron_scale=kwargs["intron_scale"],
         exon_scale=kwargs["exon_scale"],
         reference_scale=kwargs["reference_scale"],
-        strock_scale=kwargs["stroke_scale"],
+        stroke_scale=kwargs["stroke_scale"],
         same_y=kwargs["same_y"],
         remove_duplicate_umi=kwargs["remove_duplicate_umi"],
         threshold=kwargs["threshold"],

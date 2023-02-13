@@ -134,6 +134,7 @@ python main.py \
   --interval example/interval_list.tsv \
   --density example/density_list.tsv \
   --show-site \
+  --show-junction-num \
   --igv example/igv.tsv \
   --heatmap example/heatmap_list.tsv \
   --focus 1272656-1272656:1275656-1277656 \
@@ -145,9 +146,10 @@ python main.py \
   --width 10 \
   --height 1 \
   --barcode example/barcode_list.tsv \
-  --domain --remove-duplicate-umi
+  --domain --remove-duplicate-umi \
+  -p 4
 ```
-here is the [output file](https://github.com/ygidtu/sashimi.py/example/example.png).
+here is the [output file](https://raw.githubusercontent.com/ygidtu/sashimi.py/main/example/example.png).
 
 
 ## Questions
