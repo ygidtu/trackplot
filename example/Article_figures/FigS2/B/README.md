@@ -1,5 +1,5 @@
 
-## Figure 3B
+## FigS 2B
 
 Data was download from [Gao et al. Genome Biology,2021.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-020-02241-7),
 and we used [nanom6A](https://github.com/gaoyubang/nanom6A) and [nanopolish](https://github.com/nanoporetech/pipeline-polya-ng) for calling m6A and length of poly(A)  
@@ -7,7 +7,7 @@ and we used [nanom6A](https://github.com/gaoyubang/nanom6A) and [nanopolish](htt
 
 ```bash
 python sashimi.py/main.py \
-    -r /mnt/raid61/public_data/transferdata/GBM_bulk/data/ref/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
+    -r Homo_sapiens.GRCh37.87.gtf.sorted.gz \
     -e chr7:5566600-5570232 \
     --igv igv.tsv \
     -o igv.ATCB.pdf \
