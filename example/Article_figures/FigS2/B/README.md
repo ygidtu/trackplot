@@ -6,7 +6,7 @@ and we used [nanom6A](https://github.com/gaoyubang/nanom6A) and [nanopolish](htt
 
 
 ```bash
-python sashimi.py/main.py \
+python ../../../../main.py \
     -r Homo_sapiens.GRCh37.87.gtf.sorted.gz \
     -e chr7:5566600-5570232 \
     --igv igv.tsv \
@@ -14,5 +14,5 @@ python sashimi.py/main.py \
     --dpi 300 \
     --width 10 \
     --height 0.5 --rs rs --polya pa --m6a ma
-    
+
 ```

@@ -13,12 +13,21 @@ samtools view -u -F 2304 SRX8994511.example.bam \
 
 ```
 
+Prepare reference file
+
+```bash
+aria2c -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+bedtools sort -i Homo_sapiens.GRCh38.101.chr.gtf.gz | bgzip > Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+tabix -p gff Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+```
+
+
 the command line for generating the plots.
 
 ```bash
 
-python  sashimi.py/main.py \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+python  ../../../../main.py \
+  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
   -e 21:43092956-43107570:+ \
   --density bam.tsv \
   --igv igv.tsv \
@@ -26,6 +35,6 @@ python  sashimi.py/main.py \
   -o igv_plot.pdf \
   --dpi 300 \
   --width 6 \
-  --height 1 --show-junction-num --domain 
+  --height 1 --show-junction-num --domain
 
 ```

@@ -19,13 +19,21 @@ aria2c -x 16 https://www.encodeproject.org/files/ENCFF476HFB/@@download/ENCFF476
 aria2c -x 16 http://hgdownload.cse.ucsc.edu/goldenpath/hg38/phastCons470way/hg38.phastCons470way.bw
 ```
 
+Prepare reference file
+
+```bash
+aria2c -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+bedtools sort -i Homo_sapiens.GRCh38.101.chr.gtf.gz | bgzip > Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+tabix -p gff Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+```
+
 for generating the plot,
 
 ```bash
 
-python sashimi.py/main.py \
+python ../../../../main.py \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
   --density bam.tsv \
   -o PTBP3.pdf \
   --dpi 300 \

@@ -54,6 +54,9 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
 
     ```bash
     pip install sashimi.py
+   # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
+   # therefore please try another pypi mirror once you encounter 
+   # `No local packages or working download links found for xxx`
     ```
 
 2. install from bioconda

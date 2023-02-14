@@ -160,7 +160,7 @@ def set_reference(self, gtf: str,
 - show_gene: whether to show gene name/id
 - show_id: show gene id or gene name
 - reverse_minus: whether to remove strand of transcripts
-- theme: the theme of transcript
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 - exon_width: the height of exons
 - show_exon_id: whether to show exon id
 
@@ -225,7 +225,7 @@ add a density plot into track
 - color: color for this density plot
 - show_y_label: whether to show y-axis label
 - y_label: the text of y-axis title
-- theme: the theme name
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 - strand_choice: the strand to draw on site plot
 - only_customized_junction: only work with bam files, only draw customized junctions
 
@@ -277,7 +277,7 @@ def add_heatmap(self,
 - library: fr-unstrand/fr-strand or fru/frs for short 
 - color: color for this density plot
 - show_y_label: whether to show y-axis label
-- theme: the theme name
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 - font_size: the font size in plot
 - distance_between_label_axis: the distance between y-axis label and y-axis
 - do_scale: whether to scale the matrix
@@ -341,7 +341,7 @@ def add_line(self,
 - n_y_ticks: number of y ticks
 - color: color for this density plot
 - show_y_label: whether to show y-axis label
-- theme: the theme name
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 - font_size: font size in this plot
 - line_attrs: the additional attributes to control the line, usd by matpltolib.axes.Axes.plot
 - show_legend: whether to show legend
@@ -385,21 +385,22 @@ def add_igv(
 
 - path: path to input files
 - category: file category for the input file
-- library: fr-unstrand
-- features:
-- exon_focus:
-- deletion_ignore:
-- del_ratio_ignore:
-- label:
-- exon_color:
-- intron_color:
-- feature_color:
-- exon_width:
-- font_size:
-- n_y_ticks:
-- distance_between_label_axis:
-- show_y_label:
-- theme:
+- library: fr-unstrand/fr-strand or fru/frf for short
+- features: additional genomic features to show in igv plot, support m6a and polyA length from bam tag.
+        like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
+- exon_focus: exon to focus, like start1-end1,start2-end2
+- deletion_ignore: ignore the deletion length
+- del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
+- label: the y-axis title of igv plot
+- exon_color: the color of drawn exons
+- intron_color: the color of drawn introns
+- feature_color: the color of additional features
+- exon_width: the width of exons
+- font_size: the font size of igv plot
+- n_y_ticks: the number of y ticks of igv plot
+- distance_between_label_axis: the distance between y-axis label and y-axis
+- show_y_label: whether to show y-axis title
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
 Returns `Plot`
 
@@ -534,6 +535,8 @@ def add_motif(self, path: str, category: str = "motif", motif_region: GenomicLoc
 
 Returns `Plot`
 
+---
+
 ### merge_by_cell
 
 ```python
@@ -600,7 +603,7 @@ def plot(self,
   The value determines where the step will occur:
   - pre: The y value is continued constantly to the left from every x position, i.e. the interval (x[i-1], x[i]] has the value y[i].
   - post: The y value is continued constantly to the right from every x position, i.e. the interval [x[i], x[i+1]) has the value y[i].
-  - mid': Steps occur half-way between the x positions.
+  - mid: Steps occur half-way between the x positions.
 - return_image: used for interactive ui, this parameter takes `png` or `pdf`, then will return corresponding format of image in bytes array
 - n_jobs: the number of processes to use while loading data, recommended for huge number or size of input files
 - normalize_format: used to normalized input data, should be one of `count`[default], `cpm` or `rpkm`, only worked for bam file
@@ -613,3 +616,11 @@ def plot(self,
 - n_jobs: load data in how many processes
 
 Returns `None` or `io.BytesIO`
+
+---
+
+### Theme
+We have three build-in themes used for different kind of plot
+- blank: disable axis and ticks, normally used for transcripts, strokes and links at the bottom
+- ticks: disable top and right axis, used for the last plot under transcripts
+- ticks_blank: disable the top, right and bottom axis, remove x-axis ticks, used for most plots

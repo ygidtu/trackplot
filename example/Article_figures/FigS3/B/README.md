@@ -28,16 +28,25 @@ hicConvertFormat -m ENCFF931NQV.chr19_1kb.cool --inputFormat cool --outputFormat
 
 ```
 
+Prepare reference file
+
+```bash
+aria2c -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+bedtools sort -i Homo_sapiens.GRCh38.101.chr.gtf.gz | bgzip > Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+tabix -p gff Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+```
+
+
 The command line for generating the plot,
 ```bash
 
-python sashimi.py/main.py \
+python ../../../..//main.py \
   --hic hic.tsv \
   --barcode Tcell_barcode_sub.list \
   --density density.list \
   --dpi 300 --output scrna.tcell.pdf \
   -e chr19:35600000-35800000:+ \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
   --raster --width 3 -t 1000000 --choose-primary
 
 
