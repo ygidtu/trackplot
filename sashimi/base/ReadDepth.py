@@ -21,8 +21,7 @@ class ReadDepth(object):
     """
 
     __slots__ = [
-        "junction_dict_plus", "junction_dict_minus",
-        "minus", "plus",
+        "junctions_dict", "minus", "plus",
         "strand_aware", "site_plus", "site_minus",
     ]
 
@@ -31,8 +30,7 @@ class ReadDepth(object):
                  site_plus: Optional[np.array] = None,
                  site_minus: Optional[np.array] = None,
                  minus: Optional[np.array] = None,
-                 junction_dict_plus: Optional[np.array] = None,
-                 junction_dict_minus: Optional[np.array] = None,
+                 junction_dict: Optional[np.array] = None,
                  strand_aware: bool = False):
         u"""
         init this class
@@ -42,14 +40,11 @@ class ReadDepth(object):
         :param site_minus: a numpy.ndarray object represented the reverse site coverage
         :param minus: a numpy.ndarray object represented the reverse strand read coverage
         :param strand_aware: strand specific depth
-        :param junction_dict_plus: these splice junction from plus strand
-        :param junction_dict_minus: these splice junction from minus strand
         """
         self.plus = wiggle
         self.strand_aware = strand_aware
         self.minus = abs(minus) if minus is not None else minus
-        self.junction_dict_plus = junction_dict_plus
-        self.junction_dict_minus = junction_dict_minus
+        self.junctions_dict = junction_dict
         self.site_plus = site_plus
         self.site_minus = site_minus * -1 if site_minus is not None else site_minus
 
@@ -62,13 +57,6 @@ class ReadDepth(object):
             return self.plus + self.minus
 
         return self.plus
-
-    @property
-    def junctions_dict(self) -> dict:
-        res = {}
-        res.update(self.junction_dict_plus)
-        res.update(self.junction_dict_minus)
-        return res
 
     @property
     def max(self) -> float:

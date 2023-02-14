@@ -695,15 +695,9 @@ def plot_density(
             leftss, rightss = jxn.start, jxn.end
 
             # junction must at least have one anchor located in plotted region
-            if (leftss < region.start and rightss > region.end) or rightss < region.start or leftss > region.end:
+            if (leftss < region.start < region.end < rightss) or rightss <= region.start or leftss >= region.end:
                 logger.warning(f"junction {jxn} of {y_label} is is out of plotting region, skip")
                 continue
-
-            # @2022.09.26
-            # Skip these too short span junction for avoiding plotting junction number
-            # overlap_length = min(rightss, region.end) - max(leftss, region.start) + 1
-            # if not overlap_length / len(region) > 0.5 and not overlap_length / len(jxns) > 0.5:
-            #     continue
 
             # @2018.12.19
             # set junctions coordinate here

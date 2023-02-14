@@ -328,7 +328,7 @@ def add_line(self,
 ```
 
 - path: path to input files
-- group: the heatmap group
+- group: the line group
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
