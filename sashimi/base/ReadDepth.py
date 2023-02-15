@@ -114,19 +114,12 @@ class ReadDepth(object):
         :param other:
         :return:
         """
-        junc_plus, junc_minus = {}, {}
 
         for key, value in other.junctions_dict.items():
             if key in self.junctions_dict.keys():
-                if key.strand == "+":
-                    self.junction_dict_plus[key] = value + other.junctions_dict[key]
-                else:
-                    self.junction_dict_minus[key] = value + other.junctions_dict[key]
+                self.junctions_dict[key] = value + other.junctions_dict[key]
             else:
-                if key.strand == "+":
-                    self.junction_dict_plus[key] = other.junctions_dict[key]
-                else:
-                    self.junction_dict_minus[key] = other.junctions_dict[key]
+                self.junctions_dict[key] = value
 
         return self.junctions_dict
 

@@ -225,15 +225,17 @@ class Plot(object):
                 sites = [int(x) for x in sites.split(",")]
 
                 for s in sites:
+                    s = s - self.start
                     if s not in self.sites.keys():
-                        self.sites[s - self.start] = "blue"
+                        self.sites[s] = "blue"
                     else:
-                        self.sites[s - self.start] = "red"
+                        self.sites[s] = "red"
             elif isinstance(sites, int):
+                sites = sites - self.start
                 if sites not in self.sites.keys():
-                    self.sites[sites - self.start] = "blue"
+                    self.sites[sites] = "blue"
                 else:
-                    self.sites[sites - self.start] = "red"
+                    self.sites[sites] = "red"
         return self
 
     def add_focus(self, focus: Optional[str], start: int = 0, end: int = 0):
@@ -1044,6 +1046,8 @@ class Plot(object):
 
             if p.is_single_cell:
                 height_ratio.append(sc_height_ratio.get(p.type, 1))
+            elif p.type == "igv":
+                height_ratio.append(p.len(reference_scale))
             else:
                 height_ratio.append(1)
 
