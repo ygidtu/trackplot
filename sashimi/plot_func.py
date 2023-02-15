@@ -937,7 +937,8 @@ def plot_heatmap(
 
         order = dendrogram(
             linkage(mtx, method=clustering_method, metric=distance_metric),
-            orientation='right'
+            orientation='right',
+            no_plot=True
         )
 
         mtx = mtx[order["leaves"], :]
