@@ -1,5 +1,4 @@
 import os
-from configparser import ConfigParser
 from setuptools import setup, find_packages
 
 __version__ = "0.1.6"
@@ -15,7 +14,7 @@ def locate_packages():
     with open(pipfile) as r:
         for line in r:
             line = line.strip()
-            if not line.startswith("--hash") and \
+            if not line.startswith("-") and \
                     "pybigwig" not in line.lower() and \
                     "hicmatrix" not in line.lower():
                 packages.append(line.split(";")[0].strip())
@@ -43,7 +42,7 @@ setup(
     entry_points={
         'console_scripts': ['sashimipy=sashimi.cli:main']
     },
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     data_files=[(".", ['README.md', 'Pipfile', 'pyproject.toml', 'requirements.txt'])],
     install_requires=locate_packages(),
     extra_requires={

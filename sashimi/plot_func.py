@@ -854,7 +854,7 @@ def plot_site_plot(
         if strand_choice != "all" and label != strand_choice:
             continue
 
-        array_hist = np.repeat(graph_coords, np.abs(array_plot).astype(np.int))
+        array_hist = np.repeat(graph_coords, np.abs(array_plot).astype(np.int32))
         try:
             kde = gaussian_kde(array_hist)
             fit_value = kde.pdf(graph_coords)

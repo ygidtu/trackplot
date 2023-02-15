@@ -60,9 +60,9 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
    conda create -n sashimi -c bioconda -c conda-forge sashimi-py
    
    # or install latest sashimi-py  
-   git clone from https://github.com/ygidtu/sashimipy sashimi
+   git clone https://github.com/ygidtu/sashimi.py.git sashimi
    cd sashimi
-   conda env create -n sashimi -f environment.yaml
+   conda create -n sashimi -f environment.yaml
    ```
 
 2. install from PyPi
@@ -73,7 +73,8 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
    # therefore please try another pypi mirror once you encounter 
    # `No local packages or working download links found for xxx`
    
-   pip install pybigwig hicmatrix # to enable bigWig, bigBed and hicMatrix support
+   # optional, enable bigWig, bigBed and hicMatrix support
+   pip install pybigwig hicmatrix
    ```
 
 3. using docker image
@@ -83,7 +84,7 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
     docker run --rm ygidtu/sashimi --help
 
     # or build docker image from source
-    git clone from https://github.com/ygidtu/sashimi.py sashimi
+    git clone https://github.com/ygidtu/sashimi.py sashimi
     cd sashimi
     docker build -t ygidtu/docker .
     docker run --rm ygidtu/sashimi --help
@@ -112,14 +113,28 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
    cd sashimi.py
    
    # pipenv
-   pipenv install   # create virtualenv and install required packages
-   pipenv shell     # switch to virtualenv
-      
-   # poetry
-   poetry install   # create virtualenv and install required packages
-   poetry shell     # switch to virtualenv
+   # create virtualenv and install required packages
+   pipenv install
+   # optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
+   # optional, with `--skip-lock` once encounter locking issues
    
-   python main.py --help
+   # switch to virtualenv
+   pipenv shell && python main.py --help
+   
+   # or just run with pipenv
+   pipenv run python main.py --help
+  
+   
+   # poetry
+   # once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
+   # create virtualenv and install required packages
+   poetry install
+   
+   # switch to virtualenv
+   poetry shell  && python main.py --help
+   
+   # or just run with poetry
+   poetry run python main.py --help
    ```
 
 6. running from a local webserver

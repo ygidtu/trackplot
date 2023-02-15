@@ -33,6 +33,13 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 default = true
 secondary = false
 
+
+[[tool.poetry.source]]
+name = "official"
+url = "https://pypi.org/simple"
+default = false
+secondary = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

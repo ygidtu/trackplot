@@ -21,9 +21,9 @@ conda install -c bioconda -c conda-forge sashimi-py
 conda create -n sashimi -c bioconda -c conda-forge sashimi-py
 
 # or install latest sashimi-py  
-git clone from https://github.com/ygidtu/sashimipy sashimi
+git clone https://github.com/ygidtu/sashimi.py.git sashimi
 cd sashimi
-conda env create -n sashimi -f environment.yaml
+conda create -n sashimi -f environment.yaml
 ```
 
 ### Docker
@@ -33,7 +33,7 @@ docker pull ygidtu/sashimi
 docker run --rm ygidtu/sashimi --help
 
 # or build docker image from source
-git clone from https://github.com/ygidtu/sashimi.py sashimi
+git clone https://github.com/ygidtu/sashimi.py.git sashimi
 cd sashimi
 docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
@@ -43,24 +43,27 @@ docker run --rm ygidtu/sashimi --help
 
 download source code using git
 ```bash
-git clone https://github.com/ygidtu/sashimipy sashimi
+git clone https://github.com/ygidtu/sashimi.py.git sashimi
 cd sashimi
 ```
 
 ### Run as command line tools
 
 ```bash
- python setup.py install
+python setup.py install
 
- # optional, enable bigWig, bigBed and hicMatrix support
- pip install pybigwig hicmatrix
- 
- sashimipy --help
- # or
- python main.py --help
+# optional, enable bigWig, bigBed and hicMatrix support
+pip install pybigwig hicmatrix
+
+sashimipy --help
+# or
+python main.py --help
 ```
 
 ### Run as script
+
+The following 3 installation methods will try to install pyBigWig and hicmatrix by default, 
+once facing installation issues please check their official document.
 
 1. using python
     ```bash
@@ -69,16 +72,26 @@ cd sashimi
     ```
 
 2. using pipenv
-    ```bash
-    pipenv install
-    pipenv run python main.py --help
-    ```
+   ```bash
+   pipenv install  # create virtualenv and install required packages
+   # optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
+   # optional, with `--skip-lock` once encounter locking issues
+   
+   pipenv shell && python main.py --help    # switch to virtualenv
+   
+   # or just run with pipenv
+   pipenv run python main.py --help
+   ```
 
 3. using poetry
-    ```bash
-    poetry install
-    poetry run python main.py --help
-    ```
+   ```bash
+   # once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
+   poetry install   # create virtualenv and install required packages
+   poetry shell  && python main.py --help   # switch to virtualenv
+   
+   # or just run with poetry
+   poetry run python main.py --help
+   ```
 
 ** Note: **
 If there is any problem with installation of `cairocffi`
@@ -104,7 +117,7 @@ docker run --rm ygidtu/sashimi --help
 
 ### Build docker image from source
 ```bash
-git clone from https://github.com/ygidtu/sashimipy sashimi
+git clone https://github.com/ygidtu/sashimi.py.git sashimi
 cd sashimi
 docker build -t ygidtu/docker .
 docker run --rm ygidtu/sashimi --help
@@ -129,7 +142,7 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 2. **Users could change the server ip and port by modify the settings.ini**
 
 ```bash
-git clone https://github.com/ygidtu/sashimipy sashimi
+git clone https://github.com/ygidtu/sashimi.py.git sashimi
 cd sashimi/web
 
 # build the frontend static files
