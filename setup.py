@@ -9,19 +9,17 @@ __email__ = "ygidtu@gmail.com"
 
 def locate_packages():
     __dir__ = os.path.dirname(os.path.abspath(__file__))
-    pipfile = os.path.join(__dir__, "Pipfile")
-
-    conf = ConfigParser()
-    conf.read(pipfile)
+    pipfile = os.path.join(__dir__, "requirements.txt")
 
     packages = []
-    for name in conf["packages"]:
-        version = conf.get("packages", name)
-        version = version.strip('"').strip("'")
-        if version == "*":
-            packages.append(name)
-        else:
-            packages.append(f"{name}, {version}")
+    with open(pipfile) as r:
+        for line in r:
+            line = line.strip()
+            if not line.startswith("--hash") and \
+                    "pybigwig" not in line.lower() and \
+                    "hicmatrix" not in line.lower():
+                packages.append(line.split(";")[0].strip())
+
     return packages
 
 
@@ -43,13 +41,14 @@ setup(
     zip_safe=False,
     url="https://github.com/ygidtu/sashimi.py",
     entry_points={
-        'console_scripts':
-            [
-                'sashimipy = sashimi.cli:main'
-            ]
+        'console_scripts': ['sashimipy=sashimi.cli:main']
     },
     python_requires='>=3.7',
-    data_files=[(".", ['README.md', 'Pipfile', 'Pipfile.lock'])],
+    data_files=[(".", ['README.md', 'Pipfile', 'pyproject.toml', 'requirements.txt'])],
     install_requires=locate_packages(),
+    extra_requires={
+        "bigwig": ["pybigwig"],
+        "hic": ["hicmatrix"]
+    },
     version=__version__
 )

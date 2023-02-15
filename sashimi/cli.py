@@ -21,7 +21,7 @@ from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_ME
 from sashimi.file.ATAC import ATAC
 from sashimi.plot import Plot
 
-__version__ = "0.1.6b"
+__version__ = "0.1.6"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -520,7 +520,6 @@ def main(**kwargs):
                                 choose_primary=kwargs["choose_primary"],
                                 font_size=kwargs["font_size"],
                                 show_id=kwargs["show_id"],
-                                reverse_minus=kwargs["reverse_minus"],
                                 show_exon_id=kwargs["show_exon_id"],
                                 transcripts=kwargs["transcripts_to_show"],
                                 add_domain=kwargs["domain"],

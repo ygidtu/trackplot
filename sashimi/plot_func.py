@@ -354,7 +354,6 @@ def plot_reference(
         remove_empty_transcripts: bool = False,
         choose_primary: bool = False,
         color: Optional[str] = None,
-        reverse_minus: bool = False,
         theme: str = "blank",
         y_loc: int = 0,
         exon_width: float = .3,
@@ -476,7 +475,7 @@ def plot_reference(
 
                 for i in range(narrows):
                     loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
-                    if strand == '+' or reverse_minus:
+                    if strand == '+':
                         x = [loc - spread, loc, loc - spread]
                     else:
                         x = [loc + spread, loc, loc + spread]
@@ -696,7 +695,7 @@ def plot_density(
 
             # junction must at least have one anchor located in plotted region
             if (leftss < region.start < region.end < rightss) or rightss <= region.start or leftss >= region.end:
-                logger.warning(f"junction {jxn} of {y_label} is is out of plotting region, skip")
+                logger.debug(f"junction {jxn} of {y_label} is is out of plotting region, skip")
                 continue
 
             # @2018.12.19
@@ -1065,7 +1064,9 @@ def plot_line(
     :param max_used_y_val:
     """
     max_y_val = 0
-    for ylab, val in data.items():
+    legend = []
+    distance_to_zero = pylab.linspace(0, len(graph_coords), len(data) + 2)
+    for idx, (ylab, val) in enumerate(data.items()):
         attr = line_attrs.get(ylab, {}) if line_attrs else {}
 
         x, y = [], []
@@ -1076,10 +1077,26 @@ def plot_line(
 
         max_y_val = max(max_y_val, max(val.wiggle))
 
+        if not show_legend:
+            idx = int(distance_to_zero[idx + 1])
+            t = ax.text(
+                x[idx], np.median(y), ylab, color=attr.get("color", "black"),
+                fontsize=font_size, ha='center', va='center', backgroundcolor='w'
+            )
+
+            # @2018.12.19 transparent background
+            t.set_bbox(dict(alpha=0))
+            legend.append(t)
+
     if show_legend:
         ax.legend(loc=legend_position,
                   ncol=int(len(data) / 1.5) if legend_ncol <= 0 else legend_ncol,
                   fancybox=False, shadow=False)
+    else:
+        try:
+            adjust_text(legend, arrowprops=dict(arrowstyle="-", lw=1))
+        except IndexError as err:
+            logger.warning(err)
 
     set_y_ticks(
         ax, label=y_label, theme=theme,

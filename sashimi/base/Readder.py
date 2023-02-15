@@ -9,7 +9,7 @@ import os
 from typing import Optional
 
 import numpy as np
-import pyBigWig
+
 import pysam
 from loguru import logger
 
@@ -140,6 +140,11 @@ class Reader(object):
 
     @classmethod
     def read_bigwig(cls, path: str, region: GenomicLoci) -> np.array:
+        try:
+            import pyBigWig
+        except ImportError:
+            raise ImportError("Please install pyBigWig to enable BigBed support")
+
         with pyBigWig.open(path) as r:
             try:
                 return r.values(region.chromosome, region.start, region.end + 1)
@@ -154,6 +159,11 @@ class Reader(object):
 
     @classmethod
     def read_bigbed(cls, path: str, region: GenomicLoci):
+        try:
+            import pyBigWig
+        except ImportError:
+            raise ImportError("Please install pyBigWig to enable BigBed support")
+
         with pyBigWig.open(path) as r:
             if not r.isBigBed():
                 logger.warning(f"{path} don't look like bigbed file.")
@@ -210,7 +220,11 @@ class Reader(object):
 
     @classmethod
     def read_hic(cls, path: str, region: GenomicLoci):
-        from hicmatrix import HiCMatrix as hm
+        try:
+            from hicmatrix import HiCMatrix as hm
+        except ImportError as err:
+            raise ImportError("Please install hicmatrix to enable hic support")
+
         os.environ['NUMEXPR_MAX_THREADS'] = '16'
         os.environ['NUMEXPR_NUM_THREADS'] = '8'
         hic = hm.hiCMatrix(path, f"{region.chromosome}:{region.start}-{region.end}")

@@ -5,61 +5,79 @@
 
 ```bash
 pip install sashimi.py
+# __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
+# therefore please try another pypi mirror once you encounter 
+# `No local packages or working download links found for xxx`
+
+pip install pybigwig hicmatrix # to enable bigWig, bigBed and hicMatrix support
 ```
 
 ### Conda
 
 ```bash
-conda install -c conda-forge -c bioconda sashimi-py
+conda install -c bioconda -c conda-forge sashimi-py
 
-# create conda env from local
+# or install sashimi-py into an isolated environments
+conda create -n sashimi -c bioconda -c conda-forge sashimi-py
+
+# or install latest sashimi-py  
 git clone from https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
-
-conda create -n sashimi -f environment.yaml
-# or
-conda create -n sashimi -c conda-forge -c bioconda -f requirements.txt
-conda activate sashimi && python setup.py install
+conda env create -n sashimi -f environment.yaml
 ```
 
 ### Docker
 
 ```bash
 docker pull ygidtu/sashimi
+docker run --rm ygidtu/sashimi --help
+
+# or build docker image from source
+git clone from https://github.com/ygidtu/sashimi.py sashimi
+cd sashimi
+docker build -t ygidtu/docker .
+docker run --rm ygidtu/sashimi --help
 ```
 
 ## Install from source
 
 download source code using git
 ```bash
-git clone from https://github.com/ygidtu/sashimipy sashimi
+git clone https://github.com/ygidtu/sashimipy sashimi
 cd sashimi
 ```
 
 ### Run as command line tools
 
 ```bash
-## install from source
+ python setup.py install
 
-pip install sashimi.py
-
-# or install from source
-python setup.py install
-
-sashimipy --help
+ # optional, enable bigWig, bigBed and hicMatrix support
+ pip install pybigwig hicmatrix
+ 
+ sashimipy --help
+ # or
+ python main.py --help
 ```
 
 ### Run as script
-1. using pipenv
+
+1. using python
+    ```bash
+    pip install -r requirements.txt
+    python main.py
+    ```
+
+2. using pipenv
     ```bash
     pipenv install
     pipenv run python main.py --help
     ```
 
-2. using python
+3. using poetry
     ```bash
-    pip install -r requirements.txt
-    python main.py
+    poetry install
+    poetry run python main.py --help
     ```
 
 ** Note: **
@@ -132,6 +150,8 @@ python server.py --help
 ```bash
 docker pull ygidtu/sashimiweb
 
+# -v map the current working directory into docker containers
+# -p map the outer port to inner port of docker container
 docker run --name sashimiweb \
   --rm -v $PWD:$PWD \
   -p 5000:5000 \

@@ -332,7 +332,6 @@ class Plot(object):
                       font_size: int = 5,
                       show_gene: bool = False,
                       show_id: bool = False,
-                      reverse_minus: bool = False,
                       exon_width: float = .3,
                       show_exon_id: bool = False,
                       theme: str = "blank"
@@ -351,7 +350,6 @@ class Plot(object):
         :param color: the color of exons
         :param show_gene: whether to show gene name/id
         :param show_id: show gene id or gene name
-        :param reverse_minus: whether to remove strand of transcripts
         :param theme: the theme of transcript
         :param exon_width: the height of exons
         :param show_exon_id: whether to show exon id
@@ -375,7 +373,6 @@ class Plot(object):
             "font_size": font_size,
             "show_gene": show_gene,
             "show_id": show_id,
-            "reverse_minus": reverse_minus,
             "exon_width": exon_width,
             "show_exon_id": show_exon_id,
             "theme": theme
@@ -752,8 +749,10 @@ class Plot(object):
         exists = False
         for p in self.plots:
             if p.group == group and p.type == "line":
+                params = self.params.pop(p)
                 p.add(obj=obj, category=category, type_="line")
-                self.params[p]["line_attrs"][obj.label] = line_attrs
+                params["line_attrs"][obj.label] = line_attrs
+                self.params[p] = params
                 exists = True
                 break
 
