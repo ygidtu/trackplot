@@ -286,6 +286,10 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--local-domain", default="", is_flag=False, type=click.STRING, show_default=True,
                  help="Load local domain folder and load into reference track, download from "
                       "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
+@optgroup.option("--domain-include", default=None, type=click.STRING, show_default=True,
+                 help="Which domain will be included in reference plot")
+@optgroup.option("--domain-exclude", default=None, type=click.STRING, show_default=True,
+                 help="Which domain will be excluded in reference plot")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
@@ -523,7 +527,9 @@ def main(**kwargs):
                                 show_exon_id=kwargs["show_exon_id"],
                                 transcripts=kwargs["transcripts_to_show"],
                                 add_domain=kwargs["domain"],
-                                local_domain=kwargs["local_domain"]
+                                local_domain=kwargs["local_domain"],
+                                domain_include=kwargs["domain_include"],
+                                domain_exclude=kwargs["domain_exclude"]
                                 )
             elif key == "interval":
                 for f in process_file_list(kwargs[key], key):

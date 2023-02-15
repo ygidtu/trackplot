@@ -325,6 +325,8 @@ class Plot(object):
     def set_reference(self, gtf: str,
                       add_domain: bool = False,
                       local_domain: Optional[str] = False,
+                      domain_include: Optional[str] = False,
+                      domain_exclude: Optional[str] = False,
                       interval: Optional[str] = None,
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
@@ -342,11 +344,13 @@ class Plot(object):
                       ):
         u"""
         add transcripts to this region
-        :param gtf:
-        :param add_domain:
-        :param local_domain:
-        :param interval:
-        :param interval_label:
+        :param gtf: the path of gtf file
+        :param add_domain: whether add domain information into reference plot
+        :param local_domain: add a local domain file into reference plot
+        :param domain_exclude: the domain will be included in reference plot
+        :param domain_include: the domain will be excluded in reference plot
+        :param interval: the path of interval annotation file, such as polyAsites
+        :param interval_label: the label of current interval annotation file
         :param font_size: the size of transcript id, name
         :param transcripts: the list of name or ids of transcripts to draw
         :param remove_empty_transcripts: whether to remove transcripts without any exons
@@ -363,7 +367,9 @@ class Plot(object):
         self.reference = Reference.create(
             gtf,
             add_domain=add_domain,
-            add_local_domain=local_domain
+            add_local_domain=local_domain,
+            domain_exclude=domain_exclude,
+            domain_include=domain_include
         )
 
         if interval and interval_label:
