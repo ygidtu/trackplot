@@ -19,8 +19,6 @@ from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
 
-
-
 try:
     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 except AttributeError as err:
@@ -28,7 +26,6 @@ except AttributeError as err:
 
 
 class Reads(GenomicLoci):
-
     __slots__ = "exons", "introns", "polya_length", "m6a", "features", "id"
 
     def __init__(self,
@@ -127,6 +124,9 @@ class Reads(GenomicLoci):
             "polya_length": self.polya_length,
             "m6a": self.m6a
         }
+
+    def transform(self, log_trans: str):
+        return self
 
     @staticmethod
     def __collapse_read__(genomic_list: List[GenomicLoci]) -> List[GenomicLoci]:
@@ -516,7 +516,7 @@ class ReadSegment(File):
                 mtx[i, (e_start - self.region.start + 1):(e_end - self.region.start + 1)] = 1
 
         # "single", "complete", "average", "weighted", "centroid", "median", "ward"
-        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"))
+        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"), no_plot=True)
 
         data = []
         for i in order["leaves"]:

@@ -90,6 +90,7 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
     ```bash
     git clone https://github.com/ygidtu/sashimi.py sashimi
     cd sashimi
+    pip install -r requirements.txt
     python setup.py install
     
     sashimipy --help
