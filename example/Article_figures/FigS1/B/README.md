@@ -39,6 +39,9 @@ python ../../../../main.py \
   --dpi 300 \
   --width 6 \
   --height 1 --show-junction-num \
-  --included-junctions chr9:112297918-112330441,chr9:112297918-112333470,chr9:112330476-112333470
+  --raster \
+  --density-by-strand \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
 
 ```

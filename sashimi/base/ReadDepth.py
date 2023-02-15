@@ -75,8 +75,10 @@ class ReadDepth(object):
         if self.wiggle is not None and other.wiggle is not None:
             if len(self.wiggle) == len(other.wiggle):
                 junc = {}
-                junc.update(self.junctions_dict)
-                junc.update(other.junctions_dict)
+                if self.junctions_dict:
+                    junc.update(self.junctions_dict)
+                if other.junctions_dict:
+                    junc.update(other.junctions_dict)
 
                 minus = None
                 if self.minus is not None and other.minus is not None:

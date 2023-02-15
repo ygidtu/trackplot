@@ -1,6 +1,8 @@
 
 # Interactive Usage
 
+A detailed notebook tutorial at [here](https://nbviewer.org/github/ygidtu/sashimi.py/blob/main/docs/interactive.ipynb).
+
 ## Example Usage
 
 The interactive API could be used as normal functions or calling as process chain.
