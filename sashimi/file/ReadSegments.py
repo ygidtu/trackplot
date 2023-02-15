@@ -125,9 +125,6 @@ class Reads(GenomicLoci):
             "m6a": self.m6a
         }
 
-    def transform(self, log_trans: str):
-        return self
-
     @staticmethod
     def __collapse_read__(genomic_list: List[GenomicLoci]) -> List[GenomicLoci]:
         u"""
@@ -175,7 +172,8 @@ class ReadSegment(File):
             del_ratio_ignore: float = .5,
             features: Optional[dict] = None,
             exon_focus: Optional[str] = None,
-            is_bed: bool = False
+            is_bed: bool = False,
+            is_loaded: bool = False
     ):
         u"""
         init a class for store the information for IGV-like plot
@@ -189,6 +187,7 @@ class ReadSegment(File):
         :param features: default: features={"m6a": "ma","real_strand": "rs","polya": "pa"}
         :param exon_focus: exon to focus, like start1-end1,start2-end2
         :param is_bed: bed file for generating igv-like reads.
+        :param is_loaded: loaded already, if yes then return
         """
         super().__init__(path)
 
@@ -206,6 +205,7 @@ class ReadSegment(File):
         self.features = features
         self.is_bed = is_bed
         self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(','))) if exon_focus else exon_focus
+        self.is_loaded = is_loaded
 
     @classmethod
     def create(
@@ -533,6 +533,8 @@ class ReadSegment(File):
         :param region: the plotting region
         :return:
         """
+        if self.region == region and self.is_loaded:
+            return self
 
         self.region = region
 
@@ -542,6 +544,7 @@ class ReadSegment(File):
         else:
             self.load_bam()
 
+        self.is_loaded = True
         self.__order_data__()
 
         tmp_df = pd.DataFrame(map(lambda x: x.to_dict(), self.data))
