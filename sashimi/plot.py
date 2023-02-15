@@ -25,6 +25,8 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.Junction import load_custom_junction
 from sashimi.file.Motif import Motif
 from sashimi.plot_func import *
+from sashimi.file.ReadSegments import ReadSegment
+
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -1032,6 +1034,8 @@ class Plot(object):
                 p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
             for obj in p.obj:
+                if isinstance(obj, ReadSegment):
+                    continue
                 obj.transform()
 
             plots_n_rows += p.len(reference_scale)
