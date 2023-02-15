@@ -65,7 +65,7 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
    conda env create -n sashimi -f environment.yaml
    ```
 
-2. install from PiPy
+2. install from PyPi
 
    ```bash
    pip install sashimi.py

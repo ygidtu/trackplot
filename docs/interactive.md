@@ -5,6 +5,8 @@
 
 The interactive API could be used as normal functions or calling as process chain.
 
+The `jupyter notebook` of following example were provided at [github](https://github.com/ygidtu/sashimi.py/blob/main/docs/interactive.ipynb)
+
 ###### 1. init plot
 
 ```python
@@ -99,8 +101,8 @@ plot.add_interval(
 ###### 4. save figures
 
 ```python
-plot.plot("test_plot.png", fig_width=6, fig_height=2, raster=True)
-# save plot into test_plot.png, with given fig width and height, the raster=True, will reduce layers in pdf or svg format
+plot.plot("test_plot.png", width=6, height=1, raster=True)
+# save plot into test_plot.png, with given width and height, the raster=True, will reduce layers in pdf or svg format
 ```
 
 ## API documentation
