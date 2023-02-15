@@ -37,7 +37,7 @@ sashimipy --help
 
 Parameters:
 
-```bash
+```
 Usage: main.py [OPTIONS]
 
   Welcome to use sashimi
@@ -159,7 +159,7 @@ Options:
                                   y[i].
 
                                   - mid: Steps occur half-way between the x
-                                  positions."  [default: post]
+                                  positions.  [default: post]
     --sc-density-height-ratio FLOAT
                                   The relative height of single cell density
                                   plots  [default: 1]
@@ -399,25 +399,40 @@ example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc
 ```
 
-1.`--customized-junction` 
+#### 1.`--customized-junction` 
 
-This parameter is used to add user defined junctions
+This parameter is used to add the custom junctions from users 
 
-```bash
+```
 # junctions corresponding_input_file
 junctions 2bam 3bam
 chr1:1000-20000 100 200
 ```
 
-- the row list different junctions.
-- the columns corresponding to input files in file list.
-- the table were filled with junction counts.
+- The first row is title of each column, first column is the junction id 
+- Each row means the different junctions except the first column.
+- Each column means the counts of the custom junction 
 
-2.`--show-site` and `--show-strand`
+** Example: `--customized-junction` **
+
+```bash
+
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --customized-junction example/custome_junction.tsv \
+  --output example.pdf
+
+```
+![](imgs/cmd/custom_junction.png)
+
+####  2.`--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
 **Example: `--show-site`, `--focus` and `--sites` **
+
 
 ```bash
 python main.py \
@@ -426,12 +441,168 @@ python main.py \
   --density example/density_list.tsv \
   --show-site \
   --focus 1272656-1272656:1275656-1277656 \
-  --sites 1271656,1271656,1272656 \
+  --sites 1271656,1272656 \
   --output example.pdf
 ```
 
 ![](imgs/cmd/2.png)
 
+#### 3. Filter junction counts and include the specific junction
+
+User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
+
+Here is the command,
+```shell
+
+# panel A, show all junctions
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.raw.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num
+
+# panel B, show the junctions with more 10 counts.
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.filter.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10
+
+# panel C, show the specific junctions.
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.include.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
+```
+
+![](imgs/cmd/junction_manu.png)
+
+#### 4. Sample aggregation
+
+User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
+
+
+Here is the configure file,
+```
+# we use third column to group the different data to aggregate datasets.
+ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
+ENCFF125RUG.bam	bam	PTBP1_KD_agg	#0084d1	frf
+ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
+
+```
+
+```shell
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.agg.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
+```
+
+The `PTBP1_KD_agg` is the summation of ENCFF854PFR.bam and ENCFF125RUG.bam 
+
+![](imgs/cmd/agg.png)
+
+#### 5. The intron shrinkage
+
+The shrinkage of intron 
+
+```shell
+
+# Without shrinkage of the intron (shrinkage_scale: 1)
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.1.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale 1
+
+# with shrinkage of the intron (shrinkage_scale: 0.001)
+python ../../../../main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.001.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01
+
+```
+
+![](imgs/cmd/intron_scale.png)
+
+#### 6. Visualize coverage by rpm or rpkm
+
+We also support to visualize the coverage by normalized values.
+
+Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
+
+```shell
+# No any normalize
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.count.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format count
+
+# Normalize by rpkm
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.rpkm.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format rpkm
+
+# Normalize by cpm
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.cpm.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format cpm
+
+```
+
+![](imgs/cmd/normalize_format.png)
 
 #### Single cell bam related parameters
 
@@ -441,7 +612,7 @@ python main.py \
      
   This barcode list as follows:
   
-  ```bash
+  ```
   #bam  barcode cell_type(optional) cell_type(optional)
   sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
   sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
@@ -568,7 +739,7 @@ example/bws/0.bw    bw  bw  YlOrBr
 ![](imgs/cmd/ICE1_scale_v.png)
 
 
-### Igv plot
+### Read-by-read plot
 
 
 1.Sashimi.igv module support different format file as input.
