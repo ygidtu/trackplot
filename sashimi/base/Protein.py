@@ -24,7 +24,9 @@ class CdsProtein(GenomicLoci):
 
     __slots__ = [
         "proxy", "timeout", "cds",
-        "pep", "gene_id", "transcript_id"
+        "pep", "gene_id", "transcript_id",
+        "domain_include",
+        "domain_exclude"
     ]
 
     def __init__(
@@ -37,7 +39,9 @@ class CdsProtein(GenomicLoci):
             gene_id: set,
             transcript_id: set,
             proxy: Optional[str] = None,
-            timeout: int = 10
+            timeout: int = 10,
+            domain_include: Optional[str] = None,
+            domain_exclude: Optional[str] = None
     ):
         u"""
         Re-iter the gtf and collection all CDS information from gtf, not truncated genomic region at here
@@ -54,6 +58,14 @@ class CdsProtein(GenomicLoci):
             start=start,
             end=end,
             strand=strand)
+        self.domain_include = set(
+            [i.strip().upper() for i in domain_include.split(':')]
+        ) if domain_include else domain_include
+
+        self.domain_exclude = set(
+            [i.strip().upper() for i in domain_exclude.split(':')]
+        ) if domain_exclude else domain_exclude
+
         self.proxy = proxy
         self.timeout = timeout
         self.cds = cds
@@ -91,7 +103,9 @@ class CdsProtein(GenomicLoci):
             gene_id: set,
             strand: str = "*",
             proxy: Optional[str] = None,
-            timeout: int = 10
+            timeout: int = 10,
+            domain_include: Optional[str] = None,
+            domain_exclude: Optional[str] = None
     ):
         u"""
         Generate the CdsProtein object
@@ -99,9 +113,12 @@ class CdsProtein(GenomicLoci):
         :param chromosome: the chromosome id of the given genes
         :param transcript_id: the set of transcript_id to fetch CDS region
         :param gene_id: the set of gene_id to fetch CDS region, and also used to stop the iteration
+        :param domain_exclude: the domain will be included in reference plot
+        :param domain_include: the domain will be excluded in reference plot
         :param strand: the strand of gene
         :return:
         """
+
         relevant_exon_iterator = gtf_tabix.fetch(reference=chromosome, parser=asGTF())
 
         boundary_for_iter = []
@@ -168,6 +185,8 @@ class CdsProtein(GenomicLoci):
                 cds=cds_contain,
                 gene_id=gene_id,
                 transcript_id=transcript_id,
+                domain_include=domain_include,
+                domain_exclude=domain_exclude,
                 proxy=proxy,
                 timeout=timeout
             )
@@ -205,6 +224,21 @@ class CdsProtein(GenomicLoci):
             domain_res = defaultdict(list)
             for domain in current_pep.domain:
                 current_unique_id = domain.unique_id
+                try:
+                    domain_cate, domain_type = current_unique_id.upper().split(',')[:2]
+                    if self.domain_exclude is not None and \
+                            (domain_cate in self.domain_exclude or
+                             f"{domain_cate},{domain_type}" in self.domain_exclude):
+                        continue
+
+                    if self.domain_include is not None and \
+                            domain_cate not in self.domain_include and \
+                             f"{domain_cate},{domain_type}" not in self.domain_include:
+                        continue
+
+                except ValueError:
+                    pass
+
                 pep_genomic_coord = coord_mapper.pep_to_cds(
                     int(domain.begin),
                     int(domain.end)
@@ -227,6 +261,7 @@ class CdsProtein(GenomicLoci):
                 domain_res[current_unique_id].extend([current_domain_res])
 
             for domain_unique_id, domain_list in domain_res.items():
+
                 start_site = min([
                     min(map(lambda x: x.start, i)) for i in domain_list
                 ])

@@ -33,7 +33,7 @@ for generating the plot,
 
 python ../../../../main.py \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
   -o PTBP3.pdf \
   --dpi 300 \

@@ -29,10 +29,13 @@ class Reference(File):
     """
 
     __slots__ = "category", "add_domain", "domain", \
-        "interval_file", "add_local_domain", "local_domain", "proxy", "timeout"
+        "interval_file", "add_local_domain", "local_domain", "proxy", "timeout", \
+                "domain_include", "domain_exclude"
 
     def __init__(self, path: str, category: str = "gtf",
                  add_domain: bool = False, add_local_domain: Optional[str] = False,
+                 domain_include: Optional[str] = False,
+                 domain_exclude: Optional[str] = False,
                  proxy: Optional[str] = None, timeout: int = 10):
         u"""
         init func
@@ -50,6 +53,9 @@ class Reference(File):
 
         self.add_local_domain = add_local_domain
         self.local_domain = None
+
+        self.domain_include = domain_include
+        self.domain_exclude = domain_exclude
 
         self.proxy = proxy
         self.timeout = timeout
@@ -92,13 +98,19 @@ class Reference(File):
         return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
-    def create(cls, path: str, add_domain: bool = False, add_local_domain: Optional[str] = False,
+    def create(cls, path: str,
+               add_domain: bool = False,
+               add_local_domain: Optional[str] = False,
+               domain_include: Optional[str] = None,
+               domain_exclude: Optional[str] = None,
                category: str = "gtf"):
         u"""
         create reference file object
         :param path: path to input file
         :param add_domain: whether plot domain
         :param add_local_domain: fetch domain information from local file, which download from ucsc
+        :param domain_exclude: the domain will be included in reference plot
+        :param domain_include: the domain will be excluded in reference plot
         :param category: the type of reference file, include gtf and bam: customized reads as references
         :return: Reference obj
         """
@@ -111,6 +123,8 @@ class Reference(File):
             path=path,
             add_domain=add_domain,
             add_local_domain=add_local_domain,
+            domain_include=domain_include,
+            domain_exclude=domain_exclude,
             category=category)
 
     def __load_local_domain__(self, region: GenomicLoci):
@@ -196,7 +210,9 @@ class Reference(File):
                     gtf_tabix=gtf_tabix,
                     chromosome=chromosome_id,
                     transcript_id=transcript_id,
-                    gene_id=chromosome_id
+                    gene_id=chromosome_id,
+                    domain_include=self.domain_include,
+                    domain_exclude=self.domain_exclude
                 )
             # add pep information to cdsProtein.
             if self.domain:

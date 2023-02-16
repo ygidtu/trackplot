@@ -532,9 +532,13 @@ def plot_reference(
                     if len(sub_exon) != 1:
                         ax.plot(intron_sites, [y_loc, y_loc],
                                 color=color, lw=0.2, rasterized=raster)
+                if show_id:
+                    ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript_id}",
+                            fontsize=font_size / 2, ha="right")
+                else:
+                    ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript}",
+                            fontsize=font_size / 2, ha="right")
 
-                ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript_id}",
-                        fontsize=font_size / 2, ha="right")
 
                 y_loc += 0.25
 
