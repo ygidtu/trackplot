@@ -414,7 +414,7 @@ class Plot(object):
                             density_by_strand: bool = False,
 
                             # for hic plot
-                            trans: Optional[str] = None,
+                            # trans: Optional[str] = None,
                             depth: Optional[int] = 30000,
 
                             # for ATAC
@@ -458,7 +458,7 @@ class Plot(object):
             obj = HiCTrack.create(
                 path=path,
                 label=label,
-                trans=trans,
+                log_trans=log_trans,
                 depth=depth
             )
         elif category == "bigwig" or category == "bw":
@@ -788,7 +788,7 @@ class Plot(object):
             category: str = "hic",
             label: str = "",
             color: str = "RdYlBu_r",
-            trans: Optional[str] = None,
+            log_trans: Optional[str] = None,
             show_legend: bool = True,
             depth: int = 30000,
             font_size: int = 8,
@@ -801,7 +801,7 @@ class Plot(object):
             category=category,
             label=label,
             depth=depth,
-            trans=trans
+            log_trans=log_trans
         )
 
         info = PlotInfo(obj=obj, category=category, type_="hic")
@@ -1043,6 +1043,8 @@ class Plot(object):
 
             for obj in p.obj:
                 if isinstance(obj, ReadSegment):
+                    continue
+                if isinstance(obj, HiCTrack):
                     continue
                 obj.transform()
 
