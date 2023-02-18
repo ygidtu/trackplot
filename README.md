@@ -185,7 +185,7 @@ python main.py \
   -p 4
 ```
 
-here is the [output file](https://raw.githubusercontent.com/ygidtu/sashimi.py/main/example/example.png)._
+here is the [output file](https://raw.githubusercontent.com/ygidtu/sashimi.py/main/example/example.png).
 
 
 ## Questions
