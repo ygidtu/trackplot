@@ -416,7 +416,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 2nd column is the file category, \n
                  - 3rd column is input file alias (optional), \n
                  - 4th column is color of input files (optional),\n
-                 - 5th column is data transform for HiC matrix, eg log1p, log2, log10 (optional).
+                 - 5th column is data transform for HiC matrix, eg 0, 2, 10 (optional). Same to `--log`
                  """)
 @optgroup.group("Additional annotation")
 @optgroup.option("-f", "--genome", type=click.Path(), default=None,
@@ -705,7 +705,7 @@ def main(**kwargs):
                         f.path,
                         category=f.category,
                         label=f.label,
-                        trans=f.trans,
+                        log_trans=f.trans,
                         depth=f.depth,
                         color=f.color,
                         show_legend=not kwargs["hide_legend"],

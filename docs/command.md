@@ -354,8 +354,8 @@ The sashimi will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCE
 
 #### 2. Include or exclude the domain based on category or type
 
-`--include`: the domain will be included and a domain which is not in the list will not be presented
-`--exclude`: the domain will be excluded
+`--domain-include`: the domain will be included and a domain which is not in the list will not be presented
+`--domain-exclude`: the domain will be excluded
 For example,
 
 ```shell
@@ -491,7 +491,7 @@ python main.py \
 User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
 
 Here is the command,
-```shell
+```bash
 
 # panel A, show all junctions
 
@@ -544,7 +544,7 @@ ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
 
 ```
 
-```shell
+```bash
 
 python main.py \
   -e chr9:112296343-112335026 \
@@ -566,7 +566,7 @@ The `PTBP1_KD_agg` is the summation of ENCFF854PFR.bam and ENCFF125RUG.bam
 
 The shrinkage of intron 
 
-```shell
+```bash
 
 # Without shrinkage of the intron (shrinkage_scale: 1)
 python main.py \
@@ -581,7 +581,7 @@ python main.py \
   --intron-scale 1
 
 # with shrinkage of the intron (shrinkage_scale: 0.001)
-python ../../../../main.py \
+python main.py \
   -e chr9:112296343-112335026 \
   -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
@@ -602,7 +602,7 @@ We also support to visualize the coverage by normalized values.
 
 Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
 
-```shell
+```bash
 # No any normalize
 python main.py \
   -e chr9:112296343-112335026 \
