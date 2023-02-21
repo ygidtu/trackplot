@@ -1017,7 +1017,7 @@ def plot_hic(
                 cmap=color),
             cax=cbar_ax)
         cbar.ax.tick_params(labelsize=font_size)
-        if obj.trans:
+        if obj.log_trans:
             legend_ticks = cbar.get_ticks().tolist()
             legend_ticks[0] = f"{legend_ticks[0]}\n{obj.trans}"
             cbar.set_ticklabels(legend_ticks)
