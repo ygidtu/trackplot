@@ -331,6 +331,8 @@ def process_file_list(infile: str, category: str = "density"):
                  i.e. the interval [x[i], x[i+1]) has the value y[i].\n
                  - mid: Steps occur half-way between the x positions."
                  """)
+@optgroup.option("--smooth-bin", type=int, default=20, show_default=True,
+                 help="The bin size used to smooth ATAC fragments.")
 @optgroup.option("--sc-density-height-ratio", type=float, default=1, show_default=True,
                  help="The relative height of single cell density plots")
 @optgroup.group("Line plot settings")
@@ -580,17 +582,18 @@ def main(**kwargs):
                                       log_trans=kwargs["log"])
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.name in barcodes.keys() and f.category in ["bam", "atac"]:
+                    if barcodes and f.category in ["bam", "atac"]:
+                        bcs = barcodes.get(f.path, barcodes.get(f.name, {}))
                         if f.label not in size_factors.keys() and f.category == "atac":
                             logger.info(f"Indexing {f.path}")
-                            size_factors[f.label] = ATAC.index(f.path, barcodes[f.name])
+                            size_factors[f.label] = ATAC.index(f.path, bcs)
 
-                        for group in barcodes[f.name].keys():
+                        for group in bcs.keys():
                             p.add_heatmap(f.path,
                                           category=f.category,
                                           label=f"{f.label} - {group}" if group else f.label,
                                           barcode=group,
-                                          barcode_groups=barcodes[f.name],
+                                          barcode_groups=bcs,
                                           group=f"{f.group} - {group}" if f.group else f.group,
                                           barcode_tag=kwargs["barcode_tag"],
                                           size_factor=size_factors.get(f.label),
@@ -751,7 +754,8 @@ def main(**kwargs):
         included_junctions=included_junctions,
         n_jobs=kwargs.get("process", 1),
         normalize_format=kwargs.get("normalize_format"),
-        fill_step=kwargs.get("fill_step", "post")
+        fill_step=kwargs.get("fill_step", "post"),
+        smooth_bin=kwargs["smooth_bin"]
     )
     logger.info("DONE")
 

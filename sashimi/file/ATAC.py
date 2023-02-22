@@ -8,6 +8,7 @@ changelog:
 
 """
 import os
+from copy import deepcopy
 from typing import Dict, Optional, Set
 
 import numpy as np
@@ -137,6 +138,12 @@ class ATAC(SingleCell):
         self.region = region
         self.log_trans = log_trans
 
+        smooth_bin = kwargs.get("smooth_bin", 10)
+        half_bin = smooth_bin // 2
+        region = deepcopy(region)
+        region.start -= half_bin
+        region.end += half_bin
+
         depth_vector = np.zeros(len(region), dtype=int)
         try:
             for _, start, end, barcode, count in Reader.read_depth(path=self.path, region=region):
@@ -145,8 +152,8 @@ class ATAC(SingleCell):
                 if not self.empty_barcode():
                     if not self.has_barcode(barcode):
                         continue
-                depth_vector[(start - region.start)] += count
-                depth_vector[(end - region.start)] += count
+                depth_vector[max(start - region.start, 0)] += count
+                depth_vector[min(end - region.start, len(depth_vector) - 1)] += count
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)
@@ -156,6 +163,12 @@ class ATAC(SingleCell):
 
         self.data = ReadDepth(depth_vector)
         self.data.normalize(self.size_factor[self.barcode])
+
+        depth_vector = self.data.wiggle
+        for i in range(half_bin, len(self.region)):
+            depth_vector[i] = np.mean(depth_vector[i-half_bin:i+half_bin])
+        depth_vector = depth_vector[half_bin:len(depth_vector) - half_bin]
+        self.data = ReadDepth(depth_vector)
         return self
 
 

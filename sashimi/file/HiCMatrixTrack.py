@@ -16,9 +16,10 @@ from scipy import sparse
 
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
+from sashimi.file.File import File
 
 
-class HiCTrack:
+class HiCTrack(File):
 
     __slots__ = "path", "matrix", "x", "y", "depth", "trans", "label", "region", "is_single_cell"
 
@@ -33,14 +34,13 @@ class HiCTrack:
                  region: Optional[GenomicLoci] = None,
                  is_single_cell: bool = False
                  ):
-        self.path = path
+        super().__init__(path, region=region)
         self.matrix = matrix
         self.x = x_coord
         self.y = y_coord
         self.depth = depth
         self.trans = trans
         self.label = label
-        self.region = region
         self.is_single_cell = is_single_cell
 
     @classmethod

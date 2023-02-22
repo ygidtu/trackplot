@@ -92,6 +92,8 @@ class ReadDepth(object):
                     self.plus + other.plus, minus=minus,
                     junction_dict=junc,
                 )
+            else:
+                raise ValueError(f"ReadDepth objects are not equal length: {len(self.wiggle)} != {len(other.wiggle)}")
         elif self.wiggle is None:
             return other
         else:
@@ -133,28 +135,28 @@ class ReadDepth(object):
             if self.minus is not None:
                 self.minus = funcs[log_trans](self.minus + 1)
 
-    def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 1):
+    def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 0):
         u"""
         Convert reads counts to cpm, fpkm or just scale with scale_factor
 
         Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
         """
 
-        if format_ == "rpkm":
+        if format_ == "rpkm" and read_length > 0:
             # for rpkm the size_factor is total reads
             self.plus = np.divide(self.plus, np.multiply((len(self.plus) - read_length + 1) * 1e3, size_factor / 1e6))
             if self.minus is not None:
                 self.minus = np.divide(self.minus,
                                        np.multiply((len(self.minus) - read_length + 1) * 1e3, size_factor / 1e6))
-        elif format_ == "cpm":
+        elif format_ == "cpm" and read_length > 0:
             # for cpm the size_factor is total reads
             self.plus = np.divide(self.plus, np.multiply(size_factor, 1e6))
             if self.minus is not None:
                 self.minus = np.divide(self.minus, np.multiply(size_factor, 1e6))
-        else:
-            self.plus = np.divide(self.plus, size_factor)  # * 100
-            if self.minus is not None:
-                self.minus = np.divide(self.minus, size_factor)
+
+        self.plus = np.divide(self.plus, size_factor)  # * 100
+        if self.minus is not None:
+            self.minus = np.divide(self.minus, size_factor)
 
 
 if __name__ == '__main__':
