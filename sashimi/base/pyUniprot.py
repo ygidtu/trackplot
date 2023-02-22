@@ -15,7 +15,7 @@ import requests as rq
 import xmltodict
 from loguru import logger
 
-# from sashimi.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
+from sashimi.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):
@@ -204,9 +204,8 @@ class Uniprot(object):
                 )
 
                 sub_feature = SimpleNamespace(**sub_feature)
-
-                # if sub_feature.category in __VALID_DOMAIN_CATEGORY__:
-                res.append(sub_feature)
+                if sub_feature.category in __VALID_DOMAIN_CATEGORY__:
+                    res.append(sub_feature)
 
             if len(res) == 0:
                 return None

@@ -416,7 +416,7 @@ class Plot(object):
                             # for hic plot
                             # trans: Optional[str] = None,
                             depth: Optional[int] = 30000,
-
+                            tad: Optional[str] = None,
                             # for ATAC
                             size_factor=None,
 
@@ -459,7 +459,8 @@ class Plot(object):
                 path=path,
                 label=label,
                 log_trans=log_trans,
-                depth=depth
+                depth=depth,
+                tad=tad
             )
         elif category == "bigwig" or category == "bw":
             category = "bw"
@@ -789,6 +790,7 @@ class Plot(object):
             label: str = "",
             color: str = "RdYlBu_r",
             log_trans: Optional[str] = None,
+            tad: Optional[str] = None,
             show_legend: bool = True,
             depth: int = 30000,
             font_size: int = 8,
@@ -801,6 +803,7 @@ class Plot(object):
             category=category,
             label=label,
             depth=depth,
+            tad=tad,
             log_trans=log_trans
         )
 
