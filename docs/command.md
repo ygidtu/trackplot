@@ -874,10 +874,26 @@ python main.py \
 
 Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https://github.com/deeptools/HiCMatrix/blob/master/hicmatrix/test/test_data/Li_et_al_2015.h5) into a config file, then pass to `--hic`. here is an example config file,
 
+
+Here is the command line for generating domain
+
 ```bash
-# filepath  file_category   label   color  transform	depth
-example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
+
+hicFindTADs -m example/Li_et_al_2015.h5 \
+--outPrefix example/Li_et_al_2015_thres0.05_delta0.01_fdr \
+--thresholdComparisons 0.05 \
+--delta 0.01 \
+--correctForMultipleTesting fdr \
+-p 12
+
 ```
+
+The format of configuration file,
+```bash
+# filepath  file_category   label   color  transform (2,10 and e means log2, log10 and ln.)	depth domaininfor
+example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	2	50000 example/Li_et_al_2015_thres0.05_delta0.01_fdr_domains.bed.gz
+```
+
 here is the plotting command line
 
 ```bash

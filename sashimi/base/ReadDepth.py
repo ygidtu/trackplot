@@ -21,7 +21,8 @@ class ReadDepth(object):
     """
 
     __slots__ = [
-        "junctions_dict", "minus", "plus",
+        "junction_dict_plus", "junction_dict_minus",
+        "minus", "plus",
         "strand_aware", "site_plus", "site_minus",
     ]
 
@@ -30,7 +31,8 @@ class ReadDepth(object):
                  site_plus: Optional[np.array] = None,
                  site_minus: Optional[np.array] = None,
                  minus: Optional[np.array] = None,
-                 junction_dict: Optional[np.array] = None,
+                 junction_dict_plus: Optional[np.array] = None,
+                 junction_dict_minus: Optional[np.array] = None,
                  strand_aware: bool = False):
         u"""
         init this class
@@ -40,11 +42,14 @@ class ReadDepth(object):
         :param site_minus: a numpy.ndarray object represented the reverse site coverage
         :param minus: a numpy.ndarray object represented the reverse strand read coverage
         :param strand_aware: strand specific depth
+        :param junction_dict_plus: these splice junction from plus strand
+        :param junction_dict_minus: these splice junction from minus strand
         """
         self.plus = wiggle
         self.strand_aware = strand_aware
         self.minus = abs(minus) if minus is not None else minus
-        self.junctions_dict = junction_dict
+        self.junction_dict_plus = junction_dict_plus
+        self.junction_dict_minus = junction_dict_minus
         self.site_plus = site_plus
         self.site_minus = site_minus * -1 if site_minus is not None else site_minus
 
@@ -57,6 +62,13 @@ class ReadDepth(object):
             return self.plus + self.minus
 
         return self.plus
+
+    @property
+    def junctions_dict(self) -> dict:
+        res = {}
+        res.update(self.junction_dict_plus)
+        res.update(self.junction_dict_minus)
+        return res
 
     @property
     def max(self) -> float:
@@ -74,11 +86,14 @@ class ReadDepth(object):
 
         if self.wiggle is not None and other.wiggle is not None:
             if len(self.wiggle) == len(other.wiggle):
-                junc = {}
-                if self.junctions_dict:
-                    junc.update(self.junctions_dict)
-                if other.junctions_dict:
-                    junc.update(other.junctions_dict)
+                junc_plus, junc_minus = {}, {}
+
+                for i in [self.junction_dict_plus, other.junction_dict_plus]:
+                    if i:
+                        junc_plus.update(i)
+                for i in [self.junction_dict_minus, other.junction_dict_minus]:
+                    if i:
+                        junc_minus.update(i)
 
                 minus = None
                 if self.minus is not None and other.minus is not None:
@@ -90,7 +105,8 @@ class ReadDepth(object):
 
                 return ReadDepth(
                     self.plus + other.plus, minus=minus,
-                    junction_dict=junc,
+                    junction_dict_plus=junc_plus,
+                    junction_dict_minus=junc_minus
                 )
         elif self.wiggle is None:
             return other
@@ -114,12 +130,19 @@ class ReadDepth(object):
         :param other:
         :return:
         """
+        junc_plus, junc_minus = {}, {}
 
         for key, value in other.junctions_dict.items():
             if key in self.junctions_dict.keys():
-                self.junctions_dict[key] = value + other.junctions_dict[key]
+                if key.strand == "+":
+                    self.junction_dict_plus[key] = value + other.junctions_dict[key]
+                else:
+                    self.junction_dict_minus[key] = value + other.junctions_dict[key]
             else:
-                self.junctions_dict[key] = value
+                if key.strand == "+":
+                    self.junction_dict_plus[key] = other.junctions_dict[key]
+                else:
+                    self.junction_dict_minus[key] = other.junctions_dict[key]
 
         return self.junctions_dict
 

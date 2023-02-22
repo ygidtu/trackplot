@@ -48,7 +48,8 @@ class FileList(object):
                  exon_focus: Optional[str] = None,
                  library: str = "fru",
                  trans: Optional[str] = None,
-                 depth: int = 30000):
+                 depth: int = 30000,
+                 tad: Optional[str] = None):
 
         self.path = os.path.abspath(os.path.expanduser(path))
 
@@ -63,6 +64,7 @@ class FileList(object):
         self.library = library
         self.trans = trans
         self.depth = depth
+        self.tad = tad
 
     @property
     def name(self) -> str:
@@ -216,11 +218,24 @@ def process_file_list(infile: str, category: str = "density"):
                 if len(line) < 3:
                     yield FileList(path=path, category=category)
                 elif len(line) < 4:
-                    yield FileList(path=path, category=category, label=line[2])
+                    yield FileList(path=path, category=category,
+                                   label=line[2])
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category, )
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3])
+                elif len(line) < 6:
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   trans=line[4])
+                elif len(line) < 7:
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   trans=line[4], depth=int(line[5]))
                 else:
-                    yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   trans=line[4], depth=int(line[5]),
+                                   tad=line[6])
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -701,11 +716,13 @@ def main(**kwargs):
                               )
             elif key == "hic":
                 for f in process_file_list(kwargs[key], "hic"):
+
                     p.add_hic(
                         f.path,
                         category=f.category,
                         label=f.label,
                         log_trans=f.trans,
+                        tad=f.tad,
                         depth=f.depth,
                         color=f.color,
                         show_legend=not kwargs["hide_legend"],

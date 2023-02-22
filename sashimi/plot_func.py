@@ -17,7 +17,7 @@ from adjustText import adjust_text
 from loguru import logger
 from matplotlib import pylab
 from matplotlib.font_manager import FontProperties
-from matplotlib.patches import PathPatch
+from matplotlib.patches import PathPatch, Polygon
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
@@ -224,7 +224,8 @@ def set_y_ticks(
         ax.spines["left"].set_bounds(min_used_y_val, max_used_y_val)
 
         # assign number of ticks to minus and plus axis
-        assign_ticks_y = [int(x / (abs(min_used_y_val) + max_used_y_val) * n_y_ticks) for x in [abs(min_used_y_val), abs(max_used_y_val)]]
+        assign_ticks_y = [int(x / (abs(min_used_y_val) + max_used_y_val) * n_y_ticks) for x in
+                          [abs(min_used_y_val), abs(max_used_y_val)]]
         universal_y_ticks = pylab.linspace(min_used_y_val, 0, assign_ticks_y[0] + 1)
         for i in pylab.linspace(0, max_used_y_val, assign_ticks_y[1] + 1):
             universal_y_ticks = np.append(universal_y_ticks, i)
@@ -539,7 +540,6 @@ def plot_reference(
                     ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript}",
                             fontsize=font_size / 2, ha="right")
 
-
                 y_loc += 0.25
 
         # offset for next term.
@@ -781,7 +781,8 @@ def plot_density(
                 jxn_numbers.append(t)
 
         try:
-            adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1), autoalign="y")
+            adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1),
+                        autoalign="y")
         except IndexError as err:
             logger.warning(err)
 
@@ -1003,11 +1004,29 @@ def plot_hic(
 
     if not y_label:
         y_label = obj.label
-
+    y_max = obj.matrix.shape[1]
     ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
                   cmap=color, rasterized=raster)
+
+    if obj.tad:
+
+        for tad in obj.tad_list:
+            x1 = tad.start - obj.region.start
+            x2 = x1 + float(tad.end - tad.start) / 2
+            x3 = tad.end - obj.region.start
+            y1 = 0
+            y2 = (x3 - x1)
+            if y2 > obj.depth:
+                continue
+
+            triangle = Polygon([[x1, y1], [x2, y2], [x3, y1]], closed=True,
+                               edgecolor="black",
+                               facecolor='None')
+
+            ax.add_artist(triangle)
+
     ax.set_xlim(0, len(obj.region))
-    ax.set_ylim(0, obj.matrix.shape[1])
+    ax.set_ylim(0, y_max)
 
     if show_legend:
         cbar = pylab.colorbar(
@@ -1019,7 +1038,7 @@ def plot_hic(
         cbar.ax.tick_params(labelsize=font_size)
         if obj.log_trans:
             legend_ticks = cbar.get_ticks().tolist()
-            legend_ticks[0] = f"{legend_ticks[0]}\n{obj.trans}"
+            legend_ticks[0] = f"{legend_ticks[0]}\n{obj.log_trans}"
             cbar.set_ticklabels(legend_ticks)
 
     ax.axis("off")
