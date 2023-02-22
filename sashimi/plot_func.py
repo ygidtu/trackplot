@@ -1019,7 +1019,7 @@ def plot_hic(
             if y2 > obj.depth:
                 continue
 
-            triangle = Polygon([[x1, y1], [x2, y2], [x3, y1]], closed=True,
+            triangle = Polygon([[x1, y1], [x2, y2], [x3, y1]], closed=False,
                                edgecolor="black",
                                facecolor='None')
 
