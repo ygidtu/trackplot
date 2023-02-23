@@ -116,6 +116,9 @@ class Reader(object):
                 relevant_reads = cls.__modify_chrom__(region, bam_file)
 
             for read in relevant_reads:
+                if read.is_qcfail or read.is_unmapped or read.is_duplicate:
+                    continue
+
                 yield read, __get_strand__(read, library=library)
 
     @classmethod

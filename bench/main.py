@@ -18,9 +18,8 @@ class ProjectStruct(object):
 
         self.funcs = {
             "sashimipy": run_sashimipy,
-            # "ggsashimi": run_ggsashimi,
-            # "miso": run_miso,
-            # "miso_orig_gff": run_miso,
+            "ggsashimi": run_ggsashimi,
+            "miso": run_miso,
         }
 
         self.path = {x: os.path.join(path, x) for x in self.funcs.keys()}

@@ -19,5 +19,6 @@ export default defineConfig({
     ],
     build: {
         outDir: '../ui',
+        chunkSizeWarningLimit: 1600,
     }
 })

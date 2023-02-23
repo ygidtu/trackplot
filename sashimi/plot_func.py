@@ -34,6 +34,7 @@ from sashimi.file.File import File
 from sashimi.file.HiCMatrixTrack import HiCTrack
 from sashimi.file.ReadSegments import ReadSegment
 from sashimi.file.Reference import Reference
+from sashimi.file.ATAC import ATAC
 
 
 def get_limited_index(num, length):
@@ -160,12 +161,24 @@ def set_x_ticks(
     ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
     ax.text(x=graph_coords[len(graph_coords) // 2], y=-2.8, s=x_label, fontsize=font_size, ha="center", va="top")
 
+    # get x ticks coord by graph_coords
     bk = 1
     if not sequence and nx_ticks > 1:
-        bk = len(graph_coords) // (nx_ticks - 1)
+        bk = max(graph_coords) // (nx_ticks - 1)
+
+    # generate reverse coords map the genomic coords to x axis
+    reverse_graph_coords = {}
+    for i in range(1, len(graph_coords)):
+        for x, y in zip(range(graph_coords[i-1], graph_coords[i]), np.linspace(i-1, i, num=graph_coords[i] - graph_coords[i-1])):
+            reverse_graph_coords[x] = int(y)
+
+    for i in range(graph_coords[0]):
+        reverse_graph_coords[i] = graph_coords[0]
+
     line_space = {}
-    for i in range(0, len(graph_coords), bk):
-        line_space[graph_coords[i]] = i + region.start
+    for i in range(nx_ticks-1):
+        i = bk * i
+        line_space[i] = reverse_graph_coords[i] + region.start
     line_space[max(graph_coords)] = region.end
 
     if sequence:
@@ -261,6 +274,9 @@ def set_y_ticks(
             y=(max_used_y_val + min_used_y_val) / 2,
             s=label, fontsize=font_size, ha="right"
         )
+
+    if max_used_y_val is not None and min_used_y_val is not None:
+        ax.set_ylim(ymin=min_used_y_val, ymax=max_used_y_val)
 
 
 def set_focus(
@@ -617,6 +633,7 @@ def plot_density(
         y_label: str = "",
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
+        min_used_y_val: Optional[float] = None,
         raster: bool = False,
         fill_step: str = "post",
         **kwargs
@@ -660,12 +677,14 @@ def plot_density(
         data = obj.data
     jxns = data.junctions_dict
 
+    fixed_max_used_y, fixed_min_used_y = max_used_y_val is not None, min_used_y_val is not None
     if max_used_y_val is None:
         max_used_y_val = max(data.plus)
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
-    min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
+    if min_used_y_val is None:
+        min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
 
     # Reduce memory footprint by using incremented graph_coords.
     x, y1, y2 = [], [], []
@@ -675,6 +694,21 @@ def plot_density(
         y2.append(-data.minus[i] if data.minus is not None else 0)
 
     ax.fill_between(x, y1, y2=y2, color=color, lw=0, step=fill_step, rasterized=raster)
+
+    # if isinstance(obj, ATAC):
+    #     for idx, y in enumerate([y1, y2]):
+    #         if np.sum(y) > 0:
+    #             array_hist = np.repeat(graph_coords, np.abs(y1).astype(np.int32))
+    #             try:
+    #                 kde = gaussian_kde(array_hist)
+    #                 fit_value = kde.pdf(graph_coords)
+    #             except (ValueError, np.linalg.LinAlgError):
+    #                 # logger.warning(err)
+    #                 # logger.warning(traceback.format_exc())
+    #                 continue
+    #
+    #             fit_value = fit_value / fit_value.max()
+    #             ax.plot(graph_coords, fit_value * np.max(y), c=color, lw=1)
 
     if data.strand_aware:
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
@@ -790,7 +824,15 @@ def plot_density(
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
 
     # update the y-axis actually used
-    min_used_y_val, max_used_y_val = ax.get_ylim()
+    if not fixed_max_used_y:
+        _, max_used_y_val = ax.get_ylim()
+
+    if not fixed_min_used_y:
+        min_used_y_val, _ = ax.get_ylim()
+
+    if max_used_y_val == min_used_y_val == 0:
+        min_used_y_val, max_used_y_val = ax.get_ylim()
+
     if data.strand_aware and kwargs.get("density_by_strand"):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
         min_used_y_val = -max_used_y_val
@@ -998,12 +1040,11 @@ def plot_hic(
     obj = obj[0]
 
     if graph_coords is None:
-        graph_coords = init_graph_coords(
-            obj.region
-        )
+        graph_coords = init_graph_coords(obj.region)
 
     if not y_label:
         y_label = obj.label
+
     y_max = obj.matrix.shape[1]
     ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
                   cmap=color, rasterized=raster)

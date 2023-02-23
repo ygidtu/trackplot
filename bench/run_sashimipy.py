@@ -38,7 +38,7 @@ def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
 
     bench.add(f"{sashimi_plot} --event {contig}:{start}-{end}:{strand} "
               f"--density {os.path.join(output, 'bam.list')} -p {n_jobs} -r {gtf} "
-              f"--output {os.path.join(output, event)}.pdf", with_activate=with_activate)
+              f"--output {os.path.join(output, event)}.pdf --height 0.01", with_activate=with_activate)
     return bench.stats()
 
 

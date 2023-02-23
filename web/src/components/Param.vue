@@ -2,13 +2,35 @@
   <div class="params">
     <el-form ref="form" v-model="param" label-width="120px">
       <div v-for="(p, index) in param" :key="index">
-        <el-form-item :label="p.key" v-if="!String(p.default).includes('inspect._empty')">
-          <el-input v-if="p.annotation === 'str' || p.annotation === 'Optional[str]'" v-model="p.default"/>
-          <el-input-number v-else-if="p.annotation === 'int'" v-model="p.default"/>
-          <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default"/>
-          <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>
-          <el-input v-else-if="!p.default.includes('inspect._empty')" v-model="p.default"></el-input>
-        </el-form-item>
+        <el-row>
+          <el-col :span="20">
+            <el-form-item :label="p.key" v-if="!String(p.default).includes('inspect._empty')">
+              <el-input v-if="p.annotation === 'str' || p.annotation === 'Optional[str]'" v-model="p.default"/>
+              <el-input-number v-else-if="p.annotation === 'int'" v-model="p.default"/>
+              <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default"/>
+
+              <el-radio-group v-model="p.default" :default="p.default" v-else-if="p.annotation === 'choice'">
+                <el-radio v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-radio>
+              </el-radio-group>
+
+              <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>
+              <el-input v-else-if="!p.default.includes('inspect._empty')" v-model="p.default"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-popover v-if="p.note !== ''"
+              placement="top-start"
+              title="Description"
+              :width="400"
+              trigger="hover"
+              :content="p.note"
+            >
+              <template #reference>
+                <el-button icon="Message" circle />
+              </template>
+            </el-popover>
+          </el-col>
+        </el-row>
       </div>
 
       <el-button type="primary" @click="submit" v-if="func !== 'plot'">Confirm</el-button>
@@ -32,6 +54,7 @@
 <script>
 import saveAs from 'file-saver';
 import urls from '../url.js';
+import { Message } from '@element-plus/icons-vue'
 
 export default {
   name: "Param",
@@ -58,6 +81,9 @@ export default {
             row.default = parseFloat(row.default)
           } else if (row.annotation === 'int') {
             row.default = parseInt(row.default)
+          } else if (row.annotation.startsWith("choice")) {
+            row.choice = this.decodeChoice(row.annotation)
+            row.annotation = "choice"
           }
 
           self.param.push(row)
@@ -77,7 +103,7 @@ export default {
     },
     submit() {
       const self = this;
-
+      console.log(this.param)
       let config = {}
       if (this.$props.func === "plot") {
         config["responseType"] = "blob"
@@ -138,6 +164,16 @@ export default {
         })
       })
     },
+    decodeChoice(choices) {
+      let choice = choices.match(/choice\[(.*)\]/)[1];
+      choice = choice.replaceAll("'", "").replaceAll('"', '').split(',')
+
+      let res = [];
+      for (let c of choice) {
+        res.push(c.trim())
+      }
+      return res
+    }
   },
   mounted() {
     this.loadParams()

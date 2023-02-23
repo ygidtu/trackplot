@@ -16,7 +16,6 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from sashimi.file.ATAC import ATAC
 from sashimi.file.Bam import Bam
 from sashimi.file.BedGraph import Bedgraph
 from sashimi.file.Bigwig import Bigwig
@@ -25,8 +24,6 @@ from sashimi.file.Fasta import Fasta
 from sashimi.file.Junction import load_custom_junction
 from sashimi.file.Motif import Motif
 from sashimi.plot_func import *
-from sashimi.file.ReadSegments import ReadSegment
-
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -391,9 +388,6 @@ class Plot(object):
         return self
 
     def add_interval(self, interval: str, interval_label: str):
-        u"""
-
-        """
         assert self.reference is not None, "please set_reference first."
         self.reference.add_interval(interval, interval_label)
         return self
@@ -433,7 +427,8 @@ class Plot(object):
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
                 library=library,
-                density_by_strand=density_by_strand
+                density_by_strand=density_by_strand,
+                size_factor=size_factor
             )
         elif category == "atac":
             obj = ATAC.create(
@@ -1090,13 +1085,24 @@ class Plot(object):
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
                                    wspace=.7, hspace=.15)
 
-        max_used_y_val = None
+        max_used_y_val, min_used_y_yal = None, None
         if kwargs.get("same_y"):
             for p in self.plots:
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
-                        y = max(obj.data.wiggle)
-                        max_used_y_val = y if max_used_y_val is None else max(y, max_used_y_val)
+                        max_used_y_val = max(obj.data.wiggle) if max_used_y_val is None else max(max(obj.data.wiggle),
+                                                                                                 max_used_y_val)
+
+                        if min_used_y_yal is None:
+                            min_used_y_yal = max(obj.data.minus) if obj.data.minus is not None else min(obj.data.wiggle)
+                        else:
+                            if obj.data.minus is None:
+                                min_used_y_yal = min(min_used_y_yal, min(obj.data.wiggle))
+                            else:
+                                min_used_y_yal = min(min_used_y_yal, min(obj.data.minus))
+
+            if min_used_y_yal is not None:
+                min_used_y_yal = -1 * min_used_y_yal
 
         curr_idx = 0
         for p in self.plots:
@@ -1110,6 +1116,7 @@ class Plot(object):
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
                     max_used_y_val=max_used_y_val,
+                    min_used_y_val=min_used_y_yal,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
                     fill_step=fill_step,

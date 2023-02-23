@@ -1,7 +1,7 @@
 # filepath  file_category   label   color  strand
 #~/Code/sashimi/example/bams/1.bam bam
-#example/bams/2.bam bam  2bam
-#example/bams/3.bam bam  3bam    blue
+example/bams/2.bam bam  2bam
+example/bams/3.bam bam  3bam    blue
 #example/bws/2.bw    bw bw green
-example/bams/sc.bam bam sc	red	frf
-example/bams/sc.bam bam sc1	blue	frf
+example/bams/sc.bam bam sc	red	frf	1000000
+example/bams/sc.bam bam sc1	blue	frf	1000000
