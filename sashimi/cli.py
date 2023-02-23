@@ -48,7 +48,7 @@ class FileList(object):
                  exon_focus: Optional[str] = None,
                  library: str = "fru",
                  trans: Optional[str] = None,
-                 depth: int = 30000):
+                 depth: Optional[int] = None):
 
         self.path = os.path.abspath(os.path.expanduser(path))
 
@@ -142,7 +142,7 @@ def process_file_list(infile: str, category: str = "density"):
                     yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4])
                 else:
                     yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4],
-                                   depth=line[5])
+                                   depth=int(line[5]))
         elif category in ["heatmap"]:
             groups = {}
             for idx, line in __read_iter__(infile):
@@ -159,8 +159,12 @@ def process_file_list(infile: str, category: str = "density"):
                                    color=COLORMAP[len(groups) % len(COLORMAP)], group=line[2])
                 else:
                     groups[line[2]] = 0
+                    depth = None
+                    if len(line) > 4:
+                        depth = int(line[4])
                     yield FileList(path=path, category=category,
-                                   color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru")
+                                   color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru",
+                                   depth=depth)
         elif category in ["line"]:
             groups = {}
             for idx, line in __read_iter__(infile):
@@ -189,6 +193,12 @@ def process_file_list(infile: str, category: str = "density"):
                     groups[line[2]] += 1
                     yield FileList(path=path, category=category, label=line[3],
                                    color=line[4], group=line[2])
+                else:
+                    if line[2] not in groups:
+                        groups[line[2]] = 0
+                    groups[line[2]] += 1
+                    yield FileList(path=path, category=category, label=line[3],
+                                   color=line[4], group=line[2], depth=int(line[5]))
         elif category in ["interval"]:
             for idx, line in __read_iter__(infile):
                 if len(line) < 2:
@@ -211,16 +221,18 @@ def process_file_list(infile: str, category: str = "density"):
                 else:
                     yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
         elif category in ["hic"]:
+            default_depth = 30000
             for idx, line in __read_iter__(infile):
                 path, category = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category)
+                    yield FileList(path=path, category=category, depth=default_depth)
                 elif len(line) < 4:
-                    yield FileList(path=path, category=category, label=line[2])
+                    yield FileList(path=path, category=category, label=line[2], depth=default_depth)
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category, )
+                    yield FileList(path=path, category=category, depth=default_depth)
                 else:
-                    yield FileList(path=path, category=category, label=line[2], color=line[3], trans=line[4])
+                    yield FileList(path=path, category=category, label=line[2], color=line[3],
+                                   trans=line[4], depth=default_depth)
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -304,7 +316,8 @@ def process_file_list(infile: str, category: str = "density"):
                  - 2nd column is the file category, \n
                  - 3rd column is input file alias (optional), \n
                  - 4th column is color of input files (optional),
-                 - 5th column is the library of input file (optional, only required by bam file). \n
+                 - 5th column is the library of input file (optional, only required by bam file), \n
+                 - 6th column is the number of total reads (optional, only required by bam file). \n
                  """)
 @optgroup.option("--customized-junction", type=click.STRING, default=None, show_default=True,
                  help="Path to junction table column name needs to be bam name or bam alias.")
@@ -344,6 +357,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 3rd column is input file group (optional), \n
                  - 4th column is input file alias (optional),\n
                  - 5th column is color platte of corresponding group (optional).
+                 - 6th column is the number of total reads (optional, only required by bam file). \n
                  """)
 @optgroup.option("--hide-legend", default=False, is_flag=True, type=click.BOOL, help="Whether to hide legend")
 @optgroup.option("--legend-position", default="upper right", type=click.STRING, help="The legend position")
@@ -357,6 +371,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 2nd column is the file category, \n
                  - 3rd column is input file group (optional), \n
                  - 4th column is color platte of corresponding group.
+                 - 5th column is the number of total reads (optional, only required by bam file). \n
                  """)
 @optgroup.option("--clustering", is_flag=True, show_default=True, help="Enable clustering of the heatmap")
 @optgroup.option("--clustering-method", type=click.Choice(CLUSTERING_METHOD), default="ward",
@@ -553,7 +568,7 @@ def main(**kwargs):
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
-                                          size_factor=size_factors.get(f.label),
+                                          size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
                                           color=sc_colors.get(group, f.color),
                                           font_size=kwargs["font_size"],
                                           show_junction_number=kwargs["show_junction_num"],
@@ -568,6 +583,7 @@ def main(**kwargs):
                         p.add_density(f.path,
                                       category=f.category,
                                       label=f.label,
+                                      size_factor=f.depth,
                                       barcode_tag=kwargs["barcode_tag"],
                                       umi_tag=kwargs["umi_tag"],
                                       library=f.library,
@@ -596,7 +612,7 @@ def main(**kwargs):
                                           barcode_groups=bcs,
                                           group=f"{f.group} - {group}" if f.group else f.group,
                                           barcode_tag=kwargs["barcode_tag"],
-                                          size_factor=size_factors.get(f.label),
+                                          size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
                                           color=f.color,
@@ -614,6 +630,7 @@ def main(**kwargs):
                                       category=f.category,
                                       group=f.group,
                                       label=f.label,
+                                      size_factor=f.depth,
                                       barcode_tag=kwargs["barcode_tag"],
                                       umi_tag=kwargs["umi_tag"],
                                       library=f.library,

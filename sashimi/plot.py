@@ -382,9 +382,6 @@ class Plot(object):
         return self
 
     def add_interval(self, interval: str, interval_label: str):
-        u"""
-
-        """
         assert self.reference is not None, "please set_reference first."
         self.reference.add_interval(interval, interval_label)
         return self
@@ -424,7 +421,8 @@ class Plot(object):
                 barcode_tag=barcode_tag,
                 umi_tag=umi_tag,
                 library=library,
-                density_by_strand=density_by_strand
+                density_by_strand=density_by_strand,
+                size_factor=size_factor
             )
         elif category == "atac":
             obj = ATAC.create(

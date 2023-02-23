@@ -31,7 +31,8 @@ class Bam(SingleCell):
                  path: str, label: str = "",
                  title: str = "", barcodes: Optional[Set[str]] = None,
                  barcode_tag: str = "CB", umi_tag: str = "UB",
-                 library: str = "fru", density_by_strand: bool = False):
+                 library: str = "fru", density_by_strand: bool = False,
+                 size_factor: Optional[int] = None):
         u"""
         init this object
         :param label: the left axis label
@@ -48,6 +49,7 @@ class Bam(SingleCell):
         self.label = label if label else os.path.basename(path).replace(".bam", "")
         self.library = library
         self.density_by_strand = density_by_strand
+        self.size_factor = size_factor
 
     @classmethod
     def create(cls,
@@ -58,7 +60,8 @@ class Bam(SingleCell):
                barcode_tag: str = "CB",
                umi_tag: str = "UB",
                library: str = "fru",
-               density_by_strand: bool = False
+               density_by_strand: bool = False,
+               size_factor: Optional[int] = None
                ):
         u"""
 
@@ -70,6 +73,8 @@ class Bam(SingleCell):
         :param barcode_tag: the cell barcode tag, default is CB according to 10X Genomics
         :param umi_tag: the UMI barcode tag, default is UB according to 10X Genomics
         :param library: library for determining of read strand.
+        :param density_by_strand:
+        :param size_factor:
         :return:
         """
 
@@ -94,7 +99,8 @@ class Bam(SingleCell):
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
             library=library,
-            density_by_strand=density_by_strand
+            density_by_strand=density_by_strand,
+            size_factor=size_factor
         )
 
     def __hash__(self):
@@ -286,9 +292,12 @@ class Bam(SingleCell):
             strand_aware=False if self.library == "fru" else True)
 
         if normalize_format != NORMALIZATION[0] and normalize_format is not None:
-            logger.info(f"Counting total number of reads: {self.path}")
-            total_reads = Reader.total_reads_of_bam(self.path)
-            self.data.normalize(size_factor=total_reads, format_=normalize_format, read_length=np.mean(read_lens))
+            if self.size_factor is None:
+                logger.info(f"Counting total number of reads: {self.path}")
+                self.size_factor = Reader.total_reads_of_bam(self.path)
+            else:
+                logger.info(f"Using given total number of reads [{self.size_factor}] for {self.path}")
+            self.data.normalize(size_factor=self.size_factor, format_=normalize_format, read_length=np.mean(read_lens))
         return self
 
 
