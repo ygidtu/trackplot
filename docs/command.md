@@ -37,7 +37,7 @@ sashimipy --help
 
 Parameters:
 
-```bash
+```
 Usage: main.py [OPTIONS]
 
   Welcome to use sashimi
@@ -65,7 +65,7 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=48]
     --group-by-cell               Group by cell types in density/line plot
     --remove-duplicate-umi        Drop duplicated UMIs by barcode
     --normalize-format [count|cpm|rpkm]
@@ -78,7 +78,6 @@ Options:
     --raster                      The would convert heatmap and site plot to
                                   raster image (speed up rendering and produce
                                   smaller files), only affects pdf, svg and PS
-                                  [default: False]
     --height FLOAT                The height of output file, default adjust
                                   image height by content  [default: 1]
     --width INTEGER RANGE         The width of output file, default adjust
@@ -90,14 +89,10 @@ Options:
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
                                   column is the label [optional]
-    --show-id                     Whether show gene id or gene name  [default:
-                                  False]
-    --show-exon-id                Whether show gene id or gene name  [default:
-                                  False]
+    --show-id                     Whether show gene id or gene name
+    --show-exon-id                Whether show gene id or gene name
     --no-gene                     Do not show gene id next to transcript id
-                                  [default: False]
     --domain                      Add domain information into reference track
-                                  [default: False]
     --proxy TEXT                  The http or https proxy for EBI/Uniprot
                                   requests,if `--domain` is True, eg:
                                   http://127.0.0.1:1080
@@ -106,12 +101,14 @@ Options:
     --local-domain TEXT           Load local domain folder and load into
                                   reference track, download from https://hgdow
                                   nload.soe.ucsc.edu/gbdb/hg38/uniprot/
-    --remove-empty                Whether to plot empty transcript  [default:
-                                  False]
+    --domain-include TEXT         Which domain will be included in reference
+                                  plot
+    --domain-exclude TEXT         Which domain will be excluded in reference
+                                  plot
+    --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
     --choose-primary              Whether choose primary transcript to plot.
-                                  [default: False]
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
     --exon-scale FLOAT            The scale of exon  [default: 1]
@@ -131,20 +128,16 @@ Options:
                                   file).
     --customized-junction TEXT    Path to junction table column name needs to
                                   be bam name or bam alias.
-    --only-customized-junction    Only used customized junctions.  [default:
-                                  False]
+    --only-customized-junction    Only used customized junctions.
     -t, --threshold INTEGER RANGE
                                   Threshold to filter low abundance junctions
                                   [default: 0; x>=0]
     --density-by-strand           Whether to draw density plot by strand
-                                  [default: False]
     --show-site                   Whether to draw additional site plot
-                                  [default: False]
     --site-strand [all|+|-]       Which strand kept for site plot, default use
                                   all  [default: all]
     --included-junctions TEXT     The junction id for including, chr1:1-100
     --show-junction-num           Whether to show the number of junctions
-                                  [default: False]
     --fill-step [pre|post|mid]    Define step if the filling should be a step
                                   function, i.e. constant in between x.  The
                                   value determines where the step will occur:
@@ -192,21 +185,19 @@ Options:
 
                                   - 4th column is color platte of
                                   corresponding group.
-    --clustering                  Enable clustering of the heatmap  [default:
-                                  False]
+    --clustering                  Enable clustering of the heatmap
     --clustering-method [single|complete|average|weighted|centroid|median|ward]
                                   The clustering method for heatmap  [default:
                                   ward]
     --distance-metric [braycurtis|canberra|chebyshev|cityblock|correlation|cosine|dice|euclidean|hamming|jaccard|jensenshannon|kulsinski|kulczynski1|mahalanobis|matching|minkowski|rogerstanimoto|russellrao|seuclidean|sokalmichener|sokalsneath|sqeuclidean|yule]
                                   The distance metric for heatmap  [default:
                                   euclidean]
-    --heatmap-scale               Do scale on heatmap matrix.  [default:
-                                  False]
+    --heatmap-scale               Do scale on heatmap matrix.
     --heatmap-vmin INTEGER        Minimum value to anchor the colormap,
                                   otherwise they are inferred from the data.
     --heatmap-vmax INTEGER        Maximum value to anchor the colormap,
                                   otherwise they are inferred from the data.
-    --show-row-names              Show row names of heatmap  [default: False]
+    --show-row-names              Show row names of heatmap
     --sc-heatmap-height-ratio FLOAT
                                   The relative height of single cell heatmap
                                   plots  [default: 0.2]
@@ -352,7 +343,7 @@ The recommended combination of backend and image formats please check [matplotli
 
 ### Reference plot
 
-1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
+#### 1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
 
 For each transcript, sashimi firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
 
@@ -361,7 +352,55 @@ The sashimi will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCE
 
 ![](imgs/cmd/domain.png)
 
-2.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
+#### 2. Include or exclude the domain based on category or type
+
+`--domain-include`: the domain will be included and a domain which is not in the list will not be presented
+`--domain-exclude`: the domain will be excluded
+For example,
+
+```shell
+
+# The protein information from PTM, DOMAIN_AND_SITES and helix from STRUCTURAL will be presented.    
+--include PTM:DOMAIN_AND_SITES:STRUCTURAL,helix
+
+# The protein information from PTM, DOMAIN_AND_SITES and helix from STRUCTURAL will be excluded.    
+--exclude PTM:DOMAIN_AND_SITES:STRUCTURAL,helix
+
+```
+The Category and type of domain refer to [here](https://ebi-uniprot.github.io/ProtVista/userGuide.html).
+
+here is the command of the tutorial,
+```shell
+python main.py \
+  -e 7:107830089-107832297 \
+  -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
+  -o domain.raw.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10 --domain
+
+# domain include test
+python main.py \
+  -e 7:107830089-107832297 \
+  -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
+  -o domain.include.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10 --domain --domain-include MOLECULE_PROCESSING:PTM,CARBOHYD
+
+# domain exclude test
+python main.py \
+  -e 7:107830089-107832297 \
+  -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
+  -o domain.exclude.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10 --domain --domain-exclude PTM:TOPOLOGY
+
+```
+![](imgs/cmd/domain_filter.png)
+
+#### 3.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
 In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to sashimi with `--local-domain`.
 
@@ -369,7 +408,7 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 
 ![](imgs/cmd/local_domain.png)
 
-3.`--interval`: add additional feature track into reference.
+#### 4.`--interval`: add additional feature track into reference.
 
 In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into reference track.
 And user could prepare and record custom annotation information into a config file, like this
@@ -399,25 +438,40 @@ example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc
 ```
 
-1.`--customized-junction` 
+#### 1.`--customized-junction` 
 
-This parameter is used to add user defined junctions
+This parameter is used to add the custom junctions from users 
 
-```bash
+```
 # junctions corresponding_input_file
 junctions 2bam 3bam
 chr1:1000-20000 100 200
 ```
 
-- the row list different junctions.
-- the columns corresponding to input files in file list.
-- the table were filled with junction counts.
+- The first row is title of each column, first column is the junction id 
+- Each row means the different junctions except the first column.
+- Each column means the counts of the custom junction 
 
-2.`--show-site` and `--show-strand`
+** Example: `--customized-junction` **
+
+```bash
+
+python main.py \
+  -e chr1:1270656-1284730:+ \
+  -r example/example.sorted.gtf.gz \
+  --density example/density_list.tsv \
+  --customized-junction example/custome_junction.tsv \
+  --output example.pdf
+
+```
+![](imgs/cmd/custom_junction.png)
+
+####  2.`--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
 **Example: `--show-site`, `--focus` and `--sites` **
+
 
 ```bash
 python main.py \
@@ -426,12 +480,168 @@ python main.py \
   --density example/density_list.tsv \
   --show-site \
   --focus 1272656-1272656:1275656-1277656 \
-  --sites 1271656,1271656,1272656 \
+  --sites 1271656,1272656 \
   --output example.pdf
 ```
 
 ![](imgs/cmd/2.png)
 
+#### 3. Filter junction counts and include the specific junction
+
+User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
+
+Here is the command,
+```bash
+
+# panel A, show all junctions
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.raw.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num
+
+# panel B, show the junctions with more 10 counts.
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.filter.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10
+
+# panel C, show the specific junctions.
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density example/Article_figures/FigS1/b/bam.tsv \
+  -o PTBP3.include.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
+```
+
+![](imgs/cmd/junction_manu.png)
+
+#### 4. Sample aggregation
+
+User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
+
+
+Here is the configure file,
+```
+# we use third column to group the different data to aggregate datasets.
+ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
+ENCFF125RUG.bam	bam	PTBP1_KD_agg	#0084d1	frf
+ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
+
+```
+
+```bash
+
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.agg.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
+```
+
+The `PTBP1_KD_agg` is the summation of ENCFF854PFR.bam and ENCFF125RUG.bam 
+
+![](imgs/cmd/agg.png)
+
+#### 5. The intron shrinkage
+
+The shrinkage of intron 
+
+```bash
+
+# Without shrinkage of the intron (shrinkage_scale: 1)
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.1.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale 1
+
+# with shrinkage of the intron (shrinkage_scale: 0.001)
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.001.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01
+
+```
+
+![](imgs/cmd/intron_scale.png)
+
+#### 6. Visualize coverage by rpm or rpkm
+
+We also support to visualize the coverage by normalized values.
+
+Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
+
+```bash
+# No any normalize
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.count.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format count
+
+# Normalize by rpkm
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.rpkm.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format rpkm
+
+# Normalize by cpm
+python main.py \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.cpm.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale .01 --normalize-format cpm
+
+```
+
+![](imgs/cmd/normalize_format.png)
 
 #### Single cell bam related parameters
 
@@ -441,7 +651,7 @@ python main.py \
      
   This barcode list as follows:
   
-  ```bash
+  ```
   #bam  barcode cell_type(optional) cell_type(optional)
   sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
   sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
@@ -568,7 +778,7 @@ example/bws/0.bw    bw  bw  YlOrBr
 ![](imgs/cmd/ICE1_scale_v.png)
 
 
-### Igv plot
+### Read-by-read plot
 
 
 1.Sashimi.igv module support different format file as input.
@@ -664,10 +874,26 @@ python main.py \
 
 Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https://github.com/deeptools/HiCMatrix/blob/master/hicmatrix/test/test_data/Li_et_al_2015.h5) into a config file, then pass to `--hic`. here is an example config file,
 
+
+Here is the command line for generating domain
+
 ```bash
-# filepath  file_category   label   color  transform	depth
-example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	log2	30000
+
+hicFindTADs -m example/Li_et_al_2015.h5 \
+--outPrefix example/Li_et_al_2015_thres0.05_delta0.01_fdr \
+--thresholdComparisons 0.05 \
+--delta 0.01 \
+--correctForMultipleTesting fdr \
+-p 12
+
 ```
+
+The format of configuration file,
+```bash
+# filepath  file_category   label   color  transform (2,10 and e means log2, log10 and ln.)	depth domaininfor
+example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	2	50000 example/Li_et_al_2015_thres0.05_delta0.01_fdr_domains.bed.gz
+```
+
 here is the plotting command line
 
 ```bash

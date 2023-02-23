@@ -161,6 +161,8 @@ class Bam(SingleCell):
         spanned_junctions = kwargs.get("junctions", {})
         included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
+        spanned_junctions_plus = dict()
+        spanned_junctions_minus = dict()
         plus, minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
         site_plus, site_minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
 
@@ -255,7 +257,7 @@ class Bam(SingleCell):
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
 
-                            spanned_junctions[junction_name] += 1
+                            spanned_junctions[junction_name] = spanned_junctions[junction_name] + 1
                         except ValueError as err:
                             logger.warning(err)
                             continue
@@ -266,16 +268,21 @@ class Bam(SingleCell):
                 elif strand == "-" and 0 <= end - region.start < len(minus):
                     site_minus[start - region.start] += 1
 
-            spanned_junctions_ = {}
             for k, v in spanned_junctions.items():
                 if included_junctions and str(k) not in included_junctions:
                     continue
 
                 if v >= threshold:
-                    spanned_junctions_[k] = v
-            spanned_junctions = spanned_junctions_
-            del spanned_junctions_
-
+                    if k.strand == "-":
+                        if k not in spanned_junctions_plus:
+                            spanned_junctions_plus[k] = -1
+                        else:
+                            spanned_junctions_plus[k] += -1
+                    elif k.strand == "+":
+                        if k not in spanned_junctions_minus:
+                            spanned_junctions_minus[k] = 1
+                        else:
+                            spanned_junctions_minus[k] += 1
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)
@@ -288,7 +295,8 @@ class Bam(SingleCell):
             site_plus=site_plus,
             site_minus=site_minus,
             minus=minus if self.density_by_strand else None,
-            junction_dict=spanned_junctions,
+            junction_dict_plus=spanned_junctions_plus,
+            junction_dict_minus=spanned_junctions_minus,
             strand_aware=False if self.library == "fru" else True)
 
         if normalize_format != NORMALIZATION[0] and normalize_format is not None:

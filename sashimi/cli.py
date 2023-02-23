@@ -49,6 +49,7 @@ class FileList(object):
                  library: str = "fru",
                  trans: Optional[str] = None,
                  depth: Optional[int] = None):
+                 tad: Optional[str] = None):
 
         self.path = os.path.abspath(os.path.expanduser(path))
 
@@ -63,6 +64,7 @@ class FileList(object):
         self.library = library
         self.trans = trans
         self.depth = depth
+        self.tad = tad
 
     @property
     def name(self) -> str:
@@ -229,10 +231,22 @@ def process_file_list(infile: str, category: str = "density"):
                 elif len(line) < 4:
                     yield FileList(path=path, category=category, label=line[2], depth=default_depth)
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category, depth=default_depth)
-                else:
-                    yield FileList(path=path, category=category, label=line[2], color=line[3],
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   depth=default_depth)
+                elif len(line) < 6:
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
                                    trans=line[4], depth=default_depth)
+                elif len(line) < 7:
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   trans=line[4], depth=int(line[5]))
+                else:
+                    yield FileList(path=path, category=category,
+                                   label=line[2], color=line[3],
+                                   trans=line[4], depth=int(line[5]),
+                                   tad=line[6])
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -298,6 +312,10 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--local-domain", default="", is_flag=False, type=click.STRING, show_default=True,
                  help="Load local domain folder and load into reference track, download from "
                       "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
+@optgroup.option("--domain-include", default=None, type=click.STRING, show_default=True,
+                 help="Which domain will be included in reference plot")
+@optgroup.option("--domain-exclude", default=None, type=click.STRING, show_default=True,
+                 help="Which domain will be excluded in reference plot")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
@@ -429,7 +447,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 2nd column is the file category, \n
                  - 3rd column is input file alias (optional), \n
                  - 4th column is color of input files (optional),\n
-                 - 5th column is data transform for HiC matrix, eg log1p, log2, log10 (optional).
+                 - 5th column is data transform for HiC matrix, eg 0, 2, 10 (optional). Same to `--log`
                  """)
 @optgroup.group("Additional annotation")
 @optgroup.option("-f", "--genome", type=click.Path(), default=None,
@@ -540,7 +558,9 @@ def main(**kwargs):
                                 show_exon_id=kwargs["show_exon_id"],
                                 transcripts=kwargs["transcripts_to_show"],
                                 add_domain=kwargs["domain"],
-                                local_domain=kwargs["local_domain"]
+                                local_domain=kwargs["local_domain"],
+                                domain_include=kwargs["domain_include"],
+                                domain_exclude=kwargs["domain_exclude"]
                                 )
             elif key == "interval":
                 for f in process_file_list(kwargs[key], key):
@@ -716,11 +736,13 @@ def main(**kwargs):
                               )
             elif key == "hic":
                 for f in process_file_list(kwargs[key], "hic"):
+
                     p.add_hic(
                         f.path,
                         category=f.category,
                         label=f.label,
-                        trans=f.trans,
+                        log_trans=f.trans,
+                        tad=f.tad,
                         depth=f.depth,
                         color=f.color,
                         show_legend=not kwargs["hide_legend"],

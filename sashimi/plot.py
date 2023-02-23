@@ -322,6 +322,8 @@ class Plot(object):
     def set_reference(self, gtf: str,
                       add_domain: bool = False,
                       local_domain: Optional[str] = False,
+                      domain_include: Optional[str] = False,
+                      domain_exclude: Optional[str] = False,
                       interval: Optional[str] = None,
                       interval_label: Optional[str] = None,
                       transcripts: Optional[List[str]] = None,
@@ -339,11 +341,13 @@ class Plot(object):
                       ):
         u"""
         add transcripts to this region
-        :param gtf:
-        :param add_domain:
-        :param local_domain:
-        :param interval:
-        :param interval_label:
+        :param gtf: the path of gtf file
+        :param add_domain: whether add domain information into reference plot
+        :param local_domain: add a local domain file into reference plot
+        :param domain_exclude: the domain will be included in reference plot
+        :param domain_include: the domain will be excluded in reference plot
+        :param interval: the path of interval annotation file, such as polyAsites
+        :param interval_label: the label of current interval annotation file
         :param font_size: the size of transcript id, name
         :param transcripts: the list of name or ids of transcripts to draw
         :param remove_empty_transcripts: whether to remove transcripts without any exons
@@ -360,7 +364,9 @@ class Plot(object):
         self.reference = Reference.create(
             gtf,
             add_domain=add_domain,
-            add_local_domain=local_domain
+            add_local_domain=local_domain,
+            domain_exclude=domain_exclude,
+            domain_include=domain_include
         )
 
         if interval and interval_label:
@@ -402,9 +408,9 @@ class Plot(object):
                             density_by_strand: bool = False,
 
                             # for hic plot
-                            trans: Optional[str] = None,
+                            # trans: Optional[str] = None,
                             depth: Optional[int] = 30000,
-
+                            tad: Optional[str] = None,
                             # for ATAC
                             size_factor=None,
 
@@ -447,8 +453,9 @@ class Plot(object):
             obj = HiCTrack.create(
                 path=path,
                 label=label,
-                trans=trans,
-                depth=depth
+                log_trans=log_trans,
+                depth=depth,
+                tad=tad
             )
         elif category == "bigwig" or category == "bw":
             category = "bw"
@@ -777,7 +784,8 @@ class Plot(object):
             category: str = "hic",
             label: str = "",
             color: str = "RdYlBu_r",
-            trans: Optional[str] = None,
+            log_trans: Optional[str] = None,
+            tad: Optional[str] = None,
             show_legend: bool = True,
             depth: int = 30000,
             font_size: int = 8,
@@ -790,7 +798,8 @@ class Plot(object):
             category=category,
             label=label,
             depth=depth,
-            trans=trans
+            tad=tad,
+            log_trans=log_trans
         )
 
         info = PlotInfo(obj=obj, category=category, type_="hic")
@@ -1032,6 +1041,8 @@ class Plot(object):
 
             for obj in p.obj:
                 if isinstance(obj, ReadSegment):
+                    continue
+                if isinstance(obj, HiCTrack):
                     continue
                 obj.transform()
 

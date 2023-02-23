@@ -158,7 +158,11 @@ __Note:__ if `segment fault` with multiple processing, please try to use docker 
 
 ## Example
 
+The `example` folder is downloaded from [here.](https://github.com/ygidtu/sashimi.py/archive/refs/heads/main.zip) 
+And a more detailed tutorial could be found at [here.](https://sashimi.readthedocs.io/en/latest/)  
+
 ```bash
+
 python main.py \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
@@ -172,7 +176,7 @@ python main.py \
   --stroke 1275656-1277656:1277856-1278656@blue \
   --sites 1271656,1271656,1272656 \
   --line example/line_list.tsv \
-  -o example/example.png \
+  -o example.png \
   --dpi 300 \
   --width 10 \
   --height 1 \
@@ -181,6 +185,7 @@ python main.py \
   --normalize-format cpm \
   -p 4
 ```
+
 here is the [output file](https://raw.githubusercontent.com/ygidtu/sashimi.py/main/example/example.png).
 
 

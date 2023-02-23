@@ -16,18 +16,20 @@ from scipy import sparse
 
 from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
+from sashimi.base.Transcript import Transcript
 from sashimi.file.File import File
 
 
 class HiCTrack(File):
 
-    __slots__ = "path", "matrix", "x", "y", "depth", "trans", "label", "region", "is_single_cell"
+    __slots__ = "path", "matrix", "x", "y", "depth", "log_trans", "label", "region", "is_single_cell", "tad", "tad_list"
 
     def __init__(self,
                  path: str,
                  label: str = "",
                  depth: int = 30000,
-                 trans: Optional[str] = None,
+                 log_trans: Optional[str] = None,
+                 tad: Optional[str] = None,
                  matrix: Optional[np.ndarray] = None,
                  x_coord: Optional[np.ndarray] = None,
                  y_coord: Optional[np.ndarray] = None,
@@ -39,30 +41,36 @@ class HiCTrack(File):
         self.x = x_coord
         self.y = y_coord
         self.depth = depth
-        self.trans = trans
+        self.log_trans = log_trans
         self.label = label
         self.is_single_cell = is_single_cell
+        self.tad = tad
+        self.tad_list = []
 
     @classmethod
     def create(cls,
                path: str,
                label: str,
                depth: int,
-               trans: Optional[str] = False
+               log_trans: Optional[str] = False,
+               tad: Optional[str] = None
                ):
         """
         Create a HiCTrack object for fetching interaction matrix
         :param path: the HiC file which could be one of [h5, cool / mcool / scool, hicpro, homer]
         :param label: the label of the given HiC data
         :param depth: the depth of the given HiC data, a bigger depth means big y-axis
-        :param trans: log1p, log2 or log10 transform
+        :param log_trans: log1p, log2 or log10 transform
+        :param tad: the path of tad domain
         :return:
         """
+
         return cls(
             path=path,
             label=label,
             depth=depth,
-            trans=trans
+            log_trans=log_trans,
+            tad=tad
         )
 
     def load(self,
@@ -124,21 +132,44 @@ class HiCTrack(File):
 
         self.x = matrix_tmp[:, 1].reshape(n + 1, n + 1)
         self.y = matrix_tmp[:, 0].reshape(n + 1, n + 1)
-        self.matrix = HiCTrack.mat_trans(matrix, method=self.trans)
+        self.matrix = HiCTrack.mat_trans(matrix, log_trans=self.log_trans)
         self.region = region
+        if self.tad:
+            # read bed file
+            try:
+                for rec in Reader.read_gtf(self.tad, region=region, bed=True):
+                    exon_bound = []
+                    current_start = int(rec[1])
+                    current_end = int(rec[2])
+
+                    read = Transcript(
+                        chromosome=self.region.chromosome,
+                        start=current_start,
+                        end=current_end,
+                        strand=self.region.strand,
+                        transcript_id=f"{self.region.chromosome}:{current_start}-{current_end}",
+                        exons=[]
+                    )
+
+                    if read.start < self.region.start or read.end > self.region.end:
+                        continue
+
+                    self.tad_list.append(read)
+
+            except IOError as err:
+                logger.error('There is no .bed file at {0}'.format(self.tad))
+                logger.error(err)
+            except ValueError as err:
+                logger.error(self.path)
+                logger.error(err)
 
     @staticmethod
-    def mat_trans(matrix: np.ndarray, method: Optional[str] = None):
-        if not method:
-            return matrix
-        assert method in {"log1p", "log2", "log10"}, f"couldn't recognize current transform method {method}"
-        if method == "log1p":
-            return np.log1p(matrix)
-        elif method == "log2":
-            return np.log2(matrix + 1)
-        elif method == "log10":
-            return np.log10(matrix + 1)
+    def mat_trans(matrix: np.ndarray, log_trans: Optional[str] = None):
+        funcs = {"10": np.log10, "2": np.log2, "e": np.log}
 
+        if log_trans in funcs.keys():
+            matrix = funcs[log_trans](matrix + 1)
+        return matrix
 
 if __name__ == '__main__':
     pass

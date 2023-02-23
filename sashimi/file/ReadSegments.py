@@ -19,6 +19,8 @@ from sashimi.base.GenomicLoci import GenomicLoci
 from sashimi.base.Readder import Reader
 from sashimi.file.File import File
 
+
+
 try:
     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 except AttributeError as err:
@@ -26,6 +28,7 @@ except AttributeError as err:
 
 
 class Reads(GenomicLoci):
+
     __slots__ = "exons", "introns", "polya_length", "m6a", "features", "id"
 
     def __init__(self,
@@ -172,8 +175,7 @@ class ReadSegment(File):
             del_ratio_ignore: float = .5,
             features: Optional[dict] = None,
             exon_focus: Optional[str] = None,
-            is_bed: bool = False,
-            is_loaded: bool = False
+            is_bed: bool = False
     ):
         u"""
         init a class for store the information for IGV-like plot
@@ -187,7 +189,6 @@ class ReadSegment(File):
         :param features: default: features={"m6a": "ma","real_strand": "rs","polya": "pa"}
         :param exon_focus: exon to focus, like start1-end1,start2-end2
         :param is_bed: bed file for generating igv-like reads.
-        :param is_loaded: loaded already, if yes then return
         """
         super().__init__(path)
 
@@ -205,7 +206,6 @@ class ReadSegment(File):
         self.features = features
         self.is_bed = is_bed
         self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(','))) if exon_focus else exon_focus
-        self.is_loaded = is_loaded
 
     @classmethod
     def create(
@@ -516,80 +516,12 @@ class ReadSegment(File):
                 mtx[i, (e_start - self.region.start + 1):(e_end - self.region.start + 1)] = 1
 
         # "single", "complete", "average", "weighted", "centroid", "median", "ward"
-        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"), no_plot=True)
+        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"))
 
         data = []
         for i in order["leaves"]:
             data.append(self.data[i])
         self.data = data
-
-    @staticmethod
-    def df_sort(dfs: pd.DataFrame) -> Optional[pd.DataFrame]:
-        u"""
-        sorting the dataframe to generate plot index,
-        copy from jinbu jia
-        :param dfs: a pd.DataFrame object
-        :return: pd.DataFrame
-        """
-
-        y_loci = []
-        have_overlap_regions = []
-        now_max_x = 0
-        height = 1
-        y_min = 1
-        dfs_lst = []
-        for _, df in dfs.groupby('exon_group'):
-            for index, row in df.iterrows():
-                start = row["start"]
-                end = row["end"]
-
-                if start > now_max_x:
-                    if y_min != 0:
-                        y_min += 1
-                    y_max = height
-                    now_max_x = end
-                    have_overlap_regions = [[1, y_max, now_max_x]]
-                else:
-                    for d in have_overlap_regions:
-                        if d[2] < start:
-                            d[2] = start - 1
-                    if len(have_overlap_regions) > 1:
-                        new_have_overlap_regions = [have_overlap_regions[0]]
-                        for d in have_overlap_regions[1:]:
-                            if d[2] == new_have_overlap_regions[-1][2]:
-                                new_have_overlap_regions[-1][1] = d[1]
-                            else:
-                                new_have_overlap_regions.append(d)
-                        have_overlap_regions = new_have_overlap_regions
-                    have_insert = False
-                    for (i, d) in enumerate(have_overlap_regions):
-                        x1, x2, x3 = d
-                        if x3 < start and (x2 - x1 + 1) >= height:
-                            have_insert = True
-                            y_min = x1
-                            y_max = y_min + height - 1
-                            if y_max != x3:
-                                d[0] = y_max + 1
-                                have_overlap_regions.insert(i, [x1, y_max, end])
-                            else:
-                                d[2] = end
-                            break
-                    if not have_insert:
-                        y_min = have_overlap_regions[-1][1] + 1 if have_overlap_regions else 1
-                        y_max = y_min + height - 1
-                        have_overlap_regions.append([y_min, y_max, end])
-                    if end > now_max_x:
-                        now_max_x = end
-                y_loci.append(y_min)
-            df["y_loci"] = y_loci
-            dfs_lst.append(df)
-            y_loci = []
-
-        if len(dfs_lst) <= 0:
-            logger.error(f"There is no any read segments")
-            return None
-
-        return pd.concat(dfs_lst)
 
     def load(
             self,
@@ -601,8 +533,6 @@ class ReadSegment(File):
         :param region: the plotting region
         :return:
         """
-        if self.region == region and self.is_loaded:
-            return self
 
         self.region = region
 
@@ -612,11 +542,7 @@ class ReadSegment(File):
         else:
             self.load_bam()
 
-        self.is_loaded = True
-
-        long_reads = np.mean([x.end - x.start for x in self.data]) > 200
-        if long_reads:
-            self.__order_data__()
+        self.__order_data__()
 
         tmp_df = pd.DataFrame(map(lambda x: x.to_dict(), self.data))
         tmp_df["list_index"] = range(len(self.data))
@@ -631,10 +557,7 @@ class ReadSegment(File):
         else:
             tmp_df["exon_group"] = "0"
         tmp_df["y_loci"] = range(tmp_df.shape[0])
-
         self.meta = tmp_df
-        if not long_reads:
-            self.meta = self.df_sort(self.meta)
 
     def len(self, scale: Union[int, float] = 0.005) -> int:
         u"""
