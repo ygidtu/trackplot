@@ -201,14 +201,17 @@ class Bam(SingleCell):
                         # filter reads with duplicate umi by barcode
                         if read.has_tag(self.umi_tag):
                             umi = read.get_tag(self.umi_tag)
-
-                            if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
-                                continue
-
-                            if len(umis[barcode]) == 0:
-                                umis[barcode][umi] = hash(read.query_name)
                         else:
+                            umi = read.query_name
+
+                        if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
                             continue
+
+                        if len(umis[barcode]) == 0:
+                            umis[barcode][umi] = hash(read.query_name)
+                        # else:
+                        #     # There is no umi tag in atacdata, and we add it
+                        #     continue
 
                 start = read.reference_start
                 if required_strand and strand != required_strand:

@@ -1061,7 +1061,7 @@ def plot_hic(
                 continue
 
             triangle = Polygon([[x1, y1], [x2, y2], [x3, y1]], closed=False,
-                               edgecolor="black",
+                               edgecolor="grey",
                                facecolor='None')
 
             ax.add_artist(triangle)
