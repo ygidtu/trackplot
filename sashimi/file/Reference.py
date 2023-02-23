@@ -211,8 +211,6 @@ class Reference(File):
                     chromosome=chromosome_id,
                     transcript_id=transcript_id,
                     gene_id=chromosome_id,
-                    domain_include=self.domain_include,
-                    domain_exclude=self.domain_exclude
                 )
             # add pep information to cdsProtein.
             if self.domain:

@@ -48,7 +48,7 @@ class FileList(object):
                  exon_focus: Optional[str] = None,
                  library: str = "fru",
                  trans: Optional[str] = None,
-                 depth: Optional[int] = None):
+                 depth: Optional[int] = None,
                  tad: Optional[str] = None):
 
         self.path = os.path.abspath(os.path.expanduser(path))
