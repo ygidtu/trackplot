@@ -144,12 +144,12 @@ Options:
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/007/SRR1032177/SRR1032177.fastq.gz
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/008/SRR1032178/SRR1032178.fastq.gz
    
-   wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR111/056/SRR11181956/SRR11181956.fastq.gz
-   # unzip and split fastq into pair-end
-   gunzip SRR11181956.fastq.gz
-   paste - - - - - - - - < SRR11181956.fastq \
-    | tee >(cut -f 1-4 | tr "\t" "\n" | gzip > C143_S1_L001_R1_001.fastq.gz) \
-    |       cut -f 5-8 | tr "\t" "\n" | gzip > C143_S1_L001_R2_001.fastq.gz
+   wget -c https://sra-pub-sars-cov2.s3.amazonaws.com/sra-src/SRR11181956/C143_R1.fastq.1
+   wget -c https://sra-pub-sars-cov2.s3.amazonaws.com/sra-src/SRR11181956/C143_R2.fastq.1
+
+   mv C143_R1.fastq.1 C143_S1_L001_R1_001.fastq
+   mv C143_R2.fastq.1 C143_S1_L001_R1_001.fastq
+   gzip C143_S1_L001_R1_001.fastq C143_S1_L001_R2_001.fastq
 
    cd ..
    ```

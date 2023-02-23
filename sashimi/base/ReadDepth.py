@@ -66,8 +66,11 @@ class ReadDepth(object):
     @property
     def junctions_dict(self) -> dict:
         res = {}
-        res.update(self.junction_dict_plus)
-        res.update(self.junction_dict_minus)
+        if self.junction_dict_plus:
+            res.update(self.junction_dict_plus)
+
+        if self.junction_dict_minus:
+            res.update(self.junction_dict_minus)
         return res
 
     @property

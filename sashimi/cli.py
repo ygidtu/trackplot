@@ -579,7 +579,7 @@ def main(**kwargs):
 
                             if f.label not in size_factors.keys() and f.category == "atac":
                                 logger.info(f"Indexing {f.path}")
-                                size_factors[f.label] = ATAC.index(f.path, barcodes[f.name])
+                                size_factors[f.label] = ATAC.index(f.path, bcs)
 
                             p.add_density(f.path,
                                           category=f.category,
