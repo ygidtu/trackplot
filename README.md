@@ -178,6 +178,7 @@ python main.py \
   --height 1 \
   --barcode example/barcode_list.tsv \
   --domain --remove-duplicate-umi \
+  --normalize-format cpm \
   -p 4
 ```
 here is the [output file](https://raw.githubusercontent.com/ygidtu/sashimi.py/main/example/example.png).

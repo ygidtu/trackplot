@@ -273,7 +273,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The would convert heatmap and site plot to raster image "
                       "(speed up rendering and produce smaller files), only affects pdf, svg and PS")
 @optgroup.option("--height", default=1, type=float,
-                 help="The height of output file, default adjust image height by content", show_default=True)
+                 help="The height of single subplot, default adjust image height by content", show_default=True)
 @optgroup.option("--width", default=10, type=click.IntRange(min=0, clamp=True),
                  help="The width of output file, default adjust image width by content", show_default=True)
 @optgroup.option("--backend", type=click.STRING, default="Agg", help="Recommended backend", show_default=True)
@@ -455,7 +455,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
                  help="The number of ticks of y-axis")
 @optgroup.option("--distance-ratio", type=click.FLOAT, default=0.1,
-                 help="distance between transcript label and transcript line", show_default=True)
+                 help="The distance between transcript label and transcript line", show_default=True)
 @optgroup.option("--reference-scale", type=click.FLOAT, default=.25,
                  help="The size of reference plot in final plot", show_default=True)
 @optgroup.option("--stroke-scale", type=click.FLOAT, default=.25,
@@ -547,8 +547,9 @@ def main(**kwargs):
                     p.add_interval(f.path, f.label)
             elif key == "density":
                 for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.name in barcodes.keys() and f.category in ["bam", "atac"]:
-                        for group in barcodes[f.name].keys():
+                    bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
+                    if bcs and f.category in ["bam", "atac"]:
+                        for group in bcs.keys():
                             if kwargs["group_by_cell"] and group:
                                 label = group
                             elif group:
@@ -564,7 +565,7 @@ def main(**kwargs):
                                           category=f.category,
                                           label=label,
                                           barcode=group,
-                                          barcode_groups=barcodes[f.name],
+                                          barcode_groups=bcs,
                                           barcode_tag=kwargs["barcode_tag"],
                                           umi_tag=kwargs["umi_tag"],
                                           library=f.library,
@@ -599,7 +600,7 @@ def main(**kwargs):
             elif key == "heatmap":
                 for f in process_file_list(kwargs[key], key):
                     if barcodes and f.category in ["bam", "atac"]:
-                        bcs = barcodes.get(f.path, barcodes.get(f.name, {}))
+                        bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
                         if f.label not in size_factors.keys() and f.category == "atac":
                             logger.info(f"Indexing {f.path}")
                             size_factors[f.label] = ATAC.index(f.path, bcs)
