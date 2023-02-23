@@ -23,6 +23,7 @@ and test sashimi plots using the whole gene region with default parameters
   - [tabix](http://www.htslib.org/doc/tabix.html)
   - [samtools](http://www.htslib.org)
   - [bedtools](https://bedtools.readthedocs.io/en/latest/)
+  - [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/installation)
 - For benchmark
   - time: required by cmdbench, please install through `sudo apt install time` or `sudo yum install time`
 - For plot
@@ -122,7 +123,7 @@ Options:
 ### Prepare example data
 
 1. Download raw data
-   We used the [GSM1267847](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1267847) datasets as example data.
+   We used the [GSM1267847](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1267847) datasets for number of input files.
 
    - `SRR1032173`: HEK293_Control_R1
    - `SRR1032174`: HEK293_Control_R2
@@ -130,6 +131,9 @@ Options:
    - `SRR1032176`: Stau1_KnockDown_R2
    - `SRR1032177`: Stau1_Overexpression_R1
    - `SRR1032178`: Stau1_Overexpression_R2
+   
+   We used the [GSM4339771](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM4339771) datasets for multi processes.
+   - `SRR11181956`: BALF_C143 
 
    ```bash
    mkdir fastq && cd fastq
@@ -139,6 +143,14 @@ Options:
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/006/SRR1032176/SRR1032176.fastq.gz
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/007/SRR1032177/SRR1032177.fastq.gz
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/008/SRR1032178/SRR1032178.fastq.gz
+   
+   wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR111/056/SRR11181956/SRR11181956.fastq.gz
+   # unzip and split fastq into pair-end
+   gunzip SRR11181956.fastq.gz
+   paste - - - - - - - - < SRR11181956.fastq \
+    | tee >(cut -f 1-4 | tr "\t" "\n" | gzip > C143_S1_L001_R1_001.fastq.gz) \
+    |       cut -f 5-8 | tr "\t" "\n" | gzip > C143_S1_L001_R2_001.fastq.gz
+
    cd ..
    ```
 
@@ -150,8 +162,6 @@ Options:
    wget -c https://ftp.ensembl.org/pub/release-101/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
    
    # generate STAR index
-   mkdir STAR_index
-   zcat Homo_sapiens.GRCh38.101.chr.gtf.gz > Homo_sapiens.GRCh38.101.chr.gtf
    zcat Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > Homo_sapiens.GRCh38.dna.primary_assembly.fa
   
    STAR --runThreadN 20 \
@@ -160,6 +170,9 @@ Options:
       --genomeFastaFiles Homo_sapiens.GRCh38.dna.primary_assembly.fa \
       --sjdbGTFfile Homo_sapiens.GRCh38.101.chr.gtf \
       --sjdbOverhang 99
+   
+   # generate cellranger index
+   cellranger mkref --nthreads=20 --genome=Homo_sapiens --genes =Homo_sapiens.GRCh38.101.chr.gtf.gz --fasta=Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
    rm Homo_sapiens.GRCh38.101.chr.gtf Homo_sapiens.GRCh38.dna.primary_assembly.fa
    
    # sort gtf and create tabix index
@@ -177,7 +190,7 @@ Options:
     ```bash
     mkdir STAR
     STAR --genomeLoad LoadAndExit --genomeDir ref/STAR_index
-    for i in $(/bin/ls fastq/*.fastq.gz);
+    for i in $(/bin/ls fastq/SRR*.fastq.gz);
     do
         echo $i
         fn=$(basename $i)
@@ -191,6 +204,8 @@ Options:
             --outFileNamePrefix STAR/${fn/".fastq.gz"/""}.
     done
     STAR --genomeLoad Remove --genomeDir ref/STAR_index
+   
+    cellranger count --id=C143 --fastqs=fastq --sample=C143 --transcriptome=ref/Homo_sapiens
     ```
    
 4. To test whether all scripts and conda environments were properly setup
@@ -251,11 +266,12 @@ Options:
     # execution_time=21.66; max_memory=324194304
     ```
 
-5. generate bam list for official benchmark
-    - 1st column: path to bam file
-    - 2nd column: alias of bam file
-    - 3rd column: color of bam file
+   5. generate bam list for official benchmark
+   - 1st column: path to bam file
+   - 2nd column: alias of bam file
+   - 3rd column: color of bam file
    
+    The `bam_list.txt`
     ```bash
     ./STAR/SRR1032173.Aligned.sortedByCoord.out.bam        HEK293_Control_R1   #CC0011
     ./STAR/SRR1032174.Aligned.sortedByCoord.out.bam        HEK293_Control_R2   #CC0011
@@ -263,6 +279,11 @@ Options:
     ./STAR/SRR1032176.Aligned.sortedByCoord.out.bam        Stau1_KnockDown_R2  #FF8800
     ./STAR/SRR1032177.Aligned.sortedByCoord.out.bam        Stau1_Overexpression_R1 #0080FF
     ./STAR/SRR1032178.Aligned.sortedByCoord.out.bam        Stau1_Overexpression_R2 #0080FF
+    ```
+   
+    The `bam_list2.txt`
+    ```bash
+    ./C143/outs/possorted_genome_bam.bam        BALF_C143   #CC0011
     ```
     
     Then run and get the final statistic information in `benckmark/stats.txt`
@@ -289,25 +310,21 @@ Options:
 ```bash
 event="ENSG00000139618,ENSG00000139618,ENSG00000139618,ENSG00000146535,ENSG00000146535,ENSG00000146535,ENSG00000133703,ENSG00000133703,ENSG00000133703,ENSG00000139719,ENSG00000139719,ENSG00000139719"
 gtf="./ref/Homo_sapiens.GRCh38.101.chr.sorted"
+
+# test up to 30 files with single process
 for i in $(seq 5 5 30)
 do
   echo $i
   python main.py -i bam_list.txt -o benchmark_files/$i -g $gtf --repeat $i --n-jobs 1 --event $event
 done
 
-
+# test up to 20 processes with 20 bam files
 for i in 5 10 15 20
 do
   echo $i
-  python main.py -i bam_list.txt -o benchmark_threads/$i -g $gtf --repeat 60 --n-jobs $i --event $event
+  python main.py -i bam_list2.txt -o benchmark_threads/$i -g $gtf --repeat 20 --n-jobs $i --event $event
 done
 
-
-for i in 5 10 15 20
-do
-  echo $i
-  python main.py -i bam_list.txt -o benchmark_threads/$i -g $gtf -a --repeat 60 --n-jobs $i --event $event
-done
-
+# generate benchmarking plots
 Rscript plot.R
 ```
