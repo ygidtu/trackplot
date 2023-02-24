@@ -16,10 +16,10 @@ import matplotlib as mpl
 from click_option_group import optgroup
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
-from sashimi.file.ATAC import ATAC
-from sashimi.plot import Plot
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
+from trackplot.file.ATAC import ATAC
+from trackplot.plot import Plot
 
 __version__ = "0.1.6"
 __author__ = "ygidtu & Ran Zhou"

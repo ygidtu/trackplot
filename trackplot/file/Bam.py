@@ -15,12 +15,12 @@ import numpy as np
 import pysam
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Junction import Junction
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.Readder import Reader
-from sashimi.conf.config import NORMALIZATION
-from sashimi.file.File import SingleCell
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.Junction import Junction
+from trackplot.base.ReadDepth import ReadDepth
+from trackplot.base.Readder import Reader
+from trackplot.conf.config import NORMALIZATION
+from trackplot.file.File import SingleCell
 
 
 class Bam(SingleCell):

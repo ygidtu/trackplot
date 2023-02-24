@@ -12,7 +12,7 @@ The `jupyter notebook` of following example were provided at [github](https://gi
 ###### 1. init plot
 
 ```python
-from sashimi.plot import Plot
+from trackplot.plot import Plot
 
 plot = Plot()
 ```
@@ -274,6 +274,7 @@ def add_heatmap(self,
 - category: file category corresponding to input file
 - label: the label of input file
 - title: the title of input file
+- size_factor: Total number of reads for bam file or total number of fragments required by scATAC
 - barcode: key of barcode barcode_groups
 - barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag

@@ -2,7 +2,7 @@ import os
 from configparser import ConfigParser
 from setuptools import setup, find_packages
 
-__version__ = "0.1.6"
+__version__ = "0.0.1-beta"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -35,20 +35,20 @@ def load_description():
 
 
 setup(
-    name='sashimi.py',
+    name='trackplot',
     long_description=load_description(),
     long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    url="https://github.com/ygidtu/sashimi.py",
+    url="https://github.com/ygidtu/trackplot",
     entry_points={
         'console_scripts':
             [
-                'sashimipy = sashimi.cli:main'
+                'trackplot = trackplot.cli:main'
             ]
     },
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     data_files=[(".", ['README.md', 'Pipfile', 'Pipfile.lock'])],
     install_requires=locate_packages(),
     version=__version__

@@ -15,7 +15,7 @@ import requests as rq
 import xmltodict
 from loguru import logger
 
-from sashimi.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
+from trackplot.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):

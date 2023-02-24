@@ -8,7 +8,7 @@ import os
 import re
 from typing import Dict
 
-from sashimi.base.Junction import Junction
+from trackplot.base.Junction import Junction
 
 
 def load_custom_junction(path: str) -> Dict[str, Dict[Junction, int]]:

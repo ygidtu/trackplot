@@ -16,11 +16,11 @@ import filetype
 import pysam
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Protein import CdsProtein
-from sashimi.base.Readder import Reader
-from sashimi.base.Transcript import Transcript
-from sashimi.file.File import File
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.Protein import CdsProtein
+from trackplot.base.Readder import Reader
+from trackplot.base.Transcript import Transcript
+from trackplot.file.File import File
 
 
 class Reference(File):
