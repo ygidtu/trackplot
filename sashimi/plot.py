@@ -1085,24 +1085,17 @@ class Plot(object):
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
                                    wspace=.7, hspace=.15)
 
-        max_used_y_val, min_used_y_yal = None, None
-        if kwargs.get("same_y"):
+        max_used_y_val, min_used_y_val = {}, {}
+        if kwargs.get("same_y") or kwargs.get("same_y_sc"):
             for p in self.plots:
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
-                        max_used_y_val = max(obj.data.wiggle) if max_used_y_val is None else max(max(obj.data.wiggle),
-                                                                                                 max_used_y_val)
+                        max_used_y_val[obj.path] = max(max(obj.data.wiggle), max_used_y_val.get(obj.path, 0))
 
-                        if min_used_y_yal is None:
-                            min_used_y_yal = max(obj.data.minus) if obj.data.minus is not None else min(obj.data.wiggle)
+                        if obj.data.minus is None:
+                            min_used_y_val[obj.path] = min(min(obj.data.wiggle), min_used_y_val.get(obj.path, 0))
                         else:
-                            if obj.data.minus is None:
-                                min_used_y_yal = min(min_used_y_yal, min(obj.data.wiggle))
-                            else:
-                                min_used_y_yal = min(min_used_y_yal, min(obj.data.minus))
-
-            if min_used_y_yal is not None:
-                min_used_y_yal = -1 * min_used_y_yal
+                            min_used_y_val[obj.path] = min(min(obj.data.minus), min_used_y_val.get(obj.path, 0))
 
         curr_idx = 0
         for p in self.plots:
@@ -1110,13 +1103,20 @@ class Plot(object):
                 ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(reference_scale), 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
+
+            max_y_val_, min_y_val_ = None, None
+            if kwargs.get("same_y_sc") and p.obj[0].is_single_cell:
+                max_y_val_, min_y_val_ = max_used_y_val[p.obj[0].path], min_used_y_val[p.obj[0].path]
+            elif kwargs.get("same_y"):
+                max_y_val_, min_y_val_ = max(max_used_y_val.values()), min(min_used_y_val.values())
+
             if p.type == "density":
                 plot_density(
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
-                    max_used_y_val=max_used_y_val,
-                    min_used_y_val=min_used_y_yal,
+                    max_used_y_val=max_y_val_,
+                    min_used_y_val=min_y_val_,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
                     fill_step=fill_step,
@@ -1136,7 +1136,8 @@ class Plot(object):
                     ax=ax_var,
                     obj=p.obj[0],
                     graph_coords=self.graph_coords,
-                    max_used_y_val=max_used_y_val,
+                    max_used_y_val=max_y_val_,
+                    min_used_y_val=min_y_val_,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
                     **self.params[p]
@@ -1168,7 +1169,8 @@ class Plot(object):
                     ax=ax_var,
                     data=p.data,
                     y_label=p.group,
-                    max_used_y_val=max_used_y_val,
+                    max_used_y_val=max_y_val_,
+                    min_used_y_val=min_y_val_,
                     graph_coords=self.graph_coords,
                     distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]

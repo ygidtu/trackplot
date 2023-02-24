@@ -168,6 +168,7 @@ class Bam(SingleCell):
 
         umis = {}
         read_lens = []
+        scatac_alert = True
         try:
             for read, strand in Reader.read_bam(path=self.path, region=region, library=self.library):
                 # make sure that the read can be used
@@ -202,6 +203,9 @@ class Bam(SingleCell):
                         if read.has_tag(self.umi_tag):
                             umi = read.get_tag(self.umi_tag)
                         else:
+                            if scatac_alert:
+                                logger.warning(f"Is {self.path} an scATAC-seq bam? There is no {self.umi_tag}")
+                                scatac_alert = False
                             umi = read.query_name
 
                         if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
