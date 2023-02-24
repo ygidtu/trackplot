@@ -41,7 +41,8 @@ python ../../../../main.py \
   --height 1 --show-junction-num \
   --raster \
   --density-by-strand \
-  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale 0.01
 
 
 ```
