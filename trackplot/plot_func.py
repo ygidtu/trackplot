@@ -25,16 +25,16 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.stats import gaussian_kde, zscore
 
-from sashimi.anno.theme import Theme
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.Stroke import Stroke
-from sashimi.conf.config import CLUSTERING_METHOD, DISTANCE_METRIC
-from sashimi.file.File import File
-from sashimi.file.HiCMatrixTrack import HiCTrack
-from sashimi.file.ReadSegments import ReadSegment
-from sashimi.file.Reference import Reference
-from sashimi.file.ATAC import ATAC
+from trackplot.anno.theme import Theme
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.ReadDepth import ReadDepth
+from trackplot.base.Stroke import Stroke
+from trackplot.conf.config import CLUSTERING_METHOD, DISTANCE_METRIC
+from trackplot.file.File import File
+from trackplot.file.HiCMatrixTrack import HiCTrack
+from trackplot.file.ReadSegments import ReadSegment
+from trackplot.file.Reference import Reference
+from trackplot.file.ATAC import ATAC
 
 
 def get_limited_index(num, length):

@@ -16,14 +16,14 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from sashimi.file.Bam import Bam
-from sashimi.file.BedGraph import Bedgraph
-from sashimi.file.Bigwig import Bigwig
-from sashimi.file.Depth import Depth
-from sashimi.file.Fasta import Fasta
-from sashimi.file.Junction import load_custom_junction
-from sashimi.file.Motif import Motif
-from sashimi.plot_func import *
+from trackplot.file.Bam import Bam
+from trackplot.file.BedGraph import Bedgraph
+from trackplot.file.Bigwig import Bigwig
+from trackplot.file.Depth import Depth
+from trackplot.file.Fasta import Fasta
+from trackplot.file.Junction import load_custom_junction
+from trackplot.file.Motif import Motif
+from trackplot.plot_func import *
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 

@@ -18,8 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from sashimi.cli import load_barcodes
-from sashimi.plot import *
+from trackplot.cli import load_barcodes
+from trackplot.plot import *
 
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")

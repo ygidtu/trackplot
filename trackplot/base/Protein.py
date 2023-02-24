@@ -11,10 +11,10 @@ from loguru import logger
 from pysam import asGTF
 from pysam.libctabix import Tabixfile
 
-from sashimi.base.CoordinateMap import CoordinateMapper
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Transcript import Transcript
-from sashimi.base.pyUniprot import Uniprot
+from trackplot.base.CoordinateMap import CoordinateMapper
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.Transcript import Transcript
+from trackplot.base.pyUniprot import Uniprot
 
 
 class CdsProtein(GenomicLoci):

@@ -14,10 +14,10 @@ import numpy as np
 from loguru import logger
 from scipy import sparse
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Readder import Reader
-from sashimi.base.Transcript import Transcript
-from sashimi.file.File import File
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.Readder import Reader
+from trackplot.base.Transcript import Transcript
+from trackplot.file.File import File
 
 
 class HiCTrack(File):

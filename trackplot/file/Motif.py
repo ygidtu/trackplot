@@ -5,9 +5,9 @@ u"""
 """
 import os
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.Readder import Reader
-from sashimi.file.File import File
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.Readder import Reader
+from trackplot.file.File import File
 
 
 class Motif(File):

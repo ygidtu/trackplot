@@ -3,7 +3,7 @@
 u"""
 
 """
-from sashimi.base.GenomicLoci import GenomicLoci
+from trackplot.base.GenomicLoci import GenomicLoci
 
 
 class Stroke(object):

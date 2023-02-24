@@ -3,7 +3,7 @@
 u"""
 This file contains the main entries of the sashimi
 """
-from sashimi.cli import main
+from trackplot.cli import main
 
 
 if __name__ == "__main__":

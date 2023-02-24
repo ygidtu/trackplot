@@ -12,8 +12,8 @@ Or user could download and install nodejs from https://nodejs.org/en/
 2. install from source code
 
 ```shell
-git clone https://github.com/ygidtu/sashimipy sashimi
-cd sashimi/web
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot/web
 
 # build the frontend static files
 npm install -g vue-cli vite && npm install
@@ -41,13 +41,13 @@ We also prepared a docker image of web server, uses could access this by followi
 
 ```shell
 
-docker pull ygidtu/sashimiweb
+docker pull ygidtu/trackplotweb
 
 # Deploy the server
-docker run --name sashimiweb \
+docker run --name trackplotweb \
   --rm -v $PWD:$PWD \
   -p 5000:5000 \
-  ygidtu/sashimiweb 
+  ygidtu/trackplotweb 
 
 ```
 
@@ -132,7 +132,7 @@ here is the detailed information for each parameter of the Density track.
 - show_site_plot: draw the density distribution of reads from different strand
 - strand_choice: the strand to draw on site plot
 
-For another track, the document of parameter refer to [here](https://sashimi.readthedocs.io/en/latest/interactive/#api-documentation). 
+For another track, the document of parameter refer to [here](https://trackplot.readthedocs.io/en/latest/interactive/#api-documentation). 
 
 7. Draw the final plot
 

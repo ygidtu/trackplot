@@ -8,7 +8,7 @@ Changelog:
 """
 from typing import List
 
-from sashimi.base.GenomicLoci import GenomicLoci
+from trackplot.base.GenomicLoci import GenomicLoci
 
 
 class Transcript(GenomicLoci):

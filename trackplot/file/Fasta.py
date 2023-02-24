@@ -8,8 +8,8 @@ import os
 import pysam
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.file.File import File
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.file.File import File
 
 
 class Fasta(File):

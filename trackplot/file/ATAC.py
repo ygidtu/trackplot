@@ -14,10 +14,10 @@ from typing import Dict, Optional, Set
 import numpy as np
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
-from sashimi.base.ReadDepth import ReadDepth
-from sashimi.base.Readder import Reader
-from sashimi.file.File import SingleCell
+from trackplot.base.GenomicLoci import GenomicLoci
+from trackplot.base.ReadDepth import ReadDepth
+from trackplot.base.Readder import Reader
+from trackplot.file.File import SingleCell
 
 
 class ATAC(SingleCell):

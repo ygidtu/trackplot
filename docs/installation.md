@@ -111,22 +111,22 @@ For users who wish to running this program on `Windows` or `macOS (Apple Silicon
 
 ### Pull from docker hub
 ```bash
-docker pull ygidtu/sashimi
-docker run --rm ygidtu/sashimi --help
+docker pull ygidtu/trackplot
+docker run --rm ygidtu/trackplot --help
 ```
 
 ### Build docker image from source
 ```bash
-git clone https://github.com/ygidtu/sashimi.py.git sashimi
-cd sashimi
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
 docker build -t ygidtu/docker .
-docker run --rm ygidtu/sashimi --help
+docker run --rm ygidtu/trackplot --help
 ```
 
 ### Command line Usage
 
 ```bash
-docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
+docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/trackplot --help
 ```
 
 - `-v`, `--volumn`: mount the working directory to docker container
@@ -142,8 +142,8 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/sashimi --help
 2. **Users could change the server ip and port by modify the settings.ini**
 
 ```bash
-git clone https://github.com/ygidtu/sashimi.py.git sashimi
-cd sashimi/web
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot/web
 
 # build the frontend static files
 npm install -g vue-cli vite && npm install
@@ -161,12 +161,12 @@ python server.py --help
 #### Pull from web
 
 ```bash
-docker pull ygidtu/sashimiweb
+docker pull ygidtu/trackplotweb
 
 # -v map the current working directory into docker containers
 # -p map the outer port to inner port of docker container
-docker run --name sashimiweb \
+docker run --name trackplotweb \
   --rm -v $PWD:$PWD \
   -p 5000:5000 \
-  ygidtu/sashimiweb 
+  ygidtu/trackplotweb 
 ```

@@ -1,10 +1,10 @@
-from sashimi.plot_func import *
+from trackplot.plot_func import *
 
 from matplotlib import pyplot as plt
 
 
 def test_density():
-    from sashimi.file.Bam import Bam
+    from trackplot.file.Bam import Bam
     fig, ax = plt.subplots()
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
     bam = Bam.create("../example/bams/1.bam")
@@ -14,7 +14,7 @@ def test_density():
 
 
 def test_bw():
-    from sashimi.file.Bigwig import Bigwig
+    from trackplot.file.Bigwig import Bigwig
 
     bw = Bigwig.create("../example/bws/1.bw", title="test")
     bw.load(GenomicLoci("chr1", 1270656, 1284730, "+"))
@@ -53,7 +53,7 @@ def test_ref():
 
 
 def test_depth():
-    from sashimi.file.Depth import Depth
+    from trackplot.file.Depth import Depth
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
     depth = Depth.create("../example/depth.bgz")
     depth.load(region)
@@ -69,7 +69,7 @@ def test_depth():
 
 def test_heatmap_and_line():
     from matplotlib import gridspec
-    from sashimi.file.Bam import Bam
+    from trackplot.file.Bam import Bam
 
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
     graph_coords = init_graph_coords(region)
@@ -144,7 +144,7 @@ def test_set_x_ticks():
 
 
 def test_igv_plot():
-    from sashimi.file.ReadSegments import ReadSegment
+    from trackplot.file.ReadSegments import ReadSegment
     fig, ax = plt.subplots()
     region = GenomicLoci("chr1", 13362, 29900, "+")
 
@@ -156,7 +156,7 @@ def test_igv_plot():
 
 
 def test_igv_plot2():
-    from sashimi.file.ReadSegments import ReadSegment
+    from trackplot.file.ReadSegments import ReadSegment
     fig, ax = plt.subplots()
     region = GenomicLoci("chr1", 1270656, 1284730, "+")
 
@@ -168,7 +168,7 @@ def test_igv_plot2():
 
 
 def test_igv_plot3():
-    from sashimi.file.ReadSegments import ReadSegment
+    from trackplot.file.ReadSegments import ReadSegment
     fig, ax = plt.subplots()
     # 1: 10024601 - 10038168
     region = GenomicLoci("1", 10024601, 10038168, "+")
@@ -179,7 +179,7 @@ def test_igv_plot3():
 
 
 def test_hic_plot():
-    from sashimi.file.HiCMatrixTrack import HiCTrack
+    from trackplot.file.HiCMatrixTrack import HiCTrack
     fig, ax = plt.subplots()
     region = GenomicLoci("X", 2500000, 2600000, "*")
     hic = HiCTrack.create(path="../example/Li_et_al_2015.h5", label="Li",

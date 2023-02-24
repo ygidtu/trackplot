@@ -13,7 +13,7 @@ import pyBigWig
 import pysam
 from loguru import logger
 
-from sashimi.base.GenomicLoci import GenomicLoci
+from trackplot.base.GenomicLoci import GenomicLoci
 
 
 def __opposite_strand__(strand: str) -> str:
