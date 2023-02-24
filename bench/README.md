@@ -3,8 +3,9 @@
 This README.md documented how we perform speed and memory usage benchmark 
 between [sashimi.py](https://github.com/ygidtu/sashimi.py), [misopy](https://miso.readthedocs.io/en/fastmiso/) and [ggsashimi](https://github.com/guigolab/ggsashimi)
 
-In this comparision, we run miso in isoform-centric mode, 
-and test sashimi plots using the whole gene region with default parameters 
+In this benchmark, we ran miso in isoform-centric mode, 
+and tested the performance of sashimi_plot using the whole gene region with default parameters 
+
 
 ---
 
@@ -328,3 +329,6 @@ done
 # generate benchmarking plots
 Rscript plot.R
 ```
+
+
+![](benchmark.png)

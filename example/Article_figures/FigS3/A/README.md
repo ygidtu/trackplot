@@ -13,7 +13,7 @@ The command line for generating the plot
 ```bash
 
 python ../../../..//main.py \
-  -e 17:35832921-35835613 \
+  -e 17:35832921-35835600 \
   -r Mus_musculus.GRCm38.101.chr.sorted.gtf.gz \
   --density density_list.tsv \
   -o hsc_8w.Tubb5.remove_dup.2.pdf \

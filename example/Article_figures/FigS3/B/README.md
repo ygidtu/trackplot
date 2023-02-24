@@ -1,6 +1,6 @@
 ## FigS 3B
 
-### An example for visualizing Single cell transcriptional and chromatin accessibility datasets.
+### An example for visualizing Single cell transcriptional and chromatin accessibility profiling datasets.
 
 Before running this example, you should download these data.
 
@@ -33,7 +33,7 @@ python ../../../../main.py \
   --dpi 300 --output U2AF1L4.pdf \
   -e chr19:35742064-35746000:+ \
   -r /mnt/raid61/Ref/HomSap/release101/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
-  --raster --width 6 -t 1000000 --intron-scale 0.0001 --same-y
+  --raster --width 6 -t 1000000 --intron-scale 0.0001 --same-y --sites 35742529,35743011
 
 
 ```
