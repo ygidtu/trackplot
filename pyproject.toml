@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "sashimi-py"
+name = "trackplot"
 version = "0.1.6"
-description = "sashimi.py is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. https://sashimi.readthedocs.io/"
+description = "The trackplot is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. https://sashimi.readthedocs.io/"
 authors = ["ygidtu <ygidtu@gmail.com>"]
 license = "BSD-3"
 readme = "README.md"
-packages = [{include = "sashimi"}]
+packages = [{include = "trackplot"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
