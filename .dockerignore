@@ -8,4 +8,3 @@ plots/
 dist/
 build/
 *.egg-info/
-ui/

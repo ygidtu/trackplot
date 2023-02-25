@@ -1,7 +1,7 @@
 # Web UI
 
 ## Deployment
-1. nodejs (18.14.0 LTS above)
+1.nodejs (18.14.0 LTS above)
 
 Install by conda, 
 ```shell
@@ -9,7 +9,7 @@ conda install -c conda-forge nodejs
 ```
 Or user could download and install nodejs from https://nodejs.org/en/
 
-2. install from source code
+2.install from source code
 
 ```shell
 git clone https://github.com/ygidtu/trackplot.git trackplot
@@ -35,7 +35,7 @@ Deploy the server
 python server.py
 ```
 
-3. Docker
+3.Docker
 
 We also prepared a docker image of web server, uses could access this by following this,
 

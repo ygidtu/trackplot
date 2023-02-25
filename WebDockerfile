@@ -1,7 +1,8 @@
-FROM ygidtu/sashimi
+FROM ygidtu/trackplot
 
-ENV PYPI=https://pypi.douban.com/simple
-ENV ROOT_DIR=/opt/sashimi
-RUN cd $ROOT_DIR && pip install fastapi uvicorn pydantic jinja2  # -i $PYPI
+ENV ROOT_DIR=/opt/trackplot
 
-ENTRYPOINT ["python", "/opt/sashimi/server.py", "--host", "0.0.0.0"]
+RUN ls $ROOT_DIR
+RUN cd $ROOT_DIR && pip install fastapi uvicorn pydantic jinja2
+
+ENTRYPOINT ["python", "/opt/trackplot/server.py", "--host", "0.0.0.0"]

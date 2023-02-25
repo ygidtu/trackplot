@@ -135,17 +135,19 @@ add transcripts into track
 def set_reference(self, gtf: str,
                   add_domain: bool = False,
                   local_domain: Optional[str] = False,
+                  domain_include: Optional[str] = False,
+                  domain_exclude: Optional[str] = False,
                   interval: Optional[str] = None,
                   interval_label: Optional[str] = None,
                   transcripts: Optional[List[str]] = None,
                   remove_empty_transcripts: bool = False,
-                  color: Optional[str] = None,
+                  choose_primary: bool = False,
+                  color: Optional[str] = "black",
 
                   # transcripts related parameters
                   font_size: int = 5,
                   show_gene: bool = False,
                   show_id: bool = False,
-                  reverse_minus: bool = False,
                   exon_width: float = .3,
                   show_exon_id: bool = False,
                   theme: str = "blank"
@@ -155,18 +157,20 @@ def set_reference(self, gtf: str,
 - gtf: path to gtf file
 - add_domain: whether to add domain
 - local_domain: whether add domain information into reference track
+- domain_include: [empty]
+- domain_exclude: [empty]
 - interval: path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
 - interval_label: the label of added interval
-- font_size: the size of transcript id, name
 - transcripts: the list of name or ids of transcripts to draw
 - remove_empty_transcripts: whether to remove transcripts without any exons
+- choose_primary: [empty]
 - color: the color of exons
+- font_size: the size of transcript id, name
 - show_gene: whether to show gene name/id
 - show_id: show gene id or gene name
-- reverse_minus: whether to remove strand of transcripts
-- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 - exon_width: the height of exons
 - show_exon_id: whether to show exon id
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
 Returns `Plot`
 
@@ -179,8 +183,9 @@ add a density plot into track
 ```python
  def add_density(self,
                 path: str,
-                category: str,
-
+                category: str = "bam",
+                size_factor=None,
+                
                 # file loading parameters
                 label: Union[str, List[str]] = "",
                 title: str = "",
@@ -188,48 +193,50 @@ add a density plot into track
                 barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
-                library: str = "fr-unstrand",
+                library: str = "fru",
                 density_by_strand: bool = False,
-
+                
                 # plotting parameters
                 color="blue",
                 font_size: int = 8,
                 show_junction_number: bool = True,
                 junction_number_font_size: int = 5,
                 n_y_ticks: int = 4,
-                distance_between_label_axis: float = .1,
                 show_y_label: bool = True,
                 y_label: str = "",
                 theme: str = "ticks_blank",
-
+                log_trans: Optional[str] = None,
+                
                 # site plot parameters
                 show_site_plot: bool = False,
                 strand_choice: Optional[str] = None,
-                 
+                
                 only_customized_junction: bool = False
                 )
 ```
 
 - path: the path to input file
 - category: the input file type
-- show_site_plot: draw the density distribution of reads from different strand
+- size_factor: the total reads of bam or total fragments of fragments.tsv
 - label: the label of input file
 - title: the title of input file
 - barcode: key of barcode barcode_groups
 - barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
-- library: fr-unstrand/fr-strand or fru/frs for short 
+- library: fru => fr-unstrand; frf => fr-firststrand; frs => fr-secondstrand
 - density_by_strand: whether to draw density plot in strand-specific manner.
+- color: color for this density plot
 - font_size: the font size for ticks, y-axis label and title
 - show_junction_number: whether to show the number of junctions
+- junction_number_font_size: the size of numbers in junctions
 - distance_between_label_axis: distance between y-axis label and y-axis ticks
 - n_y_ticks: number of y ticks
-- junction_number_font_size:
-- color: color for this density plot
 - show_y_label: whether to show y-axis label
 - y_label: the text of y-axis title
 - theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
+- log_trans: Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10
+- show_site_plot: draw the density distribution of reads from different strand
 - strand_choice: the strand to draw on site plot
 - only_customized_junction: only work with bam files, only draw customized junctions
 
@@ -244,8 +251,9 @@ add a heatmap based on a group of objects into track
 ```python
 def add_heatmap(self,
                 path: str,
-                group: str,
+                group: str = "",
                 category: str = "bam",
+                size_factor=None,
 
                 # file loading parameters
                 label: Union[str, List[str]] = "",
@@ -254,45 +262,49 @@ def add_heatmap(self,
                 barcode_groups: Dict[str, Set[str]] = None,
                 barcode_tag: str = "BC",
                 umi_tag: str = "UB",
-                library: str = "fr-unstrand",
+                library: str = "fru",
 
                 # plotting parameters
                 color="viridis",
                 font_size: int = 8,
-                distance_between_label_axis: float = .1,
                 show_y_label: bool = True,
-                theme: str = "ticks",
+                theme: str = "ticks_blank",
                 do_scale: bool = False,
                 clustering: bool = False,
                 clustering_method: str = "ward",
                 distance_metric: str = "euclidean",
-                )
+                show_row_names: bool = False,
+                vmin=None, vmax=None,
+                log_trans: Optional[str] = None)
 ```
 
 - path: path to input files
 - group: the heatmap group
 - category: file category corresponding to input file
+- size_factor: Total number of reads for bam file or total number of fragments required by scATAC
 - label: the label of input file
 - title: the title of input file
-- size_factor: Total number of reads for bam file or total number of fragments required by scATAC
 - barcode: key of barcode barcode_groups
 - barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
-- library: fr-unstrand/fr-strand or fru/frs for short 
+- library: fru => fr-unstrand; frf => fr-firststrand; frs => fr-secondstrand
 - color: color for this density plot
+- font_size: the font size in plot
 - show_y_label: whether to show y-axis label
 - theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
-- font_size: the font size in plot
-- distance_between_label_axis: the distance between y-axis label and y-axis
 - do_scale: whether to scale the matrix
 - clustering: whether reorder matrix by clustering
 - clustering_method: same as  scipy.cluster.hierarchy.linkage
 - distance_metric: same as scipy.spatial.distance.pdist
-- color: used for seaborn.heatmap, see: https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html
-            'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
+- color: used for seaborn.heatmap, see: [https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html](https://matplotlib.org/3.5.1/tutorials/colors/colormaps.html)    
+          normally including: 'binary', 'gist_yarg', 'gist_gray', 'gray', 'bone',
             'pink', 'spring', 'summer', 'autumn', 'winter', 'cool',
             'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper'
+- show_row_names: show rownames along heatmap
+- vmin: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+- vmax: Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+- log_trans: Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10
 
 Returns `Plot`
 
@@ -306,7 +318,7 @@ add a line plot based on a group of objects into track
 ```python
 def add_line(self,
              path: str,
-             group: str,
+             group: str = "",
              category: str = "bam",
 
              # file loading parameters
@@ -316,19 +328,19 @@ def add_line(self,
              barcode_groups: Dict[str, Set[str]] = None,
              barcode_tag: str = "BC",
              umi_tag: str = "UB",
-             library: str = "fr-unstrand",
+             library: str = "fru",
 
              # plotting parameters
              color="blue",
              font_size: int = 8,
-             distance_between_label_axis: float = .1,
              show_y_label: bool = True,
              line_attrs: Optional[Dict] = None,
              theme: str = "ticks_blank",
              n_y_ticks: int = 4,
              show_legend: bool = False,
              legend_position: str = "upper right",
-             legend_ncol: int = 0
+             legend_ncol: int = 0,
+             log_trans: Optional[str] = None,
              )
 ```
 
@@ -341,19 +353,53 @@ def add_line(self,
 - barcode_groups: dict contains barcodes by groups; key -> Set[str]
 - barcode_tag: cell barcode tag
 - umi_tag: umi barcode tag
-- library: fr-unstrand/fr-strand or fru/frs for short
-- distance_between_label_axis: distance between y-axis label and y-axis ticks
-- n_y_ticks: number of y ticks
-- color: color for this density plot
-- show_y_label: whether to show y-axis label
-- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
+- library: fru => fr-unstrand; frf => fr-firststrand; frs => fr-secondstrand
+- color: color for this line
 - font_size: font size in this plot
+- show_y_label: whether to show y-axis label
 - line_attrs: the additional attributes to control the line, usd by matpltolib.axes.Axes.plot
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
+- n_y_ticks: number of y ticks
 - show_legend: whether to show legend
 - legend_position: the position of legend
 - legend_ncol: the number of columns in legend
+- log_trans: Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10
 
 Returns `Plot`
+
+---
+
+### add_hic
+
+
+```bash
+def add_hic(
+        self,
+        path: str,
+        category: str = "hic",
+        label: str = "",
+        color: str = "RdYlBu_r",
+        log_trans: Optional[str] = None,
+        tad: Optional[str] = None,
+        show_legend: bool = True,
+        depth: int = 30000,
+        font_size: int = 8,
+        n_y_ticks: int = 4,
+        show_y_label: bool = True,
+        theme: str = "ticks")
+```
+- path: path to input files
+- category: file category corresponding to input file
+- label: the label of input file
+- color: color for this line
+- log_trans: Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10
+- tad: [empty]
+- show_legend: whether to show legend
+- depth: [empty]
+- font_size: font size in this plot
+- n_y_ticks: number of y ticks
+- show_y_label: whether to show y-axis label
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
 ---
 
@@ -368,13 +414,13 @@ def add_igv(
             category: str = "igv",
             label: str = "",
             exon_focus: Optional[str] = None,
-
+            
             # file loading parameters
-            library: str = "fr-unstrand",
+            library: str = "fru",
             features: Optional[dict] = None,
             deletion_ignore: Optional[int] = True,
             del_ratio_ignore: float = .5,
-
+            
             # plotting parameters
             exon_color: Optional[str] = None,
             intron_color: Optional[str] = None,
@@ -382,7 +428,6 @@ def add_igv(
             exon_width: float = .3,
             font_size: int = 8,
             n_y_ticks: int = 1,
-            distance_between_label_axis: float = .1,
             show_y_label: bool = True,
             theme: str = "ticks_blank"
 )
@@ -390,20 +435,19 @@ def add_igv(
 
 - path: path to input files
 - category: file category for the input file
-- library: fr-unstrand/fr-strand or fru/frf for short
+- label: the y-axis title of igv plot
+- exon_focus: exon to focus, like start1-end1,start2-end2
+- library: fru => fr-unstrand; frf => fr-firststrand; frs => fr-secondstrand
 - features: additional genomic features to show in igv plot, support m6a and polyA length from bam tag.
         like {"m6a": "ma", "polya": "pa", "real_strand": "rs"}
-- exon_focus: exon to focus, like start1-end1,start2-end2
 - deletion_ignore: ignore the deletion length
 - del_ratio_ignore: ignore the deletion length which calculated by mapped length * ratio
-- label: the y-axis title of igv plot
 - exon_color: the color of drawn exons
 - intron_color: the color of drawn introns
 - feature_color: the color of additional features
 - exon_width: the width of exons
 - font_size: the font size of igv plot
 - n_y_ticks: the number of y ticks of igv plot
-- distance_between_label_axis: the distance between y-axis label and y-axis
 - show_y_label: whether to show y-axis title
 - theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
@@ -504,10 +548,16 @@ Returns `Plot`
 draw line or density plot based on manually added data.
 
 ```python
-def add_manual(self, data: np.array, image_type: str = "line", 
-               label: str = "", group: str = "", color: str = "blue", 
-               font_size: int = 8, n_y_ticks: int = 1, 
-               show_y_label: bool = True, theme: str = "ticks_blank",)
+def add_manual(self, 
+               data: np.array, 
+               image_type: str = "line", 
+               label: str = "",
+               group: str = "",
+               color: str = "blue", 
+               font_size: int = 8, 
+               n_y_ticks: int = 1, 
+               show_y_label: bool = True, 
+               theme: str = "ticks_blank",)
 ```
 
 - data: the manual data object, should be 1D np.array with same length of target region
@@ -518,7 +568,7 @@ def add_manual(self, data: np.array, image_type: str = "line",
 - font_size: the font size of this plot
 - n_y_ticks: the number of y ticks to show
 - show_y_label: whether to show y label
-- theme: the theme of this plot
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
 
 Returns `Plot`
@@ -530,13 +580,19 @@ Returns `Plot`
 draw motif based on bedGraph file
 
 ```python
-def add_motif(self, path: str, category: str = "motif", motif_region: GenomicLoci = None,
-              width: float = 0.8, theme: str = "blank")
+def add_motif(self, 
+              path: str, 
+              category: str = "motif", 
+              motif_region: GenomicLoci = None,
+              width: float = 0.8, 
+              theme: str = "blank")
 ```
 
 - path: the path to tabix indexed bedGraph file, first 3 columns is chromosome, start and end site, the rest 4 columns is scores for ATCG.
+- category: file category for the input file
 - motif_region: to specify the position of motif
 - width: the width of characters
+- theme: the build-in theme, including `blank`, `ticks`, `ticks_blank`
 
 Returns `Plot`
 
@@ -569,30 +625,31 @@ p.merge_by_cell()
 save/show the final image
 
 ```python
-def plot(self,
-            output: Optional[str] = None,
-            dpi: int = 300,
-            width: Union[int, float] = 0,
-            height: Union[int, float] = 0,
-            raster: bool = False,
-            same_y: bool=False,
-            remove_duplicate_umi: bool = False,
-            threshold: int = 10,
-            included_junctions = ["chr1:1-100"],
-            fill_step: str = "post",
-            return_image: Optional[str] = None,
-            
-            n_jobs: int = 1,
-            normalize_format: str = "count",
-
-            intron_scale: float=.5,
-            exon_scale: float = 1,
-         
-            reference_scale: float = .25,
-            stroke_scale: float = .25,
-            sc_height_ratio: Optional[Dict[str, float]] = None,
-            distance_between_label_axis: float = .3,
-        )
+def plot(
+        self,
+        output: Optional[str] = None,
+        dpi: int = 300,
+        width: Union[int, float] = 0,
+        height: Union[int, float] = 0,
+        raster: bool = False,
+        same_y: bool=False,
+        remove_duplicate_umi: bool = False,
+        threshold: int = 10,
+        included_junctions = ["chr1:1-100"],
+        fill_step: str = "post",
+        return_image: Optional[str] = None,
+        
+        n_jobs: int = 1,
+        normalize_format: str = "count",
+        
+        intron_scale: float=.5,
+        exon_scale: float = 1,
+        
+        reference_scale: float = .25,
+        stroke_scale: float = .25,
+        sc_height_ratio: Optional[Dict[str, float]] = None,
+        distance_between_label_axis: float = .3,
+)
 ```
 
 - output: if output is empty then show this image by plt.showfig
@@ -618,7 +675,7 @@ def plot(self,
 - stroke_scale: to adjust the max size of stroke plot, the references only occupy at most 1/4 of figure height by default
 - sc_height_ratio: to adjust the relative height of single cell related plots, including single cell density and heatmap
 - distance_between_label_axis: to adjust the distance between y-axis label and y-axis ticks
-- n_jobs: load data in how many processes
+
 
 Returns `None` or `io.BytesIO`
 
@@ -626,6 +683,7 @@ Returns `None` or `io.BytesIO`
 
 ### Theme
 We have three build-in themes used for different kind of plot
+
 - blank: disable axis and ticks, normally used for transcripts, strokes and links at the bottom
 - ticks: disable top and right axis, used for the last plot under transcripts
 - ticks_blank: disable the top, right and bottom axis, remove x-axis ticks, used for most plots

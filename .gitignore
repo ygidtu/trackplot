@@ -284,4 +284,6 @@ example.sorted.sorted.gtf.gz.tbi
 
 docs/_*
 plots/
-ui
+conda_build.py
+run.sh
+param.py
