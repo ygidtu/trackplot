@@ -5,7 +5,7 @@
 The following code is used to generate the example images.
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
@@ -40,7 +40,7 @@ Parameters:
 ```
 Usage: trackplot [OPTIONS]
 
-  Welcome to use sashimi
+  Welcome to use trackplot
 
 Options:
   --version                       Show the version and exit.
@@ -225,17 +225,17 @@ Options:
                                   
                                   - 5th column is exon_id for sorting the
                                   reads (optional).
-    --m6a TEXT                    Sashimi.py will load location information
+    --m6a TEXT                    trackplot will load location information
                                   from the given tags and  then highlight the
                                   RNA m6a modification cite at individual
                                   reads.  If there are multiple m6a
                                   modification site, please add tag as follow,
                                   234423,234450
-    --polya TEXT                  Sashimi.py will load length of poly(A) from
+    --polya TEXT                  trackplot will load length of poly(A) from
                                   the given tags and then visualize the
                                   poly(A) part at end of each individual
                                   reads.
-    --rs TEXT                     Sashimi.py will load real strand information
+    --rs TEXT                     trackplot will load real strand information
                                   of each reads from the given tags and
                                   
                                    the strand information is necessary for
@@ -324,7 +324,7 @@ path/to/bam1 LUAD
 path/to/bam2 LUSC
 ```
 
-Then the `--color-factor 2` means sashimi assign two colors to LUAD and LUSC separately automatically.  
+Then the `--color-factor 2` means trackplot assign two colors to LUAD and LUSC separately automatically.  
    
 - advanced usage:
 
@@ -333,7 +333,7 @@ path/to/bam1 LUAD|red
 path/to/bam2 LUSC|#000000
 ```
 
-Then the `--color-factor 2` means sashimi assign red color to LUAD and "#000000" to LUSC separately.  
+Then the `--color-factor 2` means trackplot assign red color to LUAD and "#000000" to LUSC separately.  
 
 
 ### Output options
@@ -358,10 +358,10 @@ The recommended combination of backend and image formats please check [matplotli
 
 #### 1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
 
-For each transcript, sashimi firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
+For each transcript, trackplot firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
 
 
-The sashimi will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCESSING', 'PTM', 'STRUCTURAL', 'TOPOLOGY'] in default, and please refer [this](https://ebi-uniprot.github.io/ProtVista/userGuide.html) for the detail of each category.
+The trackplot will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PROCESSING', 'PTM', 'STRUCTURAL', 'TOPOLOGY'] in default, and please refer [this](https://ebi-uniprot.github.io/ProtVista/userGuide.html) for the detail of each category.
 
 ![](imgs/cmd/domain.png)
 
@@ -384,7 +384,7 @@ The Category and type of domain refer to [here](https://ebi-uniprot.github.io/Pr
 
 here is the command of the tutorial,
 ```shell
-python main.py \
+trackplot \
   -e 7:107830089-107832297 \
   -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
   -o domain.raw.pdf \
@@ -393,7 +393,7 @@ python main.py \
   --height 1 --show-junction-num -t 10 --domain
 
 # domain include test
-python main.py \
+trackplot \
   -e 7:107830089-107832297 \
   -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
   -o domain.include.pdf \
@@ -402,7 +402,7 @@ python main.py \
   --height 1 --show-junction-num -t 10 --domain --domain-include MOLECULE_PROCESSING:PTM,CARBOHYD
 
 # domain exclude test
-python main.py \
+trackplot \
   -e 7:107830089-107832297 \
   -r example/Article_figures/FigS1/A/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
   -o domain.exclude.pdf \
@@ -415,7 +415,7 @@ python main.py \
 
 #### 3.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
-In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to sashimi with `--local-domain`.
+In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to trackplot with `--local-domain`.
 
 But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi couldn't map the protein information into the corresponding transcript id.
 
@@ -468,8 +468,7 @@ chr1:1000-20000 100 200
 ** Example: `--customized-junction` **
 
 ```bash
-
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
@@ -487,7 +486,7 @@ These two parameters were used to show the density of reads starts by forward an
 
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
@@ -508,7 +507,7 @@ Here is the command,
 
 # panel A, show all junctions
 
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density example/Article_figures/FigS1/b/bam.tsv \
@@ -519,7 +518,7 @@ python main.py \
 
 # panel B, show the junctions with more 10 counts.
 
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density example/Article_figures/FigS1/b/bam.tsv \
@@ -529,7 +528,7 @@ python main.py \
   --height 1 --show-junction-num -t 10
 
 # panel C, show the specific junctions.
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density example/Article_figures/FigS1/b/bam.tsv \
@@ -548,18 +547,36 @@ python main.py \
 User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
 
 
+Firstly, prepare the example datas
+
+```bash
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF125RUG/@@download/ENCFF125RUG.bam
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF854PFR/@@download/ENCFF854PFR.bam
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF709LHN/@@download/ENCFF709LHN.bam
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF613CGT/@@download/ENCFF613CGT.bam
+
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF936SHU/@@download/ENCFF936SHU.bigWig
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF363UDO/@@download/ENCFF363UDO.bigWig
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF051PIE/@@download/ENCFF051PIE.bigWig
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF245YUN/@@download/ENCFF245YUN.bigWig
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF556EQK/@@download/ENCFF556EQK.bigWig
+aria2c -x 16 https://www.encodeproject.org/files/ENCFF476HFB/@@download/ENCFF476HFB.bigWig
+
+aria2c -x 16 http://hgdownload.cse.ucsc.edu/goldenpath/hg38/phastCons470way/hg38.phastCons470way.bw%
+```
+
+
 Here is the configure file,
 ```
 # we use third column to group the different data to aggregate datasets.
 ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
 ENCFF125RUG.bam	bam	PTBP1_KD_agg	#0084d1	frf
 ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
-
 ```
 
 ```bash
 
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
@@ -582,7 +599,7 @@ The shrinkage of intron
 ```bash
 
 # Without shrinkage of the intron (shrinkage_scale: 1)
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
@@ -594,7 +611,7 @@ python main.py \
   --intron-scale 1
 
 # with shrinkage of the intron (shrinkage_scale: 0.001)
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
   -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   --density bam.tsv \
@@ -609,18 +626,20 @@ python main.py \
 
 ![](imgs/cmd/intron_scale.png)
 
-#### 6. Visualize coverage by rpm or rpkm
+#### 6. Visualize coverage by cpm or rpkm
 
 We also support to visualize the coverage by normalized values.
 
 Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
 
 ```bash
+wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+
 # No any normalize
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
-  --density bam.tsv \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
+  --density example/bam.tsv \
   -o PTBP3.count.pdf \
   --dpi 300 \
   --width 6 \
@@ -629,9 +648,9 @@ python main.py \
   --intron-scale .01 --normalize-format count
 
 # Normalize by rpkm
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --density bam.tsv \
   -o PTBP3.rpkm.pdf \
   --dpi 300 \
@@ -641,9 +660,9 @@ python main.py \
   --intron-scale .01 --normalize-format rpkm
 
 # Normalize by cpm
-python main.py \
+trackplot \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --density bam.tsv \
   -o PTBP3.cpm.pdf \
   --dpi 300 \
@@ -664,12 +683,12 @@ python main.py \
      
   This barcode list as follows:
   
-  ```
-  #bam  barcode cell_type(optional) cell_type(optional)
-  sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
-  sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
-  sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
-  ```
+```
+#bam  barcode cell_type(optional) cell_type(optional)
+sc AAACCTGCACCTCGTT-1 AT2 #A6DCC2
+sc AAAGATGTCCGAATGT-1 AT2 #A6DCC2
+sc AAAGCAATCGTACGGC-1 AT2 #A6DCC2
+```
 
 2.`--barocde-tag` and `--umi-tag`
 
@@ -682,7 +701,7 @@ Group by cell types in density/line plot.
 **Example: `--barcode` and `--group-by-cell`**
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --density example/density_list.tsv \
@@ -712,9 +731,9 @@ By default, the position of legend and columns of legend were determined by [mat
 **Example: `--hide-legend` **
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
-  -o example/example_without_legend.png \
+  -o example_without_legend.pdf \
   --dpi 300 \
   --width 10 \
   --height 1 \
@@ -730,9 +749,9 @@ python main.py \
 **Example: `--legend-position` and `--legend-ncol`**
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
-  -o example/example_with_legend.pdf \
+  -o example_with_legend.pdf \
   --dpi 300 \
   --width 10 \
   --height 1 \
@@ -810,7 +829,7 @@ example/bams/0.bam	igv	bam
 
 here is the plotting command line
 ```bash
-python main.py \
+trackplot \
   -e 1:10024601-10038168:+ \
   -r example/example.sorted.gtf.gz \
   --igv example/igv.tsv \
@@ -818,7 +837,6 @@ python main.py \
   --dpi 300 \
   --width 10 \
   --height 1
-
 ```
 
 ![](imgs/cmd/igv_plot.1.png)
@@ -843,14 +861,13 @@ SRR12503063.89603	16	1	14394	2	..	*	0	0	..	..	NM:i:220	ms:i:1064	AS:i:891	nn:i:0
 here is the command line,
 
 ```bash
- python main.py \
-    -e chr1:13362-29900:+ \
-    --igv example/igv.m6a.tsv \
-    -o igv.m6a.pdf \
-    --dpi 300 \
-    --width 5 \
-    --height 1 --rs rs --polya pa --m6a ma
-
+trackplot \
+  -e chr1:13362-29900:+ \
+  --igv example/igv.m6a.tsv \
+  -o igv.m6a.pdf \
+  --dpi 300 \
+  --width 5 \
+  --height 1 --rs rs --polya pa --m6a ma
 ```
 In this picture, the red track and blue dot represents the length of poly(A) and m6a modification respectively,
 ![](imgs/cmd/igv_plot.2.png)
@@ -867,8 +884,10 @@ example/SRX8994511.example.bed.gz	igv	bed12	blue	43100453-43100519,43101366-4310
 here is the command line for plotting
 
 ```bash
-python main.py \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+
+trackplot \
+  -r example/Homo_sapiens.GRCh38.101.chr.gtf.gz \
   -e 21:43092956-43107570:+ \
   --igv example/igv.3.tsv \
   --focus 43100453-43100519:43101366-43101432 \
@@ -876,7 +895,6 @@ python main.py \
   --dpi 300 \
   --width 6 \
   --height 1
-
 ```
 
 ![](imgs/cmd/igv_plot.3.png)
@@ -891,14 +909,12 @@ Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https:
 Here is the command line for generating domain
 
 ```bash
-
 hicFindTADs -m example/Li_et_al_2015.h5 \
 --outPrefix example/Li_et_al_2015_thres0.05_delta0.01_fdr \
 --thresholdComparisons 0.05 \
 --delta 0.01 \
 --correctForMultipleTesting fdr \
 -p 12
-
 ```
 
 The format of configuration file,
@@ -910,7 +926,7 @@ example/Li_et_al_2015.h5	hic	Li_hic	RdYlBu_r	2	50000 example/Li_et_al_2015_thres
 here is the plotting command line
 
 ```bash
-python main.py \
+trackplot \
   -e X:2500000-3500000:+ \
   --hic example/hic.tsv \
   -o example.hic.png \
@@ -953,21 +969,21 @@ hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -
 # filepath  file_category   label   color  transform	depth
 example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
 ```
-3.run Sashimi
+3.run trackplot
 
 ```bash
-python main.py \
+trackplot \
     -e chr1:1200000-1300000:+ \
     -r example/example.sorted.gtf.gz \
     --interval example/interval_list.tsv \
     --hic example/hic.2.tsv \
-    -o hic.2.pdf \
+    -o hic.2.png \
     --dpi 300 \
     --width 10 \
     --height 1 \
     --domain
 ```
-here is the [results](https://github.com/ygidtu/sashimi/blob/dev/example/hic.example.pdf).
+here is the result. ![results](imgs/cmd/hic.2.png)
 
 ## circRNA plot
 
@@ -977,7 +993,9 @@ The linear and circRNA raw data were downloaded from [PRJNA541935](https://www.n
 The command for generating a circRNA coverage plot with highlight the back-splice junction
 
 ```bash
-python sashimi.py/main.py \
+wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+
+trackplot \
   -e chr1:925421-944308:+ \
   --density example/circRNA.tsv \
   --stroke 937113-937713@blue \
@@ -986,7 +1004,7 @@ python sashimi.py/main.py \
   --width 10 \
   --height 1 \
   -t 10 \
-  -r Homo_sapiens.GRCh38.101.gtf \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --link 925921-943808 
 ```
 ![](imgs/cmd/circRNA.png)
@@ -995,10 +1013,10 @@ python sashimi.py/main.py \
 ## Motif plot
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1270776:+ \
   --density example/density_list.tsv \
-  -o example/motif.pdf \
+  -o motif.pdf \
   --dpi 300 \
   --width 10 \
   --height 1 \
@@ -1016,22 +1034,22 @@ chr1  100 101 0.1 0.2 -0.3  -0.4
 
 Then, bgzipped && tabix indexed
 
-here is the [result](imgs/cmd/motif.png).
+here is the result. ![result](imgs/cmd/motif.png)
 
 
-### Additional annotation
+## Additional annotation
 
 We also provide multiple annotations, including indicator lines, focus, stroke and sequence.
 
 **Example: `--focus`, `--sites` and `--stroke`**
 
 ```bash
-python main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   --focus 1272656-1272656:1275656-1277656 \
   --stroke 1275656-1277656:1277856-1278656@blue \
   --sites 1271656,1271656,1272656 \
-  -o example/example_additional.pdf \
+  -o additional.pdf \
   --dpi 300 \
   --width 10 \
   --height 1 \

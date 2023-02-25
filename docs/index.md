@@ -1,6 +1,6 @@
-# Welcome to Sashimi.py
+# Welcome to trackplot
 
-[Sashimi.py](https://github.com/ygidtu/sashimi.py) is a feature-rich sashimi plot framework written in pure Python code.
+[trackplot](https://github.com/ygidtu/trackplot) is a feature-rich sashimi plot framework written in pure Python code.
 
 ![](imgs/diagram.png)
 
@@ -8,4 +8,4 @@
 
 ## Get started
 
-To learn Sashimi.py, please follow the [Tutorial](https://sashimi.readthedocs.io/en/latest/command/)
+To learn trackplot, please follow the [Tutorial](https://trackplot.readthedocs.io/en/latest/command/)

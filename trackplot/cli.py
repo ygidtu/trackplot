@@ -21,7 +21,7 @@ from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -416,19 +416,19 @@ def process_file_list(infile: str, category: str = "density"):
                  """)
 @optgroup.option("--m6a", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load location information from the given tags and
+                 trackplot will load location information from the given tags and
                   then highlight the RNA m6a modification cite at individual reads.
                   If there are multiple m6a modification site, please add tag as follow,
                   234423,234450
                  """)
 @optgroup.option("--polya", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load length of poly(A) from the given tags and
+                 trackplot will load length of poly(A) from the given tags and
                  then visualize the poly(A) part at end of each individual reads.
                  """)
 @optgroup.option("--rs", default=None, type=click.STRING,
                  help="""
-                 Sashimi.py will load real strand information of each reads from the given tags and \n
+                 trackplot will load real strand information of each reads from the given tags and \n
                   the strand information is necessary for visualizing poly(A) part.
                  """)
 @optgroup.option("--del-ratio-ignore", default=1.0,
@@ -495,7 +495,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--font", type=click.STRING, default=None, help="Fonts", show_default=True)
 def main(**kwargs):
     u"""
-    Welcome to use sashimi
+    Welcome to use trackplot
     \f
     """
     logger.remove()

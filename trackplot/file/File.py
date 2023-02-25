@@ -60,7 +60,7 @@ class File(object):
                     # should be Reads
                     logger.debug(f"one of current data should be Reads: {err}: {[type(x) for x in self.data]}")
                     pass
-            else:
+            elif not isinstance(self.data, dict):
                 self.data.transform(self.log_trans)
 
 

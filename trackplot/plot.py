@@ -892,12 +892,19 @@ class Plot(object):
                   width: float = 0.8,
                   theme: str = "blank",
                   **kwargs):
-        obj = Motif.create(path, self.region)
+
+        if motif_region.start < self.region.start:
+            motif_region.start = self.region.start
+
+        if motif_region.end > self.region.end:
+            motif_region.end = self.region.end
+
+        obj = Motif.create(path, motif_region)
 
         info = PlotInfo(obj=obj, category=category, type_="motif")
 
         self.plots.append(info)
-        self.params[info] = {"width": width, "theme": theme, "region": motif_region if motif_region else self.region}
+        self.params[info] = {"width": width, "theme": theme}
         return self
 
     def add_manual(self,

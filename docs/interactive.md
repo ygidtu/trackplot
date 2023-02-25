@@ -1,13 +1,13 @@
 
 # Interactive Usage
 
-A detailed notebook tutorial at [here](https://nbviewer.org/github/ygidtu/sashimi.py/blob/main/docs/interactive.ipynb).
+A detailed notebook tutorial at [here](https://nbviewer.org/github/ygidtu/trackplot/blob/main/docs/interactive.ipynb).
 
 ## Example Usage
 
 The interactive API could be used as normal functions or calling as process chain.
 
-The `jupyter notebook` of following example were provided at [github](https://github.com/ygidtu/sashimi.py/blob/main/docs/interactive.ipynb)
+The `jupyter notebook` of following example were provided at [github](https://github.com/ygidtu/trackplot/blob/main/docs/interactive.ipynb)
 
 ###### 1. init plot
 

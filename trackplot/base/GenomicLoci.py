@@ -62,6 +62,10 @@ class GenomicLoci(object):
         """
         return f"{self.chromosome}:{self.start}-{self.end}:{self.strand}"
 
+    def __iter__(self):
+        for i in range(self.start, self.end+1):
+            yield i
+
     def __gt__(self, other):
         u"""
         if other downstream of other

@@ -4,7 +4,7 @@
 ### PyPI
 
 ```bash
-pip install sashimi.py
+pip install trackplot
 # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
 # therefore please try another pypi mirror once you encounter 
 # `No local packages or working download links found for xxx`
@@ -15,47 +15,47 @@ pip install pybigwig hicmatrix # to enable bigWig, bigBed and hicMatrix support
 ### Conda
 
 ```bash
-conda install -c bioconda -c conda-forge sashimi-py
+conda install -c bioconda -c conda-forge trackplot
 
-# or install sashimi-py into an isolated environments
-conda create -n sashimi -c bioconda -c conda-forge sashimi-py
+# or install trackplot into an isolated environments
+conda create -n trackplot -c bioconda -c conda-forge trackplot
 
-# or install latest sashimi-py  
-git clone https://github.com/ygidtu/sashimi.py.git sashimi
-cd sashimi
-conda create -n sashimi -f environment.yaml
+# or install latest trackplot
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
+conda create -n trackplot -f environment.yaml
 ```
 
 ### Docker
 
 ```bash
-docker pull ygidtu/sashimi
-docker run --rm ygidtu/sashimi --help
+docker pull ygidtu/trackplot
+docker run --rm ygidtu/trackplot --help
 
 # or build docker image from source
-git clone https://github.com/ygidtu/sashimi.py.git sashimi
-cd sashimi
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
 docker build -t ygidtu/docker .
-docker run --rm ygidtu/sashimi --help
+docker run --rm ygidtu/trackplot --help
 ```
 
 ## Install from source
 
 download source code using git
 ```bash
-git clone https://github.com/ygidtu/sashimi.py.git sashimi
-cd sashimi
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
 ```
 
 ### Run as command line tools
 
 ```bash
-python setup.py install
-
 # optional, enable bigWig, bigBed and hicMatrix support
 pip install pybigwig hicmatrix
 
-sashimipy --help
+python setup.py install
+
+trackplot --help
 # or
 python main.py --help
 ```
@@ -65,33 +65,36 @@ python main.py --help
 The following 3 installation methods will try to install pyBigWig and hicmatrix by default, 
 once facing installation issues please check their official document.
 
-1. using python
-    ```bash
-    pip install -r requirements.txt
-    python main.py
-    ```
+#### 1. using python
 
-2. using pipenv
-   ```bash
-   pipenv install  # create virtualenv and install required packages
-   # optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
-   # optional, with `--skip-lock` once encounter locking issues
-   
-   pipenv shell && python main.py --help    # switch to virtualenv
-   
-   # or just run with pipenv
-   pipenv run python main.py --help
-   ```
+```bash
+pip install -r requirements.txt
+python main.py
+```
 
-3. using poetry
-   ```bash
-   # once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
-   poetry install   # create virtualenv and install required packages
-   poetry shell  && python main.py --help   # switch to virtualenv
-   
-   # or just run with poetry
-   poetry run python main.py --help
-   ```
+#### 2. using pipenv
+
+```bash
+pipenv install  # create virtualenv and install required packages
+# optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
+# optional, with `--skip-lock` once encounter locking issues
+
+pipenv shell && python main.py --help    # switch to virtualenv
+
+# or just run with pipenv
+pipenv run python main.py --help
+```
+
+#### 3. using poetry
+
+```bash
+# once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
+poetry install   # create virtualenv and install required packages
+poetry shell  && python main.py --help   # switch to virtualenv
+
+# or just run with poetry
+poetry run python main.py --help
+```
 
 ** Note: **
 If there is any problem with installation of `cairocffi`
@@ -110,12 +113,14 @@ But:
 For users who wish to running this program on `Windows` or `macOS (Apple Silicon)`, we **strongly** recommend docker image.
 
 ### Pull from docker hub
+
 ```bash
 docker pull ygidtu/trackplot
 docker run --rm ygidtu/trackplot --help
 ```
 
 ### Build docker image from source
+
 ```bash
 git clone https://github.com/ygidtu/trackplot.git trackplot
 cd trackplot

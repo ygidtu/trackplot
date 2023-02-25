@@ -29,10 +29,10 @@ class Motif(File):
         assert os.path.exists(path), f"{path} is not exists."
         return cls(path=path, region=region)
 
-    def load(self, region: GenomicLoci, **kwargs):
+    def load(self, **kwargs):
         data = {}
         keys = ["A", "T", "C", "G"]
-        for record in Reader.read_depth(self.path, region):
+        for record in Reader.read_depth(self.path, self.region):
             start = record[1]
             data[int(start)] = {x: float(y) for x, y in zip(keys, record[3:7])}
         self.data = data
