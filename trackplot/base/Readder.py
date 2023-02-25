@@ -6,10 +6,10 @@ Created by ygidtu@gmail.com at 2022.05.11
 The scripts contain the object to handle all the pysam, pybigwig related reading
 """
 import os
+import sys
 from typing import Optional
 
 import numpy as np
-import pyBigWig
 import pysam
 from loguru import logger
 
@@ -143,6 +143,12 @@ class Reader(object):
 
     @classmethod
     def read_bigwig(cls, path: str, region: GenomicLoci) -> np.array:
+        try:
+            import pyBigWig
+        except ImportError as err:
+            logger.error(f"Please install pyBigWig properly to enable bigWig support: {err}")
+            sys.exit(1)
+
         with pyBigWig.open(path) as r:
             try:
                 return r.values(region.chromosome, region.start, region.end + 1)
@@ -157,6 +163,12 @@ class Reader(object):
 
     @classmethod
     def read_bigbed(cls, path: str, region: GenomicLoci):
+        try:
+            import pyBigWig
+        except ImportError as err:
+            logger.error(f"Please install pyBigWig properly to enable bigWig support: {err}")
+            sys.exit(1)
+
         with pyBigWig.open(path) as r:
             if not r.isBigBed():
                 logger.warning(f"{path} don't look like bigbed file.")
@@ -213,7 +225,12 @@ class Reader(object):
 
     @classmethod
     def read_hic(cls, path: str, region: GenomicLoci):
-        from hicmatrix import HiCMatrix as hm
+        try:
+            from hicmatrix import HiCMatrix as hm
+        except ImportError as err:
+            logger.error(f"Please install pyBigWig properly to enable HiC support: {err}")
+            sys.exit(1)
+
         os.environ['NUMEXPR_MAX_THREADS'] = '16'
         os.environ['NUMEXPR_NUM_THREADS'] = '8'
         hic = hm.hiCMatrix(path, f"{region.chromosome}:{region.start}-{region.end}")
