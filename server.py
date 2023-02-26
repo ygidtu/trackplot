@@ -43,13 +43,13 @@ __COMMON_PARAMS__ = [
         "key": "path",
         "annotation": "str",
         "default": "<class 'inspect._empty'>",
-        "note": "Please input the path to input file"
+        "note": "Please input the file path"
     },
     {
         "key": "category",
         "annotation": "str",
         "default": "bam",
-        "note": "The category of input input file"
+        "note": "The category of input file"
     },
     {
         "key": "size_factor",
@@ -284,13 +284,13 @@ __PARAMS__ = {
             "key": "deletion_ignore",
             "annotation": "Optional[int]",
             "default": "True",
-            "note": ""
+            "note": "Whether ignore the gap in full length sequencing data"
         },
         {
             "key": "del_ratio_ignore",
             "annotation": "float",
             "default": "0.5",
-            "note": ""
+            "note": "Ignore the deletion gap in nanopore or pacbio reads"
         },
         {
             "key": "exon_color",
@@ -537,7 +537,7 @@ __PARAMS__ = {
             "key": "transcripts",
             "annotation": "Optional[List[str]]",
             "default": "<class 'inspect._empty'>",
-            "note": "The name transcripts for "
+            "note": "The name of ftranscripts for plotting"
         },
         {
             "key": "remove_empty_transcripts",

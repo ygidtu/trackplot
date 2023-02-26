@@ -157,13 +157,13 @@ def set_reference(self, gtf: str,
 - gtf: path to gtf file
 - add_domain: whether to add domain
 - local_domain: whether add domain information into reference track
-- domain_include: [empty]
-- domain_exclude: [empty]
+- domain_include: Which domain will be included in reference plot
+- domain_exclude: Which domain will be excluded in reference plot
 - interval: path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
 - interval_label: the label of added interval
 - transcripts: the list of name or ids of transcripts to draw
 - remove_empty_transcripts: whether to remove transcripts without any exons
-- choose_primary: [empty]
+- choose_primary: Whether choose primary transcript to plot
 - color: the color of exons
 - font_size: the size of transcript id, name
 - show_gene: whether to show gene name/id
@@ -393,9 +393,9 @@ def add_hic(
 - label: the label of input file
 - color: color for this line
 - log_trans: Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10
-- tad: [empty]
+- tad: The region of topologically associating domains for HiC track
 - show_legend: whether to show legend
-- depth: [empty]
+- depth: The depth of region of interest in HiC track
 - font_size: font size in this plot
 - n_y_ticks: number of y ticks
 - show_y_label: whether to show y-axis label
@@ -506,7 +506,7 @@ def add_stroke(
 
 - stroke: string format of stroke,  eg: 100-200:200-300@blue
 - start: start position
-- end: position
+- end: end position
 - label: stroke label
 - color: the color of stroke
 

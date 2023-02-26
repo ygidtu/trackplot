@@ -170,19 +170,26 @@ class ReadDepth(object):
 
         if format_ == "rpkm" and read_length > 0:
             # for rpkm the size_factor is total reads
-            self.plus = np.divide(self.plus, np.multiply((len(self.plus) - read_length + 1) * 1e3, size_factor / 1e6))
+            self.plus = np.divide(self.plus,
+                                  np.multiply((np.sum(self.plus != 0) - read_length + 1) / 1e3, size_factor / 1e6))
             if self.minus is not None:
                 self.minus = np.divide(self.minus,
-                                       np.multiply((len(self.minus) - read_length + 1) * 1e3, size_factor / 1e6))
+                                       np.multiply((np.sum(self.minus != 0) - read_length + 1) / 1e3,
+                                                   size_factor / 1e6))
+            elif format_ == "cpm" and read_length > 0:
+                # for cpm the size_factor is total reads
+                self.plus = np.divide(self.plus, np.divide(size_factor, 1e6))
+                if self.minus is not None:
+                    self.minus = np.divide(self.minus, np.divide(size_factor, 1e6))
         elif format_ == "cpm" and read_length > 0:
             # for cpm the size_factor is total reads
-            self.plus = np.divide(self.plus, np.multiply(size_factor, 1e6))
+            self.plus = np.divide(self.plus, np.divide(size_factor, 1e6))
             if self.minus is not None:
-                self.minus = np.divide(self.minus, np.multiply(size_factor, 1e6))
-
-        self.plus = np.divide(self.plus, size_factor)  # * 100
-        if self.minus is not None:
-            self.minus = np.divide(self.minus, size_factor)
+                self.minus = np.divide(self.minus, np.divide(size_factor, 1e6))
+        elif size_factor is not None and size_factor > 0 and format_ == "atac":
+            self.plus = np.divide(self.plus, size_factor)  # * 100
+            if self.minus is not None:
+                self.minus = np.divide(self.minus, size_factor)
 
 
 if __name__ == '__main__':

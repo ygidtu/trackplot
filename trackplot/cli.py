@@ -21,7 +21,7 @@ from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -333,7 +333,7 @@ def process_file_list(infile: str, category: str = "density"):
                  - 1st column is path to input file, \n
                  - 2nd column is the file category, \n
                  - 3rd column is input file alias (optional), \n
-                 - 4th column is color of input files (optional),
+                 - 4th column is color of input files (optional),\n
                  - 5th column is the library of input file (optional, only required by bam file), \n
                  - 6th column is the number of total reads (optional, only required by bam file). \n
                  """)

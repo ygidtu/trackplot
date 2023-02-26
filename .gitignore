@@ -287,3 +287,4 @@ plots/
 conda_build.py
 run.sh
 param.py
+.DS_Store

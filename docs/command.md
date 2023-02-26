@@ -123,7 +123,9 @@ Options:
                                   - 3rd column is input file alias (optional),
                                   
                                   - 4th column is color of input files
-                                  (optional), - 5th column is the library of
+                                  (optional), 
+                                  
+                                  - 5th column is the library of
                                   input file (optional, only required by bam
                                   file),
                                   
@@ -960,29 +962,29 @@ wget https://www.encodeproject.org/files/ENCFF931NQV/@@download/ENCFF931NQV.pair
 wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 pairix ENCFF931NQV.pairs.gz
 cooler cload pairix -p 16 hg38.chrom.sizes:1000 ENCFF931NQV.pairs.gz ENCFF931NQV_1kb.cool
-hicConvertFormat -m ENCFF121YPY_1000.cool --inputFormat cool --outputFormat h5 -o ENCFF121YPY.h5
+hicConvertFormat -m ENCFF931NQV_1kb.cool --inputFormat cool --outputFormat h5 -o ENCFF931NQV.h5
 ```
 
 2.prepare the config file
 
 ```bash
-# filepath  file_category   label   color  transform	depth
-example/ENCFF718AWL.h5	hic	ENCFF718AWL	RdYlBu_r	log2	30000
+# filepath  file_category   label   color  transform depth
+example/ENCFF931NQV.h5 hic ENCFF931NQV RdYlBu_r log2 30000
 ```
 3.run trackplot
 
 ```bash
 trackplot \
-    -e chr1:1200000-1300000:+ \
+    -e chr19:35600000-35800000:+ \
     -r example/example.sorted.gtf.gz \
     --interval example/interval_list.tsv \
     --hic example/hic.2.tsv \
     -o hic.2.png \
     --dpi 300 \
     --width 10 \
-    --height 1 \
-    --domain
+    --height 1 
 ```
+
 here is the result. ![results](imgs/cmd/hic.2.png)
 
 ## circRNA plot

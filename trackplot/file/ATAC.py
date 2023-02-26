@@ -162,7 +162,7 @@ class ATAC(SingleCell):
             logger.error(err)
 
         self.data = ReadDepth(depth_vector)
-        self.data.normalize(self.size_factor[self.barcode])
+        self.data.normalize(self.size_factor[self.barcode], format_="atac")
 
         depth_vector = self.data.wiggle
         for i in range(half_bin, len(self.region)):
