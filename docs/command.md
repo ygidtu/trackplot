@@ -976,8 +976,7 @@ example/ENCFF931NQV.h5 hic ENCFF931NQV RdYlBu_r log2 30000
 ```bash
 trackplot \
     -e chr19:35600000-35800000:+ \
-    -r example/example.sorted.gtf.gz \
-    --interval example/interval_list.tsv \
+    -r example/example.sorted.2.gtf.gz \
     --hic example/hic.2.tsv \
     -o hic.2.png \
     --dpi 300 \

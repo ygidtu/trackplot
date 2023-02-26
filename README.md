@@ -56,21 +56,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
     to solve their requirements.
 
 
-1. install from bioconda
-
-   ```bash
-   conda install -c bioconda -c conda-forge trackplot
-   
-   # or install trackplot into an isolated environments
-   conda create -n sashimi -c bioconda -c conda-forge trackplot
-   
-   # or install latest trackplot  
-   git clone https://github.com/ygidtu/trackplot.git sashimi
-   cd sashimi
-   conda create -n sashimi -f environment.yaml
-   ```
-
-2. install from PyPi
+1. install from PyPi
 
    ```bash
    # optional, enable bigWig, bigBed and hicMatrix support
@@ -82,7 +68,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
    # `No local packages or working download links found for xxx`
    ```
 
-3. using docker image
+2. using docker image
 
     ```bash
     docker pull ygidtu/sashimi
@@ -95,7 +81,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
     docker run --rm ygidtu/sashimi --help
     ```
 
-4. install from source code
+3. install from source code
 
     ```bash
     git clone https://github.com/ygidtu/trackplot sashimi
@@ -110,6 +96,19 @@ The trackplot is written in Python, and user could install it in a variety of wa
     # or
     python main.py --help
     ```
+4. install from bioconda
+
+   ```bash
+   conda install -c bioconda -c conda-forge trackplot
+   
+   # or install trackplot into an isolated environments
+   conda create -n sashimi -c bioconda -c conda-forge trackplot
+   
+   # or install latest trackplot  
+   git clone https://github.com/ygidtu/trackplot.git sashimi
+   cd sashimi
+   conda create -n sashimi -f environment.yaml
+   ```
 
 5. for `pipenv` or `poetry` users
 
