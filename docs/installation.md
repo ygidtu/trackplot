@@ -12,20 +12,6 @@ pip install trackplot
 pip install pybigwig hicmatrix # to enable bigWig, bigBed and hicMatrix support
 ```
 
-### Conda
-
-```bash
-conda install -c bioconda -c conda-forge trackplot
-
-# or install trackplot into an isolated environments
-conda create -n trackplot -c bioconda -c conda-forge trackplot
-
-# or install latest trackplot
-git clone https://github.com/ygidtu/trackplot.git trackplot
-cd trackplot
-conda create -n trackplot -f environment.yaml
-```
-
 ### Docker
 
 ```bash
@@ -45,6 +31,20 @@ download source code using git
 ```bash
 git clone https://github.com/ygidtu/trackplot.git trackplot
 cd trackplot
+```
+
+### Conda
+
+```bash
+conda install -c bioconda -c conda-forge trackplot
+
+# or install trackplot into an isolated environments
+conda create -n trackplot -c bioconda -c conda-forge trackplot
+
+# or install latest trackplot
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
+conda create -n trackplot -f environment.yaml
 ```
 
 ### Run as command line tools
