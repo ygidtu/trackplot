@@ -71,28 +71,28 @@ The trackplot is written in Python, and user could install it in a variety of wa
 2. using docker image
 
     ```bash
-    docker pull ygidtu/sashimi
-    docker run --rm ygidtu/sashimi --help
+    docker pull ygidtu/trackplot
+    docker run --rm ygidtu/trackplot --help
 
     # or build docker image from source
-    git clone https://github.com/ygidtu/trackplot sashimi
-    cd sashimi
+    git clone https://github.com/ygidtu/trackplot trackplot
+    cd trackplot
     docker build -t ygidtu/docker .
-    docker run --rm ygidtu/sashimi --help
+    docker run --rm ygidtu/trackplot --help
     ```
 
 3. install from source code
 
     ```bash
-    git clone https://github.com/ygidtu/trackplot sashimi
-    cd sashimi
+    git clone https://github.com/ygidtu/trackplot trackplot
+    cd trackplot
     pip install -r requirements.txt
     python setup.py install
    
     # optional, enable bigWig, bigBed and hicMatrix support
     pip install pybigwig hicmatrix
     
-    sashimipy --help
+    trackplot --help
     # or
     python main.py --help
     ```
@@ -103,12 +103,12 @@ The trackplot is written in Python, and user could install it in a variety of wa
    # conda install -c bioconda -c conda-forge trackplot
    
    # or install trackplot into an isolated environments
-   conda create -n sashimi -c bioconda -c conda-forge trackplot
+   conda create -n trackplot -c bioconda -c conda-forge trackplot
    
    # or install latest trackplot  
-   git clone https://github.com/ygidtu/trackplot.git sashimi
-   cd sashimi
-   conda create -n sashimi -f environment.yaml
+   git clone https://github.com/ygidtu/trackplot.git trackplot
+   cd trackplot
+   conda create -n trackplot -f environment.yaml
    ```
 
 5. for `pipenv` or `poetry` users
@@ -147,8 +147,8 @@ The trackplot is written in Python, and user could install it in a variety of wa
    Install trackplot before set up the web server
 
    ```bash
-   git clone https://github.com/ygidtu/trackplot sashimi
-   cd sashimi/web
+   git clone https://github.com/ygidtu/trackplot trackplot
+   cd trackplot/web
    
    # build the frontend static files
    npm install -g vue-cli vite && npm install
@@ -164,7 +164,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
 ## Example
 
 The `example` folder is downloaded from [here.](https://github.com/ygidtu/trackplot/archive/refs/heads/main.zip) 
-And a more detailed tutorial could be found at [here.](https://sashimi.readthedocs.io/en/latest/)  
+And a more detailed tutorial could be found at [here.](https://trackplot.readthedocs.io/en/latest/)  
 
 ```bash
 
