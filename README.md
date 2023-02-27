@@ -85,7 +85,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
 
     ```bash
     git clone https://github.com/ygidtu/trackplot trackplot
-    cd sashimi
+    cd trackplot
     pip install -r requirements.txt
     python setup.py install
    
