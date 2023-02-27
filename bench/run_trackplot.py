@@ -11,15 +11,15 @@ import click
 from bench import Bench, generate_event_region, get_env
 
 
-def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs: int, **kwargs):
+def run_trackplot(event: str, output: str, gtf: str, bam: str, env: str, n_jobs: int, **kwargs):
     bench = Bench()
 
     root = get_env(env)
-    sashimi_plot = "sashimipy"
+    trackplot_plot = "trackplot"
     with_activate = False
     if root:
         print(f"Using conda env: {root}")
-        sashimi_plot = f"source activate {env} && {sashimi_plot}"
+        trackplot_plot = f"source activate {env} && {trackplot_plot}"
         activate = Bench()
         activate.add(f"source activate {env}")
         bench.set_init_time(activate)
@@ -36,7 +36,7 @@ def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
                 line[0] = os.path.abspath(line[0])
                 w.write("\t".join(line) + "\n")
 
-    bench.add(f"{sashimi_plot} --event {contig}:{start}-{end}:{strand} "
+    bench.add(f"{trackplot_plot} --event {contig}:{start}-{end}:{strand} "
               f"--density {os.path.join(output, 'bam.list')} -p {n_jobs} -r {gtf} "
               f"--output {os.path.join(output, event)}.pdf --height 0.01", with_activate=with_activate)
     return bench.stats()
@@ -46,14 +46,14 @@ def run_sashimipy(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
 @click.option("-e", "--event", type=str, help="The target gene ID.", required=True)
 @click.option("-g", "--gtf", type=click.Path(exists=True), help="Path to gtf.", required=True)
 @click.option("-b", "--bam", type=click.Path(exists=True),
-              help="List of bams for sashimipy.", required=True)
+              help="List of bams for trackplot.", required=True)
 @click.option("-o", "--output", type=click.Path(), help="Path to output dir.", required=True)
 @click.option("--env", type=str, help="Name of used conda env.")
 @click.option("--n-jobs", type=int, default=1, help="The number of processes to use.", show_default=True)
 def main(**kwargs):
     if os.path.exists(kwargs["output"]):
         rmtree(kwargs["output"])
-    execution_time, max_memory = run_sashimipy(**kwargs)
+    execution_time, max_memory = run_trackplot(**kwargs)
     print(f"execution_time={execution_time}; max_memory={max_memory}")
 
 

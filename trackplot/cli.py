@@ -21,7 +21,7 @@ from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot
 
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 

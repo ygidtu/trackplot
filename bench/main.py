@@ -7,7 +7,7 @@ import gzip
 
 from run_ggsashimi import run_ggsashimi
 from run_miso import run_miso
-from run_sashimipy import run_sashimipy
+from run_trackplot import run_trackplot
 
 
 class ProjectStruct(object):
@@ -17,7 +17,7 @@ class ProjectStruct(object):
         self.stats = os.path.join(path, "stats.txt")
 
         self.funcs = {
-            "sashimipy": run_sashimipy,
+            "trackplot": run_trackplot,
             "ggsashimi": run_ggsashimi,
             "miso": run_miso,
         }
@@ -65,11 +65,11 @@ class FileList(object):
             return "\t".join(self.data["additional"])
         return ""
 
-    def to_str(self, ID: int, format_: str = "sashimipy"):
+    def to_str(self, ID: int, format_: str = "trackplot"):
         res = ""
         if format_ == "ggsashimi":
             res = f"{self.key}_{ID}\t{self.path}"
-        elif format_ == "sashimipy":
+        elif format_ == "trackplot":
             res = f"{self.path}\tbam\t{self.key}_{ID}"
         elif format_ == "miso":
             res = f"{self.path}\t{self.key}_{ID}"

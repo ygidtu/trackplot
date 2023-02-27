@@ -1,7 +1,7 @@
 # Benchmark pipeline
 
 This README.md documented how we perform speed and memory usage benchmark 
-between [sashimi.py](https://github.com/ygidtu/sashimi.py), [misopy](https://miso.readthedocs.io/en/fastmiso/) and [ggsashimi](https://github.com/guigolab/ggsashimi)
+between [trackplot](https://github.com/ygidtu/trackplot), [misopy](https://miso.readthedocs.io/en/fastmiso/) and [ggsashimi](https://github.com/guigolab/ggsashimi)
 
 In this benchmark, we ran miso in isoform-centric mode, 
 and tested the performance of sashimi_plot using the whole gene region with default parameters 
@@ -42,9 +42,9 @@ Three python packages were required
 - pysam: `pip install pysam`
 
 ```bash
-git git@github.com:ygidtu/sashimi.py.git sashimipy
+git git@github.com:ygidtu/trackplot.git trackplot
 
-cd sashimipy/bench
+cd trackplot/bench
 
 pip install -r requirements.txt
 
@@ -71,16 +71,16 @@ Options:
 
 ### Setup several plotting packages
 
-1. Setup sashimi.py
+1. Setup trackplot
    ```bash
-   conda create -n sashimipy -c conda-forge python=3.10
+   conda create -n trackplot -c conda-forge python=3.10
    
-   # activate and install sashimipy
-   conda activate sashimipy
-   pip install sashimi.py
+   # activate and install trackplot
+   conda activate trackplot
+   pip install trackplot
    
-   # test sashimipy installation
-   sashimipy --version
+   # test trackplot installation
+   trackplot --version
    conda deactivate
    ```
 
@@ -95,7 +95,7 @@ Options:
 
 3. Setup [ggsashimi](https://github.com/guigolab/ggsashimi)
    ```bash
-   # using python 3.10 to set same python verison with sashimipy
+   # using python 3.10 to set same python version with trackplot
    conda create -n ggsashimi -c conda-forge -c bioconda r-base python=3.10
    
    conda activate ggsashimi
@@ -229,9 +229,9 @@ Options:
     # execution_time=39.83; max_memory=137523200
     ```
 
-   2. sashimipy
+   2. trackplot
    
-   The `sashimipy.txt` should be 4 columns tab seperated list, including path to bam, file type, alias of bam and color
+   The `trackplot.txt` should be 4 columns tab seperated list, including path to bam, file type, alias of bam and color
 
     ```bash
     ./STAR/SRR1032173.Aligned.sortedByCoord.out.bam  bam     HEK293_Control_R1     #CC0011
@@ -244,7 +244,7 @@ Options:
    
    Then run and get execution time and max memory usage in terminal
     ```bash
-    python run_sashimipy.py  -g ./ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e ENSG00000186007 -o sashimipy -b sashimipy.txt
+    python run_trackplot.py  -g ./ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e ENSG00000186007 -o trackplot -b trackplot.txt
     # execution_time=6.88; max_memory=696979456
     ```
    
@@ -296,10 +296,10 @@ Options:
     ```bash
     event   time    memory  software        num_of_files    n_jobs
     ENSG0000022397  31.42   86331392        miso    6       1
-    ENSG0000022397  35.95   253845504       sashimipy       6       1
+    ENSG0000022397  35.95   253845504       trackplot       6       1
     ENSG0000022397  6.700000000000005       253845504       ggsashimi       6       1
     ENSG0000022723  80.27000000000002       253845504       miso    6       1
-    ENSG0000022723  86.10000000000001       289869824       sashimipy       6       1
+    ENSG0000022723  86.10000000000001       289869824       trackplot       6       1
     ENSG0000022723  21.92999999999999       289869824       ggsashimi       6       1
     ```
 

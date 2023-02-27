@@ -516,7 +516,7 @@ class ReadSegment(File):
                 mtx[i, (e_start - self.region.start + 1):(e_end - self.region.start + 1)] = 1
 
         # "single", "complete", "average", "weighted", "centroid", "median", "ward"
-        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"))
+        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"), no_plot=True)
 
         data = []
         for i in order["leaves"]:

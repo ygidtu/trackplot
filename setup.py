@@ -2,7 +2,7 @@ import os
 from configparser import ConfigParser
 from setuptools import setup, find_packages
 
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 

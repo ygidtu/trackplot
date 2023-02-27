@@ -96,15 +96,15 @@ hyperfine --warmup 1 'sashimi_plot --plot-event gene:ENSG00000186092 ref/miso_in
 ```
 
 
-## sashimipy
+## trackplot
 
-`sashimipy.txt`
+`trackplot.txt`
 ```bash
 ```
 
 ```bash
-conda actiavte sashimipy
-hyperfine 'sashimipy --density sashimipy.txt -r ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e 1:10000-20000 -o test.pdf'
+conda actiavte trackplot
+hyperfine 'trackplot --density trackplot.txt -r ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e 1:10000-20000 -o test.pdf'
 
 Time (mean ± σ):      4.681 s ±  0.261 s    [User: 9.457 s, System: 10.256 s]
 Range (min … max):    4.352 s …  5.047 s    10 runs
@@ -112,7 +112,7 @@ Range (min … max):    4.352 s …  5.047 s    10 runs
 Time (mean ± σ):      4.962 s ±  0.238 s    [User: 7.946 s, System: 11.926 s]
 Range (min … max):    4.788 s …  5.412 s    10 runs
 
-hyperfine 'sashimipy --density sashimipy.txt -r ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e 1:10000-20000 -o test.pdf -p 6'
+hyperfine 'trackplot --density trackplot.txt -r ref/Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz -e 1:10000-20000 -o test.pdf -p 6'
 Time (mean ± σ):      5.026 s ±  0.311 s    [User: 9.898 s, System: 17.662 s]
 Range (min … max):    4.566 s …  5.707 s    10 runs
 ```
