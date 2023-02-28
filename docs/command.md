@@ -634,6 +634,12 @@ We also support to visualize the coverage by normalized values.
 
 Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
 
+here is the configuration file,
+```bash
+# get https://www.encodeproject.org/files/ENCFF854PFR/@@download/ENCFF854PFR.bam
+ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf 6830944
+```
+
 ```bash
 wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
 
