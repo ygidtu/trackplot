@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "trackplot"
-version = "0.2.0"
+version = "0.2.1"
 description = "The trackplot is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. https://sashimi.readthedocs.io/"
 authors = ["ygidtu <ygidtu@gmail.com>"]
 license = "BSD-3"

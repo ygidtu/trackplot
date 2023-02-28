@@ -280,16 +280,10 @@ class Bam(SingleCell):
                     continue
 
                 if v >= threshold:
-                    if k.strand == "-":
-                        if k not in spanned_junctions_plus:
-                            spanned_junctions_plus[k] = -1
-                        else:
-                            spanned_junctions_plus[k] += -1
-                    elif k.strand == "+":
-                        if k not in spanned_junctions_minus:
-                            spanned_junctions_minus[k] = 1
-                        else:
-                            spanned_junctions_minus[k] += 1
+                    if k.strand == "+":
+                        spanned_junctions_plus[k] = 1 + spanned_junctions_plus.get(k, v)
+                    elif k.strand == "-":
+                        spanned_junctions_minus[k] = -1 + spanned_junctions_minus.get(k, v)
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)
