@@ -4,6 +4,14 @@
 Data was download from [Gao et al. Genome Biology,2021.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-020-02241-7),
 and we used [nanom6A](https://github.com/gaoyubang/nanom6A) and [nanopolish](https://github.com/nanoporetech/pipeline-polya-ng) for calling m6A and length of poly(A)  
 
+Prepare reference file
+
+```bash
+aria2c -c https://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.chr.gtf.gz
+bedtools sort -i Homo_sapiens.GRCh37.87.chr.gtf.gz | bgzip > Homo_sapiens.GRCh37.87.chr.sorted.gtf.gz
+tabix -p gff Homo_sapiens.GRCh37.87.chr.sorted.gtf.gz
+```
+
 
 ```bash
 python ../../../../main.py \

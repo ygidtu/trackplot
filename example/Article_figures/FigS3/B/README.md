@@ -22,6 +22,20 @@ bedtools sort -i Homo_sapiens.GRCh38.101.chr.gtf.gz | bgzip > Homo_sapiens.GRCh3
 tabix -p gff Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
 ```
 
+The cell metadata information,
+
+```bash
+#label(must be same to label in density file) cell_barcode  cell_type color_of_cell
+ATAC	AAACAGCCAAGGAATC-1	CD4_Naive	#4776a8
+ATAC	AAACAGCCAATGCGCT-1	CD4_Naive	#4776a8
+ATAC	AAACAGCCAGGATAAC-1	CD4_Naive	#4776a8
+ATAC	AAACATGCACTTGTTC-1	CD4_Naive	#4776a8
+ATAC	AAACCAACACTAAGAA-1	CD4_Naive	#4776a8
+ATAC	AAACCGCGTATGGTGC-1	CD4_Naive	#4776a8
+ATAC	AAACCGGCATTAGCCA-1	CD4_Naive	#4776a8
+ATAC	AAACGCGCACCTACTT-1	CD4_Naive	#4776a8
+```
+
 
 The command line for generating the plot,
 

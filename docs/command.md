@@ -23,7 +23,7 @@ trackplot \
   --interval example/interval_list.tsv \
   --customized-junction example/junctions.tsv
 ```
-
+---
 
 ## Command line arguments
 
@@ -313,6 +313,8 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
+---
+
 ## Detailed description
 
 ### Common options
@@ -355,6 +357,8 @@ Then the `--color-factor 2` means trackplot assign red color to LUAD and "#00000
 **Note:** `Cairo` backend may disable the heatmap rasterisation, so use as appropriate.
 
 The recommended combination of backend and image formats please check [matplotlib backend](https://matplotlib.org/stable/users/explain/backends.html)
+
+---
 
 ### Reference plot
 
@@ -437,6 +441,10 @@ example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz   polyAS
 Then Sashimi receive the custom annotation file with parameter `--interval`, the additional genomic features will be visualized at the reference track.
 
 ![](imgs/cmd/interval.png)
+
+
+---
+
 
 ### Density plot
 
@@ -723,6 +731,9 @@ trackplot \
 ![](imgs/cmd/group_by_cell.png)
     
 
+---
+
+
 ### Line plot
 
 The line plot is simply another format of density plots.
@@ -779,6 +790,9 @@ trackplot \
 
 Please check the documentation in density plot.
 
+---
+
+
 ### Heatmap plot
 
 Heatmap plot takes bam or bigwig as input.
@@ -816,6 +830,9 @@ example/bws/0.bw    bw  bw  YlOrBr
 **Example: `--heatmap-vmin` and `--heatmap-vmax` to uniform color map **
 
 ![](imgs/cmd/ICE1_scale_v.png)
+
+
+---
 
 
 ### Read-by-read plot
@@ -907,6 +924,10 @@ trackplot \
 
 ![](imgs/cmd/igv_plot.3.png)
 
+
+---
+
+
 ### HiC heatmap
 
 #### HiC toy example 1
@@ -935,7 +956,7 @@ here is the plotting command line
 
 ```bash
 trackplot \
-  -e X:2500000-3500000:+ \
+  -e X:1500000-2500000:+ \
   --hic example/hic.tsv \
   -o example.hic.png \
   --dpi 300 \
@@ -992,6 +1013,10 @@ trackplot \
 
 here is the result. ![results](imgs/cmd/hic.2.png)
 
+
+---
+
+
 ## circRNA plot
 
 The linear and circRNA raw data were downloaded from [PRJNA541935](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA541935).
@@ -1015,6 +1040,9 @@ trackplot \
   --link 925921-943808 
 ```
 ![](imgs/cmd/circRNA.png)
+
+
+---
 
 
 ## Motif plot
@@ -1042,6 +1070,9 @@ chr1  100 101 0.1 0.2 -0.3  -0.4
 Then, bgzipped && tabix indexed
 
 here is the result. ![result](imgs/cmd/motif.png)
+
+
+---
 
 
 ## Additional annotation
