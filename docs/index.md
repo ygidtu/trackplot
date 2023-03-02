@@ -1,6 +1,6 @@
 # Welcome to trackplot
 
-[trackplot](https://github.com/ygidtu/trackplot) is a feature-rich sashimi plot framework written in pure Python code.
+[trackplot](https://github.com/ygidtu/trackplot) is a feature-rich sashimi plot framework written in pure Python.
 
 ![](imgs/diagram.png)
 
