@@ -99,8 +99,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
 4. install from bioconda
 
    ```bash
-   # Our software with new name is still under reiver by bioconda, please install with another methods
-   # conda install -c bioconda -c conda-forge trackplot
+   conda install -c bioconda -c conda-forge trackplot
    
    # or install trackplot into an isolated environments
    conda create -n trackplot -c bioconda -c conda-forge trackplot
