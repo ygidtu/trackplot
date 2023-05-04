@@ -6,10 +6,11 @@ u"""
 import configparser
 import os
 from shutil import rmtree
+
 import click
 import pysam
 
-from bench import Bench, generate_gff3, get_env
+from bench import Bench, get_env
 
 
 class Config(object):
@@ -60,37 +61,36 @@ class Files:
         self.plot = os.path.join(output, "plots")
 
 
-def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int, generate_gff: bool = False, **kwargs):
+def run_miso_preprocess(output: str, env: str, gff: str, bam: str, n_jobs: int, **kwargs):
     bench = Bench()
 
     root = get_env(env)
     index_gff = "index_gff"
     miso = "miso"
-    sashimi_plot = "sashimi_plot"
     with_activate = False
     if root:
         print(f"Using conda env: {root}")
         index_gff = f"source activate {env} && index_gff"
         miso = f"source activate {env} && miso"
-        sashimi_plot = f"source activate {env} && sashimi_plot"
         activate = Bench()
         activate.add(f"source activate {env}")
         bench.set_init_time(activate)
         with_activate = True
 
     f = Files(output)
-    # print("generate_gff")
-    if generate_gff:
-        generate_gff3(gff, f.gtf, event)
-        bench.add(f"{index_gff} --index {f.gtf} {f.index}", with_activate=with_activate)
-    else:
-        bench.add(f"{index_gff} --index {gff} {f.index}", with_activate=with_activate)
+
+    bench.add(f"{index_gff} --index {gff} {f.index}", with_activate=with_activate)
 
     config = None
     bams = {}
     with open(bam) as r:
         for line in r:
-            path, key, color = line.strip().split()
+            try:
+                path, key, color = line.strip().split()
+            except ValueError:
+                path, key = line.strip().split()
+                color = "black"
+
             assert os.path.exists(path), f"{path} not exists"
             if config is None:
                 config = Config(bam_prefix=os.path.dirname(os.path.abspath(path)), miso_prefix=f.miso)
@@ -106,13 +106,38 @@ def run_miso(event: str, output: str, gff: str, bam: str, env: str, n_jobs: int,
                     read_len = rec.infer_read_length()
                     break
 
-            bench.add(f"{miso} --run {f.index} {path} --output-dir {o} --read-len {read_len} -p {n_jobs}", with_activate=with_activate)
+            bench.add(f"{miso} --run {f.index} {path} --output-dir {o} --read-len {read_len} -p {n_jobs}",
+                      with_activate=with_activate)
 
     config.write(f.conf)
 
+    stat = bench.stats()
+    del bench
+    return stat
+
+
+def run_miso(event: str, output: str, env: str, **kwargs):
+    bench = Bench()
+
+    root = get_env(env)
+    sashimi_plot = "sashimi_plot"
+    with_activate = False
+    if root:
+        print(f"Using conda env: {root}")
+        sashimi_plot = f"source activate {env} && sashimi_plot"
+        activate = Bench()
+        activate.add(f"source activate {env}")
+        bench.set_init_time(activate)
+        with_activate = True
+
+    f = Files(output)
     os.makedirs(f.plot, exist_ok=True)
-    bench.add(f"{sashimi_plot} --plot-event {event} {f.index} {f.conf} --output-dir {f.plot}")
-    return bench.stats()
+    bench.add(f"{sashimi_plot} --plot-event {event} {f.index} {f.conf} --output-dir {f.plot}",
+              with_activate=with_activate)
+
+    stat = bench.stats()
+    del bench
+    return stat
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)

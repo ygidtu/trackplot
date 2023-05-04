@@ -32,6 +32,7 @@ and tested the performance of sashimi_plot using the whole gene region with defa
   - [ggplot2](https://ggplot2.tidyverse.org)
   - [ggpubr](https://rpkgs.datanovia.com/ggpubr/)
   - [cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html)
+  - [reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
 
 ### Setup benchmark python environment
 
@@ -42,7 +43,7 @@ Three python packages were required
 - pysam: `pip install pysam`
 
 ```bash
-git git@github.com:ygidtu/trackplot.git trackplot
+git clone https://github.com/ygidtu/trackplot.git trackplot
 
 cd trackplot/bench
 
@@ -73,7 +74,7 @@ Options:
 
 1. Setup trackplot
    ```bash
-   conda create -n trackplot -c conda-forge python=3.10
+   conda create -n trackplot -y -c conda-forge python=3.10
    
    # activate and install trackplot
    conda activate trackplot
@@ -86,7 +87,7 @@ Options:
 
 2. Setup [misopy](https://miso.readthedocs.io/en/fastmiso/)
    ```bash
-   conda create -n misopy -c bioconda misopy
+   conda create -n misopy -y -c bioconda misopy
    
    # activate and test misopy installation
    conda activate misopy && index_gff --help && miso --help
@@ -96,7 +97,7 @@ Options:
 3. Setup [ggsashimi](https://github.com/guigolab/ggsashimi)
    ```bash
    # using python 3.10 to set same python version with trackplot
-   conda create -n ggsashimi -c conda-forge -c bioconda r-base python=3.10
+   conda create -n ggsashimi -y -c conda-forge -c bioconda r-base python=3.10
    
    conda activate ggsashimi
    
@@ -132,9 +133,6 @@ Options:
    - `SRR1032176`: Stau1_KnockDown_R2
    - `SRR1032177`: Stau1_Overexpression_R1
    - `SRR1032178`: Stau1_Overexpression_R2
-   
-   We used the [GSM4339771](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM4339771) datasets for multi processes.
-   - `SRR11181956`: BALF_C143 
 
    ```bash
    mkdir fastq && cd fastq
@@ -145,13 +143,6 @@ Options:
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/007/SRR1032177/SRR1032177.fastq.gz
    wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/008/SRR1032178/SRR1032178.fastq.gz
    
-   wget -c https://sra-pub-sars-cov2.s3.amazonaws.com/sra-src/SRR11181956/C143_R1.fastq.1
-   wget -c https://sra-pub-sars-cov2.s3.amazonaws.com/sra-src/SRR11181956/C143_R2.fastq.1
-
-   mv C143_R1.fastq.1 C143_S1_L001_R1_001.fastq
-   mv C143_R2.fastq.1 C143_S1_L001_R1_001.fastq
-   gzip C143_S1_L001_R1_001.fastq C143_S1_L001_R2_001.fastq
-
    cd ..
    ```
 
@@ -205,8 +196,6 @@ Options:
             --outFileNamePrefix STAR/${fn/".fastq.gz"/""}.
     done
     STAR --genomeLoad Remove --genomeDir ref/STAR_index
-   
-    cellranger count --id=C143 --fastqs=fastq --sample=C143 --transcriptome=ref/Homo_sapiens
     ```
    
 4. To test whether all scripts and conda environments were properly setup
@@ -307,28 +296,31 @@ Options:
 
 ### Generate benchmark results
 
+Increase the ulimit in your linux system
+```bash
+ulimit -n 4096
+```
+
+Run the following python code to generate benchmark results
+```python
+cmds = []
+for i in range(0, 20, 5):
+  for j in range(0, 20, 5):
+    if i == 0:
+      i = 1
+    if j == 0:
+      j = 1
+    cmds.append(f"python main.py -i bam_list.txt -o benchmark_r{i}_n{j}/ -g ref/Homo_sapiens.GRCh38.101.chr --repeat {i} --n-jobs {j} --event 1000")
+
+import os
+from multiprocessing import Pool
+with Pool(4) as p:
+  p.map(os.system, cmds)
+```
+
+Run R code to generate benchmarking plots
 
 ```bash
-event="ENSG00000139618,ENSG00000139618,ENSG00000139618,ENSG00000146535,ENSG00000146535,ENSG00000146535,ENSG00000133703,ENSG00000133703,ENSG00000133703,ENSG00000139719,ENSG00000139719,ENSG00000139719"
-gtf="./ref/Homo_sapiens.GRCh38.101.chr.sorted"
-
-# test up to 30 files with single process
-for i in $(seq 5 5 30)
-do
-  echo $i
-  python main.py -i bam_list.txt -o benchmark_files/$i -g $gtf --repeat $i --n-jobs 1 --event $event
-done
-
-# test up to 20 processes with 20 bam files
-for i in 5 10 15 20
-do
-  echo $i
-  python main.py -i bam_list2.txt -o benchmark_threads/$i -g $gtf --repeat 20 --n-jobs $i --event $event
-done
-
-# generate benchmarking plots
 Rscript plot.R
 ```
 
-
-![](benchmark.png)

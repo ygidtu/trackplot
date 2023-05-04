@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import gzip
-import os
-import time
 
-import psutil
 import random
 
+from cmdbench import benchmark_command, BenchmarkResults
 from subprocess import check_call, check_output
 
 import pysam
@@ -48,9 +46,11 @@ class Reference(object):
         return self.chrom == other.chrom and self.start == other.start and self.end == other.end
 
 class Bench(object):
+
     __slots__ = ["res", "debug", "n", "init_time", "time", "memory"]
 
     def __init__(self, debug: bool = False):
+        self.res = BenchmarkResults()
         self.debug = debug
         self.n = 0
         self.init_time = 0
@@ -61,36 +61,24 @@ class Bench(object):
         self.init_time = bench.time
 
     def add(self, cmd, with_activate: bool = False):
-        times, memory = None, None
-        # start = time.time()
+        # print(cmd)
         if self.debug:
-            check_call(f"/bin/bash -c '{cmd}'", shell=True)
+            check_call(cmd, shell=True)
         else:
-            print(cmd)
-            with open(os.devnull, "w") as w:
-                p = psutil.Popen(["bash", "-c", cmd], stdout=w)
+            self.res.add_benchmark_result(benchmark_command(f"bash -c '{cmd}'", iterations_num=1))
 
-                try:
-                    while True:
-                        times = p.cpu_times()
-                        memory = p.memory_info()
+            if self.res.iterations[-1]["process"]["exit_code"] != 0:
+                print(self.res.iterations[-1]["process"]["stdout_data"])
+                print(self.res.iterations[-1]["process"]["stderr_data"])
+                raise ValueError(f"exit_code != 0: {cmd}")
 
-                        if p.poll() is not None or not p.is_running():
-                            break
-                except Exception as err:
-                    pass
-
-                del p
-        if times and memory:
-            self.time = self.time + times.user  # (time.time() - start)
-            self.memory = max(self.memory, memory.rss)
-
+            self.time = self.time + self.res.iterations[-1]['process']['execution_time']
+            self.memory = max(self.memory, self.res.iterations[-1]['memory']['max'])
         if with_activate:
             self.n += 1
 
     def stats(self):
         return self.time - self.init_time * self.n, self.memory
-
 
 def get_env(env: str):
     out = check_output("conda env list", shell=True).decode("utf-8")

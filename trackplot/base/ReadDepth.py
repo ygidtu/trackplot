@@ -22,7 +22,7 @@ class ReadDepth(object):
 
     __slots__ = [
         "junction_dict_plus", "junction_dict_minus",
-        "minus", "plus",
+        "_minus_", "_plus_", "_number_of_merged_",
         "strand_aware", "site_plus", "site_minus",
     ]
 
@@ -45,20 +45,30 @@ class ReadDepth(object):
         :param junction_dict_plus: these splice junction from plus strand
         :param junction_dict_minus: these splice junction from minus strand
         """
-        self.plus = wiggle
+        self._plus_ = wiggle
         self.strand_aware = strand_aware
-        self.minus = abs(minus) if minus is not None else minus
+        self._minus_ = abs(minus) if minus is not None else minus
         self.junction_dict_plus = junction_dict_plus
         self.junction_dict_minus = junction_dict_minus
         self.site_plus = site_plus
         self.site_minus = site_minus * -1 if site_minus is not None else site_minus
 
+        self._number_of_merged_ = 1
+
+    @property
+    def plus(self) -> Optional[np.array]:
+        return self._plus_ / self._number_of_merged_
+
+    @property
+    def minus(self) -> Optional[np.array]:
+        return self._minus_ / self._number_of_merged_
+
     @property
     def wiggle(self) -> np.array:
-        if (self.plus is None or not self.plus.any()) and self.minus is not None:
+        if (self._plus_ is None or not self._plus_.any()) and self._minus_ is not None:
             return self.minus
 
-        if self.plus is not None and self.minus is not None:
+        if self._plus_ is not None and self._minus_ is not None:
             return self.plus + self.minus
 
         return self.plus
@@ -79,12 +89,12 @@ class ReadDepth(object):
 
     def __add__(self, other):
         """
-            __add__ allows two ReadDepth objects to be added together using the + symbol
+        __add__ allows two ReadDepth objects to be added together using the + symbol
 
-            Both self and other must have the same low and high attributes
+        Both self and other must have the same low and high attributes
 
-            return value:
-                A new ReadDepth object containing the sum of the two original ReadDepth objects
+        return value:
+            A new ReadDepth object containing the sum of the two original ReadDepth objects
         """
 
         if self.wiggle is not None and other.wiggle is not None:
@@ -99,18 +109,20 @@ class ReadDepth(object):
                         junc_minus.update(i)
 
                 minus = None
-                if self.minus is not None and other.minus is not None:
-                    minus = self.minus + other.minus
-                elif self.minus is None and other.minus is not None:
+                if self._minus_ is not None and other._minus_ is not None:
+                    minus = self._minus_ + other._minus_
+                elif self._minus_ is None and other._minus_ is not None:
                     minus = other.minus
-                elif self.minus is not None and other.minus is None:
-                    minus = self.minus
+                elif self._minus_ is not None and other._minus_ is None:
+                    minus = self._minus_
 
-                return ReadDepth(
-                    self.plus + other.plus, minus=minus,
+                merged = ReadDepth(
+                    self._plus_ + other._plus_, minus=minus,
                     junction_dict_plus=junc_plus,
                     junction_dict_minus=junc_minus
                 )
+                merged._number_of_merged_ = self._number_of_merged_ + other._number_of_merged_
+                return merged
             else:
                 raise ValueError(f"ReadDepth objects are not equal length: {len(self.wiggle)} != {len(other.wiggle)}")
         elif self.wiggle is None:

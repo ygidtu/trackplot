@@ -4,10 +4,12 @@ import os
 
 import click
 import gzip
+import pysam
 
 from run_ggsashimi import run_ggsashimi
-from run_miso import run_miso
+from run_miso import run_miso, run_miso_preprocess
 from run_trackplot import run_trackplot
+from bench import subset_gtf_or_gff3
 
 
 class ProjectStruct(object):
@@ -85,61 +87,103 @@ class FileList(object):
               required=True)
 @click.option("-o", "--output", type=click.Path(), help="Path to output directory.", required=True)
 @click.option("-g", "--reference", type=str, help="Prefix of gtf and gff3.")
-@click.option("-e", "--event", type=str, help="comma seperated gene ids",
-              default="ENSG0000022397,ENSG0000022723", show_default=True)
+@click.option("-e", "--event", type=int, help="The number of compared genes", default=10000, show_default=True)
 @click.option("-r", "--repeat", type=click.IntRange(min=1), help="How many files to generated.",
               default=6, show_default=True)
 @click.option("-n", "--n-jobs", type=click.IntRange(min=1), help="How many processes to use.",
               default=1, show_default=True)
 @click.option("-a", "--append", is_flag=True, help="Append new results to exist file.",
               show_default=True)
-def main(infile: str, output: str, repeat: int, n_jobs: int, reference: str, event: str, append: bool):
-    for postfix in [".gff3.gz", ".gff3.gz.tbi", ".gtf.gz", ".gtf.gz.tbi"]:
-        assert os.path.exists(f"{reference}{postfix}"), f"{reference}{postfix} not exists"
-
+@click.option("-s", "--seed", type=int, default=1, help="The seed for random selection of genes.", show_default=True)
+@click.option("-s", "--seed", type=int, default=1, help="The seed for random selection of genes.", show_default=True)
+def main(infile, output, repeat, n_jobs, reference, event, seed, append):
     data = []
     with open(infile) as r:
         for line in r:
             data.append(FileList(line))
 
     proj = ProjectStruct(output)
-    for key, path in proj.bam_lists.items():
-        print(f"generating bam list of {key}")
-        with open(path, "w+") as w:
-            for i in range(repeat):
-                w.write(data[i % len(data)].to_str(ID=i, format_=key) + "\n")
+
+    if not append:
+        for key, path in proj.bam_lists.items():
+            print(f"generating bam list of {key}")
+            with open(path, "w+") as w:
+                for i in range(repeat):
+                    w.write(data[i % len(data)].to_str(ID=i, format_=key) + "\n")
+
+        if not os.path.exists(f"{reference}.gff3") and os.path.exists(f"{reference}.gff3.gz"):
+            print(f"generating {reference}.gff3")
+            with open(f"{reference}.gff3", "w+") as w:
+                with gzip.open(f"{reference}.gff3.gz", "rt") as r:
+                    for line in r:
+                        w.write(line)
+
+        print("down sampling gff3")
+        gene_ids = subset_gtf_or_gff3(
+            f"{reference}.gff3", os.path.join(output, "target.gff3"),
+            is_gtf=False, gene_ids=event, seed=seed
+        )
+
+        print("down sampling gtf")
+        subset_gtf_or_gff3(
+            f"{reference}.gtf", os.path.join(output, "target.gtf"),
+            is_gtf=True, gene_ids={x.split(":")[-1] for x in gene_ids}, seed=seed
+        )
 
     events = {}
-
-    if not os.path.exists(f"{reference}.gff3") and os.path.exists(f"{reference}.gff3.gz"):
-        with open(f"{reference}.gff3", "w+") as w:
-            with gzip.open(f"{reference}.gff3.gz", "rt") as r:
-                for line in r:
-                    w.write(line)
-
     fcode = "a+" if append else "w+"
+
+    finished = set()
+    if append:
+        with open(proj.stats, "r") as r:
+            for line in r:
+                line = line.split()
+                finished.add(line[0])
+
     with open(proj.stats, fcode) as w:
         if not append:
             w.write("event\ttime\tmemory\tsoftware\tnum_of_files\tn_jobs\n")
-        for e in event.split(","):
+
+        p_t, p_m = run_miso_preprocess(**{
+            "output": proj.path["miso"],
+            "gff": os.path.join(output, "target.gff3"),
+            "bam": proj.bam_lists["miso"],
+            "env": "misopy",
+            "n_jobs": n_jobs,
+        })
+        print(f"preprocess\t{p_t}\t{p_m}\tmiso_preprocess\t{repeat}\t{n_jobs}")
+        w.write(f"preprocess\t{p_t}\t{p_m}\tmiso_preprocess\t{repeat}\t{n_jobs}\n")
+
+        gene_ids_pkl = []
+        for parent, _, files in os.walk(proj.path["miso"]):
+            for f in files:
+                if f.endswith(".pickle"):
+                    if append and f.replace(".pickle", "") in finished:
+                        continue
+                    gene_ids_pkl.append(f.replace(".pickle", ""))
+
+        for e in sorted(set(gene_ids_pkl)):
             e_id = 0
             while f"{e}.{e_id}" in events.keys():
                 e_id += 1
 
             for key, func in proj:
-                t, m = func(**{
-                    "event": e if "miso" != key else f"gene:{e}",
-                    "output": proj.output(key, f"{e}.{e_id}"),
-                    "gff": f"{reference}.gff3.gz", # if key == "miso" else f"{reference}.gff3",
-                    "gtf": f"{reference}.gtf.gz",
-                    "bam": proj.bam_lists[key],
-                    "env": key if "miso" != key else "misopy",
-                    "n_jobs": n_jobs, "generate_gff": key == "miso"
-                })
-                print(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}")
-                w.write(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}\n")
-                w.flush()
+                try:
+                    t, m = func(**{
+                        "event": e if "miso" == key else e.split(":")[-1],
+                        "output": proj.output(key, "plots") if "miso" != key else proj.path[key],
+                        "gtf": os.path.join(output, "target.gtf.gz"),
+                        "bam": proj.bam_lists[key],
+                        "env": key if "miso" != key else "misopy",
+                        "n_jobs": n_jobs,
+                    })
+                    print(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}")
+                    w.write(f"{e}\t{t}\t{m}\t{key}\t{repeat}\t{n_jobs}\n")
+                    w.flush()
+                except ValueError as err:
+                    print(err)
 
 
 if __name__ == '__main__':
+    # python main.py -i bam_list.txt -o benchmark_files/ -a -g ref/Homo_sapiens.GRCh38.101.chr --repeat 1 --n-jobs 1 --event 3
     main()

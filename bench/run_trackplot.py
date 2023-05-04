@@ -39,7 +39,9 @@ def run_trackplot(event: str, output: str, gtf: str, bam: str, env: str, n_jobs:
     bench.add(f"{trackplot_plot} --event {contig}:{start}-{end}:{strand} "
               f"--density {os.path.join(output, 'bam.list')} -p {n_jobs} -r {gtf} "
               f"--output {os.path.join(output, event)}.pdf --height 0.01", with_activate=with_activate)
-    return bench.stats()
+    stat = bench.stats()
+    del bench
+    return stat
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)

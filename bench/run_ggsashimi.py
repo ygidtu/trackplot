@@ -39,7 +39,9 @@ def run_ggsashimi(event: str, output: str, gtf: str, bam: str, env: str, **kwarg
     bench.add(f"{sashimi_plot} -c {contig}:{start}-{end}:{strand} --color-factor 3 "
               f"-b {os.path.join(output, 'bam.list')} -g {gtf} -o {os.path.join(output, event)}",
               with_activate=with_activate)
-    return bench.stats()
+    stat = bench.stats()
+    del bench
+    return stat
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
