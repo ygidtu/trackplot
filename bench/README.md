@@ -324,3 +324,5 @@ Run R code to generate benchmarking plots
 Rscript plot.R
 ```
 
+![benchmark results](./benchmark.png)
+

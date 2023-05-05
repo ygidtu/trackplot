@@ -1,26 +1,40 @@
 
-## FigS 3A
+## FigS 2A
 
-Data was downloaded from [Zhou et al., Nucleic Acids Research, 2022](https://academic.oup.com/nar/article/50/11/e66/6548409)
+Data was downloaded from [SRX8994511](https://www.ncbi.nlm.nih.gov/sra/SRX8994511). 
+After mapping to the corresponding genome using minimap2, we convert bam file into bed file. the detailed command line as follow,
 
 ```bash
-aria2c -c https://ftp.ensembl.org/pub/release-101/gtf/mus_musculus/Mus_musculus.GRCm38.101.chr.gtf.gz
-bedtools sort -i Mus_musculus.GRCm38.101.chr.gtf.gz | bgzip > Mus_musculus.GRCm38.101.chr.sorted.gtf.gz
-tabix -p gff Mus_musculus.GRCm38.101.chr.sorted.gtf.gz
+
+samtools view -u -F 2304 SRX8994511.example.bam \
+| bedtools bamtobed -bed12 -cigar \
+| bedtools sort -i /dev/stdin \
+| bgzip > SRX8994511.bed.gz
+
 ```
 
-The command line for generating the plot
+Prepare reference file
+
+```bash
+aria2c -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+bedtools sort -i Homo_sapiens.GRCh38.101.chr.gtf.gz | bgzip > Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+tabix -p gff Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz
+```
+
+
+the command line for generating the plots.
+
 ```bash
 
-python ../../../..//main.py \
-  -e 17:35832921-35835600 \
-  -r Mus_musculus.GRCm38.101.chr.sorted.gtf.gz \
-  --density density_list.tsv \
-  -o hsc_8w.Tubb5.remove_dup.2.pdf \
+python  ../../../../main.py \
+  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
+  -e 21:43092956-43107570:+ \
+  --density bam.tsv \
+  --igv igv.tsv \
+  --focus 43100453-43100519:43101366-43101432 \
+  -o igv_plot.pdf \
   --dpi 300 \
   --width 6 \
-  --height 1 -t 100000 \
-  --barcode cell_meta.tsv --remove-duplicate-umi -p 12
-
+  --height 1 --show-junction-num --domain
 
 ```
