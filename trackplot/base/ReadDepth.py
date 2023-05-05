@@ -57,11 +57,15 @@ class ReadDepth(object):
 
     @property
     def plus(self) -> Optional[np.array]:
-        return self._plus_ / self._number_of_merged_
+        if self._plus_ is not None and self._number_of_merged_ > 0:
+            return self._plus_ / self._number_of_merged_
+        return self._plus_
 
     @property
     def minus(self) -> Optional[np.array]:
-        return self._minus_ / self._number_of_merged_
+        if self._minus_ is not None and self._number_of_merged_ > 0:
+            return self._minus_ / self._number_of_merged_
+        return self._minus_
 
     @property
     def wiggle(self) -> np.array:

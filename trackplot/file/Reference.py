@@ -335,18 +335,14 @@ class Reference(File):
                     keep_original=True
                 )
             except OSError as err:
-                logger.error(err)
-                logger.error("Guess gtf needs to be sorted")
+                logger.warning(f"Guess gtf needs to be sorted: {err}")
 
                 sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
                 if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
                     return sorted_gtf
 
                 cls.sort_gtf(input_gtf, sorted_gtf)
-                pysam.tabix_index(
-                    sorted_gtf, preset="gff",
-                    force=True, keep_original=True
-                )
+                pysam.tabix_index(sorted_gtf, preset="gff", force=True, keep_original=True)
                 return sorted_gtf
         elif os.path.getctime(output_gtf) < os.path.getctime(output_gtf):
             logger.info("the tbi index is older than the gtf file")
@@ -442,11 +438,9 @@ class Reference(File):
                 )
                 transcripts[t] = transcripts.get(t, 0) + 1
         except IOError as err:
-            logger.error('There is no .bam file at {0}'.format(self.path))
-            logger.error(err)
+            logger.warning(f"There is no .bam file at {self.path}: {err}")
         except ValueError as err:
-            logger.error(self.path)
-            logger.error(err)
+            logger.warning(f"{self.path}: {err}")
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
@@ -502,11 +496,9 @@ class Reference(File):
                 transcripts.append(read)
 
         except IOError as err:
-            logger.error('There is no .bed file at {0}'.format(self.path))
-            logger.error(err)
+            logger.warning(f"There is no .bed file at {self.path}: {err}")
         except ValueError as err:
-            logger.error(self.path)
-            logger.error(err)
+            logger.warning(f"{self.path}: {err}")
         return transcripts
 
     def load(self, region: GenomicLoci, threshold_of_reads: int = 0, **kwargs):

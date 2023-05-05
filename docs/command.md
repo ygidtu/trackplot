@@ -579,9 +579,9 @@ aria2c -x 16 http://hgdownload.cse.ucsc.edu/goldenpath/hg38/phastCons470way/hg38
 Here is the configure file,
 ```
 # we use third column to group the different data to aggregate datasets.
-ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
 ENCFF125RUG.bam	bam	PTBP1_KD_agg	#0084d1	frf
 ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
+ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
 ```
 
 ```bash

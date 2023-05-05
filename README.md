@@ -203,5 +203,5 @@ contact [Yiming Zhang](https://github.com/ygidtu) and
 
 If you use Sashimi.py in your publication, please cite Sashimi.py by
 
-[Zhang et al. Sashimi.py: a flexible toolkit for combinatorial analysis of genomic data. bioRxiv 2022.11.02.514803.](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
+[Zhang et al. bioRxiv, 2022.11.02.514803.](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
 
