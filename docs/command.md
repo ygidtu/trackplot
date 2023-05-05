@@ -598,7 +598,7 @@ trackplot \
 
 ```
 
-The `PTBP1_KD_agg` is the summation of ENCFF854PFR.bam and ENCFF125RUG.bam 
+The `PTBP1_KD_agg` is the mean of ENCFF854PFR.bam and ENCFF125RUG.bam 
 
 ![](imgs/cmd/agg.png)
 
