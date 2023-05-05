@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 adjusttext = "*"
-cairocffi = "*"
+cairocffi = "1.4.0"
 click = "*"
 click-option-group = "*"
 filetype = "*"

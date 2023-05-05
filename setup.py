@@ -17,11 +17,11 @@ def locate_packages():
     packages = []
     for name in conf["packages"]:
         version = conf.get("packages", name)
-        version = version.strip('"').strip("'")
+        version = version.strip('"').strip("'").lstrip("^")
         if version == "*":
             packages.append(name)
         else:
-            packages.append(f"{name}, {version}")
+            packages.append(f"{name}=={version}")
     return packages
 
 
