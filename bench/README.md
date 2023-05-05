@@ -302,6 +302,7 @@ ulimit -n 4096
 ```
 
 Run the following python code to generate benchmark results
+
 ```python
 cmds = []
 for i in range(0, 20, 5):
@@ -318,11 +319,15 @@ with Pool(4) as p:
   p.map(os.system, cmds)
 ```
 
-Run R code to generate benchmarking plots
+Run R code to check whether the benchmark results were properly generated and preview the benchmarking results.
 
 ```bash
 Rscript plot.R
 ```
+
+---
+
+The benchmark results in our article.
 
 ![benchmark results](./benchmark.png)
 
