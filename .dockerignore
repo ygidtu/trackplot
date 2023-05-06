@@ -8,3 +8,5 @@ plots/
 dist/
 build/
 *.egg-info/
+bench/
+example/

@@ -128,6 +128,9 @@ class PlotInfo(object):
                 kwargs_["region"] = region
                 self.obj = p.map(__load__, [[o, args, kwargs_] for o in self.obj])
 
+        for obj in self.obj:
+            obj.transform()
+
         if self.type == "density":
             if len(self.obj) > 1:
                 data = self.obj[0].data
@@ -1046,12 +1049,12 @@ class Plot(object):
             if n_jobs <= 1:
                 p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
-            for obj in p.obj:
-                if isinstance(obj, ReadSegment):
-                    continue
-                if isinstance(obj, HiCTrack):
-                    continue
-                obj.transform()
+            # for obj in p.obj:
+            #     if isinstance(obj, ReadSegment):
+            #         continue
+            #     if isinstance(obj, HiCTrack):
+            #         continue
+            #     obj.transform()
 
             plots_n_rows += p.len(reference_scale)
             if p.type in ["heatmap", "hic"]:

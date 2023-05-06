@@ -21,7 +21,7 @@ class ReadDepth(object):
     """
 
     __slots__ = [
-        "junction_dict_plus", "junction_dict_minus",
+        "_junction_dict_plus_", "_junction_dict_minus_",
         "_minus_", "_plus_", "_number_of_merged_",
         "strand_aware", "site_plus", "site_minus",
     ]
@@ -48,8 +48,8 @@ class ReadDepth(object):
         self._plus_ = wiggle
         self.strand_aware = strand_aware
         self._minus_ = abs(minus) if minus is not None else minus
-        self.junction_dict_plus = junction_dict_plus
-        self.junction_dict_minus = junction_dict_minus
+        self._junction_dict_plus_ = junction_dict_plus
+        self._junction_dict_minus_ = junction_dict_minus
         self.site_plus = site_plus
         self.site_minus = site_minus * -1 if site_minus is not None else site_minus
 
@@ -57,13 +57,13 @@ class ReadDepth(object):
 
     @property
     def plus(self) -> Optional[np.array]:
-        if self._plus_ is not None and self._number_of_merged_ > 0:
+        if not self._transformed_or_normalized_ and self._plus_ is not None and self._number_of_merged_ > 0:
             return self._plus_ / self._number_of_merged_
         return self._plus_
 
     @property
     def minus(self) -> Optional[np.array]:
-        if self._minus_ is not None and self._number_of_merged_ > 0:
+        if not self._transformed_or_normalized_ and self._minus_ is not None and self._number_of_merged_ > 0:
             return self._minus_ / self._number_of_merged_
         return self._minus_
 
@@ -78,13 +78,25 @@ class ReadDepth(object):
         return self.plus
 
     @property
+    def junctions_plus(self) -> dict:
+        if self._number_of_merged_ > 1:
+            return {k: v / self._number_of_merged_ for k, v in self._junction_dict_plus_.items()}
+        return self._junction_dict_plus_
+
+    @property
+    def junctions_minus(self) -> dict:
+        if self._number_of_merged_ > 1:
+            return {k: v / self._number_of_merged_ for k, v in self._junction_dict_minus_.items()}
+        return self._junction_dict_minus_
+
+    @property
     def junctions_dict(self) -> dict:
         res = {}
-        if self.junction_dict_plus:
-            res.update(self.junction_dict_plus)
+        if self._junction_dict_plus_:
+            res.update(self.junctions_plus)
 
-        if self.junction_dict_minus:
-            res.update(self.junction_dict_minus)
+        if self._junction_dict_minus_:
+            res.update(self.junctions_minus)
         return res
 
     @property
@@ -105,10 +117,10 @@ class ReadDepth(object):
             if len(self.wiggle) == len(other.wiggle):
                 junc_plus, junc_minus = {}, {}
 
-                for i in [self.junction_dict_plus, other.junction_dict_plus]:
+                for i in [self._junction_dict_plus_, other._junction_dict_plus_]:
                     if i:
                         junc_plus.update(i)
-                for i in [self.junction_dict_minus, other.junction_dict_minus]:
+                for i in [self._junction_dict_minus_, other._junction_dict_minus_]:
                     if i:
                         junc_minus.update(i)
 
@@ -151,19 +163,12 @@ class ReadDepth(object):
         :param other:
         :return:
         """
-        junc_plus, junc_minus = {}, {}
 
-        for key, value in other.junctions_dict.items():
-            if key in self.junctions_dict.keys():
-                if key.strand == "+":
-                    self.junction_dict_plus[key] = value + other.junctions_dict[key]
-                else:
-                    self.junction_dict_minus[key] = value + other.junctions_dict[key]
-            else:
-                if key.strand == "+":
-                    self.junction_dict_plus[key] = other.junctions_dict[key]
-                else:
-                    self.junction_dict_minus[key] = other.junctions_dict[key]
+        for k, v in other._junction_dict_plus_:
+            self._junction_dict_plus_[k] = v + self._junction_dict_plus_.get(k, 0)
+
+        for k, v in other._junction_dict_minus_:
+            self._junction_dict_minus_[k] = v + self._junction_dict_minus_.get(k, 0)
 
         return self.junctions_dict
 
@@ -171,41 +176,51 @@ class ReadDepth(object):
         funcs = {"10": np.log10, "2": np.log2, "zscore": zscore, "e": np.log}
 
         if log_trans in funcs.keys():
-            if self.plus is not None:
-                self.plus = funcs[log_trans](self.plus + 1)
+            if self._plus_ is not None:
+                self._plus_ = funcs[log_trans](self._plus_ + 1)
 
             if self.minus is not None:
-                self.minus = funcs[log_trans](self.minus + 1)
+                self._minus_ = funcs[log_trans](self._minus_ + 1)
 
     def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 0):
         u"""
         Convert reads counts to cpm, fpkm or just scale with scale_factor
 
-        Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
+        Inspired by `rpkm_per_region` from
+        [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
         """
 
         if format_ == "rpkm" and read_length > 0:
             # for rpkm the size_factor is total reads
-            self.plus = np.divide(self.plus,
-                                  np.multiply((np.sum(self.plus != 0) - read_length + 1) / 1e3, size_factor / 1e6))
-            if self.minus is not None:
-                self.minus = np.divide(self.minus,
-                                       np.multiply((np.sum(self.minus != 0) - read_length + 1) / 1e3,
-                                                   size_factor / 1e6))
+            self._plus_ = np.divide(
+                self._plus_,
+                np.multiply(
+                    (np.sum(self._plus_ != 0) - read_length + 1) / 1e3,
+                    size_factor / 1e6
+                )
+            )
+            if self._minus_ is not None:
+                self._minus_ = np.divide(
+                    self._minus_,
+                    np.multiply(
+                        (np.sum(self._minus_ != 0) - read_length + 1) / 1e3,
+                        size_factor / 1e6
+                    )
+                )
             elif format_ == "cpm" and read_length > 0:
                 # for cpm the size_factor is total reads
-                self.plus = np.divide(self.plus, np.divide(size_factor, 1e6))
-                if self.minus is not None:
-                    self.minus = np.divide(self.minus, np.divide(size_factor, 1e6))
+                self._plus_ = np.divide(self._plus_, np.divide(size_factor, 1e6))
+                if self._minus_ is not None:
+                    self._minus_ = np.divide(self._minus_, np.divide(size_factor, 1e6))
         elif format_ == "cpm" and read_length > 0:
             # for cpm the size_factor is total reads
-            self.plus = np.divide(self.plus, np.divide(size_factor, 1e6))
-            if self.minus is not None:
-                self.minus = np.divide(self.minus, np.divide(size_factor, 1e6))
+            self._plus_ = np.divide(self._plus_, np.divide(size_factor, 1e6))
+            if self._minus_ is not None:
+                self._minus_ = np.divide(self._minus_, np.divide(size_factor, 1e6))
         elif size_factor is not None and size_factor > 0 and format_ == "atac":
-            self.plus = np.divide(self.plus, size_factor)  # * 100
-            if self.minus is not None:
-                self.minus = np.divide(self.minus, size_factor)
+            self._plus_ = np.divide(self._plus_, size_factor)  # * 100
+            if self._minus_ is not None:
+                self._minus_ = np.divide(self._minus_, size_factor)
 
 
 if __name__ == '__main__':
