@@ -28,7 +28,7 @@ export default {
   name: 'Home',
   data() {
     return {
-      msg: "Welcome to your Sashimi App",
+      msg: "Welcome to trackplot App",
       example: `${urls.static}/example.png`
     }
   }
