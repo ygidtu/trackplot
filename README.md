@@ -201,7 +201,7 @@ contact [Yiming Zhang](https://github.com/ygidtu) and
 
 ## Citation
 
-If you use Sashimi.py in your publication, please cite Sashimi.py by
+If you use the tool in your publication, please cite by
 
 [Zhang et al. bioRxiv, 2022.11.02.514803.](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
 
