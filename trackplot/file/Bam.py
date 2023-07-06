@@ -204,7 +204,7 @@ class Bam(SingleCell):
                             umi = read.get_tag(self.umi_tag)
                         else:
                             if scatac_alert:
-                                logger.warning(f"Is {self.path} an scATAC-seq bam? There is no {self.umi_tag}")
+                                logger.debug(f"Is {self.path} an scATAC-seq bam? There is no {self.umi_tag}")
                                 scatac_alert = False
                             umi = read.query_name
 
@@ -266,7 +266,7 @@ class Bam(SingleCell):
 
                             spanned_junctions[junction_name] = spanned_junctions[junction_name] + 1
                         except ValueError as err:
-                            logger.warning(err)
+                            logger.debug(err)
                             continue
                 start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
                 end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end

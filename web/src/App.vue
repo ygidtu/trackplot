@@ -1,13 +1,13 @@
 <template>
   <el-row>
     <el-col :span="20" :offset="2">
-        <router-view style="width:100%" />
+        <router-view />
     </el-col>
   </el-row>
 
 </template>
 
-<script>
+<script lang="ts">
 
 export default {
   name: 'App'

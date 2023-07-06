@@ -129,7 +129,7 @@ class CdsProtein(GenomicLoci):
                     cds_dict[line.transcript_id].append(line)
 
             except KeyError as err:
-                logger.warning(err)
+                logger.debug(err)
 
         cds_contain = {}
         start_site = float('Inf')

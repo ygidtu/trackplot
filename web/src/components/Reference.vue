@@ -1,109 +1,68 @@
 <template>
   <div>
-    <el-row :gutter="20"> <!--  v-if="status.region === 'success'" -->
-      <el-col :span="8" :offset="1">
-        <el-button @click="dialog.reference = true">Choose reference file</el-button>
-      </el-col>
-      <el-col :span="12" :offset="1">
-        <Param func="set_reference" :path.sync="options.reference"/>
+    <el-row :gutter="20">
+      <el-col :span="24" :offset="1">
+        <param-comp func="set_reference" @select-data="valid" :postfix="/.(gtf|gff\d?)(.gz)?$/" />
       </el-col>
     </el-row>
-    <div id="dialog">
-      <el-dialog title="Reference" v-model="dialog.reference">
-        <el-row>
-          <el-col :span="16" :offset="2">
-            <el-input type="textarea"
-                      v-model="options.reference"
-                      clearable @input="fill_path(options.reference)"
-                      :rows="5"
-            />
-          </el-col>
-          <el-col :span="4">
-            <el-button type="primary" @click="valid(options.reference)">Choose</el-button>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <ul class="infinite-list" style="overflow:auto">
-            <li v-for="i in options.references" :key="i.path" style="text-align: left;">
-              <el-link @click="fill_path(i.path)" :icon="i.isdir ? 'el-icon-folder' : 'el-icon-files'">
-                {{ i.path }}
-              </el-link>
-            </li>
-          </ul>
-        </el-row>
-      </el-dialog>
-    </div>
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
+import ParamComp from './Param.vue'
+</script>
 
-import Param from './Param.vue'
-import urls from '../url.js'
-
-import { ref } from 'vue'
+<script lang="ts">
+import {h} from 'vue'
+import urls from '../url';
+import {errorPrint, Notification} from "../error";
+import {AxiosError} from "axios";
 
 export default {
-  name: 'Reference',
-  components: {
-    Param
-  },
+  name: "reference",
   data() {
     return {
-      dialog: {
-        reference: ref(false)
-      },
-      options: {
-        references: [],
-        reference: ""
-      }
+      dialog: {reference: false, path: ""},
     }
   },
+  emits: ["select-data"],
   methods: {
-    fill_path: function (path) {
-      const self = this;
-
-      this.options.reference = path;
-
+    valid (data: any) {
       this.axios.get(urls.file, {
-        params: {"target": path}
-      }).then(response => {
-        self.options.references = response.data;
-      }).catch(error => {
-        ElNotification({
-          type: 'error',
-          title: `Error Status: ${error.response.status}`,
-          message: h('i', { style: 'color: teal' }, error.response.data.detail)
-        })
-      })
-    },
-    valid: function (path) {
-      const self = this;
-      this.axios.get(urls.file, {
-        params: {"target": path, valid: true},
-      }).then(response => {
+        params: {"target": data.path, valid: true},
+      }).then((response: any) => {
         if (response.data) {
-          self.dialog.reference = false;
+          this.dialog.reference = false;
+          data.type = "reference"
+          this.submit(data)
         } else {
-          ElNotification({
+          let msg: Notification = {
             type: 'error',
             title: "Error",
             message: h('i', { style: 'color: teal' }, "Please select a file, instead of directory")
-          })
+          }
+          errorPrint(msg)
         }
-      }).catch(error => {
-        ElNotification({
-          showClose: true,
-          type: 'error',
-          title: `Error Status: ${error.response.status}`,
-          message: h('i', { style: 'color: teal' }, error.response.data.detail)
-        })
+      }).catch((error: any) => {
+        errorPrint(error)
       })
     },
-  },
-  mounted() {
-    this.fill_path(this.options.reference)
+    submit(data: any) {
+      this.axios.post(
+          `${urls.plot}?pid=${this.$cookie.getCookie("plot")}&func=set_reference`,
+          data,
+      ).then((_) => {
+        let msg: Notification = {
+          title: 'Success',
+          message: `set_reference execute success`,
+          type: 'success'
+        }
+        errorPrint(msg)
+        this.$emit("select-data", data)
+      }).catch((error: AxiosError) => {
+        errorPrint(error)
+      })
+    },
   }
 }
 </script>

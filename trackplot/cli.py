@@ -254,7 +254,8 @@ def process_file_list(infile: str, category: str = "density"):
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
 @click.version_option(__version__, message="Current version %(version)s")
-@click.option("--debug", is_flag=True, help="enable debug level log")
+@click.option("--verbose", is_flag=True, help="enable debug level log")
+@click.option("--logfile", type=click.Path(), help="save log info into file")
 @click.option("-e", "--event", type=click.STRING, required=True,
               help="Event range eg: chr1:100-200:+")
 @optgroup.group("Common input files configuration")
@@ -499,25 +500,25 @@ def main(**kwargs):
     \f
     """
     logger.remove()
-    logger.add(sys.stderr, level="INFO" if not kwargs["debug"] else "DEBUG")
+    logger.add(sys.stderr, level="INFO" if not kwargs["verbose"] else "DEBUG")
 
     # print warning info about backend
     if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":
-        logger.warning(f"{kwargs['backend']} backend may have problems with small domain, "
+        logger.debug(f"{kwargs['backend']} backend may have problems with small domain, "
                        f"if there is any please try cairo backend instead.")
 
     if kwargs["raster"] and kwargs["heatmap"] and kwargs["backend"].lower() == "cairo":
-        logger.warning(f"{kwargs['backend']} backend may have problems with rasterized heatmap, "
+        logger.debug(f"{kwargs['backend']} backend may have problems with rasterized heatmap, "
                        f"if there is any, please try another backend instead.")
 
     try:
         mpl.use(kwargs["backend"])
     except ImportError as err:
         if kwargs["backend"].lower() == "cairo":
-            logger.warning("Cairo backend required cairocffi installed")
-            logger.warning("Switch back to Agg backend")
+            logger.debug("Cairo backend required cairocffi installed")
+            logger.debug("Switch back to Agg backend")
         else:
-            logger.warning(f"backend error, switch back to Agg: {err}")
+            logger.debug(f"backend error, switch back to Agg: {err}")
         mpl.use("Agg")
 
     mpl.rcParams['pdf.fonttype'] = 42
@@ -533,7 +534,7 @@ def main(**kwargs):
     else:
         included_junctions = {}
 
-    p = Plot()
+    p = Plot(logfile=kwargs["logfile"])
 
     region = decode_region(kwargs["event"])
     p.set_region(region=region)
@@ -800,7 +801,6 @@ def main(**kwargs):
         fill_step=kwargs.get("fill_step", "post"),
         smooth_bin=kwargs["smooth_bin"]
     )
-    logger.info("DONE")
 
 
 if __name__ == '__main__':

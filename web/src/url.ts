@@ -1,7 +1,7 @@
-export function createURL(...urls) {
+export function createURL(...urls: string[]) {
     let res = [];
 
-    // res.push("http://127.0.0.1:5001")
+    res.push("http://127.0.0.1:5000")
 
     for (let i=0; i < urls.length; i++) {
         let temp = urls[i].toString();
@@ -20,6 +20,7 @@ const urls = {
     file: createURL('/api/file'),
     params: createURL('/api/params'),
     plot: createURL('/api/plot'),
+    log: createURL('/api/log')
 };
 
 export default urls;

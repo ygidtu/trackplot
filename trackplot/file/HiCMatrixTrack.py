@@ -116,7 +116,7 @@ class HiCTrack(File):
         depth_in_bins = max(1, int(1.5 * region_len / hic.getBinSize()))
 
         if current_depth < self.depth:
-            logger.warning(f"The depth was set to {self.depth} which is more than 125% "
+            logger.debug(f"The depth was set to {self.depth} which is more than 125% "
                            f"of the region plotted. The depth will be set "
                            f"to {current_depth}.\n")
             # remove from matrix all data points that are not visible.

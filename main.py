@@ -3,9 +3,14 @@
 u"""
 This file contains the main entries of the sashimi
 """
+from loguru import logger
+
 from trackplot.cli import main
 
 
 if __name__ == "__main__":
-    main()
-    pass
+    try:
+        main()
+    except Exception as err:
+        logger.error(err)
+    logger.info("DONE")

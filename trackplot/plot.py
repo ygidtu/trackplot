@@ -155,7 +155,7 @@ class Plot(object):
         "plots", "params", "junctions", "link"
     ]
 
-    def __init__(self):
+    def __init__(self, logfile=None):
         u"""
         init this class
         """
@@ -172,6 +172,9 @@ class Plot(object):
         self.params = {}
         self.junctions = {}
         self.link = []
+
+        if logfile:
+            logger.add(logfile, level="TRACE")
 
     @property
     def chrom(self) -> Optional[str]:
@@ -556,7 +559,7 @@ class Plot(object):
         if show_site_plot and category == "bam":
             type_ = "site-plot"
         elif show_site_plot:
-            logger.warning("show_site_plot only works with bam files")
+            logger.debug("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
 
@@ -1072,7 +1075,7 @@ class Plot(object):
         exon_scale = kwargs.get("exon_scale", 1)
         intron_scale = kwargs.get("intron_scale", .5)
         if plots_n_cols > 1 and intron_scale != 1:
-            logger.warning(f"heatmap require intron_scale = 1")
+            logger.debug(f"heatmap require intron_scale = 1")
             intron_scale = 1
 
         self.graph_coords = init_graph_coords(

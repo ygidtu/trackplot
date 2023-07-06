@@ -163,10 +163,10 @@ class Uniprot(object):
                 return xml_dic['accession']
 
         except ExpatError:
-            logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
+            logger.debug(f"Timeout or no domain information found, id: {self.ui}.")
             return None
         except KeyError:
-            # logger.warning(f"Timeout or no domain information found, id: {self.ui}.")
+            # logger.debug(f"Timeout or no domain information found, id: {self.ui}.")
             return None
 
         # this set may be empty

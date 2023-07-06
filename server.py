@@ -3,26 +3,32 @@
 u"""
 Web UI of sashimi
 """
-
+import os
 import pickle
-import sys
-import traceback
+
+
 from glob import glob
+from typing import List, Optional
 
 import click
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+
 
 from trackplot.cli import load_barcodes
 from trackplot.plot import *
 
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")
+
+if not os.path.exists(__UI__):
+    raise FileNotFoundError("ui files not exists")
+
 
 app = FastAPI()
 app.add_middleware(
@@ -36,7 +42,8 @@ app.mount("/static", StaticFiles(directory=__UI__, html=True), name="static")
 templates = Jinja2Templates(directory=__UI__)
 
 __PLOT__ = os.path.join(os.path.dirname(__file__), "plots")
-os.makedirs(__PLOT__, exist_ok=True)
+__LOG__ = os.path.join(__PLOT__, "logs")
+os.makedirs(__LOG__, exist_ok=True)
 
 __COMMON_PARAMS__ = [
     {
@@ -642,6 +649,13 @@ class PlotParam(BaseModel):
     param: List[Param]
 
 
+class Logs(BaseModel):
+    time: str
+    level: str
+    source: str
+    message: str
+
+
 def get_value(param: Param):
     if "empty" in param.default:
         return None
@@ -702,7 +716,7 @@ def clean(annotation):
 
 
 @app.get("/api/params")
-async def params(target: Optional[str] = None):
+async def params(target: Optional[str] = None) -> List[Param]:
     res = []
 
     for p in __PARAMS__[target]:
@@ -761,7 +775,7 @@ async def params(target: Optional[str] = None):
 async def plot(pid: str, param: PlotParam, func: str):
     pk = os.path.join(__PLOT__, pid)
     if not os.path.exists(pk):
-        p = Plot()
+        p = Plot(os.path.join(__LOG__, pid + ".log"))
         with open(pk, "wb+") as w:
             pickle.dump(p, w)
     else:
@@ -784,7 +798,7 @@ async def plot(pid: str, param: PlotParam, func: str):
             o.seek(0)
             resp = StreamingResponse(o, media_type=f"image/pdf")
             resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-            resp.headers["Content-Disposition"] = str(p.region) + ".pdf"
+            resp.headers["Content-Disposition"] = f"attachment; filename={p.region}.pdf"
             return resp
         elif func == "set_region":
             p.set_region(**kwargs)
@@ -807,10 +821,7 @@ async def plot(pid: str, param: PlotParam, func: str):
 
                 getattr(p, func)(param.path, **kwargs)
     except (AssertionError, OSError, TypeError) as err:
-        print(err)
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        raise HTTPException(status_code=404,
-                            detail=f"{err}: {traceback.format_exception(exc_type, exc_value, exc_traceback)}")
+        logger.error(err)
 
     with open(pk, "wb+") as w:
         pickle.dump(p, w)
@@ -821,6 +832,47 @@ async def delete(pid: str):
     pk = os.path.join(__PLOT__, pid)
     if os.path.exists(pk):
         os.remove(pk)
+
+
+@app.get("/api/log")
+async def logs(pid: str, debug: bool = False, download: bool = False):
+    logfile = os.path.join(__LOG__, pid + ".log")
+
+    if download:
+        with open(logfile) as r:
+            resp = Response(r.read())
+            resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+            resp.headers["Content-Disposition"] = f"attachment; filename={os.path.basename(logfile)}"
+            return resp
+
+    log_info = []
+    if os.path.exists(logfile):
+        with open(logfile) as r:
+            for line in r:
+                try:
+                    time, level, info = line.strip().split("|")
+                    infos = info.split("-")
+                    source = infos[0]
+                    info = "-".join(infos[1:])
+
+                    if not debug and "DEBUG" in level:
+                        continue
+
+                    log_info.append(Logs(
+                        time=time.strip(),
+                        level=level.strip(),
+                        source=source.strip(),
+                        message=info.strip()
+                    ))
+                except Exception as err:
+                    log_info.append(Logs(
+                        time="",
+                        level="WARN",
+                        source="log api",
+                        message=str(err)
+                    ))
+
+    return log_info
 
 
 @click.command(context_settings=dict(help_option_names=['--help']), )

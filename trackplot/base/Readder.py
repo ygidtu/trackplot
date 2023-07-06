@@ -112,7 +112,7 @@ class Reader(object):
             try:
                 relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
             except ValueError as err:
-                logger.warning(err)
+                logger.debug(err)
                 relevant_reads = cls.__modify_chrom__(region, bam_file)
 
             for read in relevant_reads:
@@ -134,7 +134,7 @@ class Reader(object):
                 try:
                     iter_ = cls.__modify_chrom__(region, r, parser=pysam.asGTF() if not bed else pysam.asBed())
                 except ValueError as err:
-                    logger.warning("please check the input region and gtf files")
+                    logger.debug("please check the input region and gtf files")
                     logger.error(err)
                     raise err
 
@@ -153,7 +153,7 @@ class Reader(object):
             try:
                 return r.values(region.chromosome, region.start, region.end + 1)
             except RuntimeError as e:
-                logger.warning(e)
+                logger.debug(e)
 
                 logger.info("may be caused by the mismatch of chromosome")
                 if region.chromosome.startswith("chr"):
@@ -171,13 +171,13 @@ class Reader(object):
 
         with pyBigWig.open(path) as r:
             if not r.isBigBed():
-                logger.warning(f"{path} don't look like bigbed file.")
+                logger.debug(f"{path} don't look like bigbed file.")
                 yield from []
             else:
                 try:
                     iter_ = r.entries(region.chromosome, region.start, region.end + 1)
                 except RuntimeError as e:
-                    logger.warning(e)
+                    logger.debug(e)
 
                     logger.info("may be caused by the mismatch of chromosome")
                     if region.chromosome.startswith("chr"):
@@ -216,7 +216,7 @@ class Reader(object):
                     try:
                         iter_ = cls.__modify_chrom__(region, r, parser=pysam.asTuple())
                     except ValueError as err:
-                        logger.warning("please check the input region and gtf files")
+                        logger.debug("please check the input region and gtf files")
                         logger.error(err)
                         raise err
 

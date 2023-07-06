@@ -293,7 +293,7 @@ def set_focus(
             fill_y = [y1, y1, y2, y2]
             ax.fill(fill_x, fill_y, alpha=0.1, color='grey')
         except IndexError as err:
-            logger.warning("focus region is out of bound: " + str(err))
+            logger.debug("focus region is out of bound: " + str(err))
 
 
 def set_indicator_lines(
@@ -320,7 +320,7 @@ def set_indicator_lines(
                 lw=0.5
             )
         except IndexError as err:
-            logger.warning("Indicator line is out of bound: " + str(err))
+            logger.debug("Indicator line is out of bound: " + str(err))
 
 
 def plot_stroke(
@@ -353,7 +353,7 @@ def plot_stroke(
                 color=stroke.color
             )
         except IndexError as err:
-            logger.warning(f"stroke is out of bound: {err}")
+            logger.debug(f"stroke is out of bound: {err}")
 
     Theme.set_theme(ax, theme)
     ax.set_xlim(left=0, right=max(graph_coords))
@@ -411,7 +411,7 @@ def plot_reference(
                 transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
             transcripts.append(primary_transcripts.transcript_id)
     elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
-        logger.warning(
+        logger.debug(
             "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
     else:
         pass
@@ -703,8 +703,8 @@ def plot_density(
     #                 kde = gaussian_kde(array_hist)
     #                 fit_value = kde.pdf(graph_coords)
     #             except (ValueError, np.linalg.LinAlgError):
-    #                 # logger.warning(err)
-    #                 # logger.warning(traceback.format_exc())
+    #                 # logger.debug(err)
+    #                 # logger.debug(traceback.format_exc())
     #                 continue
     #
     #             fit_value = fit_value / fit_value.max()
@@ -818,7 +818,7 @@ def plot_density(
             adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1),
                         autoalign="y")
         except IndexError as err:
-            logger.warning(err)
+            logger.debug(err)
 
     if obj and obj.title:
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
@@ -906,8 +906,8 @@ def plot_site_plot(
             kde = gaussian_kde(array_hist)
             fit_value = kde.pdf(graph_coords)
         except (ValueError, np.linalg.LinAlgError):
-            # logger.warning(err)
-            # logger.warning(traceback.format_exc())
+            # logger.debug(err)
+            # logger.debug(traceback.format_exc())
             continue
 
         fit_value = fit_value / fit_value.max()
@@ -1161,7 +1161,7 @@ def plot_line(
         try:
             adjust_text(legend, arrowprops=dict(arrowstyle="-", lw=1))
         except IndexError as err:
-            logger.warning(err)
+            logger.debug(err)
 
     set_y_ticks(
         ax, label=y_label, theme=theme,

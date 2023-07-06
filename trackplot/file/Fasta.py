@@ -21,7 +21,7 @@ class Fasta(File):
     @classmethod
     def create(cls, path: str):
         if not os.path.exists(path + ".fai"):
-            logger.warning(f"{path}.fai not exists, try to create it")
+            logger.debug(f"{path}.fai not exists, try to create it")
 
             pysam.faidx(path)
 
@@ -35,7 +35,7 @@ class Fasta(File):
         """
 
         if not os.path.exists(self.path + ".fai"):
-            logger.warning(f"{self.path}.fai not exists, try to create it")
+            logger.debug(f"{self.path}.fai not exists, try to create it")
             pysam.faidx(self.path)
 
         self.data = {}

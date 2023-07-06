@@ -335,7 +335,7 @@ class Reference(File):
                     keep_original=True
                 )
             except OSError as err:
-                logger.warning(f"Guess gtf needs to be sorted: {err}")
+                logger.debug(f"Guess gtf needs to be sorted: {err}")
 
                 sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
                 if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
@@ -438,9 +438,9 @@ class Reference(File):
                 )
                 transcripts[t] = transcripts.get(t, 0) + 1
         except IOError as err:
-            logger.warning(f"There is no .bam file at {self.path}: {err}")
+            logger.debug(f"There is no .bam file at {self.path}: {err}")
         except ValueError as err:
-            logger.warning(f"{self.path}: {err}")
+            logger.debug(f"{self.path}: {err}")
 
         return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
@@ -496,9 +496,9 @@ class Reference(File):
                 transcripts.append(read)
 
         except IOError as err:
-            logger.warning(f"There is no .bed file at {self.path}: {err}")
+            logger.debug(f"There is no .bed file at {self.path}: {err}")
         except ValueError as err:
-            logger.warning(f"{self.path}: {err}")
+            logger.debug(f"{self.path}: {err}")
         return transcripts
 
     def load(self, region: GenomicLoci, threshold_of_reads: int = 0, **kwargs):
