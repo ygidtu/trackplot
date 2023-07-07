@@ -1,54 +1,19 @@
 <template>
   <div>
     <el-row :gutter="20">
-      <el-col :span="8" :offset="1">
+      <el-col :span="20" :offset="2">
         <el-row>
-          <el-select v-model="image.select" placeholder="Please choose">
-            <el-option v-for="item in image.type" :key="item" :label="item" :value="item">
-            </el-option>
-          </el-select>
+          <el-radio-group v-model="image.select" placeholder="Please choose">
+            <el-radio-button v-for="item in image.type" :key="item" :label="item" :value="item"/>
+          </el-radio-group>
         </el-row>
         <el-divider/>
-        <el-row>
-          <el-button @click="dialog.file = true">Choose file</el-button>
-        </el-row>
-      </el-col>
-      <el-col :span="12" :offset="1">
         <param-comp :func.sync="'add_' + image.select.toLowerCase()"
                     :path.sync="options.file"
                     :plot_type.sync="image.select"
-                    @select-data="selectData"
-        />
+                    @select-data="valid" />
       </el-col>
     </el-row>
-    <div id="dialog">
-      <el-dialog title="Reference" v-model="dialog.file">
-        <template #footer>
-          <el-row>
-            <el-col :span="16" :offset="2">
-              <el-input type="textarea"
-                        v-model="options.file"
-                        clearable @input="fill_path(options.file)"
-                        :rows="5"
-              />
-            </el-col>
-            <el-col :span="4">
-              <el-button type="primary" @click="valid(options.file)">Choose</el-button>
-            </el-col>
-          </el-row>
-
-          <el-row>
-            <ul class="infinite-list" style="overflow:auto">
-              <li v-for="i in options.files" :key="i.path" style="text-align: left;">
-                <el-link @click="fill_path(i.path)" :icon="i.isdir ? 'el-icon-folder' : 'el-icon-files'">
-                  {{ i.path }}
-                </el-link>
-              </li>
-            </ul>
-          </el-row>
-        </template>
-      </el-dialog>
-    </div>
   </div>
 </template>
 
@@ -67,8 +32,8 @@ interface Option {
 </script>
 
 <script lang="ts">
-import {errorPrint, Notification} from "../error.ts";
-import {AxiosError, AxiosResponse} from "axios";
+import {errorPrint, Notification} from "../error";
+
 import urls from '../url';
 import {h} from 'vue';
 
@@ -79,10 +44,9 @@ export default {
 
     return {
       image: {
-        type: ["Density", "Line", "Heatmap", "IGV", "HiC", "Motif"],
+        type: ["Density", "Line", "Heatmap", "IGV", "HiC", "Links", "Sites", "Stroke", "Focus"],
         select: "Density"
       },
-      dialog: {file: false},
       options: options
     }
   },
@@ -99,12 +63,13 @@ export default {
         errorPrint(error)
       })
     },
-    valid (path: string) {
+    valid (data: any) {
       this.axios.get(urls.file, {
-        params: {"target": path, valid: true},
+        params: {"target": data.path, valid: true},
       }).then((response: AxiosResponse) => {
         if (response.data) {
-          this.dialog.file = false;
+          data.type = `add_${this.image.select}`
+          this.$emit("select-data", data)
         } else {
           let msg: Notification = {
               type: 'error',
@@ -117,10 +82,6 @@ export default {
          errorPrint(error)
       })
     },
-    selectData(data: any) {
-      data.type = this.image.type
-      this.$emit("select-data", data)
-    }
   },
   mounted() {
     this.fill_path(this.options.file)

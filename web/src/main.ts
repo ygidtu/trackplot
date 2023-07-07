@@ -11,7 +11,7 @@ const routes: RouteRecordRaw[] = [
     { path: "/", component: () => import("./pages/Home.vue") },
     { path: "/home", redirect: "/" },
     { path: "/plot", component: () => import("./pages/Plot.vue") },
-    { path: "/log", component: () => import("./components/Reference.vue") },
+    // { path: "/log", component: () => import("./components/Img.vue") },
 ];
 
 const router = createRouter({

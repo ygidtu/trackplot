@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row :gutter="20">
-      <el-col :span="24" :offset="1">
+      <el-col :span="20" :offset="2">
         <param-comp func="set_reference" @select-data="valid" :postfix="/.(gtf|gff\d?)(.gz)?$/" />
       </el-col>
     </el-row>
@@ -16,13 +16,12 @@ import ParamComp from './Param.vue'
 import {h} from 'vue'
 import urls from '../url';
 import {errorPrint, Notification} from "../error";
-import {AxiosError} from "axios";
 
 export default {
   name: "reference",
   data() {
     return {
-      dialog: {reference: false, path: ""},
+
     }
   },
   emits: ["select-data"],
@@ -32,7 +31,6 @@ export default {
         params: {"target": data.path, valid: true},
       }).then((response: any) => {
         if (response.data) {
-          this.dialog.reference = false;
           data.type = "reference"
           this.submit(data)
         } else {
@@ -48,20 +46,7 @@ export default {
       })
     },
     submit(data: any) {
-      this.axios.post(
-          `${urls.plot}?pid=${this.$cookie.getCookie("plot")}&func=set_reference`,
-          data,
-      ).then((_) => {
-        let msg: Notification = {
-          title: 'Success',
-          message: `set_reference execute success`,
-          type: 'success'
-        }
-        errorPrint(msg)
-        this.$emit("select-data", data)
-      }).catch((error: AxiosError) => {
-        errorPrint(error)
-      })
+      this.$emit("select-data", data)
     },
   }
 }

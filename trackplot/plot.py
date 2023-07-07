@@ -223,6 +223,7 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
+        logger.info(f"add sites: {sites}")
         if sites is not None:
             if isinstance(sites, str):
                 sites = [int(x) for x in sites.split(",")]
@@ -241,7 +242,7 @@ class Plot(object):
                     self.sites[sites] = "red"
         return self
 
-    def add_focus(self, focus: Optional[str], start: int = 0, end: int = 0):
+    def add_focus(self, focus: Optional[str] = None, start: int = 0, end: int = 0):
         u"""
         set focus region
         :param focus: string in 100-200:300-400
@@ -250,6 +251,7 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
+        logger.info(f"add focus: {focus}" if focus else f"add focus: {start}-{end}")
         if focus:
             for site in focus.split(":"):
                 site = sorted([int(x) - self.start for x in site.split("-")])
@@ -283,6 +285,7 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
+        logger.info(f"add stroke: {stroke}" if stroke else f"add stroke: {start}-{end}")
         if stroke:
             self.stroke += Stroke.create(stroke, self.region)
 
@@ -308,6 +311,7 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
+        logger.info(f"add link: {link}" if link else f"add stroke: {start}-{end}")
         if link:
             self.link.append(Stroke.create(link, self.region, default_color=color))
 
@@ -395,6 +399,7 @@ class Plot(object):
 
     def add_interval(self, interval: str, interval_label: str):
         assert self.reference is not None, "please set_reference first."
+        logger.info(f"add interval: {interval} - {interval_label}")
         self.reference.add_interval(interval, interval_label)
         return self
 
@@ -424,6 +429,7 @@ class Plot(object):
                             ):
         self.__n_objs__ += 1
         path = os.path.expanduser(path)
+        logger.info(f"add {category} {label} {path}")
         if category == "bam":
             obj = Bam.create(
                 path,

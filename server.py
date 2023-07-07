@@ -3,12 +3,8 @@
 u"""
 Web UI of sashimi
 """
-import os
-import pickle
-
-
+import re
 from glob import glob
-from typing import List, Optional
 
 import click
 import uvicorn
@@ -19,12 +15,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
+from rich import print
 
 from trackplot.cli import load_barcodes
 from trackplot.plot import *
 
+
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")
+
 
 if not os.path.exists(__UI__):
     raise FileNotFoundError("ui files not exists")
@@ -42,8 +41,7 @@ app.mount("/static", StaticFiles(directory=__UI__, html=True), name="static")
 templates = Jinja2Templates(directory=__UI__)
 
 __PLOT__ = os.path.join(os.path.dirname(__file__), "plots")
-__LOG__ = os.path.join(__PLOT__, "logs")
-os.makedirs(__LOG__, exist_ok=True)
+os.makedirs(__PLOT__, exist_ok=True)
 
 __COMMON_PARAMS__ = [
     {
@@ -384,8 +382,8 @@ __PARAMS__ = {
     "add_sites": [
         {
             "key": "sites",
-            "annotation": "",
-            "default": "<class 'inspect._empty'>",
+            "annotation": "str",
+            "default": "",
             "note": "Where to plot additional indicator lines, comma separated int"
         }
     ],
@@ -543,8 +541,8 @@ __PARAMS__ = {
         {
             "key": "transcripts",
             "annotation": "Optional[List[str]]",
-            "default": "<class 'inspect._empty'>",
-            "note": "The name of ftranscripts for plotting"
+            "default": "",
+            "note": "The name of transcripts for plotting"
         },
         {
             "key": "remove_empty_transcripts",
@@ -646,7 +644,15 @@ class Param(BaseModel):
 
 class PlotParam(BaseModel):
     path: str
+    type: Optional[str]
     param: List[Param]
+
+
+class PostForm(BaseModel):
+    region: PlotParam
+    reference: PlotParam
+    files: List[PlotParam]
+    draw: PlotParam
 
 
 class Logs(BaseModel):
@@ -690,7 +696,7 @@ async def file(target: str = __DIR__, valid: bool = False) -> Union[bool, List[P
     fs = []
     src = target
 
-    if valid and target:
+    if valid:
         return os.path.isfile(target)
 
     try:
@@ -771,79 +777,85 @@ async def params(target: Optional[str] = None) -> List[Param]:
     return res
 
 
-@app.post("/api/plot")
-async def plot(pid: str, param: PlotParam, func: str):
-    pk = os.path.join(__PLOT__, pid)
-    if not os.path.exists(pk):
-        p = Plot(os.path.join(__LOG__, pid + ".log"))
-        with open(pk, "wb+") as w:
-            pickle.dump(p, w)
-    else:
-        with open(pk, "rb") as r:
-            p = pickle.load(r)
+@app.post("/api/plot/{pid}")
+async def plot(pid: str, param: PostForm):
+    p = Plot(os.path.join(__PLOT__, pid + ".log"))
 
-    kwargs = {}
-    for param_ in param.param:
-        val = get_value(param_)
-        if val is not None:
-            kwargs[param_.key] = val
+    def plot_form_to_dict(param_: PlotParam):
+        kwargs = {}
+        for para_ in param_.param:
+            val = get_value(para_)
+            if val is not None:
+                kwargs[para_.key] = val
+        return kwargs
 
     try:
-        if func == "plot":
+        # set region
+        p.set_region(**plot_form_to_dict(param.region))
+
+        # set reference
+        p.set_reference(param.reference.path, **plot_form_to_dict(param.reference))
+
+        # set files
+        for param_ in param.files:
+            kwargs = plot_form_to_dict(param_)
+            if re.search(r"_(sites|stroke|link|focus)", param_.type.lower()):
+                getattr(p, param_.type.lower())(**kwargs)
+            else:
+                if "barcode_groups" in kwargs.keys() and kwargs["barcode_groups"]:
+                    barcodes, sc_colors = load_barcodes(kwargs["barcode_groups"])
+                    kwargs["barcode_groups"] = barcodes
+                    for group in barcodes[kwargs["label"]].keys():
+                        kwargs["barcode"] = group
+                        kwargs["color"] = sc_colors[group]
+                        kwargs["y_label"] = group
+                        getattr(p, param_.type.lower())(param_.path, **kwargs)
+                else:
+                    for tag in ["vmin", "vmax"]:
+                        if tag in kwargs.keys():
+                            try:
+                                kwargs[tag] = float(kwargs[tag])
+                            except Exception:
+                                kwargs[tag] = None
+
+                    getattr(p, param_.type.lower())(param_.path, **kwargs)
+
+        # draw
+        param_ = param.draw
+        kwargs = plot_form_to_dict(param_)
+        if param_.type == "plot":
             o = p.plot(return_image="png", **kwargs)
             o.seek(0)
             return StreamingResponse(o, media_type=f"image/png")
-        elif func == "save":
+        elif param_.type == "save":
             o = p.plot(return_image="pdf", **kwargs)
             o.seek(0)
             resp = StreamingResponse(o, media_type=f"image/pdf")
             resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
             resp.headers["Content-Disposition"] = f"attachment; filename={p.region}.pdf"
             return resp
-        elif func == "set_region":
-            p.set_region(**kwargs)
-        else:
-            if "barcode_groups" in kwargs.keys() and kwargs["barcode_groups"]:
-                barcodes, sc_colors = load_barcodes(kwargs["barcode_groups"])
-                kwargs["barcode_groups"] = barcodes
-                for group in barcodes[kwargs["label"]].keys():
-                    kwargs["barcode"] = group
-                    kwargs["color"] = sc_colors[group]
-                    kwargs["y_label"] = group
-                    getattr(p, func)(param.path, **kwargs)
-            else:
-                for tag in ["vmin", "vmax"]:
-                    if tag in kwargs.keys():
-                        try:
-                            kwargs[tag] = float(kwargs[tag])
-                        except Exception:
-                            kwargs[tag] = None
-
-                getattr(p, func)(param.path, **kwargs)
     except (AssertionError, OSError, TypeError) as err:
         logger.error(err)
-
-    with open(pk, "wb+") as w:
-        pickle.dump(p, w)
 
 
 @app.get("/api/del")
 async def delete(pid: str):
-    pk = os.path.join(__PLOT__, pid)
+    pk = os.path.join(__PLOT__, pid + ".log")
     if os.path.exists(pk):
         os.remove(pk)
 
 
 @app.get("/api/log")
 async def logs(pid: str, debug: bool = False, download: bool = False):
-    logfile = os.path.join(__LOG__, pid + ".log")
+    logfile = os.path.join(__PLOT__, pid + ".log")
 
     if download:
-        with open(logfile) as r:
-            resp = Response(r.read())
-            resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-            resp.headers["Content-Disposition"] = f"attachment; filename={os.path.basename(logfile)}"
-            return resp
+        if os.path.exists(logfile):
+            with open(logfile) as r:
+                resp = Response(r.read())
+                resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+                resp.headers["Content-Disposition"] = f"attachment; filename={os.path.basename(logfile)}"
+                return resp
 
     log_info = []
     if os.path.exists(logfile):
@@ -872,7 +884,7 @@ async def logs(pid: str, debug: bool = False, download: bool = False):
                         message=str(err)
                     ))
 
-    return log_info
+    return log_info[::-1]
 
 
 @click.command(context_settings=dict(help_option_names=['--help']), )

@@ -6,7 +6,6 @@
     </el-descriptions-item>
   </el-descriptions>
   <el-divider />
-  <el-scrollbar :height="height" always>
     <el-timeline>
       <el-timeline-item
         v-for="activity in logs"
@@ -26,66 +25,64 @@
         </el-descriptions>
       </el-timeline-item>
     </el-timeline>
-  </el-scrollbar>
 </template>
 
 <script lang="ts" setup>
-  import urls from "../url";
+import urls from "../url";
 </script>
 
 <script lang="ts">
 import {AxiosResponse, AxiosError} from "axios";
 import {errorPrint} from "../error";
-  interface Log {
-    time: string,
-    level: string,
-    source: string,
-    message: string
-  }
-  export default {
-    name: 'LogComp',
-    props: {
-      pid: {required: false, type: String, default: "test"},
-      height: {default: "500px"}
-    },
-    data() {
-      let logs: Array<Log> = []
-      return {
-        timer: "",
-        logs: logs,
-        count: 1
-      }
-    },
-    methods: {
-      loadParams() {
-        // 👇️ const data: GetUsersResponse
-        this.axios.get(urls.log, { params: {pid: this.$props.pid}}
-        ).then((response: AxiosResponse) => {
-          this.logs = response.data
-        }).catch((error: AxiosError) => {
-          errorPrint(error)
-        })
-      },
-      logLevel (level: string) {
-        if (level === "INFO") {
-          return("primary")
-        }
-        if (level === "WARN") {
-          return("warning")
-        }
-        if (level === "ERROR") {
-          return("danger")
-        }
-        return("info")
-      }
-    },
-    mounted() {
-      // this.timer = setInterval(this.loadParams, 2000);
-    },
-    beforeUnmount() {
-      clearInterval(this.timer);
+interface Log {
+  time: string,
+  level: string,
+  source: string,
+  message: string
+}
+export default {
+  name: 'LogComp',
+  props: {
+    pid: {required: false, type: String, default: "test"},
+  },
+  data() {
+    let logs: Array<Log> = []
+    return {
+      timer: "",
+      logs: logs,
+      count: 1
     }
+  },
+  methods: {
+    loadParams() {
+      // 👇️ const data: GetUsersResponse
+      this.axios.get(urls.log, { params: {pid: this.$props.pid}}
+      ).then((response: AxiosResponse) => {
+        this.logs = response.data
+      }).catch((error: AxiosError) => {
+        errorPrint(error)
+      })
+    },
+    logLevel (level: string) {
+      if (level === "INFO") {
+        return("primary")
+      }
+      if (level === "WARN") {
+        return("warning")
+      }
+      if (level === "ERROR") {
+        return("danger")
+      }
+      return("info")
+    }
+  },
+  mounted() {
+    this.timer = setInterval(this.loadParams, 1000);
+  },
+  beforeUnmount() {
+    clearInterval(this.timer);
   }
+}
 </script>
 
 <style scoped>

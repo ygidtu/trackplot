@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import {Message, Document, Folder} from '@element-plus/icons-vue'
+import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue'
 </script>
 
 <template>
   <div class="params">
     <el-form ref="form" label-width="160px">
       <div v-for="(p, index) in param" :key="index">
-        <el-row :gutter="20">
+        <el-row :gutter="20" v-if="String(p.default).match(/empty/) === null">
           <el-col :span="20">
-            <el-form-item :label="p.key" v-if="!String(p.default).includes('inspect._empty')">
+            <el-form-item :label="p.key" >
               <el-input v-if="p.annotation === 'str' || p.annotation === 'Optional[str]'" v-model="p.default"/>
               <el-input-number v-else-if="p.annotation === 'int'" v-model="p.default"/>
               <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default"/>
@@ -18,7 +18,7 @@ import {Message, Document, Folder} from '@element-plus/icons-vue'
               </el-radio-group>
 
               <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>
-              <el-input v-else-if="!p.default.includes('inspect._empty')" v-model="p.default"></el-input>
+              <el-input v-else-if="p.default.match(/empty/) === null" v-model="p.default"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="4">
@@ -37,7 +37,7 @@ import {Message, Document, Folder} from '@element-plus/icons-vue'
         </el-row>
       </div>
 
-      <div v-if="img === null">
+      <div v-if="func.match(/(sites|links|stroke|focus|plot)/) === null">
         <el-form-item label="File path">
           <el-input v-model="file" @input="fill_path(file)" placeholder="please select or input the file path" />
         </el-form-item>
@@ -46,41 +46,31 @@ import {Message, Document, Folder} from '@element-plus/icons-vue'
 
         <ul class="infinite-list" style="overflow: auto">
           <li v-for="i in files.Dirs" :key="i.path" class="infinite-list-item" @click="fill_path(i.path)">
-            <Folder />{{ i.path }}
+            <el-link type="primary" :icon="Folder">{{ i.path }}</el-link>
           </li>
           <li v-for="i in files.Files" :key="i.path" class="infinite-list-item" @click="fill_path(i.path)">
-            <Document />{{ i.path }}
+            <el-link type="primary" :icon="Document">{{ i.path }}</el-link>
           </li>
         </ul>
-
       </div>
 
-      <el-button type="primary" @click="submit" v-if="$props.func !== 'plot'">Confirm</el-button>
+      <el-button type="primary" @click="submit" v-if="func !== 'plot'">Confirm</el-button>
       <el-button-group v-else>
-        <el-button type="primary" icon="el-icon-view" @click="submit">Preview</el-button>
-        <el-button type="primary" @click="save">Save pdf<i class="el-icon-download"></i></el-button>
+        <el-button type="primary" :icon="View" @click="submit">Preview</el-button>
+        <el-button type="primary" :icon="Download" @click="save">Save pdf</el-button>
       </el-button-group>
     </el-form>
-
-    <div v-if="img !== null">
-      <el-divider/>
-      <el-row>
-        <el-col :span="20" :offset="2">
-          <el-image :src="img"></el-image>
-        </el-col>
-      </el-row>
-    </div>
   </div>
 </template>
 
 
 <script lang="ts">
-import {defineComponent} from 'vue'
-import { saveAs } from 'file-saver'
+import {defineComponent, watch, defineProps} from 'vue'
 import {AxiosResponse, AxiosError} from 'axios'
+
 import urls from '../url'
 
-import {errorPrint, Notification} from "../error.ts";
+import { errorPrint } from "../error.ts";
 
 
 interface Param {
@@ -102,7 +92,6 @@ interface Files {
 }
 
 interface Data {
-  img: string | null,
   param: Param[],
   file: string,
   files: Files
@@ -131,45 +120,22 @@ export default defineComponent({
   },
   data() {
     let d: Data = {
-      img: null, param: [],
-      file: "",
-      files: {
-        Dirs: [],
-        Files: []
-      }
+      param: [], file: "",
+      files: {Dirs: [], Files: []}
     }
     return d
   },
   emits: ["select-data"],
   methods: {
     save() {
-      if (this.$props.func !== "plot") {
-        let msg: Notification = {
-          type: 'error',
-          title: `Please choose file first`,
-          message: ""
-        }
-        errorPrint(msg)
-        return
-      }
-
-      this.axios.post(
-          `${urls.plot}?pid=${this.$cookie.getCookie("plot")}&func=save`,
-          {
-            path: this.file,
-            param: this.param,
-          },
-          {responseType: 'blob'}
-      ).then((response: AxiosResponse) => {
-        let headers = response.headers
-        let filename = headers["content-disposition"].split("filename=")[1]
-        saveAs(response.data, filename)
-      }).catch((error: AxiosError) => {
-        errorPrint(error)
-      })
+      this.$emit("select-data", {path: this.file, param: this.param, type: "save"})
+    },
+    preview() {
+      this.file = "preview"
+      this.submit()
     },
     submit() {
-      this.$emit("select-data", {path: this.file, param: this.param})
+      this.$emit("select-data", {path: this.file, param: this.param, type: this.$props.func})
     },
     loadParams() {
       // 👇️ const data: GetUsersResponse
@@ -218,10 +184,17 @@ export default defineComponent({
   },
   mounted() {
     this.loadParams();
-    if (this.img === null) {
+    if (this.$props.func !== 'plot') {
       this.fill_path(this.file)
     }
-
+  },
+  watch: {
+    func: {
+      deep: true,
+      handler: function() {
+        this.loadParams()
+      }
+    }
   },
 })
 
@@ -238,8 +211,8 @@ export default defineComponent({
 .infinite-list .infinite-list-item {
   display: flex;
   justify-content: left;
-  height: 30px;
-  margin: 10px;
+  //height: 30px;
+  margin: 5px;
   color: var(--el-color-primary);
 }
 .infinite-list .infinite-list-item + .list-item {

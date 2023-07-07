@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import {Delete, View} from "@element-plus/icons-vue"
 import AddComp from '../components/Add.vue'
 import ParamComp from '../components/Param.vue'
 import Reference from '../components/Reference.vue'
@@ -16,7 +17,7 @@ import LogComp from "../components/Log.vue"
         <el-steps align-center
                   finish-status="success"
                   process-status="process"
-                  :active="activeSteps"
+                  :active="active"
         >
           <el-step title="Set target region"/>
           <el-step title="Set reference"/>
@@ -25,18 +26,18 @@ import LogComp from "../components/Log.vue"
         </el-steps>
       </el-col>
       <el-col :span="4" :offset="2">
-        <el-button type="danger" icon="el-icon-delete" @click="reset">Reset</el-button>
+        <el-button type="danger" :icon="Delete" @click="reset">Reset</el-button>
       </el-col>
     </el-row>
     <el-divider/>
-    <el-row>
+    <el-row :gutter="20" style="overflow: hidden">
       <el-col :span="12">
         <el-form :model="ruleForm" ref="ruleForm" style="width: 100%" label-width="80px" :rules="rules">
-          <el-collapse v-model="active">
-            <el-collapse-item title="Region" name="0">
+          <el-tabs v-model="active">
+            <el-tab-pane label="Region" :name="0">
               <el-row :gutter="20">
                 <el-col :span="20" :offset="2">
-                  <el-form-item prop="region">
+                  <el-row :gutter="10">
                     <el-col :span="20">
                       <el-input
                         v-model="ruleForm.region" clearable
@@ -45,49 +46,171 @@ import LogComp from "../components/Log.vue"
                     <el-col :span="4">
                       <el-button type="primary" @click="submitRegion">Confirm</el-button>
                     </el-col>
-                  </el-form-item>
+                  </el-row>
                 </el-col>
               </el-row>
-            </el-collapse-item>
-            <el-collapse-item title="Reference" name="1">
-              <div>
-                <reference @select-data="makeProgress"/>
-              </div>
-            </el-collapse-item>
-            <el-collapse-item title="Add" name="2">
-              <add-comp />
-            </el-collapse-item>
-            <el-collapse-item title="Draw" name="3">
-              <param-comp func="plot" path="plot" @select-data="makeProgress"/>
-            </el-collapse-item>
-          </el-collapse>
+            </el-tab-pane>
+            <el-tab-pane label="Reference" :name="1">
+              <el-scrollbar :max-height="windowHeight" always>
+                <el-col :span="24">
+                  <reference @select-data="makeProgress"/>
+                </el-col>
+              </el-scrollbar>
+            </el-tab-pane>
+            <el-tab-pane label="Add" :name="2" always>
+              <el-scrollbar :max-height="windowHeight">
+                <el-col :span="24">
+                  <add-comp  @select-data="makeProgress" />
+                </el-col>
+              </el-scrollbar>
+            </el-tab-pane>
+            <el-tab-pane label="Draw" :name="3" always>
+              <el-scrollbar :max-height="windowHeight">
+                <el-col :span="24">
+                  <param-comp func="plot" path="plot" @select-data="makeProgress" />
+                </el-col>
+              </el-scrollbar>
+            </el-tab-pane>
+          </el-tabs>
         </el-form>
       </el-col>
       <el-col :span="12">
-        <el-divider>Process log</el-divider>
-        <log-comp v-if="pid !== ''" :pid="pid" />
+        <el-tabs v-model="setting">
+          <el-tab-pane label="Plot settings" name="settings">
+            <el-scrollbar :height="windowHeight">
+              <el-space direction="vertical" fill>
+                <el-row v-if="progress.region !== null">
+                  <el-descriptions class="margin-top" title="Plotting region" :column="4" border>
+                    <el-descriptions-item v-for="p in progress.region.param" :label="p.key" :key="p.key">
+                      {{ p.default }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </el-row>
+
+                <el-row v-if="progress.reference !== null" >
+                  <el-col :span="24">
+                    <el-descriptions class="margin-top" title="Reference" :column="4" border>
+                    <el-descriptions-item label="Path">
+                      <el-popover
+                        placement="top-start"
+                        title="Detailed"
+                        :width="'70%'"
+                        trigger="hover"
+                      >
+                        <template #reference>
+                          <el-text type="info">{{ progress.reference.path }}<el-icon><View /></el-icon></el-text>
+                        </template>
+                        <el-descriptions title="Parameters" :column="3" border>
+                          <el-descriptions-item v-for="p in showParam(progress.reference.param)" :key="p.key" :label="p.key">{{ p.default }}</el-descriptions-item>
+                        </el-descriptions>
+                      </el-popover>
+                    </el-descriptions-item>
+                  </el-descriptions>
+                  </el-col>
+                </el-row>
+
+                <el-row v-if="progress.files.length > 0" >
+                  <el-col :span="24">
+                    <el-descriptions class="margin-top" title="Files" :column="1" border>
+                      <el-descriptions-item v-for="file in progress.files" :key="`${file.path}:${file.type}`" :label="file.type.replace(/add_/, '')">
+                        <el-popover
+                          placement="top-start"
+                          title="Detailed"
+                          :width="'70%'"
+                          trigger="hover"
+                        >
+                          <template #reference><el-text type="info">{{ file.path }}<el-icon><View /></el-icon></el-text></template>
+                          <el-descriptions title="Parameters" :column="3" border>
+                            <el-descriptions-item v-for="p in showParam(file.param)" :key="p.key" :label="p.key">
+                              {{ p.default }}
+                            </el-descriptions-item>
+                          </el-descriptions>
+                        </el-popover>
+                      </el-descriptions-item>
+                    </el-descriptions>
+                  </el-col>
+                </el-row>
+
+                <el-row v-if="progress.draw !== null" >
+                  <el-col :span="24">
+                    <el-descriptions class="margin-top" title="Plotting parameters" :column="4" border>
+                      <el-descriptions-item :label="progress.draw.type">
+                      <el-popover
+                          placement="top-start"
+                          title="Detailed"
+                          :width="'70%'"
+                          trigger="hover"
+                        >
+                          <template #reference><el-text type="info">View<el-icon><View /></el-icon></el-text></template>
+                          <el-descriptions title="Parameters" :column="3" border>
+                            <el-descriptions-item v-for="p in showParam(progress.draw.param)" :key="p.key" :label="p.key">
+                              {{ p.default }}
+                            </el-descriptions-item>
+                          </el-descriptions>
+                        </el-popover>
+                      </el-descriptions-item>
+                    </el-descriptions>
+                  </el-col>
+                </el-row>
+              </el-space>
+            </el-scrollbar>
+          </el-tab-pane>
+          <el-tab-pane label="Process log" name="log" v-if="progress.draw !== null">
+            <el-scrollbar :height="windowHeight">
+              <el-col :span="24">
+                <log-comp v-if="pid !== ''" :pid="pid" />
+              </el-col>
+            </el-scrollbar>
+          </el-tab-pane>
+        </el-tabs>
       </el-col>
     </el-row>
+
+
+    <el-dialog
+      v-model="showImage"
+      title="Preview"
+      width="60%"
+      :before-close="handleClose"
+    >
+      <template #footer>
+        <el-row>
+          <el-col :span="20" :offset="2">
+            <el-image :src="img"></el-image>
+          </el-col>
+        </el-row>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts">
 
-import {defineComponent, h} from "vue";
+import {defineComponent,} from "vue";
+import {AxiosRequestConfig, AxiosResponse, AxiosError} from "axios";
+import {saveAs} from "file-saver";
+import urls from '../url'
+import {errorPrint, Notification} from "../error";
 
-import urls from '../url.ts'
-import {errorPrint, Notification} from "../error.ts";
+
+interface Param {
+  key: string,
+  annotation: string,
+  default: any,
+  note: string | null
+}
 
 interface FilePath {
   path: string,
   type: string,
-  param: any
+  param: Param[]
 }
 
 interface Progress {
   region: string | null,
   reference: FilePath | null,
   files: FilePath[] | null,
+  draw: FilePath | null
 }
 
 const validRegion = (_: any, value: any, callback: any) => {
@@ -106,30 +229,21 @@ export default defineComponent({
     let progress: Progress = {
       region: null,
       reference: null,
-      files: []
+      files: [],
+      draw: null
     }
+    let img: Blob | null | string = null
     return {
       msg: "Make your own plot",
-      pid: "",
-      active: "0",
-      dialog: {
-        reference: false
-      },
-      image: ["Density", "Line", "Heatmap", "IGV", "HiC", "Motif"],
-      options: {
-        references: []
-      },
-      ruleForm: {
-        region: "chr1:1270656-1284730:+",
-      },
+      active: 0, setting: "settings", pid: "",
+      ruleForm: { region: "chr1:1270656-1284730:+" },
       rules: {
         region: [
           {validator: validRegion, trigger: "blur"}
         ]
       },
-      plot: null,
-      loading: false,
-      progress: progress
+      progress: progress,
+      img: img
     };
   },
   methods: {
@@ -139,44 +253,49 @@ export default defineComponent({
       let strand = regions[regions.length - 1]
       let sites = regions[1].split("-")
 
-      this.axios.post(`${urls.plot}?pid=${this.$cookie.getCookie("plot")}&func=set_region`, {
-        path: "",
+      this.progress.region = {
+        path: "", type: "set_region",
         param: [
-          {key: "chromosome", default: chrom, annotation: "str"},
-          {key: "start", default: parseInt(sites[0], 10), annotation: "int"},
-          {key: "end", default: parseInt(sites[1], 10), annotation: "int"},
-          {key: "strand", default: strand, annotation: "str"},
+            {key: "chromosome", default: chrom, annotation: "str"},
+            {key: "start", default: parseInt(sites[0], 10), annotation: "int"},
+            {key: "end", default: parseInt(sites[1], 10), annotation: "int"},
+            {key: "strand", default: strand, annotation: "str"}
         ]
-      }).then(() => {
-        let msg: Notification = {
-          title:'Success',
-          message:`set_region execute success`,
-          type:'success'
-        }
-        errorPrint(msg)
-
-        this.progress.region = this.ruleForm.region
-      }).catch((error: any) => {
-        errorPrint(error)
-      })
+      }
     },
     reset() {
       this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
       location.reload()
     },
+    showParam(params: Param[]) {
+      let p = []
+
+      for (let param of params) {
+        if (param.default !== null && param.default.toString().match(/empty/) === null) {
+          p.push(param)
+        }
+      }
+      return p
+    },
+    handleClose() { this.img = null },
     makeProgress(file: FilePath) {
       if (file.type === "reference") {
         this.progress.reference = file
-      } else {
+      } else if (file.type !== "plot" && file.type !== "save") {
         this.progress.files?.push(file)
+      } else if (file.type === "plot" || file.type == "save") {
+        this.progress.draw = file
+        this.setting = "log"
+        console.log(file)
+        this.submit(file.type)
       }
     },
-    submit() {
-      const self = this;
-      let config: AxiosRequestConfig = {responseType: "json"}
-      if (this.$props.func === "plot") {
+    submit(type: string) {
+      let config: AxiosRequestConfig = {responseType: "application/json"}
+      if (type === "plot" || type === "save") {
         config["responseType"] = "blob"
-      } else if (this.$props.path === "") {
+        this.img = null
+      } else if (type === "") {
         let msg: Notification = {
           type: 'error',
           title: `Please set up correct file path`,
@@ -187,21 +306,19 @@ export default defineComponent({
       }
 
       this.axios.post(
-          `${urls.plot}?pid=${this.$cookie.getCookie("plot")}&func=${this.$props.func}`,
-          {
-            path: this.$props.path,
-            param: this.param
-          },
-          config
+          `${urls.plot}/${this.$cookie.getCookie("plot")}`,
+          this.progress, config
       ).then((response: AxiosResponse) => {
-        if (this.$props.func === "plot") {
-          const {data, headers} = response
-          const blob = new Blob([data], {type: headers['content-type']})
-          self.img = window.URL.createObjectURL(blob)
+        if (type === "plot") {
+          const blob = new Blob([response.data], {type: response.headers['content-type']})
+          this.img = window.URL.createObjectURL(blob)
+        } else if (type === "save") {
+          let filename = response.headers["content-disposition"].split("filename=")[1]
+          saveAs(response.data, filename)
         } else {
           let msg: Notification = {
             title: 'Success',
-            message: `${this.$props.func} execute success`,
+            message: `${type} execute success`,
             type: 'success'
           }
           errorPrint(msg)
@@ -212,16 +329,9 @@ export default defineComponent({
     },
   },
   computed: {
-    activeSteps() {
-      if (this.progress.region === null || this.progress.region === "") {
-        return 0
-      } else if (this.progress.reference === null) {
-        return 1
-      } else if (this.progress.files === null || this.progress.files.length < 1) {
-        return 2
-      } else {
-        return 3
-      }
+    showImage() { return this.img !== null },
+    windowHeight: function() {
+      return window.innerHeight - 300
     }
   },
   mounted() {
