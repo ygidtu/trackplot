@@ -46,7 +46,7 @@ and each track on output corresponds these datasets from config file.
 
 ## Usage
 
-The trackplot is written in Python, and user could install it in a variety of ways as follows
+The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user could install it in a variety of ways as follows
 
 
 ###### Notes
@@ -54,15 +54,22 @@ The trackplot is written in Python, and user could install it in a variety of wa
 >2. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
+>3. Currently, trackplot couldn't be installed on Macintosh with apple silicon.
 
 
-1. install from PyPi
+
+1. install from PyPi 
+
+   Before running this command line, please check python (>3.8) was installed.
 
    ```bash
-   # optional, enable bigWig, bigBed and hicMatrix support
-   pip install pybigwig hicmatrix
+   # Check the version of default python
+   python --version
    
-   pip install trackplot
+   # optional, enable bigWig, bigBed and hicMatrix support
+   pip3 install pybigwig hicmatrix
+   
+   pip3 install trackplot
    # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
    # therefore please try another pypi mirror once you encounter 
    # `No local packages or working download links found for xxx`
@@ -77,6 +84,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
     # or build docker image from source
     git clone https://github.com/ygidtu/trackplot trackplot
     cd trackplot
+   
     docker build -t ygidtu/docker .
     docker run --rm ygidtu/trackplot --help
     ```
@@ -86,16 +94,23 @@ The trackplot is written in Python, and user could install it in a variety of wa
     ```bash
     git clone https://github.com/ygidtu/trackplot trackplot
     cd trackplot
-    pip install -r requirements.txt
+   
+    # Check the version of default python
+    python --version
+   
+    # if high version python was not available, please install a newer version.
+
+    pip3 install -r requirements.txt
     python setup.py install
    
     # optional, enable bigWig, bigBed and hicMatrix support
-    pip install pybigwig hicmatrix
+    pip3 install pybigwig hicmatrix
     
     trackplot --help
     # or
     python main.py --help
     ```
+   
 4. install from bioconda
 
    ```bash
@@ -111,6 +126,8 @@ The trackplot is written in Python, and user could install it in a variety of wa
    ```
 
 5. for `pipenv` or `poetry` users
+
+   Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
 
    ```bash
    git clone https://github.com/ygidtu/trackplot
@@ -143,13 +160,13 @@ The trackplot is written in Python, and user could install it in a variety of wa
 
 6. running from a local webserver
    
-   Install trackplot before set up the web server
+   After installing trackplot, users could set up a web server to visualize their datasets. 
 
    ```bash
    git clone https://github.com/ygidtu/trackplot trackplot
    cd trackplot/web
    
-   # build the frontend static files
+   # build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
    npm install -g vue-cli vite && npm install
    vite build
    
