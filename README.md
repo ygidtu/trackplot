@@ -56,7 +56,7 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
     to solve their requirements.
 >3. Currently, trackplot couldn't be installed on Macintosh with apple silicon.
 
-
+### Using trackplot by a command line
 
 1. install from PyPi 
 
@@ -66,13 +66,13 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
    # Check the version of default python
    python --version
    
-   # optional, enable bigWig, bigBed and hicMatrix support
-   pip3 install pybigwig hicmatrix
-   
-   pip3 install trackplot
-   # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
-   # therefore please try another pypi mirror once you encounter 
-   # `No local packages or working download links found for xxx`
+    # To enable support for bigWig, bigBed, and hicMatrix, you can use the following commands:
+    pip install pybigwig hicmatrix
+
+    pip install trackplot
+    # Please note that some pypi mirrors may not sync all the packages we depend on. 
+    # If you encounter the error message "No local packages or working download links found for xxx," 
+    # please try using another pypi mirror. 
    ```
 
 2. using docker image
@@ -92,26 +92,38 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
 3. install from source code
 
     ```bash
-    git clone https://github.com/ygidtu/trackplot trackplot
-    cd trackplot
-   
-    # Check the version of default python
-    python --version
-   
-    # if high version python was not available, please install a newer version.
+   git clone https://github.com/ygidtu/trackplot trackplot
+   cd trackplot
 
-    pip3 install -r requirements.txt
-    python setup.py install
-   
-    # optional, enable bigWig, bigBed and hicMatrix support
-    pip3 install pybigwig hicmatrix
-    
-    trackplot --help
-    # or
-    python main.py --help
+   # Check the version of the default Python installation
+   python --version
+
+   # If a higher version of Python is not available, please install a newer version.
+
+   pip3 install -r requirements.txt
+   python setup.py install
+
+   # Optional: Enable support for bigWig, bigBed, and hicMatrix
+   pip3 install pybigwig hicmatrix
+
+   trackplot --help
+   # or
+   python main.py --help   
     ```
    
 4. install from bioconda
+
+   Install conda in your env
+
+   ```bash
+   # Check if conda has been successfully installed.
+   conda --version
+   
+   # if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+
+   ```
+   
+   After successful installation
 
    ```bash
    conda install -c bioconda -c conda-forge trackplot
@@ -158,9 +170,11 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
    poetry run python main.py --help
    ```
 
-6. running from a local webserver
-   
-   After installing trackplot, users could set up a web server to visualize their datasets. 
+### Using trackplot by a local webserver
+
+1. Install from source code
+
+   Before this, please make sure that trackplot has been properly installed in your env.  
 
    ```bash
    git clone https://github.com/ygidtu/trackplot trackplot
@@ -177,6 +191,18 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
    python server.py --help
    ```
    
+2. Install from a docker image
+   
+   ```bash
+   docker pull ygidtu/trackplotweb
+   
+   # -v map the current working directory into docker containers
+   # -p map the outer port to inner port of docker container
+   docker run --name trackplotweb \
+     --rm -v $PWD:$PWD \
+     -p 5000:5000 \
+     ygidtu/trackplotweb
+   ```
 
 ## Example
 
@@ -214,7 +240,7 @@ here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/mai
 ## Questions
 
 Visit [issues](https://github.com/ygidtu/trackplot/issues) or 
-contact [Yiming Zhang](https://github.com/ygidtu) and 
+contact [Yiming Zhang](https://github.com/ygidtu) or 
 [Ran Zhou](https://github.com/zhou-ran)
 
 ## Citation
