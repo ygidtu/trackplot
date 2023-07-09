@@ -173,6 +173,7 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
    # prepare the backend server
    pip install fastapi pydantic jinja2 uvicorn
    
+   cd ../
    python server.py --help
    ```
    
