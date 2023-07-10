@@ -46,7 +46,7 @@ and each track on output corresponds these datasets from config file.
 
 ## Usage
 
-The trackplot is written in Python, and user could install it in a variety of ways as follows
+The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user could install it in a variety of ways as follows
 
 
 ###### Notes
@@ -54,18 +54,25 @@ The trackplot is written in Python, and user could install it in a variety of wa
 >2. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
+>3. Currently, trackplot couldn't be installed on Macintosh with apple silicon.
 
+### Using trackplot by a command line
 
-1. install from PyPi
+1. install from PyPi 
+
+   Before running this command line, please check python (>3.8) was installed.
 
    ```bash
-   # optional, enable bigWig, bigBed and hicMatrix support
-   pip install pybigwig hicmatrix
+   # Check the version of default python
+   python --version
    
-   pip install trackplot
-   # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
-   # therefore please try another pypi mirror once you encounter 
-   # `No local packages or working download links found for xxx`
+    # To enable support for bigWig, bigBed, and hicMatrix, you can use the following commands:
+    pip install pybigwig hicmatrix
+
+    pip install trackplot
+    # Please note that some pypi mirrors may not sync all the packages we depend on. 
+    # If you encounter the error message "No local packages or working download links found for xxx," 
+    # please try using another pypi mirror. 
    ```
 
 2. using docker image
@@ -77,6 +84,7 @@ The trackplot is written in Python, and user could install it in a variety of wa
     # or build docker image from source
     git clone https://github.com/ygidtu/trackplot trackplot
     cd trackplot
+   
     docker build -t ygidtu/docker .
     docker run --rm ygidtu/trackplot --help
     ```
@@ -84,19 +92,38 @@ The trackplot is written in Python, and user could install it in a variety of wa
 3. install from source code
 
     ```bash
-    git clone https://github.com/ygidtu/trackplot trackplot
-    cd trackplot
-    pip install -r requirements.txt
-    python setup.py install
-   
-    # optional, enable bigWig, bigBed and hicMatrix support
-    pip install pybigwig hicmatrix
-    
-    trackplot --help
-    # or
-    python main.py --help
+   git clone https://github.com/ygidtu/trackplot trackplot
+   cd trackplot
+
+   # Check the version of the default Python installation
+   python --version
+
+   # If a higher version of Python is not available, please install a newer version.
+
+   pip3 install -r requirements.txt
+   python setup.py install
+
+   # Optional: Enable support for bigWig, bigBed, and hicMatrix
+   pip3 install pybigwig hicmatrix
+
+   trackplot --help
+   # or
+   python main.py --help   
     ```
+   
 4. install from bioconda
+
+   Install conda in your env
+
+   ```bash
+   # Check if conda has been successfully installed.
+   conda --version
+   
+   # if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+
+   ```
+   
+   After successful installation
 
    ```bash
    conda install -c bioconda -c conda-forge trackplot
@@ -111,6 +138,8 @@ The trackplot is written in Python, and user could install it in a variety of wa
    ```
 
 5. for `pipenv` or `poetry` users
+
+   Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
 
    ```bash
    git clone https://github.com/ygidtu/trackplot
@@ -141,24 +170,39 @@ The trackplot is written in Python, and user could install it in a variety of wa
    poetry run python main.py --help
    ```
 
-6. running from a local webserver
-   
-   Install trackplot before set up the web server
+### Using trackplot by a local webserver
+
+1. Install from source code
+
+   Before this, please make sure that trackplot has been properly installed in your env.  
 
    ```bash
    git clone https://github.com/ygidtu/trackplot trackplot
    cd trackplot/web
    
-   # build the frontend static files
+   # build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
    npm install -g vue-cli vite && npm install
    vite build
    
    # prepare the backend server
    pip install fastapi pydantic jinja2 uvicorn
    
+   cd ../
    python server.py --help
    ```
    
+2. Install from a docker image
+   
+   ```bash
+   docker pull ygidtu/trackplotweb
+   
+   # -v map the current working directory into docker containers
+   # -p map the outer port to inner port of docker container
+   docker run --name trackplotweb \
+     --rm -v $PWD:$PWD \
+     -p 5000:5000 \
+     ygidtu/trackplotweb
+   ```
 
 ## Example
 
@@ -196,7 +240,7 @@ here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/mai
 ## Questions
 
 Visit [issues](https://github.com/ygidtu/trackplot/issues) or 
-contact [Yiming Zhang](https://github.com/ygidtu) and 
+contact [Yiming Zhang](https://github.com/ygidtu) or 
 [Ran Zhou](https://github.com/zhou-ran)
 
 ## Citation
