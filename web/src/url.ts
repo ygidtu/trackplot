@@ -1,7 +1,7 @@
 export function createURL(...urls: string[]) {
     let res = [];
 
-    res.push("http://127.0.0.1:5000")
+    // res.push("http://127.0.0.1:5000")
 
     for (let i=0; i < urls.length; i++) {
         let temp = urls[i].toString();

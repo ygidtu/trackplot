@@ -15,8 +15,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from rich import print
-
 from trackplot.cli import load_barcodes
 from trackplot.plot import *
 

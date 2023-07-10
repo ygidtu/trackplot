@@ -22,14 +22,12 @@
 
 <script lang="ts">
 
-import urls from '../url.js'
-
 export default {
   name: 'Home',
   data() {
     return {
       msg: "Welcome to trackplot App",
-      example: `${urls.static}/example.png`
+      example: `https://trackplot.readthedocs.io/en/latest/imgs/diagram.png`
     }
   }
 }

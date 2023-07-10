@@ -1,15 +1,19 @@
 <template>
 
   <el-descriptions>
-    <el-descriptions-item :label="'If there is any unexpected error, please send this log file to developers for debugging'">
-      <el-link type="primary" :href="`${urls.log}?pid=${pid}&download=true`">Download</el-link>
+    <el-descriptions-item>
+      <el-text type="info">If there is any unexpected error, please send </el-text>
+      <el-link type="primary" :href="`${urls.log}?pid=${pid}&download=true`">this log file</el-link>
+      <el-text type="info"> to developers at </el-text>
+      <el-link href="https://github.com/ygidtu/trackplot" type="primary">Github</el-link>
+      <el-text type="info"> for debugging</el-text>
     </el-descriptions-item>
   </el-descriptions>
   <el-divider />
     <el-timeline>
       <el-timeline-item
         v-for="activity in logs"
-        :type="this.logLevel(activity.level)"
+        :type="logLevel(activity.level)"
         :key="activity.time"
         :size="'large'"
         :center="false"
@@ -20,7 +24,7 @@
           <el-descriptions-item :label="activity.time">
             <el-text tag="b">{{ activity.source }}</el-text>
             <el-divider direction="vertical" />
-            <el-text :type="this.logLevel(activity.level)">{{ activity.message }}</el-text>
+            <el-text :type="logLevel(activity.level)">{{ activity.message }}</el-text>
           </el-descriptions-item>
         </el-descriptions>
       </el-timeline-item>

@@ -339,8 +339,8 @@ export default defineComponent({
       this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
     }
 
-    // this.$cookie.setCookie("plot", (Math.random() + 1).toString(36).substring(7))
-    this.$cookie.setCookie("plot", "test")
+    this.$cookie.setCookie("plot", (Math.random() + 1).toString(36).substring(7))
+    // this.$cookie.setCookie("plot", "test")
     this.pid = this.$cookie.getCookie("plot")
   }
 })
