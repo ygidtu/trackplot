@@ -54,7 +54,7 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
 >2. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
->3. Currently, trackplot couldn't be installed on Macintosh with apple silicon.
+>3. Currently, trackplot couldn't be installed by pypi or conda on Macintosh with apple silicon.
 
 ### Using trackplot by a command line
 
@@ -87,6 +87,8 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
    
     docker build -t ygidtu/docker .
     docker run --rm ygidtu/trackplot --help
+    
+    
     ```
 
 3. install from source code
@@ -232,6 +234,40 @@ python main.py \
   --domain --remove-duplicate-umi \
   --normalize-format cpm \
   -p 4
+```
+
+if trackplot was installed by docker, here is the cmd
+
+```bash
+## The absolute path is required in Docker env.
+ 
+cat $PWD/example/interval_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/interval_list.abspath.tsv
+cat $PWD/example/density_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/density_list.abspath.tsv
+cat $PWD/example/igv.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/igv.abspath.tsv
+cat $PWD/example/heatmap_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/heatmap_list.abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot \
+  -e chr1:1270656-1284730:+ \
+  -r $PWD/example/example.sorted.gtf.gz \
+  --interval $PWD/example/interval_list.tsv \
+  --density $PWD/example/density_list.tsv \
+  --show-site \
+  --show-junction-num \
+  --igv $PWD/example/igv.tsv \
+  --heatmap $PWD/example/heatmap_list.tsv \
+  --focus 1272656-1272656:1275656-1277656 \
+  --stroke 1275656-1277656:1277856-1278656@blue \
+  --sites 1271656,1271656,1272656 \
+  --line $PWD/example/line_list.tsv \
+  -o example.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --barcode $PWD/example/barcode_list.tsv \
+  --domain --remove-duplicate-umi \
+  --normalize-format cpm \
+  -p 4
+
 ```
 
 here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/main/example/example.png).

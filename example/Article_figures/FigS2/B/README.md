@@ -46,3 +46,24 @@ python ../../../../main.py \
 
 
 ```
+
+if trackplot was installed by docker, here is the cmd
+
+```bash
+
+cat bam.tsv | while read line; do echo $PWD/${line}; done > bam_abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot  -e chr9:112296343-112335026 \
+  -r $PWD/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  --density $PWD/bam_abspath.tsv \
+  -o $PWD/PTBP3.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --raster \
+  --density-by-strand \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:- \
+  --intron-scale 0.01
+
+
+```

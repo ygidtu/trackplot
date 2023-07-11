@@ -27,7 +27,7 @@ the command line for generating the plots.
 ```bash
 
 python  ../../../../main.py \
-  -r Homo_sapiens.GRCh38.101.chr.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
   -e 21:43092956-43107570:+ \
   --density bam.tsv \
   --igv igv.tsv \
@@ -36,5 +36,28 @@ python  ../../../../main.py \
   --dpi 300 \
   --width 6 \
   --height 1 --show-junction-num --domain
+
+```
+
+
+if trackplot was installed by docker, here is the cmd
+
+```bash
+
+cat bam.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > bam_abspath.tsv
+cat igv.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > igv_abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot  \
+  -r $PWD/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -e 21:43092956-43107570:+ \
+  --density $PWD/bam_abspath.tsv \
+  --igv $PWD/igv_abspath.tsv \
+  --focus 43100453-43100519:43101366-43101432 \
+  -o $PWD/igv_plot.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num --domain
+
+
 
 ```

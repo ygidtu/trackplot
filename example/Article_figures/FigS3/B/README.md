@@ -24,3 +24,20 @@ python ../../../../main.py \
     --height 0.5 --rs rs --polya pa --m6a ma
 
 ```
+
+if trackplot was installed by docker, here is the cmd
+
+```bash
+
+cat igv.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > igv_abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot  \
+    -r $PWD/Homo_sapiens.GRCh37.87.gtf.sorted.gz \
+    -e chr7:5566600-5570232 \
+    --igv $PWD/igv_abspath.tsv \
+    -o $PWD/igv.ATCB.pdf \
+    --dpi 300 \
+    --width 10 \
+    --height 0.5 --rs rs --polya pa --m6a ma
+
+```
