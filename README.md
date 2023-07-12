@@ -50,161 +50,222 @@ The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user co
 
 
 ###### Notes
->1. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
->2. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
+>1. For **microsoft windows**, **mac (apple silicon)** and **other arm platform** users, 
+    due to pysam, pybigwig and hicmatrix do not support those platforms, 
+    trackplot couldn't be installed by pypi or conda,
+    pleas use docker image as alternative 
+>2. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
+>3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
->3. Currently, trackplot couldn't be installed by pypi or conda on Macintosh with apple silicon.
+
 
 ### Using trackplot by a command line
 
 1. install from PyPi 
 
-   Before running this command line, please check python (>3.8) was installed.
+Before running this command line, please check python (>=3.8) was installed.
 
-   ```bash
-   # Check the version of default python
-   python --version
-   
-    # To enable support for bigWig, bigBed, and hicMatrix, you can use the following commands:
-    pip install pybigwig hicmatrix
+```bash
+# optional, enable bigWig, bigBed and hicMatrix support
+pip install pybigwig hicmatrix
 
-    pip install trackplot
-    # Please note that some pypi mirrors may not sync all the packages we depend on. 
-    # If you encounter the error message "No local packages or working download links found for xxx," 
-    # please try using another pypi mirror. 
-   ```
+pip install trackplot
+# __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
+# therefore please try another pypi mirror once you encounter 
+# `No local packages or working download links found for xxx`
+```
 
-2. using docker image
+---
 
-    ```bash
-    docker pull ygidtu/trackplot
-    docker run --rm ygidtu/trackplot --help
+2. AppImage (Linux x86_64 platform only)
 
-    # or build docker image from source
-    git clone https://github.com/ygidtu/trackplot trackplot
-    cd trackplot
-   
-    docker build -t ygidtu/docker .
-    docker run --rm ygidtu/trackplot --help
-    
-    
-    ```
+>Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+Once you have installation issues and not familiar with docker, 
+please download the AppImage file from our releases.
 
-3. install from source code
+All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
+- Arch: `appimagecrafters/tests-env:archlinux-latest`
+- Fedora: `appimagecrafters/tests-env:fedora-30`
+- Debian: `appimagecrafters/tests-env:debian-stable`
+- Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
+- Centos: `appimagecrafters/tests-env:centos-7`
 
-    ```bash
-   git clone https://github.com/ygidtu/trackplot trackplot
-   cd trackplot
+> Once the AppImage file couldn't work properly please open an issue in this repo, 
+and provide us the system platform and full error messages for us to debug. 
 
-   # Check the version of the default Python installation
-   python --version
+> **Note:** the AppImage will decompress all bundled files before execution, 
+> therefore it will a little bit slower than command line tools and source code
 
-   # If a higher version of Python is not available, please install a newer version.
+```bash
+# example with version v0.2.6, please using your interested version according to your needs
+export VERSION=0.2.6
+chmod +x trackplot-${VERSION}-x86_64.AppImage
+./trackplot-${VERSION}-x86_64.AppImage --help
+```
 
-   pip3 install -r requirements.txt
-   python setup.py install
+---
 
-   # Optional: Enable support for bigWig, bigBed, and hicMatrix
-   pip3 install pybigwig hicmatrix
+3. using docker image
 
-   trackplot --help
-   # or
-   python main.py --help   
-    ```
-   
-4. install from bioconda
+> Known issue: the logging time may have several hours mismatch with your local time, due to timezone settings inner the image.
 
-   Install conda in your env
+```bash
+docker pull ygidtu/trackplot
+docker run --rm ygidtu/trackplot --help
 
-   ```bash
-   # Check if conda has been successfully installed.
-   conda --version
-   
-   # if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+# or build docker image from source
+git clone https://github.com/ygidtu/trackplot trackplot
+cd trackplot
+docker build -t ygidtu/docker .
+docker run --rm ygidtu/trackplot --help
+```
 
-   ```
-   
-   After successful installation
+---
 
-   ```bash
-   conda install -c bioconda -c conda-forge trackplot
-   
-   # or install trackplot into an isolated environments
-   conda create -n trackplot -c bioconda -c conda-forge trackplot
-   
-   # or install latest trackplot  
-   git clone https://github.com/ygidtu/trackplot.git trackplot
-   cd trackplot
-   conda create -n trackplot -f environment.yaml
-   ```
+4. install from source code
 
-5. for `pipenv` or `poetry` users
+```bash
+git clone https://github.com/ygidtu/trackplot trackplot
+cd trackplot
+pip install -r requirements.txt
+python setup.py install
 
-   Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
+# optional, enable bigWig, bigBed and hicMatrix support
+pip install pybigwig hicmatrix
 
-   ```bash
-   git clone https://github.com/ygidtu/trackplot
-   cd trackplot
-   
-   # pipenv
-   # create virtualenv and install required packages
-   pipenv install
-   # optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
-   # optional, with `--skip-lock` once encounter locking issues
-   
-   # switch to virtualenv
-   pipenv shell && python main.py --help
-   
-   # or just run with pipenv
-   pipenv run python main.py --help
-  
-   
-   # poetry
-   # once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
-   # create virtualenv and install required packages
-   poetry install
-   
-   # switch to virtualenv
-   poetry shell  && python main.py --help
-   
-   # or just run with poetry
-   poetry run python main.py --help
-   ```
+trackplot --help
+# or
+python main.py --help
+```
+
+---
+
+5. install from bioconda
+
+First make sure your conda is properly installed.
+
+```bash
+# Check if conda has been successfully installed.
+conda --version
+
+# if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+```
+
+After successful installation
+
+```bash
+conda install -c bioconda -c conda-forge trackplot
+
+# or install trackplot into an isolated environments
+conda create -n trackplot -c bioconda -c conda-forge trackplot
+
+# or install latest trackplot  
+git clone https://github.com/ygidtu/trackplot.git trackplot
+cd trackplot
+conda env update -n trackplot --file environment.yaml
+
+# activate the trackplot environment and execute the command line tool
+conda activate trackplot
+trackplot --help
+```
+
+---
+
+6. for `pipenv` or `poetry` users
+
+> Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
+
+```bash
+git clone https://github.com/ygidtu/trackplot
+cd trackplot
+
+# pipenv
+# create virtualenv and install required packages
+pipenv install
+# optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
+# optional, with `--skip-lock` once encounter locking issues
+
+# switch to virtualenv
+pipenv shell && python main.py --help
+
+# or just run with pipenv
+pipenv run python main.py --help
+
+
+# poetry
+# once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
+# create virtualenv and install required packages
+poetry install
+
+# switch to virtualenv
+poetry shell  && python main.py --help
+
+# or just run with poetry
+poetry run python main.py --help
+```
 
 ### Using trackplot by a local webserver
 
-1. Install from source code
+1. using AppImage (Linux x86_64 only)
 
-   Before this, please make sure that trackplot has been properly installed in your env.  
+```bash
+# example with version v0.2.6, please using your interested version according to your needs
+export VERSION=0.2.6
+gunzip trackplotweb-${VERSION}-x86_64.AppImage
+chmod +x trackplotweb-${VERSION}-x86_64.AppImage
+./trackplotweb-${VERSION}-x86_64.AppImage --help
 
-   ```bash
-   git clone https://github.com/ygidtu/trackplot trackplot
-   cd trackplot/web
-   
-   # build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
-   npm install -g vue-cli vite && npm install
-   vite build
-   
-   # prepare the backend server
-   pip install fastapi pydantic jinja2 uvicorn
-   
-   cd ../
-   python server.py --help
-   ```
-   
+# startup webserver
+./trackplotweb-${VERSION}-x86_64.AppImage --host 127.0.0.1 --port 5000 --plots ./plots
+```
+    
+**Note:** the `--plots` were required while using appimages
+
+---
+
+
 2. Install from a docker image
    
-   ```bash
-   docker pull ygidtu/trackplotweb
-   
-   # -v map the current working directory into docker containers
-   # -p map the outer port to inner port of docker container
-   docker run --name trackplotweb \
-     --rm -v $PWD:$PWD \
-     -p 5000:5000 \
-     ygidtu/trackplotweb
-   ```
+```bash
+docker pull ygidtu/trackplotweb
+
+# -v map the current working directory into docker containers
+# -p map the outer port to inner port of docker container
+docker run --name trackplotweb \
+ --rm -v $PWD:$PWD \
+ -p 5000:5000 \
+ ygidtu/trackplotweb
+```
+
+---
+
+3. Install from source code
+
+Before this, please make sure that trackplot has been properly installed in your env.  
+
+```bash
+git clone https://github.com/ygidtu/trackplot trackplot
+cd trackplot/web
+
+# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
+npm install -g vue-cli vite && npm install
+vite build
+
+# check whether the ui is successfully compiled
+ls ../ui
+
+# prepare the backend server
+pip install fastapi pydantic jinja2 uvicorn
+
+# before startup, check whether the trackplot properly installed
+python -c "import trackplot; print(trackplot.__version__)"
+
+cd ../
+python server.py --help
+```
+
+---
 
 ## Example
 

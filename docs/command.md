@@ -38,13 +38,14 @@ trackplot --help
 Parameters:
 
 ```
-Usage: trackplot [OPTIONS]
+Usage: main.py [OPTIONS]
 
   Welcome to use trackplot
 
 Options:
   --version                       Show the version and exit.
-  --debug                         enable debug level log
+  --verbose                       enable debug level log
+  --logfile PATH                  save log info into file
   -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
   Common input files configuration: 
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
@@ -123,11 +124,10 @@ Options:
                                   - 3rd column is input file alias (optional),
                                   
                                   - 4th column is color of input files
-                                  (optional), 
+                                  (optional),
                                   
-                                  - 5th column is the library of
-                                  input file (optional, only required by bam
-                                  file),
+                                  - 5th column is the library of input file
+                                  (optional, only required by bam file),
                                   
                                   - 6th column is the number of total reads
                                   (optional, only required by bam file).

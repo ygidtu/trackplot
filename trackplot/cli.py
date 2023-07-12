@@ -12,7 +12,6 @@ from multiprocessing import cpu_count
 from typing import Optional, Dict, Set, Tuple
 
 import click
-import matplotlib as mpl
 from click_option_group import optgroup
 from loguru import logger
 
@@ -21,7 +20,7 @@ from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -473,7 +472,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Layout settings")
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
                  help="The number of ticks of y-axis")
-@optgroup.option("--distance-ratio", type=click.FLOAT, default=0.1,
+@optgroup.option("--distance-ratio", type=click.FLOAT, default=0,
                  help="The distance between transcript label and transcript line", show_default=True)
 @optgroup.option("--reference-scale", type=click.FLOAT, default=.25,
                  help="The size of reference plot in final plot", show_default=True)
@@ -511,21 +510,6 @@ def main(**kwargs):
         logger.debug(f"{kwargs['backend']} backend may have problems with rasterized heatmap, "
                        f"if there is any, please try another backend instead.")
 
-    try:
-        mpl.use(kwargs["backend"])
-    except ImportError as err:
-        if kwargs["backend"].lower() == "cairo":
-            logger.debug("Cairo backend required cairocffi installed")
-            logger.debug("Switch back to Agg backend")
-        else:
-            logger.debug(f"backend error, switch back to Agg: {err}")
-        mpl.use("Agg")
-
-    mpl.rcParams['pdf.fonttype'] = 42
-
-    if kwargs["font"]:
-        mpl.rcParams['font.family'] = kwargs["font"]
-
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
 
@@ -534,7 +518,7 @@ def main(**kwargs):
     else:
         included_junctions = {}
 
-    p = Plot(logfile=kwargs["logfile"])
+    p = Plot(logfile=kwargs["logfile"], font_family=kwargs["font"], backend=kwargs["backend"])
 
     region = decode_region(kwargs["event"])
     p.set_region(region=region)

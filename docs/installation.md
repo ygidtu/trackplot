@@ -1,15 +1,47 @@
 
 ## Install with pypi, conda or docker
 
-### PyPI
+### Notes
+>1. For **windows**, **mac(apple silicon)** and **other arm** users, due to several requirements pysam, pybigwig and hicmatrix do not support those platforms, pleas use docker image as alternative 
+>2. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
+>3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
+    [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
+    to solve their requirements.
+
+### PyPi
 
 ```bash
+# optional, enable bigWig, bigBed and hicMatrix support
+pip install pybigwig hicmatrix
+
 pip install trackplot
 # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
 # therefore please try another pypi mirror once you encounter 
 # `No local packages or working download links found for xxx`
+```
 
-pip install pybigwig hicmatrix # to enable bigWig, bigBed and hicMatrix support
+### AppImage (Linux x86_64 platform only)
+
+Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+Once you have installation issues and not familiar with docker, 
+please download the AppImage file from our releases.
+
+All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
+
+- Arch `appimagecrafters/tests-env:archlinux-latest`
+- Fedora `appimagecrafters/tests-env:fedora-30`
+- Debian `appimagecrafters/tests-env:debian-stable`
+- Ubuntu `appimagecrafters/tests-env:ubuntu-bionic`
+- Centos `appimagecrafters/tests-env:centos-7`
+
+> **Note:** the AppImage will decompress all bundled files before execution, 
+> therefore it will a little bit slower than command line tools and source code
+
+```bash
+# example with version v0.2.6, please using your interested version according to your needs
+export VERSION=0.2.6
+chmod +x trackplot-${VERSION}-x86_64.AppImage
+./trackplot-${VERSION}-x86_64.AppImage --help
 ```
 
 ### Docker
@@ -25,7 +57,7 @@ docker build -t ygidtu/docker .
 docker run --rm ygidtu/trackplot --help
 ```
 
-## Install from source
+### Install from source
 
 download source code using git
 ```bash
@@ -140,38 +172,3 @@ docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/trackplot --help
 
 **Note: ** detailed command line usage please check [Command line Usage](./command.md)
 
-
-## Build Web interface from source
-
-1. **nodejs is required**
-2. **Users could change the server ip and port by modify the settings.ini**
-
-```bash
-git clone https://github.com/ygidtu/trackplot.git trackplot
-cd trackplot/web
-
-# build the frontend static files
-npm install -g vue-cli vite && npm install
-vite build
-
-# prepare the backend server
-pip install fastapi pydantic jinja2 uvicorn
-
-python server.py --help
-```
-
-
-### Using docker image
-
-#### Pull from web
-
-```bash
-docker pull ygidtu/trackplotweb
-
-# -v map the current working directory into docker containers
-# -p map the outer port to inner port of docker container
-docker run --name trackplotweb \
-  --rm -v $PWD:$PWD \
-  -p 5000:5000 \
-  ygidtu/trackplotweb 
-```

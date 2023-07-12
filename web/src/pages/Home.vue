@@ -1,3 +1,7 @@
+<script lang="ts" setup>
+import {Message, View} from "@element-plus/icons-vue"
+</script>
+
 <template>
   <div>
     <h1>{{ msg }}</h1>
@@ -5,8 +9,18 @@
     <el-divider/>
 
     <el-row>
-      <el-col :span="20" :offset="2">
+      <el-col :span="12" :offset="3">
         <el-link type="primary" href="/#/plot">Create your own plot</el-link>
+      </el-col>
+
+      <el-col :span="6">
+        <el-link type="primary" href="https://github.com/ygidtu/trackplot/issues" :icon="Message">Report bug at Github</el-link>
+        <el-divider direction="vertical" />
+        <el-link type="primary" :icon="View" href="https://trackplot.readthedocs.io/en/latest/web/">Read the tutorial</el-link>
+      </el-col>
+
+      <el-col :span="6">
+
       </el-col>
     </el-row>
 

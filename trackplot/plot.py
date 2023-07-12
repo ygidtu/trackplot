@@ -155,7 +155,7 @@ class Plot(object):
         "plots", "params", "junctions", "link"
     ]
 
-    def __init__(self, logfile=None):
+    def __init__(self, logfile: Optional[str]=None, backend: str="agg", font_family: Optional[str]=None):
         u"""
         init this class
         """
@@ -175,6 +175,22 @@ class Plot(object):
 
         if logfile:
             logger.add(logfile, level="TRACE")
+
+        # print warning info about backend
+        try:
+            mpl.use(backend)
+        except ImportError as err:
+            if backend.lower() == "cairo":
+                logger.debug("Cairo backend required cairocffi installed")
+                logger.debug("Switch back to Agg backend")
+            else:
+                logger.debug(f"backend error, switch back to Agg: {err}")
+            mpl.use("Agg")
+
+        mpl.rcParams['pdf.fonttype'] = 42
+
+        if font_family:
+            mpl.rcParams['font.family'] = font_family
 
     @property
     def chrom(self) -> Optional[str]:
@@ -343,11 +359,12 @@ class Plot(object):
 
                       # transcripts related parameters
                       font_size: int = 5,
-                      show_gene: bool = False,
+                      show_gene: bool = True,
                       show_id: bool = False,
                       exon_width: float = .3,
                       show_exon_id: bool = False,
-                      theme: str = "blank"
+                      theme: str = "blank",
+                      **kwargs
                       ):
         u"""
         add transcripts to this region
@@ -994,7 +1011,7 @@ class Plot(object):
              raster: bool = False,
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
-             distance_between_label_axis: float = .3,
+             distance_between_label_axis: float = 0,
              n_jobs: int = 1, fill_step: str = "post",
              *args, **kwargs):
         u"""

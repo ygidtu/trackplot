@@ -7,13 +7,17 @@ from trackplot.base.GenomicLoci import GenomicLoci
 
 
 class Stroke(object):
+    __slots__ = ["start", "end", "color", "label", "origin"]
 
-    __slots__ = ["start", "end", "color", "label"]
-    def __init__(self, start: int, end: int, color: str = "red", label: str = ""):
+    def __init__(self, start: int, end: int, color: str = "red", label: str = "", origin: str = ""):
         self.start = start
         self.end = end
         self.color = color
         self.label = label
+        self.origin = origin if origin else f"{start}-{end}@{color}-{label}"
+
+    def __str__(self):
+        return self.origin
 
     @property
     def center(self) -> float:
@@ -39,8 +43,7 @@ class Stroke(object):
 
                 if len(i) > 1:
                     label = i[-1]
-
-            res.append(Stroke(sites[0], sites[-1], color, label))
+            res.append(Stroke(sites[0], sites[-1], color, label, "@".join(i)))
         return res
 
 
