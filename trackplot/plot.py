@@ -177,7 +177,6 @@ class Plot(object):
             logger.add(logfile, level="TRACE")
 
         # print warning info about backend
-        print(backend, font_family)
         try:
             mpl.use(backend)
         except ImportError as err:
@@ -399,7 +398,7 @@ class Plot(object):
 
         if interval and interval_label:
             self.reference.add_interval(interval, interval_label)
-        print(show_gene)
+
         self.params["reference"] = {
             "transcripts": transcripts,
             "remove_empty_transcripts": remove_empty_transcripts,
@@ -1012,7 +1011,7 @@ class Plot(object):
              raster: bool = False,
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
-             distance_between_label_axis: float = .3,
+             distance_between_label_axis: float = 0,
              n_jobs: int = 1, fill_step: str = "post",
              *args, **kwargs):
         u"""

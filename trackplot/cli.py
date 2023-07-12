@@ -472,7 +472,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.group("Layout settings")
 @optgroup.option("--n-y-ticks", default=4, type=click.IntRange(min=0, clamp=True),
                  help="The number of ticks of y-axis")
-@optgroup.option("--distance-ratio", type=click.FLOAT, default=0.1,
+@optgroup.option("--distance-ratio", type=click.FLOAT, default=0,
                  help="The distance between transcript label and transcript line", show_default=True)
 @optgroup.option("--reference-scale", type=click.FLOAT, default=.25,
                  help="The size of reference plot in final plot", show_default=True)

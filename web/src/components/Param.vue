@@ -28,11 +28,18 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
                   title="Description"
                   :width="400"
                   trigger="hover"
-                  :content="p.note"
                 >
               <template #reference>
                 <el-button :icon="Message" circle />
               </template>
+              <el-text type="info" v-if="!p.note.toString().match(/\n/)">{{ p.note }}</el-text>
+              <div v-else>
+                <ul>
+                  <el-text type="info" v-for="(content, index) in p.note.split(/\n/)">
+                    <li v-if="index > 0"> <el-text type="danger">{{content.split(":")[0]}}</el-text>:</li> {{ content.split(":")[1] }}
+                  </el-text>
+                </ul>
+              </div>
             </el-popover>
           </el-col>
         </el-row>

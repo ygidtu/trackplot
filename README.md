@@ -46,7 +46,7 @@ and each track on output corresponds these datasets from config file.
 
 ## Usage
 
-The trackplot is written in Python, and user could install it in a variety of ways as follows
+The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user could install it in a variety of ways as follows
 
 ###### Notes
 >1. For **windows**, **mac(apple silicon)** and **other arm** users, due to pysam, pybigwig and hicmatrix do not support those platforms, pleas use docker image as alternative 
@@ -54,10 +54,14 @@ The trackplot is written in Python, and user could install it in a variety of wa
 >3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
+>3. Currently, trackplot couldn't be installed by pypi or conda on Macintosh with apple silicon.
 
-### Running in terminal
 
-1. install from PyPi
+### Using trackplot by a command line
+
+1. install from PyPi 
+
+Before running this command line, please check python (>=3.8) was installed.
 
 ```bash
 # optional, enable bigWig, bigBed and hicMatrix support
@@ -133,6 +137,17 @@ python main.py --help
 
 5. install from bioconda
 
+First make sure your conda is properly installed.
+
+```bash
+# Check if conda has been successfully installed.
+conda --version
+
+# if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+```
+
+After successful installation
+
 ```bash
 conda install -c bioconda -c conda-forge trackplot
 
@@ -152,6 +167,8 @@ trackplot --help
 ---
 
 6. for `pipenv` or `poetry` users
+
+> Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
 
 ```bash
 git clone https://github.com/ygidtu/trackplot
@@ -199,41 +216,40 @@ chmod +x trackplotweb-${VERSION}-x86_64.AppImage
     
 **Note:** the `--plots` were required while using appimages
 
----
 
-2. Docker
+### Using trackplot by a local webserver
 
-```bash
-docker pull ygidtu/trackplot
-docker run --rm ygidtu/trackplot --help
+1. Install from source code
 
-# or build docker image from source
-git clone https://github.com/ygidtu/trackplot.git trackplot
-cd trackplot
-docker build -t ygidtu/docker .
-docker run --rm ygidtu/trackplot --help
-```
-
----
-
-3. build from source
-
-Please install trackplot before set up the web server
+Before this, please make sure that trackplot has been properly installed in your env.  
 
 ```bash
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot/web
 
-# build the frontend static files
+# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
 npm install -g vue-cli vite && npm install
 vite build
 
 # prepare the backend server
 pip install fastapi pydantic jinja2 uvicorn
 
+cd ../
 python server.py --help
 ```
+
+2. Install from a docker image
    
+```bash
+docker pull ygidtu/trackplotweb
+
+# -v map the current working directory into docker containers
+# -p map the outer port to inner port of docker container
+docker run --name trackplotweb \
+ --rm -v $PWD:$PWD \
+ -p 5000:5000 \
+ ygidtu/trackplotweb
+```
 
 ## Example
 
@@ -265,13 +281,47 @@ python main.py \
   -p 4
 ```
 
+if trackplot was installed by docker, here is the cmd
+
+```bash
+## The absolute path is required in Docker env.
+ 
+cat $PWD/example/interval_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/interval_list.abspath.tsv
+cat $PWD/example/density_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/density_list.abspath.tsv
+cat $PWD/example/igv.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/igv.abspath.tsv
+cat $PWD/example/heatmap_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/heatmap_list.abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot \
+  -e chr1:1270656-1284730:+ \
+  -r $PWD/example/example.sorted.gtf.gz \
+  --interval $PWD/example/interval_list.tsv \
+  --density $PWD/example/density_list.tsv \
+  --show-site \
+  --show-junction-num \
+  --igv $PWD/example/igv.tsv \
+  --heatmap $PWD/example/heatmap_list.tsv \
+  --focus 1272656-1272656:1275656-1277656 \
+  --stroke 1275656-1277656:1277856-1278656@blue \
+  --sites 1271656,1271656,1272656 \
+  --line $PWD/example/line_list.tsv \
+  -o example.png \
+  --dpi 300 \
+  --width 10 \
+  --height 1 \
+  --barcode $PWD/example/barcode_list.tsv \
+  --domain --remove-duplicate-umi \
+  --normalize-format cpm \
+  -p 4
+
+```
+
 here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/main/example/example.png).
 
 
 ## Questions
 
 Visit [issues](https://github.com/ygidtu/trackplot/issues) or 
-contact [Yiming Zhang](https://github.com/ygidtu) and 
+contact [Yiming Zhang](https://github.com/ygidtu) or 
 [Ran Zhou](https://github.com/zhou-ran)
 
 ## Citation

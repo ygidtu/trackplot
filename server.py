@@ -80,18 +80,6 @@ __COMMON_PARAMS__ = [
         "note": "The path to list of barcodes"
     },
     {
-        "key": "barcode_tag",
-        "annotation": "str",
-        "default": "BC",
-        "note": "The barcode tag in bam file"
-    },
-    {
-        "key": "umi_tag",
-        "annotation": "str",
-        "default": "UB",
-        "note": "The umi tag in bam file"
-    },
-    {
         "key": "library",
         "annotation": "choice['frr', 'frs', 'fru']",
         "default": "fru",
@@ -434,7 +422,7 @@ __PARAMS__ = {
         {
             "key": "width",
             "annotation": "Union[int, float]",
-            "default": "15",
+            "default": "10",
             "note": "The width of output file, default adjust image width by content"
         },
         {
@@ -452,7 +440,7 @@ __PARAMS__ = {
         {
             "key": "distance_ratio",
             "annotation": "float",
-            "default": "0.1",
+            "default": "0",
             "note": "The distance between transcript label and transcript line"
         },
         {
@@ -465,8 +453,10 @@ __PARAMS__ = {
             "key": "fill_step",
             "annotation": "str",
             "default": "post",
-            "note": "Define step if the filling should be a step function, i.e. constant in between x. "
-                    "Detailed info please check: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html"
+            "note": "Define step if the filling should be a step function, i.e. constant in between x. The value determines where the step will occur:\n"
+                    "pre:The y value is continued constantly to the left from every x position, i.e. the interval (x[i-1], x[i]] has the value y[i].\n"
+                    "post:The y value is continued constantly to the right from every x position, i.e. the interval [x[i], x[i+1]) has the value y[i].\n"
+                    "mid:Steps occur half-way between the x positions."
         },
         {
             "key": "same_y",
