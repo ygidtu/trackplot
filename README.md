@@ -48,13 +48,16 @@ and each track on output corresponds these datasets from config file.
 
 The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user could install it in a variety of ways as follows
 
+
 ###### Notes
->1. For **windows**, **mac(apple silicon)** and **other arm** users, due to pysam, pybigwig and hicmatrix do not support those platforms, pleas use docker image as alternative 
+>1. For **microsoft windows**, **mac (apple silicon)** and **other arm platform** users, 
+    due to pysam, pybigwig and hicmatrix do not support those platforms, 
+    trackplot couldn't be installed by pypi or conda,
+    pleas use docker image as alternative 
 >2. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
 >3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
     [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
     to solve their requirements.
->3. Currently, trackplot couldn't be installed by pypi or conda on Macintosh with apple silicon.
 
 
 ### Using trackplot by a command line
@@ -77,16 +80,19 @@ pip install trackplot
 
 2. AppImage (Linux x86_64 platform only)
 
-Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+>Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
 Once you have installation issues and not familiar with docker, 
 please download the AppImage file from our releases.
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
-- Arch `appimagecrafters/tests-env:archlinux-latest`
-- Fedora `appimagecrafters/tests-env:fedora-30`
-- Debian `appimagecrafters/tests-env:debian-stable`
-- Ubuntu `appimagecrafters/tests-env:ubuntu-bionic`
-- Centos `appimagecrafters/tests-env:centos-7`
+- Arch: `appimagecrafters/tests-env:archlinux-latest`
+- Fedora: `appimagecrafters/tests-env:fedora-30`
+- Debian: `appimagecrafters/tests-env:debian-stable`
+- Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
+- Centos: `appimagecrafters/tests-env:centos-7`
+
+> Once the AppImage file couldn't work properly please open an issue in this repo, 
+and provide us the system platform and full error messages for us to debug. 
 
 > **Note:** the AppImage will decompress all bundled files before execution, 
 > therefore it will a little bit slower than command line tools and source code
@@ -102,7 +108,7 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 
 3. using docker image
 
-> Known issue: the logging time may have around several hours mismatch with your local time due to timezone settings inner the image.
+> Known issue: the logging time may have several hours mismatch with your local time, due to timezone settings inner the image.
 
 ```bash
 docker pull ygidtu/trackplot
@@ -199,7 +205,7 @@ poetry shell  && python main.py --help
 poetry run python main.py --help
 ```
 
-### Running from a local webserver
+### Using trackplot by a local webserver
 
 1. using AppImage (Linux x86_64 only)
 
@@ -216,27 +222,8 @@ chmod +x trackplotweb-${VERSION}-x86_64.AppImage
     
 **Note:** the `--plots` were required while using appimages
 
+---
 
-### Using trackplot by a local webserver
-
-1. Install from source code
-
-Before this, please make sure that trackplot has been properly installed in your env.  
-
-```bash
-git clone https://github.com/ygidtu/trackplot trackplot
-cd trackplot/web
-
-# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
-npm install -g vue-cli vite && npm install
-vite build
-
-# prepare the backend server
-pip install fastapi pydantic jinja2 uvicorn
-
-cd ../
-python server.py --help
-```
 
 2. Install from a docker image
    
@@ -250,6 +237,35 @@ docker run --name trackplotweb \
  -p 5000:5000 \
  ygidtu/trackplotweb
 ```
+
+---
+
+3. Install from source code
+
+Before this, please make sure that trackplot has been properly installed in your env.  
+
+```bash
+git clone https://github.com/ygidtu/trackplot trackplot
+cd trackplot/web
+
+# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
+npm install -g vue-cli vite && npm install
+vite build
+
+# check whether the ui is successfully compiled
+ls ../ui
+
+# prepare the backend server
+pip install fastapi pydantic jinja2 uvicorn
+
+# before startup, check whether the trackplot properly installed
+python -c "import trackplot; print(trackplot.__version__)"
+
+cd ../
+python server.py --help
+```
+
+---
 
 ## Example
 
