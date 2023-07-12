@@ -24,3 +24,21 @@ python ../../../..//main.py \
 
 
 ```
+
+if trackplot was installed by docker, here is the cmd
+
+```bash
+
+cat density_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > density_list_abspath.tsv
+
+docker run -v $PWD:$PWD --rm ygidtu/trackplot  \
+  -e 17:35832921-35835600 \
+  -r $PWD/Mus_musculus.GRCm38.101.chr.sorted.gtf.gz \
+  --density $PWD/density_list_abspath.tsv \
+  -o $PWD/hsc_8w.Tubb5.remove_dup.2.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 -t 100000 \
+  --barcode $PWD/cell_meta.tsv --remove-duplicate-umi -p 12
+
+```
