@@ -60,6 +60,8 @@ class GenomicLoci(object):
         convert this to string
         :return:
         """
+        if self.strand == "*":
+            return f"{self.chromosome}:{self.start}-{self.end}"
         return f"{self.chromosome}:{self.start}-{self.end}:{self.strand}"
 
     def __iter__(self):

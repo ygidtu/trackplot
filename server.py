@@ -3,6 +3,7 @@
 u"""
 Web UI of sashimi
 """
+import pickle
 import re
 from glob import glob
 
@@ -15,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from trackplot.cli import load_barcodes
+from trackplot.cli import load_barcodes, __version__
 from trackplot.plot import *
 
 
@@ -39,7 +40,7 @@ app.mount("/static", StaticFiles(directory=__UI__, html=True), name="static")
 templates = Jinja2Templates(directory=__UI__)
 
 __PLOT__ = os.path.join(os.path.dirname(__file__), "plots")
-os.makedirs(__PLOT__, exist_ok=True)
+
 
 __COMMON_PARAMS__ = [
     {
@@ -105,7 +106,7 @@ __COMMON_PARAMS__ = [
     {
         "key": "show_y_label",
         "annotation": "bool",
-        "default": "True",
+        "default": "true",
         "note": "Whether to show y label"
     },
     {
@@ -116,8 +117,8 @@ __COMMON_PARAMS__ = [
     },
     {
         "key": "color",
-        "annotation": "",
-        "default": "blue",
+        "annotation": "color",
+        "default": "#409EFF",
         "note": "The fill color of density"
     },
     {
@@ -153,13 +154,13 @@ __PARAMS__ = {
         {
             "key": "density_by_strand",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether draw density plot by strand"
         },
         {
             "key": "show_junction_number",
             "annotation": "bool",
-            "default": "True",
+            "default": "true",
             "note": "Whether to show junction number"
         },
         {
@@ -171,7 +172,7 @@ __PARAMS__ = {
         {
             "key": "show_site_plot",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether to show site plot"
         },
         {
@@ -183,7 +184,7 @@ __PARAMS__ = {
         {
             "key": "only_customized_junction",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Only used customized junctions."
         }
     ],
@@ -214,13 +215,13 @@ __PARAMS__ = {
         {
             "key": "do_scale",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether to scale the matrix"
         },
         {
             "key": "clustering",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether reorder matrix by clustering"
         },
         {
@@ -238,7 +239,7 @@ __PARAMS__ = {
         {
             "key": "show_row_names",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether to show row names"
         },
         {
@@ -265,7 +266,7 @@ __PARAMS__ = {
         {
             "key": "show_legend",
             "annotation": "bool",
-            "default": "True",
+            "default": "true",
             "note": "Whether to show legend"
         },
         {
@@ -286,7 +287,7 @@ __PARAMS__ = {
         {
             "key": "deletion_ignore",
             "annotation": "Optional[int]",
-            "default": "True",
+            "default": "true",
             "note": "Whether ignore the gap in full length sequencing data"
         },
         {
@@ -297,14 +298,14 @@ __PARAMS__ = {
         },
         {
             "key": "exon_color",
-            "annotation": "Optional[str]",
-            "default": "black",
+            "annotation": "color",
+            "default": "#000000",
             "note": "The color of exons"
         },
         {
             "key": "intron_color",
-            "annotation": "Optional[str]",
-            "default": "black",
+            "annotation": "color",
+            "default": "#000000",
             "note": "The color of introns"
         },
         {
@@ -335,7 +336,7 @@ __PARAMS__ = {
         {
             "key": "show_legend",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether to show legend"
         },
         {
@@ -372,8 +373,8 @@ __PARAMS__ = {
         },
         {
             "key": "color",
-            "annotation": "str",
-            "default": "blue",
+            "annotation": "color",
+            "default": "#409EFF",
             "note": "The color of link"
         }
     ],
@@ -406,8 +407,8 @@ __PARAMS__ = {
         },
         {
             "key": "color",
-            "annotation": "str",
-            "default": "black",
+            "annotation": "color",
+            "default": "#000000",
             "note": "The color of stroke"
         }
     ],
@@ -433,25 +434,25 @@ __PARAMS__ = {
         {
             "key": "width",
             "annotation": "Union[int, float]",
-            "default": "0",
+            "default": "15",
             "note": "The width of output file, default adjust image width by content"
         },
         {
             "key": "height",
             "annotation": "Union[int, float]",
-            "default": "0",
+            "default": "1",
             "note": "The height of single subplot, default adjust image height by content"
         },
         {
             "key": "raster",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "The would convert heatmap and site plot to raster image (speed up rendering and produce smaller files), only affects pdf, svg and PS"
         },
         {
-            "key": "distance_between_label_axis",
+            "key": "distance_ratio",
             "annotation": "float",
-            "default": "0.3",
+            "default": "0.1",
             "note": "The distance between transcript label and transcript line"
         },
         {
@@ -470,13 +471,13 @@ __PARAMS__ = {
         {
             "key": "same_y",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether different sashimi/line plots shared same y-axis boundaries"
         },
         {
             "key": "remove_duplicate_umi",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Drop duplicated UMIs by barcode"
         },
         {
@@ -498,6 +499,12 @@ __PARAMS__ = {
             "note": "Define step if the filling should be a step function, i.e. constant in between x. Detailed info please check: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html"
         },
         {
+            "key": "normalize_format",
+            "annotation": "choice['count', 'cpm', 'rpkm']",
+            "default": "count",
+            "note": "The normalize format for bam file"
+        },
+        {
             "key": "smooth_bin",
             "annotation": "int",
             "default": "20",
@@ -514,51 +521,26 @@ __PARAMS__ = {
         {
             "key": "add_domain",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Add domain information into reference track"
-        },
-        {
-            "key": "local_domain",
-            "annotation": "Optional[str]",
-            "default": "False",
-            "note": "Load local domain folder and load into reference track, download from "
-                    "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/"
-        },
-        {
-            "key": "interval",
-            "annotation": "Optional[str]",
-            "default": "<class 'inspect._empty'>",
-            "note": "Path to list of interval files in bed format, 1st column is path to file, 2nd column is the label [optional]"
-        },
-        {
-            "key": "interval_label",
-            "annotation": "Optional[str]",
-            "default": "<class 'inspect._empty'>",
-            "note": "The label of interval"
-        },
-        {
-            "key": "transcripts",
-            "annotation": "Optional[List[str]]",
-            "default": "",
-            "note": "The name of transcripts for plotting"
         },
         {
             "key": "remove_empty_transcripts",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether show transcripts without any exons in target region"
         },
         {
             "key": "choose_primary",
             "annotation": "bool",
-            "default": "False",
+            "default": "false",
             "note": "Whether choose primary transcript to plot."
         },
         {
             "key": "color",
-            "annotation": "Optional[str]",
-            "default": "black",
-            "note": "The color pf transcript"
+            "annotation": "color",
+            "default": "#000000",
+            "note": "The color of exons"
         },
         {
             "key": "font_size",
@@ -567,28 +549,40 @@ __PARAMS__ = {
             "note": "The font size of reference"
         },
         {
-            "key": "show_gene",
+            "key": "no_gene",
             "annotation": "bool",
-            "default": "False",
-            "note": "Show gene name or gene id"
+            "default": "false",
+            "note": "Do not show gene id next to transcript id"
         },
         {
             "key": "show_id",
             "annotation": "bool",
-            "default": "False",
-            "note": "Show gene id/transcript id instead of gene name/transcript name"
-        },
-        {
-            "key": "exon_width",
-            "annotation": "float",
-            "default": "0.3",
-            "note": "The width of exons"
+            "default": "false",
+            "note": "Show gene name or gene id"
         },
         {
             "key": "show_exon_id",
             "annotation": "bool",
-            "default": "False",
-            "note": "Show exon id"
+            "default": "false",
+            "note": "Whether show gene id or gene name"
+        },
+        {
+            "key": "transcripts_to_show",
+            "annotation": "str",
+            "default": "",
+            "note": "Which transcript to show, transcript name or id in gtf file, eg: transcript1,transcript2"
+        },
+        {
+            "key": "intron_scale",
+            "annotation": "float",
+            "default": "0.5",
+            "note": "The scale of intron"
+        },
+        {
+            "key": "exon_scale",
+            "annotation": "float",
+            "default": "1",
+            "note": "The scale of exon"
         },
     ],
     "set_region": [
@@ -661,10 +655,13 @@ class Logs(BaseModel):
 
 
 def get_value(param: Param):
+    u"""
+    convert parameters in post param to specific format
+    """
     if "empty" in param.default:
         return None
     if "str" in param.annotation:
-        return param.default if param.default != "False" else None
+        return param.default if param.default.lower() != "false" else None
 
     if param.annotation == "int":
         return int(param.default)
@@ -733,7 +730,7 @@ async def params(target: Optional[str] = None) -> List[Param]:
 
     # if not target:
     #     method_list = [attribute for attribute in dir(Plot) if
-    #                    callable(getattr(Plot, attribute)) and attribute.startswith('__') is False]
+    #                    callable(getattr(Plot, attribute)) and attribute.startswith('__') is false]
     #     return method_list
     #
     # sig = inspect.signature(getattr(Plot, target))
@@ -761,8 +758,8 @@ async def params(target: Optional[str] = None) -> List[Param]:
     #     ))
     #
     # if target == "plot":
-    #     res.append(Param(key="same_y", annotation='bool', default="False"))
-    #     res.append(Param(key="remove_duplicate_umi", annotation='bool', default="False"))
+    #     res.append(Param(key="same_y", annotation='bool', default="false"))
+    #     res.append(Param(key="remove_duplicate_umi", annotation='bool', default="false"))
     #     res.append(Param(key="threshold", annotation='int', default="0"))
     #     res.append(Param(key="normalize_format", annotation="choice['normal', 'cpm', 'rpkm']",
     #                      default="normal", note="The normalize format for bam file"))
@@ -776,8 +773,18 @@ async def params(target: Optional[str] = None) -> List[Param]:
 
 
 @app.post("/api/plot/{pid}")
-async def plot(pid: str, param: PostForm):
-    p = Plot(os.path.join(__PLOT__, pid + ".log"))
+async def plot(pid: str, param: Optional[PostForm]):
+    log = os.path.join(__PLOT__, pid + ".log")
+    if os.path.exists(log):
+        os.remove(log)
+    p = Plot(log)
+
+    if param:
+        with open(os.path.join(__PLOT__, pid), "wb+") as w:
+            pickle.dump(param, w)
+    else:
+        with open(os.path.join(__PLOT__, pid), "rb") as r:
+            param = pickle.load(r)
 
     def plot_form_to_dict(param_: PlotParam):
         kwargs = {}
@@ -785,6 +792,12 @@ async def plot(pid: str, param: PostForm):
             val = get_value(para_)
             if val is not None:
                 kwargs[para_.key] = val
+
+        if "no_gene" in kwargs:
+            kwargs["show_gene"] = not kwargs.pop("no_gene")
+
+        if "distance_ratio" in kwargs:
+            kwargs["distance_between_label_axis"] = kwargs["distance_ratio"]
         return kwargs
 
     try:
@@ -838,10 +851,13 @@ async def plot(pid: str, param: PostForm):
 
 @app.get("/api/del")
 async def delete(pid: str):
-    pk = os.path.join(__PLOT__, pid + ".log")
+    pk = os.path.join(__PLOT__, pid)
     if os.path.exists(pk):
         os.remove(pk)
 
+    log = os.path.join(__PLOT__, pid + ".log")
+    if os.path.exists(log):
+        os.remove(log)
 
 @app.get("/api/log")
 async def logs(pid: str, debug: bool = False, download: bool = False):
@@ -889,7 +905,14 @@ async def logs(pid: str, debug: bool = False, download: bool = False):
 @click.option("-h", "--host", type=click.STRING, default="127.0.0.1", help="the ip address binding to")
 @click.option("-p", "--port", type=click.INT, default=5000, help="the port to listen on")
 @click.option("-r", "--reload", is_flag=True, help="auto-reload for development")
-def main(host: str, port: int, reload: bool):
+@click.option("--plots", type=click.Path(), default=__PLOT__,
+              help="where to save the backend plot data and logs, required while using appImage.")
+@click.version_option(__version__, message="Current version %(version)s")
+def main(host: str, port: int, reload: bool, plots: str):
+    global __PLOT__
+    if plots:
+        __PLOT__ = plots
+    os.makedirs(__PLOT__, exist_ok=True)
     uvicorn.run(app='server:app', host=host, port=int(port), log_level="info", reload=reload)
 
 

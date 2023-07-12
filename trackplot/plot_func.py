@@ -151,7 +151,7 @@ def set_x_ticks(
         graph_coords = init_graph_coords(region)
 
     # @2018.12.19 unnecessary text in figure
-    x_label = 'Genomic coordinate (%s), "%s" strand' % (region.chromosome, region.strand)
+    x_label = str(region)
 
     if log_trans:
         if log_trans in ["2", "10"]:

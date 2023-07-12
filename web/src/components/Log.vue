@@ -5,7 +5,7 @@
       <el-text type="info">If there is any unexpected error, please send </el-text>
       <el-link type="primary" :href="`${urls.log}?pid=${pid}&download=true`">this log file</el-link>
       <el-text type="info"> to developers at </el-text>
-      <el-link href="https://github.com/ygidtu/trackplot" type="primary">Github</el-link>
+      <el-link href="https://github.com/ygidtu/trackplot/issues" type="primary">Github</el-link>
       <el-text type="info"> for debugging</el-text>
     </el-descriptions-item>
   </el-descriptions>
