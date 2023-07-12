@@ -3,9 +3,11 @@
     <el-row :gutter="20">
       <el-col :span="20" :offset="2">
         <el-row>
-          <el-radio-group v-model="image.select" placeholder="Please choose">
-            <el-radio-button v-for="item in image.type" :key="item" :label="item" :value="item"/>
-          </el-radio-group>
+          <el-col :span="24">
+            <el-select v-model="image.select" placeholder="Please choose">
+            <el-option v-for="item in image.type" :key="item" :label="item" :value="item"/>
+          </el-select>
+          </el-col>
         </el-row>
         <el-divider/>
         <param-comp :func.sync="'add_' + image.select.toLowerCase()"

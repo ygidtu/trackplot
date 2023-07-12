@@ -4,14 +4,15 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
 
 <template>
   <div class="params">
-    <el-form ref="form" label-width="160px">
+    <el-form ref="form" label-width="180px">
       <div v-for="(p, index) in param" :key="index">
         <el-row :gutter="20" v-if="String(p.default).match(/empty/) === null">
           <el-col :span="20">
             <el-form-item :label="p.key" >
               <el-input v-if="p.annotation === 'str' || p.annotation === 'Optional[str]'" v-model="p.default"/>
               <el-input-number v-else-if="p.annotation === 'int'" v-model="p.default"/>
-              <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default"/>
+              <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default" :step=".1"/>
+              <el-color-picker v-else-if="p.annotation === 'color'" v-model="p.default" />
 
               <el-radio-group v-model="p.default" :default="p.default" v-else-if="p.annotation === 'choice'">
                 <el-radio v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-radio>
@@ -27,11 +28,18 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
                   title="Description"
                   :width="400"
                   trigger="hover"
-                  :content="p.note"
                 >
               <template #reference>
                 <el-button :icon="Message" circle />
               </template>
+              <el-text type="info" v-if="!p.note.toString().match(/\n/)">{{ p.note }}</el-text>
+              <div v-else>
+                <ul>
+                  <el-text type="info" v-for="(content, index) in p.note.split(/\n/)">
+                    <li v-if="index > 0"> <el-text type="danger">{{content.split(":")[0]}}</el-text>:</li> {{ content.split(":")[1] }}
+                  </el-text>
+                </ul>
+              </div>
             </el-popover>
           </el-col>
         </el-row>
@@ -65,7 +73,7 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
 
 
 <script lang="ts">
-import {defineComponent, watch, defineProps} from 'vue'
+import {defineComponent} from 'vue'
 import {AxiosResponse, AxiosError} from 'axios'
 
 import urls from '../url'
@@ -203,7 +211,7 @@ export default defineComponent({
 
 <style scoped>
 .infinite-list {
-  height: 300px;
+  max-height: 300px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -211,7 +219,6 @@ export default defineComponent({
 .infinite-list .infinite-list-item {
   display: flex;
   justify-content: left;
-  //height: 30px;
   margin: 5px;
   color: var(--el-color-primary);
 }

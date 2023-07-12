@@ -34,7 +34,6 @@ from trackplot.file.File import File
 from trackplot.file.HiCMatrixTrack import HiCTrack
 from trackplot.file.ReadSegments import ReadSegment
 from trackplot.file.Reference import Reference
-from trackplot.file.ATAC import ATAC
 
 
 def get_limited_index(num, length):
@@ -151,7 +150,7 @@ def set_x_ticks(
         graph_coords = init_graph_coords(region)
 
     # @2018.12.19 unnecessary text in figure
-    x_label = 'Genomic coordinate (%s), "%s" strand' % (region.chromosome, region.strand)
+    x_label = str(region)
 
     if log_trans:
         if log_trans in ["2", "10"]:
@@ -195,7 +194,7 @@ def set_x_ticks(
         ax.text(x=x, y=-1, s=s, fontsize=font_size, ha="center", va="top")
 
     ax.set_ylim(-3.5, 1)
-    ax.set_xlim(0, max(graph_coords))
+    ax.set_xlim(min(graph_coords), max(graph_coords))
 
 
 def set_y_ticks(
@@ -204,7 +203,7 @@ def set_y_ticks(
         graph_coords: Union[Dict, np.array],
         max_used_y_val: Union[int, float],
         min_used_y_val: Optional[Union[int, float]] = None,
-        distance_between_label_axis: float = .1,
+        distance_between_label_axis: float = 0,
         n_y_ticks: int = 4,
         theme: str = "ticks",
         font_size: int = 5,
@@ -219,13 +218,12 @@ def set_y_ticks(
     """
     # set y ticks, y label and label
     Theme.set_theme(ax, theme)
-
+    ax.set_xlim(min(graph_coords), max(graph_coords))
     if min_used_y_val is None:
         min_used_y_val, _ = ax.get_ylim()
 
+    curr_y_tick_labels = []
     if not set_label_only:
-        ax.set_xlim(0, max(graph_coords))
-
         max_ = max_used_y_val
         plus = 0.2
         while max_ > 10:
@@ -246,7 +244,7 @@ def set_y_ticks(
         # add zero into strand-aware plot
         universal_y_ticks = np.unique(np.append(universal_y_ticks, 0))
         universal_y_ticks = sorted(universal_y_ticks)
-        curr_y_tick_labels = []
+
         for lab in universal_y_ticks:
             if y_axis_skip_zero and lab == 0:
                 # Exclude label for 0
@@ -268,9 +266,19 @@ def set_y_ticks(
     @2018.12.20 using BAM label as y label
     @2019.01.04 change the standards of distance between y label and y-axis
     """
+
     if show_y_label:
+        def __dynamic_distance__(distance_between_label_axis: float, label: str, scale: int = 100) -> float:
+            if distance_between_label_axis != 0:
+                return distance_between_label_axis
+
+            return max(0.01, math.ceil(len(label) / 10) * 10 / scale) * -1
+
+        curr_y_tick_labels = sorted(curr_y_tick_labels, key=lambda x: len(x), reverse=True)
         ax.text(
-            x=-1 * distance_between_label_axis * max(graph_coords),
+            x=__dynamic_distance__(
+                distance_between_label_axis, curr_y_tick_labels[0] if curr_y_tick_labels else ""
+            ) * max(graph_coords),
             y=(max_used_y_val + min_used_y_val) / 2,
             s=label, fontsize=font_size, ha="right"
         )
@@ -328,7 +336,6 @@ def plot_stroke(
         data: List[Stroke],
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         font_size: int = 5,
-        distance_between_label_axis: Union[int, float] = .1,
         theme: str = "blank",
         **kwargs
 ):
@@ -340,23 +347,13 @@ def plot_stroke(
 
     for i, stroke in enumerate(strokes):
         try:
-            ax.hlines(
-                y=i,
-                xmin=graph_coords[stroke.start],
-                xmax=graph_coords[stroke.end],
-                color=stroke.color, lw=2)
-            ax.text(
-                -1 * distance_between_label_axis * max(graph_coords),
-                i + .2,
-                stroke.label,
-                fontsize=font_size,
-                color=stroke.color
-            )
-        except IndexError as err:
-            logger.debug(f"stroke is out of bound: {err}")
+            ax.hlines(y=i, xmin=graph_coords[stroke.start], xmax=graph_coords[stroke.end],  color=stroke.color, lw=2)
+            ax.text(-.1 * max(graph_coords),  i + .2, stroke.label, fontsize=font_size, color=stroke.color)
+        except IndexError as _:
+            logger.info(f"stroke {stroke} is out of bound, this stroke won't show up in final plot")
 
     Theme.set_theme(ax, theme)
-    ax.set_xlim(left=0, right=max(graph_coords))
+    ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(bottom=-1, top=len(strokes))
 
 
@@ -377,14 +374,13 @@ def plot_reference(
         plot_domain: bool = False,
         show_exon_id: bool = False,
         raster: bool = True,
-        distance_between_label_axis: float = 0.3,
         **kwargs
 ):
     u"""
     Plot the structure of reference
     """
     Theme.set_theme(ax, theme)
-    ax.set_xlim(0, max(graph_coords))
+    ax.set_xlim(min(graph_coords), max(graph_coords))
 
     region = obj.region
 
@@ -435,17 +431,15 @@ def plot_reference(
         if transcript.transcript:
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc + 0.25,
+                    ax.text(x=-.01 * max(graph_coords), y=y_loc + 0.25,
                             s=transcript.gene_id, fontsize=font_size, ha="right")
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.25,
+                    ax.text(x=-.01 * max(graph_coords), y=y_loc - 0.25,
                             s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
-                    ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc,
-                            s=transcript.gene + " | " + transcript.transcript,
-                            fontsize=font_size, ha="right")
+                    ax.text(x=-.01 * max(graph_coords), y=y_loc,
+                            s=transcript.gene + " | " + transcript.transcript, fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1 * distance_between_label_axis * max(graph_coords), y=y_loc - 0.1, s=transcript.transcript,
-                        fontsize=font_size, ha="right")
+                ax.text(x=-1, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
 
         # @2018.12.19
         # s and e is the start and end site of single exon
@@ -614,6 +608,7 @@ def plot_reference(
             y_loc += 1
 
     # @2022.05.13 Set y lim using y_loc value.
+    ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(-.5, y_loc + .5)
 
 
@@ -1323,7 +1318,7 @@ def plot_links(ax: mpl.axes.Axes,
         a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
         ax.add_patch(PathPatch(a, fc="none", ec=stroke.color, lw=1))
 
-    ax.set_xlim(0, max(graph_coords))
+    ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(max_y, 0)
     ax.axis("off")
 

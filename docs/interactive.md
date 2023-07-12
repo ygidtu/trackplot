@@ -14,7 +14,10 @@ The `jupyter notebook` of following example were provided at [github](https://gi
 ```python
 from trackplot.plot import Plot
 
-plot = Plot()
+# logfile: save progress logs to file, default: None [stdout]
+# backend: switch the matplotlib backend, default: agg
+# font_family: change the font family in trackplot, default: None [system default font family]
+plot = Plot(logfile=None, backend="agg", font_family=None)
 ```
 
 ###### 2. set reference

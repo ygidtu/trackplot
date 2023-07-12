@@ -20,7 +20,7 @@ import LogComp from "../components/Log.vue"
                   :active="active"
         >
           <el-step title="Set target region"/>
-          <el-step title="Set reference"/>
+          <el-step title="Set annotation"/>
           <el-step title="Set plot details"/>
           <el-step title="Preview/Save"/>
         </el-steps>
@@ -50,7 +50,7 @@ import LogComp from "../components/Log.vue"
                 </el-col>
               </el-row>
             </el-tab-pane>
-            <el-tab-pane label="Reference" :name="1">
+            <el-tab-pane label="Annotation" :name="1">
               <el-scrollbar :max-height="windowHeight" always>
                 <el-col :span="24">
                   <reference @select-data="makeProgress"/>
