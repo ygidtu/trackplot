@@ -4,7 +4,6 @@ u"""
 The parent object of input files
 """
 from copy import deepcopy
-from loguru import logger
 from typing import Optional, Set, List, Dict
 
 
@@ -56,9 +55,8 @@ class File(object):
             if isinstance(self.data, list):
                 try:
                     [x.transform(self.log_trans) for x in self.data]
-                except AttributeError as err:
-                    # should be Reads
-                    logger.debug(f"one of current data should be Reads: {err}: {[type(x) for x in self.data]}")
+                except AttributeError as _:
+                    # should be Reads, Reads will cause this error, ignore it
                     pass
             elif not isinstance(self.data, dict):
                 self.data.transform(self.log_trans)

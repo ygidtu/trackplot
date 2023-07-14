@@ -64,7 +64,10 @@ export default {
       ).then((response: AxiosResponse) => {
         this.logs = response.data
       }).catch((error: AxiosError) => {
-        errorPrint(error)
+        if (this.count < 2) {
+          errorPrint(error)
+          this.count = 2
+        }
       })
     },
     logLevel (level: string) {

@@ -78,11 +78,8 @@ pip install trackplot
 
 ---
 
-2. AppImage (Linux x86_64 platform only)
+2. AppImage (Linux x86_64 platform only) [Download here](https://github.com/ygidtu/trackplot/releases)
 
->Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
-Once you have installation issues and not familiar with docker, 
-please download the AppImage file from our releases.
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
 - Arch: `appimagecrafters/tests-env:archlinux-latest`
@@ -91,11 +88,17 @@ All the AppImage files were tested on the official pre-built GNU/Linux distribut
 - Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
 - Centos: `appimagecrafters/tests-env:centos-7`
 
+>Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+Once you have installation issues and not familiar with docker, 
+please download the AppImage file from our releases.
+> 
 > Once the AppImage file couldn't work properly please open an issue in this repo, 
-and provide us the system platform and full error messages for us to debug. 
-
-> **Note:** the AppImage will decompress all bundled files before execution, 
+and provide us the system platform and full error messages for us to debug.
+> 
+> **Notes:** 
+> 1. the AppImage will decompress all bundled files before execution, 
 > therefore it will a little bit slower than command line tools and source code
+> 2. please use absolute path instead of relative path.
 
 ```bash
 # example with version v0.2.6, please using your interested version according to your needs
@@ -244,6 +247,7 @@ docker run --name trackplotweb \
 
 Before this, please make sure that trackplot has been properly installed in your env.  
 
+
 ```bash
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot/web
@@ -256,7 +260,7 @@ vite build
 ls ../ui
 
 # prepare the backend server
-pip install fastapi pydantic jinja2 uvicorn
+pip install flask
 
 # before startup, check whether the trackplot properly installed
 python -c "import trackplot; print(trackplot.__version__)"

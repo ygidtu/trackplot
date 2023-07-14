@@ -8,40 +8,20 @@ import re
 from glob import glob
 
 import click
-import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, Response
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+
+from flask import Flask, render_template, jsonify, send_file, request
 
 from trackplot.cli import load_barcodes, __version__
 from trackplot.plot import *
 
-
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")
-
-
-if not os.path.exists(__UI__):
-    raise FileNotFoundError("ui files not exists")
-
-
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.mount("/static", StaticFiles(directory=__UI__, html=True), name="static")
-templates = Jinja2Templates(directory=__UI__)
-
 __PLOT__ = os.path.join(os.path.dirname(__file__), "plots")
 
+app = Flask( __name__, static_url_path="/static", static_folder=__UI__, template_folder=__UI__)
 
+
+# supported trackplot settings
 __COMMON_PARAMS__ = [
     {
         "key": "path",
@@ -612,46 +592,94 @@ __PARAMS__ = {
 }
 
 
-class Path(BaseModel):
-    path: str
-    isdir: bool
+# backend and frontend data format restriction
+class Path:
+    def __init__(self, path: str, isdir: bool):
+        self.path = path
+        self.isdir = isdir
 
 
-class Param(BaseModel):
-    key: str
-    annotation: str
-    default: str
-    note: Optional[str]
+class Param:
+    def __init__(self, key: str, annotation: str, default: str, note: Optional[str] = None, **kwargs):
+        self.key = key
+        self.annotation = annotation
+        self.default = default
+        self.note = note
 
 
-class PlotParam(BaseModel):
-    path: str
-    type: Optional[str]
-    param: List[Param]
+class PlotParam:
+
+    __slots__ = ["path", "type", "param"]
+
+    def __init__(self, path: str, type: Optional[str], param: List[Param]):
+        self.path = path
+        self.type = type
+        self.param = param
+
+    def __dict__(self):
+        return {
+            "path": self.path,
+            "type": self.type,
+            "param": [vars(x) for x in self.param]
+        }
+
+    @classmethod
+    def create(cls, data: dict):
+        if not data:
+            return None
+        res = {}
+        for key, value in data.items():
+            if key not in cls.__slots__:
+                continue
+            if key != "param":
+                res[key] = value
+            else:
+                res[key] = [Param(**val) for val in value]
+        return cls(**res)
 
 
-class PostForm(BaseModel):
-    region: PlotParam
-    reference: PlotParam
-    files: List[PlotParam]
-    draw: PlotParam
+class PostForm:
+    __slots__ = ["region", "reference", "files", "draw"]
+
+    def __init__(self, region: PlotParam, reference: PlotParam, files: List[PlotParam], draw: PlotParam):
+        self.region = region
+        self.reference = reference
+        self.files = files
+        self.draw = draw
+
+    @classmethod
+    def create(cls, data: dict):
+        res = {}
+        for key, value in data.items():
+            if key not in cls.__slots__:
+                continue
+            if key != "files":
+                if value:
+                    res[key] = PlotParam.create(value)
+            else:
+                res[key] = [PlotParam.create(val) for val in value if val]
+
+        return cls(**res)
 
 
-class Logs(BaseModel):
-    time: str
-    level: str
-    source: str
-    message: str
+class Logs:
+    def __init__(self, time: str, level: str, source: str, message: str):
+        self.time = time
+        self.level = level
+        self.source = source
+        self.message = message
 
 
 def get_value(param: Param):
     u"""
     convert parameters in post param to specific format
     """
-    if "empty" in param.default:
+
+    if "empty" in str(param.default):
         return None
+
     if "str" in param.annotation:
-        return param.default if param.default.lower() != "false" else None
+        return param.default if str(param.default).lower() != "false" else None
 
     if param.annotation == "int":
         return int(param.default)
@@ -660,7 +688,7 @@ def get_value(param: Param):
         return float(param.default)
 
     if param.annotation == "bool":
-        return param.default.lower() != 'false'
+        return str(param.default).lower() == "true"
 
     if param.annotation == "Union[int, float]":
         return float(param.default)
@@ -671,18 +699,28 @@ def get_value(param: Param):
     return param.default
 
 
-@app.get("/")
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+def clean(annotation):
+    if "empty" in annotation:
+        return ""
+
+    annotation = annotation.replace("<class '", "").replace("'>", "").replace("'", "")
+    return annotation.replace("typing.", "")
 
 
-@app.get("/api/file")
-async def file(target: str = __DIR__, valid: bool = False) -> Union[bool, List[Path]]:
+@app.route("/")
+def root():
+    return render_template("index.html")
+
+
+@app.route("/api/file")
+def file():
+    target = request.args.get('target', __DIR__)
+    valid = request.args.get("valid", "false").lower() == "true"
     fs = []
     src = target
 
     if valid:
-        return os.path.isfile(target)
+        return jsonify(os.path.isfile(target))
 
     try:
         if os.path.isdir(src):
@@ -693,80 +731,38 @@ async def file(target: str = __DIR__, valid: bool = False) -> Union[bool, List[P
             if not os.path.basename(x).startswith("."):
                 fs.append(Path(path=x, isdir=os.path.isdir(x)))
     except OSError as err:
-        raise HTTPException(status_code=404, detail=str(err))
+        # raise HTTPException(status_code=404, detail=str(err))
+        return jsonify(str(err)), 404
 
-    return sorted(fs, key=lambda x: (not x.isdir, x.path))
-
-
-def clean(annotation):
-    if "empty" in annotation:
-        return ""
-
-    annotation = annotation.replace("<class '", "").replace("'>", "").replace("'", "")
-    return annotation.replace("typing.", "")
+    return jsonify([vars(x) for x in sorted(fs, key=lambda x: (not x.isdir, x.path))])
 
 
-@app.get("/api/params")
-async def params(target: Optional[str] = None) -> List[Param]:
+@app.route("/api/params")
+def params():
+    target = request.args.get("target")
     res = []
 
     for p in __PARAMS__[target]:
         if not isinstance(p, dict):
             for cp in __COMMON_PARAMS__:
                 if cp["key"] in p:
-                    res.append(Param(**cp))
+                    res.append(cp)
         else:
-            res.append(Param(**p))
+            res.append(p)
 
-    # if not target:
-    #     method_list = [attribute for attribute in dir(Plot) if
-    #                    callable(getattr(Plot, attribute)) and attribute.startswith('__') is false]
-    #     return method_list
-    #
-    # sig = inspect.signature(getattr(Plot, target))
-    #
-    # for param in sig.parameters.values():
-    #     if param.name == "self":
-    #         continue
-    #
-    #     if param.name == "output":
-    #         continue
-    #
-    #     if param.name == "return_image":
-    #         continue
-    #
-    #     if param.name == "sc_height_ratio":
-    #         continue
-    #
-    #     if param.name == "barcode":
-    #         continue
-    #
-    #     res.append(Param(
-    #         key=param.name,
-    #         annotation=clean(str(param.annotation)),
-    #         default=str(param.default) if param.default is not None else ""
-    #     ))
-    #
-    # if target == "plot":
-    #     res.append(Param(key="same_y", annotation='bool', default="false"))
-    #     res.append(Param(key="remove_duplicate_umi", annotation='bool', default="false"))
-    #     res.append(Param(key="threshold", annotation='int', default="0"))
-    #     res.append(Param(key="normalize_format", annotation="choice['normal', 'cpm', 'rpkm']",
-    #                      default="normal", note="The normalize format for bam file"))
-    #     res.append(Param(key="fill_step", annotation="choice['post', 'pre', 'mid']", default="post",
-    #                      note="Define step if the filling should be a step function, i.e. constant in between x. "
-    #                           "Detailed info please check: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html"))
-    #     res.append(Param(key="smooth_bin", annotation='int',
-    #                      default="20", note="The bin size used to smooth ATAC fragments."))
-
-    return res
+    return jsonify(res)
 
 
-@app.post("/api/plot/{pid}")
-async def plot(pid: str, param: Optional[PostForm]):
+@app.route("/api/plot/<pid>", methods=["POST"])
+def plot(pid: str):
+    param = request.get_json()
+    param = PostForm.create(param)
+
     log = os.path.join(__PLOT__, pid + ".log")
+
     if os.path.exists(log):
         os.remove(log)
+
     p = Plot(log)
 
     if param:
@@ -827,20 +823,20 @@ async def plot(pid: str, param: Optional[PostForm]):
         if param_.type == "plot":
             o = p.plot(return_image="png", **kwargs)
             o.seek(0)
-            return StreamingResponse(o, media_type=f"image/png")
+            return send_file(o, mimetype=f"image/png")
         elif param_.type == "save":
             o = p.plot(return_image="pdf", **kwargs)
             o.seek(0)
-            resp = StreamingResponse(o, media_type=f"image/pdf")
-            resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-            resp.headers["Content-Disposition"] = f"attachment; filename={p.region}.pdf"
-            return resp
-    except (AssertionError, OSError, TypeError) as err:
+            return send_file(o, mimetype=f"image/pdf", as_attachment=True, download_name=f"{p.region}.pdf")
+
+    except Exception as err:
         logger.error(err)
+        return jsonify(str(err)), 501
+    return jsonify("")
 
-
-@app.get("/api/del")
-async def delete(pid: str):
+@app.route("/api/del")
+def delete():
+    pid = request.args.get("pid", "?")
     pk = os.path.join(__PLOT__, pid)
     if os.path.exists(pk):
         os.remove(pk)
@@ -848,18 +844,19 @@ async def delete(pid: str):
     log = os.path.join(__PLOT__, pid + ".log")
     if os.path.exists(log):
         os.remove(log)
+    return jsonify("done")
 
-@app.get("/api/log")
-async def logs(pid: str, debug: bool = False, download: bool = False):
+
+@app.route("/api/log")
+def logs():
+    pid = request.args.get("pid", "?")
+    debug = request.args.get("debug", "false").lower() == "true"
+    download = request.args.get("download", "false").lower() == "true"
+
     logfile = os.path.join(__PLOT__, pid + ".log")
 
     if download:
-        if os.path.exists(logfile):
-            with open(logfile) as r:
-                resp = Response(r.read())
-                resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-                resp.headers["Content-Disposition"] = f"attachment; filename={os.path.basename(logfile)}"
-                return resp
+        return send_file(logfile, as_attachment=True, download_name=os.path.basename(logfile))
 
     log_info = []
     if os.path.exists(logfile):
@@ -869,41 +866,40 @@ async def logs(pid: str, debug: bool = False, download: bool = False):
                     time, level, info = line.strip().split("|")
                     infos = info.split("-")
                     source = infos[0]
-                    info = "-".join(infos[1:])
 
                     if not debug and "DEBUG" in level:
                         continue
 
-                    log_info.append(Logs(
+                    log_info.append(vars(Logs(
                         time=time.strip(),
                         level=level.strip(),
                         source=source.strip(),
-                        message=info.strip()
-                    ))
+                        message=info.replace(source, "").strip()
+                    )))
                 except Exception as err:
-                    log_info.append(Logs(
+                    log_info.append(vars(Logs(
                         time="",
                         level="WARN",
                         source="log api",
                         message=str(err)
-                    ))
+                    )))
 
-    return log_info[::-1]
+    return jsonify(log_info[::-1])
 
 
 @click.command(context_settings=dict(help_option_names=['--help']), )
 @click.option("-h", "--host", type=click.STRING, default="127.0.0.1", help="the ip address binding to")
 @click.option("-p", "--port", type=click.INT, default=5000, help="the port to listen on")
-@click.option("-r", "--reload", is_flag=True, help="auto-reload for development")
 @click.option("--plots", type=click.Path(), default=__PLOT__,
-              help="where to save the backend plot data and logs, required while using appImage.")
+              help="the path to directory where to save the backend plot data and logs, required while using appImage.")
 @click.version_option(__version__, message="Current version %(version)s")
-def main(host: str, port: int, reload: bool, plots: str):
+def main(host: str, port: int, plots: str):
     global __PLOT__
     if plots:
         __PLOT__ = plots
     os.makedirs(__PLOT__, exist_ok=True)
-    uvicorn.run(app='server:app', host=host, port=int(port), log_level="info", reload=reload)
+
+    app.run(host=host, port=port)
 
 
 if __name__ == '__main__':

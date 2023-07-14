@@ -16,6 +16,7 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
+from trackplot.file.ATAC import ATAC
 from trackplot.file.Bam import Bam
 from trackplot.file.BedGraph import Bedgraph
 from trackplot.file.Bigwig import Bigwig
@@ -178,19 +179,18 @@ class Plot(object):
 
         # print warning info about backend
         try:
-            mpl.use(backend)
+            plt.switch_backend(backend)
         except ImportError as err:
             if backend.lower() == "cairo":
                 logger.debug("Cairo backend required cairocffi installed")
                 logger.debug("Switch back to Agg backend")
             else:
                 logger.debug(f"backend error, switch back to Agg: {err}")
-            mpl.use("Agg")
+            plt.switch_backend("Agg")
 
-        mpl.rcParams['pdf.fonttype'] = 42
-
+        plt.rcParams['pdf.fonttype'] = 42
         if font_family:
-            mpl.rcParams['font.family'] = font_family
+            plt.rcParams['font.family'] = font_family
 
     @property
     def chrom(self) -> Optional[str]:
@@ -1011,7 +1011,7 @@ class Plot(object):
              raster: bool = False,
              return_image: Optional[str] = None,
              sc_height_ratio: Optional[Dict[str, float]] = None,
-             distance_between_label_axis: float = 0,
+             distance_between_label_axis: float = .3,
              n_jobs: int = 1, fill_step: str = "post",
              *args, **kwargs):
         u"""
@@ -1075,13 +1075,6 @@ class Plot(object):
             if n_jobs <= 1:
                 p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
-            # for obj in p.obj:
-            #     if isinstance(obj, ReadSegment):
-            #         continue
-            #     if isinstance(obj, HiCTrack):
-            #         continue
-            #     obj.transform()
-
             plots_n_rows += p.len(reference_scale)
             if p.type in ["heatmap", "hic"]:
                 plots_n_cols = 2
@@ -1090,8 +1083,12 @@ class Plot(object):
                 height_ratio.append(sc_height_ratio.get(p.type, 1))
             elif p.type == "igv":
                 height_ratio.append(p.len(reference_scale))
+            elif p.type == "site-plot":
+                height_ratio += [1, 1]
             else:
                 height_ratio.append(1)
+
+        height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
 
         logger.debug(f"plots n_rows={plots_n_rows}; n_cols = {plots_n_cols}")
         logger.info("init graph_coords")
@@ -1101,13 +1098,7 @@ class Plot(object):
             logger.debug(f"heatmap require intron_scale = 1")
             intron_scale = 1
 
-        self.graph_coords = init_graph_coords(
-            self.region, self.exons,
-            exon_scale=exon_scale,
-            intron_scale=intron_scale
-        )
-
-        height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
+        self.graph_coords = init_graph_coords(self.region, self.exons, exon_scale=exon_scale, intron_scale=intron_scale)
 
         if width and height:
             fig = plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi)
@@ -1146,6 +1137,7 @@ class Plot(object):
             elif kwargs.get("same_y"):
                 max_y_val_, min_y_val_ = max(max_used_y_val.values()), min(min_used_y_val.values())
 
+            logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             if p.type == "density":
                 plot_density(
                     ax=ax_var,
@@ -1179,16 +1171,14 @@ class Plot(object):
                     **self.params[p]
                 )
 
-                site_ax = plt.subplot(gs[curr_idx + 1, 0])
-
+                curr_idx += 1
                 plot_site_plot(
-                    site_ax, p.obj[0],
+                    plt.subplot(gs[curr_idx, 0]), p.obj[0],
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
                     **self.params[p]
                 )
-                curr_idx += 1
             elif p.type == "heatmap":
                 plot_heatmap(
                     ax=ax_var,
@@ -1235,12 +1225,14 @@ class Plot(object):
                 curr_idx += p.len(reference_scale)
 
         if self.link:
+            logger.info(f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             for link in self.link:
                 plot_links(ax=plt.subplot(gs[curr_idx:(curr_idx + 1), 0]),
                            data=link, graph_coords=self.graph_coords)
                 curr_idx += 1
 
         # draw x label
+        logger.info(f"plotting x-axis ticks at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
         set_x_ticks(
             ax=plt.subplot(gs[curr_idx, 0]), region=self.region,
             graph_coords=self.graph_coords,
@@ -1250,6 +1242,7 @@ class Plot(object):
         curr_idx += 1
 
         if self.reference is not None:
+            logger.info(f"plotting reference at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
             plot_reference(ax=ax_var, obj=self.reference,
                            graph_coords=self.graph_coords,
@@ -1263,6 +1256,7 @@ class Plot(object):
             curr_idx += self.reference.len(scale=reference_scale)
 
         if self.stroke:
+            logger.info(f"plotting stroke at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             ax_var = plt.subplot(gs[curr_idx:plots_n_rows, 0])
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 

@@ -186,11 +186,12 @@ import LogComp from "../components/Log.vue"
 
 <script lang="ts">
 
-import {defineComponent,} from "vue";
+import {defineComponent} from "vue";
 import {AxiosRequestConfig, AxiosResponse, AxiosError} from "axios";
 import {saveAs} from "file-saver";
 import urls from '../url'
 import {errorPrint, Notification} from "../error";
+import {ElLoading} from "element-plus";
 
 
 interface Param {
@@ -243,7 +244,7 @@ export default defineComponent({
         ]
       },
       progress: progress,
-      img: img
+      img: img,
     };
   },
   methods: {
@@ -286,11 +287,16 @@ export default defineComponent({
       } else if (file.type === "plot" || file.type == "save") {
         this.progress.draw = file
         this.setting = "log"
-        console.log(file)
         this.submit(file.type)
       }
     },
     submit(type: string) {
+      const loading = ElLoading.service({
+        lock: true,
+        text: 'Loading',
+        background: 'rgba(0, 0, 0, 0.7)',
+      })
+
       let config: AxiosRequestConfig = {responseType: "application/json"}
       if (type === "plot" || type === "save") {
         config["responseType"] = "blob"
@@ -325,6 +331,8 @@ export default defineComponent({
         }
       }).catch((error: AxiosError) => {
         errorPrint(error)
+      }).finally(() => {
+        loading.close()
       })
     },
   },

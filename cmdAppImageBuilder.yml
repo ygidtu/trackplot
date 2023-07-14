@@ -25,6 +25,8 @@ AppDir:
 
     include:
       - libc6-dev
+      - samtools
+      - tabix
     exclude: []
 
   runtime:

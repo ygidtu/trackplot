@@ -37,8 +37,6 @@ declare module '@vue/runtime-core' {
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElText: typeof import('element-plus/es')['ElText']
-    ElTimeline: typeof import('element-plus/es')['ElTimeline']
-    ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     Log: typeof import('./src/components/Log.vue')['default']
     Param: typeof import('./src/components/Param.vue')['default']
     Reference: typeof import('./src/components/Reference.vue')['default']

@@ -504,11 +504,11 @@ def main(**kwargs):
     # print warning info about backend
     if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":
         logger.debug(f"{kwargs['backend']} backend may have problems with small domain, "
-                       f"if there is any please try cairo backend instead.")
+                     f"if there is any please try cairo backend instead.")
 
     if kwargs["raster"] and kwargs["heatmap"] and kwargs["backend"].lower() == "cairo":
         logger.debug(f"{kwargs['backend']} backend may have problems with rasterized heatmap, "
-                       f"if there is any, please try another backend instead.")
+                     f"if there is any, please try another backend instead.")
 
     for k, v in kwargs.items():
         logger.debug(f"{k} => {v}")
@@ -533,7 +533,6 @@ def main(**kwargs):
     # add reference
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
-            logger.debug(f"add {key} {kwargs[key]}")
             if key == "reference":
                 p.set_reference(kwargs["reference"],
                                 show_gene=not kwargs["no_gene"],

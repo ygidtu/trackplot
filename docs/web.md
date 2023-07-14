@@ -66,7 +66,7 @@ npm install -g vue-cli vite && npm install
 vite build
 
 # prepare the backend server
-pip install fastapi pydantic jinja2 uvicorn
+pip install flask
 
 # show the help document
 python server.py --help
