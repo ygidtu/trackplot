@@ -167,22 +167,21 @@ $PWD/Python-3.10.12/Python-3.10.12/Python/bin/trackplot --help
 4.2 python3 is available
 
 ```bash
-# 1. download trackplot from github
+# 1. download the trackplot
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot
 
-# 2. install the requirements by pip
+# 2. install the trackplot and it's requirements to python env
+pip install -e .
+trackplot --help  # or python main.py --help
+
+# Note: pybigwig hicmatrix were optional, used to enable bigWig, bigBed and hicMatrix support
+# Once the installation of pybigwig and hicmatrix fails, 
+# and these two formats are not necessary, 
+# you still can using trackplot in the following way
 pip install -r requirements.txt
-
-# 3. install trackplot
-python setup.py install
-
-# optional, enable bigWig, bigBed and hicMatrix support
-# pip install pybigwig hicmatrix
-
-trackplot --help
-# or
 python main.py --help
+
 ```
 
 ---
@@ -195,16 +194,21 @@ First make sure your conda is properly installed.
 # Check if conda has been successfully installed.
 conda --version
 
-# if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+# if conda is not installed, refer to https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+
 ```
 
 After successful installation
 
 ```bash
+
+# install trackplot into the default conda env 
 conda install -c bioconda -c conda-forge trackplot
 
 # or install trackplot into an isolated environments
 conda create -n trackplot -c bioconda -c conda-forge trackplot
+
+# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
 
 # or install latest trackplot  
 git clone https://github.com/ygidtu/trackplot.git trackplot
