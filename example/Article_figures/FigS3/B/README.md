@@ -1,5 +1,5 @@
 
-## FigS 2B
+## FigS 3B
 
 Data was download from [Gao et al. Genome Biology,2021.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-020-02241-7),
 and we used [nanom6A](https://github.com/gaoyubang/nanom6A) and [nanopolish](https://github.com/nanoporetech/pipeline-polya-ng) for calling m6A and length of poly(A)  

@@ -1,5 +1,5 @@
 
-## FigS 3A
+## FigS 4A
 
 Data was downloaded from [Zhou et al., Nucleic Acids Research, 2022](https://academic.oup.com/nar/article/50/11/e66/6548409)
 

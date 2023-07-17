@@ -1,5 +1,5 @@
 
-## FigS 2A
+## FigS 3A
 
 Data was downloaded from [SRX8994511](https://www.ncbi.nlm.nih.gov/sra/SRX8994511). 
 After mapping to the corresponding genome using minimap2, we convert bam file into bed file. the detailed command line as follow,
