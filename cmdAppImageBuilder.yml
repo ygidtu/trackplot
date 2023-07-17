@@ -4,8 +4,8 @@ script:
   - rm -rf AppDir  | true
   # Copy the python application code into the AppDir
   - mamba create -y -p AppDir python=3.11
-  - mkdir AppDir/opt && cp -r main.py trackplot requirements.txt AppDir/opt
-  - AppDir/bin/pip install -r AppDir/opt/requirements.txt
+  - mkdir AppDir/opt && cp -r main.py trackplot pyproject.toml poetry.lock README.md AppDir/opt
+  - AppDir/bin/pip install -e AppDir/opt
 
 AppDir:
   app_info:

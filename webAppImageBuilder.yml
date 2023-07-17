@@ -3,9 +3,8 @@ script:
   # Remove any previous build
   - rm -rf AppDir  | true
   - mamba create -y -p AppDir python=3.11
-  - mkdir AppDir/opt && cp -r main.py server.py trackplot requirements.txt ui AppDir/opt
-  - AppDir/bin/pip install -r AppDir/opt/requirements.txt
-  - AppDir/bin/pip install install flask
+  - mkdir AppDir/opt && cp -r main.py server.py trackplot pyproject.toml poetry.lock README.md ui AppDir/opt
+  - AppDir/bin/pip install -e AppDir/opt && AppDir/bin/pip install flask
 
 AppDir:
   app_info:

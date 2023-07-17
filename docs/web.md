@@ -24,18 +24,21 @@ chmod +x trackplotweb-${VERSION}-x86_64.AppImage
 We also prepared a docker image of web server, uses could access this by following this,
 
 ```shell
-
 docker pull ygidtu/trackplotweb
 
 # Deploy the server
 docker run --name trackplotweb \
-  --rm -v $PWD:$PWD \
+  --rm \
+  -v $PWD/data:/data \
+  -v $PWD/plots/:/plots
   -p 5000:5000 \
+  --data /data \
+  --plots /plots \
   ygidtu/trackplotweb 
 ```
 
 `-p`: public and private port for the server, default:5000(public):5000(private)
-- `-v`, `--volumn`: mount the working directory to docker container
+- `-v`, `--volume`: mount the working directory to docker container, for example, the `$PWD/data` could replace by the path to your directory contains all necessary data
 - `--user`: prevent docker read and write file using root privileges
 - the rest usage please check [Command line usage](./command.md)
 
@@ -70,12 +73,19 @@ pip install flask
 
 # show the help document
 python server.py --help
+
+Usage: server.py [OPTIONS]
+
+Options:
+  -h, --host TEXT     the ip address binding to
+  -p, --port INTEGER  the port to listen on
+  --plots PATH        the path to directory where to save the backend plot
+                      data and logs, required while using appImage.
+  --data PATH         the path to directory contains all necessary data files.
+  --version           Show the version and exit.
+  --help              Show this message and exit.
 ```
 
-`-h/--host`: the ip address of the server, default: 127.0.0.1
-`-p/--port` :the port of the server listening, default: 5000
-`--version`: display the current trackplot version
-`--help`: show the help message
 
 Deploy the server
 

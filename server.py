@@ -715,6 +715,10 @@ def root():
 @app.route("/api/file")
 def file():
     target = request.args.get('target', __DIR__)
+
+    if not target.strip("/"):
+        target = __DIR__
+
     valid = request.args.get("valid", "false").lower() == "true"
     fs = []
     src = target
@@ -834,6 +838,7 @@ def plot(pid: str):
         return jsonify(str(err)), 501
     return jsonify("")
 
+
 @app.route("/api/del")
 def delete():
     pid = request.args.get("pid", "?")
@@ -892,11 +897,17 @@ def logs():
 @click.option("-p", "--port", type=click.INT, default=5000, help="the port to listen on")
 @click.option("--plots", type=click.Path(), default=__PLOT__,
               help="the path to directory where to save the backend plot data and logs, required while using appImage.")
+@click.option("--data", type=click.Path(exists=True), default=__DIR__,
+              help="the path to directory contains all necessary data files.")
 @click.version_option(__version__, message="Current version %(version)s")
-def main(host: str, port: int, plots: str):
+def main(host: str, port: int, plots: str, data: str):
     global __PLOT__
     if plots:
         __PLOT__ = plots
+
+    global __DIR__
+    if data:
+        __DIR__ = data
     os.makedirs(__PLOT__, exist_ok=True)
 
     app.run(host=host, port=port)
