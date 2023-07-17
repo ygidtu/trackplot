@@ -19,11 +19,11 @@ Therefore, it is important to ensure that you have Python installed, preferably 
 1. From pipy
 
     ```shell
-    # To enable support for bigWig, bigBed, and hicMatrix, you can use the following commands:
+    """To enable support for bigWig, bigBed, and hicMatrix, you can use the following commands:"""
     pip install pybigwig hicmatrix
 
     pip install trackplot
-    # Please note that some pypi mirrors may not sync all the packages we depend on. 
-    # If you encounter the error message "No local packages or working download links found for xxx," 
-    # please try using another pypi mirror. 
+    """ Please note that some pypi mirrors may not sync all the packages we depend on. """ 
+    """ If you encounter the error message "No local packages or working download links found for xxx," """ 
+    """ please try using another pypi mirror. """ 
     ```

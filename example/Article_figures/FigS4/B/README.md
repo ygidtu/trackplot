@@ -1,4 +1,4 @@
-## FigS 3B
+## FigS 4B
 
 ### An example for visualizing Single cell transcriptional and chromatin accessibility profiling datasets.
 
