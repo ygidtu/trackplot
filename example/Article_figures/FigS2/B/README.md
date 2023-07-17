@@ -1,5 +1,5 @@
 
-## FigS 1B
+## FigS 2B
 
 Before running this example, you should download these data.
 

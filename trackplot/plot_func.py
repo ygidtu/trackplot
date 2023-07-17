@@ -1276,9 +1276,9 @@ def plot_igv_like(
                         y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
                         y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
                     ]
-                    ax.fill(
-                        x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+
                     if is_site:
+                        ax.fill(x, y, 'b' if not feature_color else feature_color, lw=.2, zorder=20)
                         ax.scatter(graph_coords[s],
                                    y_loc + exon_width * width_ratio,
                                    c='b' if not feature_color else feature_color,
@@ -1286,6 +1286,8 @@ def plot_igv_like(
                                    linewidths=(0,),
                                    rasterized=raster
                                    )
+                    else:
+                        ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
             if add_plot:
                 y_loc += 1
 

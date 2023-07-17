@@ -78,7 +78,7 @@ pip install trackplot
 
 ---
 
-2. AppImage (Linux x86_64 platform only)
+2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux x86_64 platform only)
 
 >Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
 Once you have installation issues and not familiar with docker, 
@@ -125,18 +125,63 @@ docker run --rm ygidtu/trackplot --help
 
 4. install from source code
 
+Prior to installing the tool from the source code, users should verify their Python version (>=3.8).
+
 ```bash
+python --version
+# Python 3.10.8
+```
+
+4.1 python3 is not available 
+
+If your Python version does not match the requirements of Trackplot, 
+users could follow the cmd to install and 
+more detailed instruction for different system please refer to [here](https://realpython.com/installing-python/).  
+
+```bash
+# If the default Python version does not meet the requirements of Trackplot, 
+# users should install an appropriate version. 
+
+# 1. install from source code
+#   1.1 Step 1: Download the Source Code 
+wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tgz
+tar -xvzf Python-3.10.12.tgz
+
+#   1.2 Step 2: Build Python
+find ./Python-3.10.12/Python -type d | xargs chmod 0755
+cd Python-3.10.12
+./configure --prefix=$PWD/Python-3.10.12/Python
+make
+make install
+
+# 2. install trackplot
+git clone https://github.com/ygidtu/trackplot trackplot
+
+$PWD/Python-3.10.12/python -m pip install -e trackplot/
+
+# 3. check trackplot
+$PWD/Python-3.10.12/Python-3.10.12/Python/bin/trackplot --help
+
+```
+
+4.2 python3 is available
+
+```bash
+# 1. download the trackplot
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot
+
+# 2. install the trackplot and it's requirements to python env
+pip install -e .
+trackplot --help  # or python main.py --help
+
+# Note: pybigwig hicmatrix were optional, used to enable bigWig, bigBed and hicMatrix support
+# Once the installation of pybigwig and hicmatrix fails, 
+# and these two formats are not necessary, 
+# you still can using trackplot in the following way
 pip install -r requirements.txt
-python setup.py install
-
-# optional, enable bigWig, bigBed and hicMatrix support
-pip install pybigwig hicmatrix
-
-trackplot --help
-# or
 python main.py --help
+
 ```
 
 ---
@@ -149,16 +194,21 @@ First make sure your conda is properly installed.
 # Check if conda has been successfully installed.
 conda --version
 
-# if not https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+# if conda is not installed, refer to https://conda.io/projects/conda/en/latest/user-guide/install/download.html
+
 ```
 
 After successful installation
 
 ```bash
+
+# install trackplot into the default conda env 
 conda install -c bioconda -c conda-forge trackplot
 
 # or install trackplot into an isolated environments
 conda create -n trackplot -c bioconda -c conda-forge trackplot
+
+# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
 
 # or install latest trackplot  
 git clone https://github.com/ygidtu/trackplot.git trackplot
@@ -345,4 +395,3 @@ contact [Yiming Zhang](https://github.com/ygidtu) or
 If you use the tool in your publication, please cite by
 
 [Zhang et al. bioRxiv, 2022.11.02.514803.](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
-
