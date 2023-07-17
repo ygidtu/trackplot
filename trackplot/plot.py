@@ -271,8 +271,8 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
-        logger.info(f"add focus: {focus}" if focus else f"add focus: {start}-{end}")
         if focus:
+            logger.info(f"add focus: {focus}")
             for site in focus.split(":"):
                 site = sorted([int(x) - self.start for x in site.split("-")])
                 if site[0] < 0:
@@ -284,6 +284,7 @@ class Plot(object):
                 self.focus[site[0]] = max(site[1], self.focus.get(site[0], -1))
 
         if 0 < start < end:
+            logger.info(f"add focus: {start}-{end}")
             self.focus[start] = max(end, self.focus.get(start, -1))
         return self
 
@@ -305,11 +306,12 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
-        logger.info(f"add stroke: {stroke}" if stroke else f"add stroke: {start}-{end}")
         if stroke:
+            logger.info(f"add stroke: {stroke}")
             self.stroke += Stroke.create(stroke, self.region)
 
         if 0 < start < end:
+            logger.info(f"add stroke: {start}-{end}")
             self.stroke.append(Stroke(start - self.start, end - self.end, color, label))
         return self
 
@@ -331,11 +333,13 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
-        logger.info(f"add link: {link}" if link else f"add stroke: {start}-{end}")
+
         if link:
+            logger.info(f"add link: {link}")
             self.link.append(Stroke.create(link, self.region, default_color=color))
 
         if 0 < start < end:
+            logger.info(f"add link: {start}-{end}")
             self.link.append([Stroke(start - self.start, end - self.end, color, label)])
         return self
 
@@ -392,7 +396,7 @@ class Plot(object):
         :return:
         """
         logger.info(f"set annotation file to {gtf}")
-        self.annotation = Reference.create(
+        self.annotation = Annotation.create(
             gtf,
             add_domain=add_domain,
             add_local_domain=local_domain,
@@ -1133,6 +1137,9 @@ class Plot(object):
                 ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale), 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
+
+            if curr_idx == 0:
+                ax_var.set_title(str(self.region), loc="left")
 
             max_y_val_, min_y_val_ = None, None
             if kwargs.get("same_y_sc") and p.obj[0].is_single_cell:

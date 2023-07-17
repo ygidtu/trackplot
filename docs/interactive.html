@@ -15694,7 +15694,18 @@ class="
     <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">raster</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
-<span class="c1"># save plot into test_plot.png (pdf and svg also supported), with given width and height, the raster=True, will reduce layers in pdf or svg format</span>
+
+<span class="c1"># to increase the resolution of output, users can replace `png` to `pdf` format or increase the number of dpi `dpi=600`</span>
+<span class="sd">"""</span>
+<span class="sd">plot.plot(</span>
+<span class="sd">    output = "test_plot.pdf",</span>
+<span class="sd">    threshold=10,</span>
+<span class="sd">    height = 1,</span>
+<span class="sd">    width=10,</span>
+<span class="sd">    dpi=600,</span>
+<span class="sd">    raster=False</span>
+<span class="sd">)</span>
+<span class="sd">"""</span>
 </pre></div>
 
      </div>

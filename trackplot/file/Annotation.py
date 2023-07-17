@@ -23,7 +23,7 @@ from trackplot.base.Transcript import Transcript
 from trackplot.file.File import File
 
 
-class Reference(File):
+class Annotation(File):
     u"""
     The reference file, support gtf and gff format
     """

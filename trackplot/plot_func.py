@@ -30,10 +30,10 @@ from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.base.ReadDepth import ReadDepth
 from trackplot.base.Stroke import Stroke
 from trackplot.conf.config import CLUSTERING_METHOD, DISTANCE_METRIC
+from trackplot.file.Annotation import Annotation
 from trackplot.file.File import File
 from trackplot.file.HiCMatrixTrack import HiCTrack
 from trackplot.file.ReadSegments import ReadSegment
-from trackplot.file.Reference import Reference
 
 
 def get_limited_index(num, length):
@@ -359,7 +359,7 @@ def plot_stroke(
 
 def plot_annotation(
         ax: mpl.axes.Axes,
-        obj: Reference,
+        obj: Annotation,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         font_size: int = 5,
         show_gene: bool = False,
