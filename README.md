@@ -131,14 +131,15 @@ docker run --rm ygidtu/trackplot --help
 ```bash
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot
+
+# install the trackplot and it's requirements to python env
+pip install -e .
+trackplot --help  # or python main.py --help
+
+# Note: pybigwig and hicmatrix were optional, used to enable bigWig, bigBed and hicMatrix support
+# Once the installation of pybigwig and hicmatrix fails, and these two formats are not necessary, 
+# you still can using trackplot in the following way
 pip install -r requirements.txt
-python setup.py install
-
-# optional, enable bigWig, bigBed and hicMatrix support
-pip install pybigwig hicmatrix
-
-trackplot --help
-# or
 python main.py --help
 ```
 
@@ -277,13 +278,12 @@ The `example` folder is downloaded from [here.](https://github.com/ygidtu/trackp
 And a more detailed tutorial could be found at [here.](https://trackplot.readthedocs.io/en/latest/)  
 
 ```bash
-
+# example of basic plot types
 python main.py \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --interval example/interval_list.tsv \
   --density example/density_list.tsv \
-  --show-site \
   --show-junction-num \
   --igv example/igv.tsv \
   --heatmap example/heatmap_list.tsv \

@@ -9,8 +9,5 @@ from trackplot.cli import main
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as err:
-        logger.error(err)
-    logger.info("DONE")
+    main()
+

@@ -270,7 +270,7 @@ def set_y_ticks(
     if show_y_label:
         def __dynamic_distance__(distance_between_label_axis: float, label: str, scale: int = 100) -> float:
             if distance_between_label_axis != 0:
-                return distance_between_label_axis
+                return -distance_between_label_axis
 
             return max(0.01, math.ceil(len(label) / 10) * 10 / scale) * -1
 
@@ -357,7 +357,7 @@ def plot_stroke(
     ax.set_ylim(bottom=-1, top=len(strokes))
 
 
-def plot_reference(
+def plot_annotation(
         ax: mpl.axes.Axes,
         obj: Reference,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
@@ -377,7 +377,7 @@ def plot_reference(
         **kwargs
 ):
     u"""
-    Plot the structure of reference
+    Plot the structure of annotation
     """
     Theme.set_theme(ax, theme)
     ax.set_xlim(min(graph_coords), max(graph_coords))
@@ -1276,9 +1276,9 @@ def plot_igv_like(
                         y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
                         y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
                     ]
-                    ax.fill(
-                        x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+
                     if is_site:
+                        ax.fill(x, y, 'b' if not feature_color else feature_color, lw=.2, zorder=20)
                         ax.scatter(graph_coords[s],
                                    y_loc + exon_width * width_ratio,
                                    c='b' if not feature_color else feature_color,
@@ -1286,6 +1286,8 @@ def plot_igv_like(
                                    linewidths=(0,),
                                    rasterized=raster
                                    )
+                    else:
+                        ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
             if add_plot:
                 y_loc += 1
 

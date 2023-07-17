@@ -152,11 +152,14 @@ class Plot(object):
     __slots__ = [
         "__n_objs__", "region", "sites",
         "focus", "stroke", "events",
-        "sequence", "reference", "graph_coords",
+        "sequence", "annotation", "graph_coords",
         "plots", "params", "junctions", "link"
     ]
 
-    def __init__(self, logfile: Optional[str]=None, backend: str="agg", font_family: Optional[str]=None):
+    def __init__(self,
+                 logfile: Optional[str] = None,
+                 backend: Optional[str] = None,
+                 font_family: Optional[str] = None):
         u"""
         init this class
         """
@@ -167,7 +170,7 @@ class Plot(object):
         self.stroke = []
         self.events = None
         self.sequence = None
-        self.reference = None
+        self.annotation = None
         self.graph_coords = None
         self.plots = []
         self.params = {}
@@ -178,15 +181,16 @@ class Plot(object):
             logger.add(logfile, level="TRACE")
 
         # print warning info about backend
-        try:
-            plt.switch_backend(backend)
-        except ImportError as err:
-            if backend.lower() == "cairo":
-                logger.debug("Cairo backend required cairocffi installed")
-                logger.debug("Switch back to Agg backend")
-            else:
-                logger.debug(f"backend error, switch back to Agg: {err}")
-            plt.switch_backend("Agg")
+        if backend:
+            try:
+                plt.switch_backend(backend)
+            except ImportError as err:
+                if backend.lower() == "cairo":
+                    logger.debug("Cairo backend required cairocffi installed")
+                    logger.debug("Switch back to Agg backend")
+                else:
+                    logger.debug(f"backend error, switch back to Agg: {err}")
+                plt.switch_backend("Agg")
 
         plt.rcParams['pdf.fonttype'] = 42
         if font_family:
@@ -214,8 +218,8 @@ class Plot(object):
 
     @property
     def exons(self) -> Optional[List[List[int]]]:
-        if self.reference:
-            return self.reference.exons
+        if self.annotation:
+            return self.annotation.exons
 
     def set_region(self, chromosome: str = "",
                    start: int = 0, end: int = 0,
@@ -345,34 +349,34 @@ class Plot(object):
         self.sequence = Fasta.create(fasta)
         return self
 
-    def set_reference(self, gtf: str,
-                      add_domain: bool = False,
-                      local_domain: Optional[str] = False,
-                      domain_include: Optional[str] = False,
-                      domain_exclude: Optional[str] = False,
-                      interval: Optional[str] = None,
-                      interval_label: Optional[str] = None,
-                      transcripts: Optional[List[str]] = None,
-                      remove_empty_transcripts: bool = False,
-                      choose_primary: bool = False,
-                      color: Optional[str] = "black",
+    def set_annotation(self, gtf: str,
+                       add_domain: bool = False,
+                       local_domain: Optional[str] = False,
+                       domain_include: Optional[str] = False,
+                       domain_exclude: Optional[str] = False,
+                       interval: Optional[str] = None,
+                       interval_label: Optional[str] = None,
+                       transcripts: Optional[List[str]] = None,
+                       remove_empty_transcripts: bool = False,
+                       choose_primary: bool = False,
+                       color: Optional[str] = "black",
 
-                      # transcripts related parameters
-                      font_size: int = 5,
-                      show_gene: bool = True,
-                      show_id: bool = False,
-                      exon_width: float = .3,
-                      show_exon_id: bool = False,
-                      theme: str = "blank",
-                      **kwargs
-                      ):
+                       # transcripts related parameters
+                       font_size: int = 5,
+                       show_gene: bool = True,
+                       show_id: bool = False,
+                       exon_width: float = .3,
+                       show_exon_id: bool = False,
+                       theme: str = "blank",
+                       **kwargs
+                       ):
         u"""
         add transcripts to this region
         :param gtf: the path of gtf file
-        :param add_domain: whether add domain information into reference plot
-        :param local_domain: add a local domain file into reference plot
-        :param domain_exclude: the domain will be included in reference plot
-        :param domain_include: the domain will be excluded in reference plot
+        :param add_domain: whether add domain information into annotation plot
+        :param local_domain: add a local domain file into annotation plot
+        :param domain_exclude: the domain will be included in annotation plot
+        :param domain_include: the domain will be excluded in annotation plot
         :param interval: the path of interval annotation file, such as polyAsites
         :param interval_label: the label of current interval annotation file
         :param font_size: the size of transcript id, name
@@ -387,8 +391,8 @@ class Plot(object):
         :param show_exon_id: whether to show exon id
         :return:
         """
-        logger.info(f"set reference file to {gtf}")
-        self.reference = Reference.create(
+        logger.info(f"set annotation file to {gtf}")
+        self.annotation = Reference.create(
             gtf,
             add_domain=add_domain,
             add_local_domain=local_domain,
@@ -397,9 +401,9 @@ class Plot(object):
         )
 
         if interval and interval_label:
-            self.reference.add_interval(interval, interval_label)
+            self.add_interval(interval, interval_label)
 
-        self.params["reference"] = {
+        self.params["annotation"] = {
             "transcripts": transcripts,
             "remove_empty_transcripts": remove_empty_transcripts,
             "choose_primary": choose_primary,
@@ -415,9 +419,9 @@ class Plot(object):
         return self
 
     def add_interval(self, interval: str, interval_label: str):
-        assert self.reference is not None, "please set_reference first."
+        assert self.annotation is not None, "please set_annotation first."
         logger.info(f"add interval: {interval} - {interval_label}")
-        self.reference.add_interval(interval, interval_label)
+        self.annotation.add_interval(interval, interval_label)
         return self
 
     def __init_input_file__(self, path: str,
@@ -1003,7 +1007,7 @@ class Plot(object):
 
     def plot(self,
              output: Optional[str] = None,
-             reference_scale: Union[int, float] = .25,
+             annotation_scale: Union[int, float] = .25,
              stroke_scale: Union[int, float] = .25,
              dpi: int = 300,
              width: Union[int, float] = 0,
@@ -1017,7 +1021,7 @@ class Plot(object):
         u"""
         draw image
         :param output: if output is empty then show this image by plt.showfig
-        :param reference_scale: to adjust the size of reference plot
+        :param annotation_scale: to adjust the size of annotation plot
         :param stroke_scale: to adjust the size of stroke plot
         :param dpi: the dpi of saved plot
         :param width: the width of figure, if width == 0, the let matplotlib decide the size of image
@@ -1033,14 +1037,13 @@ class Plot(object):
             sc_height_ratio = {"density": .2, "heatmap": .2}
         assert self.region is not None, f"please set the plotting region first."
 
-        plots_n_rows = 1
-        plots_n_cols = 1
+        plots_n_rows, plots_n_cols = 1, 1
 
         height_ratio = []
-        if self.reference is not None:
-            logger.info("load reference")
-            self.reference.load(self.region, *args, **kwargs)
-            plots_n_rows += self.reference.len(scale=reference_scale)
+        if self.annotation is not None:
+            logger.info("load annotation")
+            self.annotation.load(self.region, *args, **kwargs)
+            plots_n_rows += self.annotation.len(scale=annotation_scale)
 
         if self.stroke:
             plots_n_rows += int(max(len(self.stroke) * stroke_scale, 1))
@@ -1075,14 +1078,14 @@ class Plot(object):
             if n_jobs <= 1:
                 p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
-            plots_n_rows += p.len(reference_scale)
+            plots_n_rows += p.len(annotation_scale)
             if p.type in ["heatmap", "hic"]:
                 plots_n_cols = 2
 
             if p.is_single_cell:
                 height_ratio.append(sc_height_ratio.get(p.type, 1))
             elif p.type == "igv":
-                height_ratio.append(p.len(reference_scale))
+                height_ratio.append(p.len(annotation_scale))
             elif p.type == "site-plot":
                 height_ratio += [1, 1]
             else:
@@ -1127,7 +1130,7 @@ class Plot(object):
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
-                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(reference_scale), 0])
+                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale), 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
@@ -1222,7 +1225,7 @@ class Plot(object):
             if p.type != "igv":
                 curr_idx += 1
             else:
-                curr_idx += p.len(reference_scale)
+                curr_idx += p.len(annotation_scale)
 
         if self.link:
             logger.info(f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
@@ -1241,19 +1244,19 @@ class Plot(object):
         )
         curr_idx += 1
 
-        if self.reference is not None:
-            logger.info(f"plotting reference at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
-            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.reference.len(scale=reference_scale), 0])
-            plot_reference(ax=ax_var, obj=self.reference,
+        if self.annotation is not None:
+            logger.info(f"plotting annotation at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.annotation.len(scale=annotation_scale), 0])
+            plot_annotation(ax=ax_var, obj=self.annotation,
                            graph_coords=self.graph_coords,
-                           plot_domain=self.reference.add_domain,
+                           plot_domain=self.annotation.add_domain,
                            distance_between_label_axis=distance_between_label_axis,
-                           **self.params["reference"])
+                           **self.params["annotation"])
 
             # adjust indicator lines and focus background
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
-            curr_idx += self.reference.len(scale=reference_scale)
+            curr_idx += self.annotation.len(scale=annotation_scale)
 
         if self.stroke:
             logger.info(f"plotting stroke at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
@@ -1261,6 +1264,7 @@ class Plot(object):
             plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
 
         if output:
+            logger.info(f"saving fig into {output}")
             fig.savefig(output, transparent=True, bbox_inches='tight')
         elif return_image:
             output = io.BytesIO()
@@ -1273,6 +1277,8 @@ class Plot(object):
             plt.show()
 
         plt.close()
+
+        logger.info("Plot done")
         return self
 
 

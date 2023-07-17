@@ -102,12 +102,12 @@ Please note that the region must follow the pattern, `chromosome_id:start_site-e
 At third tip, user could reset all configurations for another analysis. 
 please be careful, this reset button will remove all information of previous plot.
 
-### 3. Choose reference
+### 3. Choose annotation
 
 At first, user should click the `Refernce` option to select the genomic annotation file (GTF). And GTF without sorting or bgzipping are both fine for the tool.
 
 Then user could define the parameter at the second tip, and click the confirm button to save the current information for the next step.
-For choosing the reference file, user could paste the absolute path of GTF or choose the file on webpage.
+For choosing the annotation file, user could paste the absolute path of GTF or choose the file on webpage.
 ![](imgs/web/3.png)
 
 Detailed explanation of configuration

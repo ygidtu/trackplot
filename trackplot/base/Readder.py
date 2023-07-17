@@ -112,7 +112,7 @@ class Reader(object):
             try:
                 relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
             except ValueError as err:
-                logger.debug(err)
+                # logger.debug(err)
                 relevant_reads = cls.__modify_chrom__(region, bam_file)
 
             for read in relevant_reads:

@@ -273,6 +273,8 @@ class ReadSegment(File):
         get a nested list which presents the order of plot
         :return:
         """
+        import warnings
+        warnings.simplefilter(action='ignore', category=FutureWarning)
         assert self.meta is not None, f"Not found meta information, please `load` first."
         for ind in self.meta.groupby(['y_loci'])['list_index'].apply(list).tolist()[::-1]:
             yield ind

@@ -49,7 +49,6 @@ class FileList(object):
                  trans: Optional[str] = None,
                  depth: Optional[int] = None,
                  tad: Optional[str] = None):
-
         self.path = os.path.abspath(os.path.expanduser(path))
 
         if not os.path.exists(self.path):
@@ -253,7 +252,7 @@ def process_file_list(infile: str, category: str = "density"):
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
 @click.version_option(__version__, message="Current version %(version)s")
-@click.option("--verbose", is_flag=True, help="enable debug level log")
+@click.option("--verbose", is_flag=True, default=False, help="enable debug level log")
 @click.option("--logfile", type=click.Path(), help="save log info into file")
 @click.option("-e", "--event", type=click.STRING, required=True,
               help="Event range eg: chr1:100-200:+")
@@ -292,7 +291,7 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The width of output file, default adjust image width by content", show_default=True)
 @optgroup.option("--backend", type=click.STRING, default="Agg", help="Recommended backend", show_default=True)
 @optgroup.group("Reference settings")
-@optgroup.option("-r", "--reference", type=click.Path(exists=True),
+@optgroup.option("-r", "--annotation", type=click.Path(exists=True),
                  help="Path to gtf file, both transcript and exon tags are necessary")
 @optgroup.option("--interval", type=click.Path(exists=True),
                  help="Path to list of interval files in bed format, "
@@ -302,7 +301,7 @@ def process_file_list(infile: str, category: str = "density"):
 @optgroup.option("--no-gene", is_flag=True, type=click.BOOL, show_default=True,
                  help="Do not show gene id next to transcript id")
 @optgroup.option("--domain", default=False, is_flag=True, type=click.BOOL, show_default=True,
-                 help="Add domain information into reference track")
+                 help="Add domain information into annotation track")
 @optgroup.option("--proxy", default=None, type=click.STRING,
                  help="The http or https proxy for EBI/Uniprot requests,"
                       "if `--domain` is True, eg: http://127.0.0.1:1080")
@@ -310,12 +309,12 @@ def process_file_list(infile: str, category: str = "density"):
                  show_default=True,
                  help="The requests timeout when `--domain` is True.")
 @optgroup.option("--local-domain", default="", is_flag=False, type=click.STRING, show_default=True,
-                 help="Load local domain folder and load into reference track, download from "
+                 help="Load local domain folder and load into annotation track, download from "
                       "https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/")
 @optgroup.option("--domain-include", default=None, type=click.STRING, show_default=True,
-                 help="Which domain will be included in reference plot")
+                 help="Which domain will be included in annotation plot")
 @optgroup.option("--domain-exclude", default=None, type=click.STRING, show_default=True,
-                 help="Which domain will be excluded in reference plot")
+                 help="Which domain will be excluded in annotation plot")
 @optgroup.option("--remove-empty", is_flag=True, type=click.BOOL, show_default=True,
                  help="Whether to plot empty transcript")
 @optgroup.option("--transcripts-to-show", default="", show_default=True,
@@ -474,15 +473,15 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The number of ticks of y-axis")
 @optgroup.option("--distance-ratio", type=click.FLOAT, default=0,
                  help="The distance between transcript label and transcript line", show_default=True)
-@optgroup.option("--reference-scale", type=click.FLOAT, default=.25,
-                 help="The size of reference plot in final plot", show_default=True)
+@optgroup.option("--annotation-scale", type=click.FLOAT, default=.25,
+                 help="The size of annotation plot in final plot", show_default=True)
 @optgroup.option("--stroke-scale", type=click.FLOAT, default=.25,
                  help="The size of stroke plot in final image", show_default=True)
 @optgroup.group("Overall settings")
 @optgroup.option("--font-size", default=8, type=click.IntRange(min=1, clamp=True),
                  help="The font size of x, y-axis and so on")
 @optgroup.option("--reverse-minus", default=False, is_flag=True, type=click.BOOL,
-                 help="Whether to reverse strand of bam/reference file")
+                 help="Whether to reverse strand of bam/annotation file")
 @optgroup.option("--hide-y-label", default=False, is_flag=True, type=click.BOOL,
                  help="Whether hide y-axis label")
 @optgroup.option("--same-y", default=False, is_flag=True, type=click.BOOL,
@@ -499,7 +498,8 @@ def main(**kwargs):
     \f
     """
     logger.remove()
-    logger.add(sys.stderr, level="INFO" if not kwargs["verbose"] else "DEBUG")
+    logger.add(sys.stderr, level="DEBUG" if kwargs["verbose"] else "INFO")
+    logger.debug("DEBUG" if kwargs["verbose"] else "INFO")
 
     # print warning info about backend
     if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":
@@ -530,24 +530,26 @@ def main(**kwargs):
 
     size_factors = {}
 
-    # add reference
+    # add annotation
+    # print(kwargs.keys())
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
-            if key == "reference":
-                p.set_reference(kwargs["reference"],
-                                show_gene=not kwargs["no_gene"],
-                                color=kwargs["ref_color"],
-                                remove_empty_transcripts=kwargs["remove_empty"],
-                                choose_primary=kwargs["choose_primary"],
-                                font_size=kwargs["font_size"],
-                                show_id=kwargs["show_id"],
-                                show_exon_id=kwargs["show_exon_id"],
-                                transcripts=kwargs["transcripts_to_show"],
-                                add_domain=kwargs["domain"],
-                                local_domain=kwargs["local_domain"],
-                                domain_include=kwargs["domain_include"],
-                                domain_exclude=kwargs["domain_exclude"]
-                                )
+            if key == "annotation":
+                print("set_annotation")
+                p.set_annotation(kwargs["annotation"],
+                                 show_gene=not kwargs["no_gene"],
+                                 color=kwargs["ref_color"],
+                                 remove_empty_transcripts=kwargs["remove_empty"],
+                                 choose_primary=kwargs["choose_primary"],
+                                 font_size=kwargs["font_size"],
+                                 show_id=kwargs["show_id"],
+                                 show_exon_id=kwargs["show_exon_id"],
+                                 transcripts=kwargs["transcripts_to_show"],
+                                 add_domain=kwargs["domain"],
+                                 local_domain=kwargs["local_domain"],
+                                 domain_include=kwargs["domain_include"],
+                                 domain_exclude=kwargs["domain_exclude"]
+                                 )
             elif key == "interval":
                 for f in process_file_list(kwargs[key], key):
                     p.add_interval(f.path, f.label)
@@ -722,7 +724,6 @@ def main(**kwargs):
                               )
             elif key == "hic":
                 for f in process_file_list(kwargs[key], "hic"):
-
                     p.add_hic(
                         f.path,
                         category=f.category,
@@ -767,7 +768,7 @@ def main(**kwargs):
         raster=kwargs["raster"],
         intron_scale=kwargs["intron_scale"],
         exon_scale=kwargs["exon_scale"],
-        reference_scale=kwargs["reference_scale"],
+        annotation_scale=kwargs["annotation_scale"],
         stroke_scale=kwargs["stroke_scale"],
         same_y=kwargs["same_y"],
         same_y_sc=kwargs.get("same_y_sc", False),

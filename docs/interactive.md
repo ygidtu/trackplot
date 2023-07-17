@@ -20,12 +20,12 @@ from trackplot.plot import Plot
 plot = Plot(logfile=None, backend="agg", font_family=None)
 ```
 
-###### 2. set reference
+###### 2. set annotation
 
 ```python
-plot.set_reference(
+plot.set_annotation(
     "../example/example.sorted.gtf.gz",                                             # path to gtf file
-    add_domain=True,                                                                # whether add domain information into reference track
+    add_domain=True,                                                                # whether add domain information into annotation track
     interval="../example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.bed.gz",       # path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
     interval_label="polyA",                                                         # the label of added interval
     show_gene=True,                                                                 # show gene id
@@ -130,12 +130,12 @@ Return
 
 ---
 
-### set_reference
+### set_annotation
 
 add transcripts into track
 
 ```python
-def set_reference(self, gtf: str,
+def set_annotation(self, gtf: str,
                   add_domain: bool = False,
                   local_domain: Optional[str] = False,
                   domain_include: Optional[str] = False,
@@ -159,9 +159,9 @@ def set_reference(self, gtf: str,
 
 - gtf: path to gtf file
 - add_domain: whether to add domain
-- local_domain: whether add domain information into reference track
-- domain_include: Which domain will be included in reference plot
-- domain_exclude: Which domain will be excluded in reference plot
+- local_domain: whether add domain information into annotation track
+- domain_include: Which domain will be included in annotation plot
+- domain_exclude: Which domain will be excluded in annotation plot
 - interval: path to list of interval files in bed format, 1st column is path to file, 2nd column is the label
 - interval_label: the label of added interval
 - transcripts: the list of name or ids of transcripts to draw
@@ -648,7 +648,7 @@ def plot(
         intron_scale: float=.5,
         exon_scale: float = 1,
         
-        reference_scale: float = .25,
+        annotation_scale: float = .25,
         stroke_scale: float = .25,
         sc_height_ratio: Optional[Dict[str, float]] = None,
         distance_between_label_axis: float = .3,
@@ -674,8 +674,8 @@ def plot(
 - normalize_format: used to normalized input data, should be one of `count`[default], `cpm` or `rpkm`, only worked for bam file
 - intron_cale: used to control the plotting scale of introns, the introns only half size by default
 - exon_cale: used to control the plotting scale of exons, the introns only half size by default
-- reference_scale: to adjust the max size of reference plot, the references only occupy at most 1/4 of figure height by default
-- stroke_scale: to adjust the max size of stroke plot, the references only occupy at most 1/4 of figure height by default
+- annotation_scale: to adjust the max size of annotation plot, the annotations only occupy at most 1/4 of figure height by default
+- stroke_scale: to adjust the max size of stroke plot, the annotations only occupy at most 1/4 of figure height by default
 - sc_height_ratio: to adjust the relative height of single cell related plots, including single cell density and heatmap
 - distance_between_label_axis: to adjust the distance between y-axis label and y-axis ticks
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
-IMAGE_TYPE = ["reference", "interval", "density", "heatmap", "line", "igv", "hic", "motif"]
+IMAGE_TYPE = ["annotation", "interval", "density", "heatmap", "line", "igv", "hic", "motif"]
 
 COLORS = ["#A0C807", "#0084D1", '#db5f57', '#dbc257', '#91db57', '#57db80', '#57d3db', '#5770db', '#a157db', '#db57b2']
 COLORMAP = [

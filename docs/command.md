@@ -85,7 +85,7 @@ Options:
                                   image width by content  [default: 10; x>=0]
     --backend TEXT                Recommended backend  [default: Agg]
   Reference settings: 
-    -r, --reference PATH          Path to gtf file, both transcript and exon
+    -r, --annotation PATH          Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
@@ -93,18 +93,18 @@ Options:
     --show-id                     Whether show gene id or gene name
     --show-exon-id                Whether show gene id or gene name
     --no-gene                     Do not show gene id next to transcript id
-    --domain                      Add domain information into reference track
+    --domain                      Add domain information into annotation track
     --proxy TEXT                  The http or https proxy for EBI/Uniprot
                                   requests,if `--domain` is True, eg:
                                   http://127.0.0.1:1080
     --timeout INTEGER RANGE       The requests timeout when `--domain` is
                                   True.  [default: 10; x>=1]
     --local-domain TEXT           Load local domain folder and load into
-                                  reference track, download from https://hgdow
+                                  annotation track, download from https://hgdow
                                   nload.soe.ucsc.edu/gbdb/hg38/uniprot/
-    --domain-include TEXT         Which domain will be included in reference
+    --domain-include TEXT         Which domain will be included in annotation
                                   plot
-    --domain-exclude TEXT         Which domain will be excluded in reference
+    --domain-exclude TEXT         Which domain will be excluded in annotation
                                   plot
     --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
@@ -292,13 +292,13 @@ Options:
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        The distance between transcript label and
                                   transcript line  [default: 0.1]
-    --reference-scale FLOAT       The size of reference plot in final plot
+    --annotation-scale FLOAT       The size of annotation plot in final plot
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image
                                   [default: 0.25]
   Overall settings: 
     --font-size INTEGER RANGE     The font size of x, y-axis and so on  [x>=1]
-    --reverse-minus               Whether to reverse strand of bam/reference
+    --reverse-minus               Whether to reverse strand of bam/annotation
                                   file
     --hide-y-label                Whether hide y-axis label
     --same-y                      Whether different density/line plots shared
@@ -421,15 +421,15 @@ trackplot \
 
 #### 3.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
-In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding reference from UCSC, and collect all bigbed file into a folder which could pass to trackplot with `--local-domain`.
+In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding annotation from UCSC, and collect all bigbed file into a folder which could pass to trackplot with `--local-domain`.
 
 But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi couldn't map the protein information into the corresponding transcript id.
 
 ![](imgs/cmd/local_domain.png)
 
-#### 4.`--interval`: add additional feature track into reference.
+#### 4.`--interval`: add additional feature track into annotation.
 
-In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into reference track.
+In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into annotation track.
 And user could prepare and record custom annotation information into a config file, like this
 
 ```bash
@@ -438,7 +438,7 @@ $ cat example/interval_list.tsv
 example/PolyASite.chr1.atlas.clusters.2.0.GRCh38.96.simple.bed.gz   polyAS 
 ```
 
-Then Sashimi receive the custom annotation file with parameter `--interval`, the additional genomic features will be visualized at the reference track.
+Then Sashimi receive the custom annotation file with parameter `--interval`, the additional genomic features will be visualized at the annotation track.
 
 ![](imgs/cmd/interval.png)
 
