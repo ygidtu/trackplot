@@ -78,7 +78,7 @@ pip install trackplot
 
 ---
 
-2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux x86_64 platform only)
+2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
 
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
@@ -88,7 +88,7 @@ All the AppImage files were tested on the official pre-built GNU/Linux distribut
 - Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
 - Centos: `appimagecrafters/tests-env:centos-7`
 
->Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+>Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for Linux (x86_64 platform) users.
 Once you have installation issues and not familiar with docker, 
 please download the AppImage file from our releases.
 > 
@@ -101,8 +101,8 @@ and provide us the system platform and full error messages for us to debug.
 > 2. please use absolute path instead of relative path.
 
 ```bash
-# example with version v0.2.6, please using your interested version according to your needs
-export VERSION=0.2.6
+# example with version v0.3.1, please using your interested version according to your needs
+export VERSION=0.3.1
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 ```
@@ -258,7 +258,7 @@ poetry run python main.py --help
 
 ### Using trackplot by a local webserver
 
-1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux x86_64 only)
+1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
 
 ```bash
 # example with version v0.3.1, please using your interested version according to your needs

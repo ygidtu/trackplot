@@ -22,7 +22,7 @@ pip install trackplot
 # `No local packages or working download links found for xxx` 
 ```
 ---
-### AppImage (Linux x86_64 platform only)
+### AppImage (Linux/WSL x86_64 platform only)
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
 - Arch: `appimagecrafters/tests-env:archlinux-latest`
@@ -31,7 +31,7 @@ All the AppImage files were tested on the official pre-built GNU/Linux distribut
 - Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
 - Centos: `appimagecrafters/tests-env:centos-7`
 
->Due to the limitation of AppImage technic itself, we only provide AppImage for linux (x86_64 platform) users.
+>Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for linux (x86_64 platform) users.
 Once you have installation issues and not familiar with docker, 
 please download the AppImage file from our releases.
 > 

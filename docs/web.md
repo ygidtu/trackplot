@@ -2,7 +2,7 @@
 
 ## Installation
 
-### AppImage (Linux x86_64 users only)
+### AppImage (Linux/WSL x86_64 users only)
 
 Download the trackplotweb appimage file from our [release](https://github.com/ygidtu/trackplot/releases)
 
