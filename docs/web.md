@@ -18,6 +18,7 @@ chmod +x trackplotweb-${VERSION}-x86_64.AppImage
     
 **Note:** the `--plots` were required while using appimages
 
+---
 
 ### Docker image (Strong recommended)
 
@@ -42,36 +43,45 @@ docker run --name trackplotweb \
 - `--user`: prevent docker read and write file using root privileges
 - the rest usage please check [Command line usage](./command.md)
 
+---
 
 ### Build Web interface from source
 
+For this tutorial, we will assume that you have already installed Conda on your system.
+
 1.nodejs (18.14.0 LTS above)
 
-Install by conda, 
 ```shell
+# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
+
 conda install -c conda-forge nodejs
 ```
-Or user could download and install nodejs from https://nodejs.org/en/
+
+Or user could download and install nodejs from [here](https://nodejs.org/en/).
 
 2.install from source code
 
+Before this, please make sure that Trackplot has been properly installed in the same env.
+
+
 ```shell
-git clone https://github.com/ygidtu/trackplot.git trackplot
-
-# install the trackplot first
-cd trackplot
-pip install -r requirements.txt
-
+git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot/web
 
-# build the frontend static files
+# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
 npm install -g vue-cli vite && npm install
 vite build
+
+# check whether the ui is successfully compiled
+ls ../ui
 
 # prepare the backend server
 pip install flask
 
-# show the help document
+# before startup, check whether the trackplot properly installed
+python -c "import trackplot; print(trackplot.__version__)"
+
+cd ../
 python server.py --help
 
 Usage: server.py [OPTIONS]
@@ -85,10 +95,7 @@ Options:
   --version           Show the version and exit.
   --help              Show this message and exit.
 ```
-
-
-Deploy the server
-
+---
 
 ## Usage
 

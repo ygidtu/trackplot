@@ -360,9 +360,9 @@ The recommended combination of backend and image formats please check [matplotli
 
 ---
 
-### Reference plot
+## Annotation plot
 
-#### 1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
+### 1.`--domain`: fetch domain information from uniprot and ensemble, then map amino acid coordinate into genomic coordinate.
 
 For each transcript, trackplot firstly get the uniprot id from [uniprot website]("https://rest.uniprot.org/uniprotkb/search?&query=ENST00000380276&format=xml") and check whether the length of protein is one third of CDS length. If yes, then fetch the uniprot information from [ebi](f"https://www.ebi.ac.uk/proteins/api/features/U2AF35a").
 
@@ -371,7 +371,7 @@ The trackplot will present these domains from ['DOMAIN_AND_SITES', 'MOLECULE_PRO
 
 ![](imgs/cmd/domain.png)
 
-#### 2. Include or exclude the domain based on category or type
+### 2. Include or exclude the domain based on category or type
 
 `--domain-include`: the domain will be included and a domain which is not in the list will not be presented
 `--domain-exclude`: the domain will be excluded
@@ -419,7 +419,7 @@ trackplot \
 ```
 ![](imgs/cmd/domain_filter.png)
 
-#### 3.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
+### 3.`--local-domain`: load domain information from a folder that contains bigbed files which download from [UCSC](https://hgdownload.soe.ucsc.edu/gbdb/hg38/uniprot/)
 
 In order to facilitate these people from poor network regions, Sashimi also provides a local mode for domain visualization. First, the user must download the corresponding annotation from UCSC, and collect all bigbed file into a folder which could pass to trackplot with `--local-domain`.
 
@@ -427,7 +427,7 @@ But the bigbed file from UCSC didn't provide a transcript or uniprot id, Sashimi
 
 ![](imgs/cmd/local_domain.png)
 
-#### 4.`--interval`: add additional feature track into annotation.
+### 4.`--interval`: add additional feature track into annotation.
 
 In addition to fetch genomic feature from GTF or GFF file, Sashimi also provides a flexible way to load other features into annotation track.
 And user could prepare and record custom annotation information into a config file, like this
@@ -446,7 +446,7 @@ Then Sashimi receive the custom annotation file with parameter `--interval`, the
 ---
 
 
-### Density plot
+## Density plot
 
 Density plot takes bam, bigwig or bgzipped depth file generated using samtools depth as input.
 
@@ -461,7 +461,7 @@ example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc
 ```
 
-#### 1.`--customized-junction` 
+### 1.`--customized-junction` 
 
 This parameter is used to add the custom junctions from users 
 
@@ -488,7 +488,7 @@ trackplot \
 ```
 ![](imgs/cmd/custom_junction.png)
 
-####  2.`--show-site` and `--show-strand`
+###  2.`--show-site` and `--show-strand`
 
 These two parameters were used to show the density of reads starts by forward and reverse strand separately.
 
@@ -508,7 +508,7 @@ trackplot \
 
 ![](imgs/cmd/2.png)
 
-#### 3. Filter junction counts and include the specific junction
+### 3. Filter junction counts and include the specific junction
 
 User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
 
@@ -552,7 +552,7 @@ trackplot \
 
 ![](imgs/cmd/junction_manu.png)
 
-#### 4. Sample aggregation
+### 4. Sample aggregation
 
 User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
 
@@ -602,7 +602,7 @@ The `PTBP1_KD_agg` is the mean of ENCFF854PFR.bam and ENCFF125RUG.bam
 
 ![](imgs/cmd/agg.png)
 
-#### 5. The intron shrinkage
+### 5. The intron shrinkage
 
 The shrinkage of intron 
 
@@ -636,7 +636,7 @@ trackplot \
 
 ![](imgs/cmd/intron_scale.png)
 
-#### 6. Visualize coverage by cpm or rpkm
+### 6. Visualize coverage by cpm or rpkm
 
 We also support to visualize the coverage by normalized values.
 
@@ -691,7 +691,7 @@ trackplot \
 
 ![](imgs/cmd/normalize_format.png)
 
-#### Single cell bam related parameters
+### Single cell bam related parameters
 
 1.`--barcode`
   
@@ -734,7 +734,7 @@ trackplot \
 ---
 
 
-### Line plot
+## Line plot
 
 The line plot is simply another format of density plots.
 
@@ -786,14 +786,14 @@ trackplot \
 ![](imgs/cmd/example_with_legend.png)
 
 
-#### single cell bam related parameters
+### single cell bam related parameters
 
 Please check the documentation in density plot.
 
 ---
 
 
-### Heatmap plot
+## Heatmap plot
 
 Heatmap plot takes bam or bigwig as input.
 
@@ -835,7 +835,7 @@ example/bws/0.bw    bw  bw  YlOrBr
 ---
 
 
-### Read-by-read plot
+## Read-by-read plot
 
 
 1.Sashimi.igv module support different format file as input.
@@ -928,9 +928,9 @@ trackplot \
 ---
 
 
-### HiC heatmap
+## HiC heatmap
 
-#### HiC toy example 1
+### HiC toy example 1
 
 Sashimi also support HiC track, and user could prepare [Li_et_al_2015.h5](https://github.com/deeptools/HiCMatrix/blob/master/hicmatrix/test/test_data/Li_et_al_2015.h5) into a config file, then pass to `--hic`. here is an example config file,
 
@@ -968,7 +968,7 @@ for each hic track, a bigger `depth` means a higher y-axis.
 
 ![](imgs/cmd/hic.1.png)
 
-#### HiC toy example 2
+### HiC toy example 2
 
 Because `Li_et_al_2015.h5` doesn't contain chromosome 1, user could download a new toy dataset and add into example picture.
 

@@ -135,7 +135,7 @@ python --version
 # Python 3.10.8
 ```
 
-4.1 python3 is not available 
+    4.1 python3 is not available 
 
 If your Python version does not match the requirements of Trackplot, 
 users could follow the cmd to install and 
@@ -167,7 +167,7 @@ $PWD/Python-3.10.12/Python-3.10.12/Python/bin/trackplot --help
 
 ```
 
-4.2 python3 is available
+    4.2 python3 is available
 
 ```bash
 # 1. download the trackplot
@@ -258,7 +258,7 @@ poetry run python main.py --help
 
 ### Using trackplot by a local webserver
 
-1. using AppImage (Linux x86_64 only)
+1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux x86_64 only)
 
 ```bash
 # example with version v0.2.6, please using your interested version according to your needs
@@ -284,16 +284,25 @@ docker pull ygidtu/trackplotweb
 # -v map the current working directory into docker containers
 # -p map the outer port to inner port of docker container
 docker run --name trackplotweb \
- --rm -v $PWD:$PWD \
- -p 5000:5000 \
- ygidtu/trackplotweb
+  --rm \
+  -v $PWD/data:/data \
+  -v $PWD/plots/:/plots
+  -p 5000:5000 \
+  --data /data \
+  --plots /plots \
+  ygidtu/trackplotweb 
 ```
+
+`-p`: public and private port for the server, default:5000(public):5000(private)
+- `-v`, `--volume`: mount the working directory to docker container, for example, the `$PWD/data` could replace by the path to your directory contains all necessary data
+- `--user`: prevent docker read and write file using root privileges
+- the rest usage please check [Command line usage](./command.md)
 
 ---
 
 3. Install from source code
 
-Before this, please make sure that trackplot has been properly installed in your env.  
+Before this, please make sure that trackplot has been properly installed in the same env.  
 
 
 ```bash
