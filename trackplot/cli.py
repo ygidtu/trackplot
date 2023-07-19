@@ -531,7 +531,6 @@ def main(**kwargs):
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
             if key == "annotation":
-                print("set_annotation")
                 p.set_annotation(kwargs["annotation"],
                                  show_gene=not kwargs["no_gene"],
                                  color=kwargs["ref_color"],

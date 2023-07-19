@@ -261,8 +261,8 @@ poetry run python main.py --help
 1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux x86_64 only)
 
 ```bash
-# example with version v0.2.6, please using your interested version according to your needs
-export VERSION=0.2.6
+# example with version v0.3.1, please using your interested version according to your needs
+export VERSION=0.3.1
 gunzip trackplotweb-${VERSION}-x86_64.AppImage
 chmod +x trackplotweb-${VERSION}-x86_64.AppImage
 ./trackplotweb-${VERSION}-x86_64.AppImage --help

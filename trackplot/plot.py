@@ -31,7 +31,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.2.8"
+__version__ = "0.3.1"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -1082,7 +1082,7 @@ class Plot(object):
         height_ratio = []
         if self.annotation is not None:
             logger.info("load annotation")
-            self.annotation.load(self.region, *args, **kwargs)
+            self.annotation.load(self.region, *args, **self.params["annotation"])
             plots_n_rows += self.annotation.len(scale=annotation_scale)
 
         if self.stroke:

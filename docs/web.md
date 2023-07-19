@@ -7,8 +7,8 @@
 Download the trackplotweb appimage file from our [release](https://github.com/ygidtu/trackplot/releases)
 
 ```bash
-# example with version v0.2.6, please using your interested version according to your needs
-export VERSION=0.2.6
+# example with version v0.3.1, please using your interested version according to your needs
+export VERSION=0.3.1
 chmod +x trackplotweb-${VERSION}-x86_64.AppImage
 ./trackplotweb-${VERSION}-x86_64.AppImage --help
 

@@ -44,8 +44,8 @@ and provide us the system platform and full error messages for us to debug.
 > 2. please use absolute path instead of relative path.
 
 ```bash
-# example with version v0.2.6, please using your interested version according to your needs
-export VERSION=0.2.6
+# example with version v0.3.1, please using your interested version according to your needs
+export VERSION=0.3.1
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 ```

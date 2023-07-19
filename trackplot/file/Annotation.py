@@ -349,7 +349,7 @@ class Annotation(File):
 
         return output_gtf
 
-    def __load_gtf__(self, region: GenomicLoci) -> List[Transcript]:
+    def __load_gtf__(self):
 
         u"""
         Load transcripts inside of region from gtf file
@@ -359,13 +359,13 @@ class Annotation(File):
         transcripts = {}
         exons = {}
 
-        for rec in Reader.read_gtf(self.path, region):
-            start = max(rec.start, region.start)
-            end = min(rec.end, region.end)
+        for rec in Reader.read_gtf(self.path, self.region):
+            start = max(rec.start, self.region.start)
+            end = min(rec.end, self.region.end)
 
-            if end + 1 <= region.start:
+            if end + 1 <= self.region.start:
                 continue
-            if start + 1 >= region.end:
+            if start + 1 >= self.region.end:
                 break
 
             if re.search(r"(rna|transcript|cds)", rec.feature, re.I):
@@ -388,9 +388,9 @@ class Annotation(File):
                 exons[rec.transcript_id].append(
                     GenomicLoci(
                         chromosome=rec.contig,
-                        start=start,
-                        end=end,
-                        strand=rec.strand
+                        start=start, end=end,
+                        strand=rec.strand,
+                        name=rec.exon_id
                     )
                 )
 
@@ -398,18 +398,17 @@ class Annotation(File):
             if key in exons.keys():
                 trans.exons += exons[key]
 
-        return sorted(transcripts.values())
+        self.data += sorted(transcripts.values())
 
-    def __load_bam__(self, region: GenomicLoci, threshold_of_reads: int = 0) -> List[Transcript]:
+    def __load_bam__(self, threshold_of_reads: int = 0):
         u"""
         Load transcripts inside of region from bam file
-        :param region: target region
         :param threshold_of_reads: only kept reads with minimum frequency
         :return: list of Transcript
         """
         transcripts = {}
         try:
-            for read, strand in Reader.read_bam(self.path, region):
+            for read, strand in Reader.read_bam(self.path, self.region):
                 start = read.reference_start
 
                 exons_in_read = []
@@ -418,11 +417,11 @@ class Annotation(File):
                     cur_end = start + length + 1
 
                     if cigar == 0:  # M
-                        if cur_start < region.end < cur_end:
+                        if cur_start < self.region.end < cur_end:
                             exons_in_read.append(GenomicLoci(
                                 chromosome=read.reference_name,
-                                start=cur_start if cur_start > region.start else region.start,
-                                end=cur_end if cur_end <= region.end else region.end,
+                                start=cur_start if cur_start > self.region.start else self.region.start,
+                                end=cur_end if cur_end <= self.region.end else self.region.end,
                                 strand="+",
                             ))
 
@@ -431,8 +430,8 @@ class Annotation(File):
 
                 t = Transcript(
                     chromosome=read.reference_name,
-                    start=read.reference_start + 1 if read.reference_start + 1 > region.start else region.start,
-                    end=read.reference_end + 1 if read.reference_end + 1 < region.end else region.end,
+                    start=read.reference_start + 1 if read.reference_start + 1 > self.region.start else self.region.start,
+                    end=read.reference_end + 1 if read.reference_end + 1 < self.region.end else self.region.end,
                     strand=strand,
                     exons=exons_in_read
                 )
@@ -442,12 +441,11 @@ class Annotation(File):
         except ValueError as err:
             logger.debug(f"{self.path}: {err}")
 
-        return sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
+        self.data += sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
 
-    def __load_bed__(self, region: GenomicLoci) -> List[Transcript]:
-        transcripts = []
+    def __load_bed__(self):
         try:
-            for rec in Reader.read_gtf(self.path, region=region, bed=True):
+            for rec in Reader.read_gtf(self.path, region=self.region, bed=True):
                 exon_bound = []
                 current_start = int(rec[1])
                 current_end = int(rec[2])
@@ -493,35 +491,14 @@ class Annotation(File):
                 if read.start < self.region.start or read.end > self.region.end:
                     continue
 
-                transcripts.append(read)
+                self.data.append(read)
 
         except IOError as err:
             logger.debug(f"There is no .bed file at {self.path}: {err}")
         except ValueError as err:
             logger.debug(f"{self.path}: {err}")
-        return transcripts
 
-    def load(self, region: GenomicLoci, threshold_of_reads: int = 0, **kwargs):
-        u"""
-        Load transcripts inside of region
-        :param region: target region
-        :param threshold_of_reads: used for bam file, only kept reads with minimum frequency
-        :return:
-        """
-        assert isinstance(region, GenomicLoci), "region should be a GenomicLoci object"
-        self.region = region
-        if self.category == "gtf":
-            self.data = self.__load_gtf__(region)
-            if self.add_local_domain:
-                self.__load_local_domain__(region)
-
-            if self.add_domain:
-                self.__add_domain__()
-        elif self.category == "bam":
-            self.data = self.__load_bam__(region, threshold_of_reads)
-        elif self.category == "bed":
-            self.data = self.__load_bed__(region)
-
+    def __load_interval(self):
         rec, start, end, strand = None, None, None, None
         for interval_file, interval_label in self.interval_file.items():
             try:
@@ -579,6 +556,70 @@ class Annotation(File):
 
             except OSError:
                 raise f"Error found when build index for {interval_file}, please sort file manually"
+
+    def load(self,
+             region: GenomicLoci,
+             threshold_of_reads: int = 0,
+             transcripts: Optional[List[str]] = None,
+             remove_empty_transcripts: bool = False,
+             choose_primary: bool = False,
+             **kwargs):
+        u"""
+        Load transcripts inside of region
+        :param region: target region
+        :param threshold_of_reads: used for bam file, only kept reads with minimum frequency
+        :param transcripts: list of ids or names contains the transcripts to show
+        :param remove_empty_transcripts: ignore transcripts with any exons in this region
+        :param choose_primary: only show the primary transcripts in final track
+        :return:
+        """
+        assert isinstance(region, GenomicLoci), "region should be a GenomicLoci object"
+        if transcripts is None:
+            transcripts = []
+        self.region = region
+        if self.category == "gtf":
+            self.__load_gtf__()
+            if self.add_local_domain:
+                self.__load_local_domain__(region)
+
+            if self.add_domain:
+                self.__add_domain__()
+        elif self.category == "bam":
+            self.__load_bam__(threshold_of_reads)
+        elif self.category == "bed":
+            self.__load_bed__()
+
+        self.__load_interval()
+
+        if choose_primary and len(transcripts) == 0:
+            transcripts = []
+            # For each gene, you can choose only one transcript to plot.
+            genes = defaultdict(list)
+            for transcript in self.data:
+                if transcript.category == 'interval':
+                    continue
+                genes[transcript.gene_id].append(transcript)
+
+            for _, transcripts_list in genes.items():
+                primary_transcripts = sorted(
+                    transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
+                transcripts.append(primary_transcripts.transcript_id)
+        elif choose_primary and len(transcripts) != 0:
+            logger.debug(
+                "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
+        else:
+            pass
+
+        if remove_empty_transcripts or len(transcripts) > 0:
+            data = []
+            for i in self.data:
+                if len(transcripts) > 0 and i.transcript not in transcripts and i.transcript_id not in transcripts:
+                    continue
+
+                if remove_empty_transcripts and len(i.exons) < 1:
+                    continue
+                data.append(i)
+            self.data = data
 
 
 if __name__ == "__main__":

@@ -364,9 +364,6 @@ def plot_annotation(
         font_size: int = 5,
         show_gene: bool = False,
         show_id: bool = False,
-        transcripts: Optional[List[str]] = None,
-        remove_empty_transcripts: bool = False,
-        choose_primary: bool = False,
         color: Optional[str] = None,
         theme: str = "blank",
         y_loc: int = 0,
@@ -393,39 +390,11 @@ def plot_annotation(
 
     color = "k" if not color else color
 
-    if choose_primary and (len(transcripts) == 0 or transcripts is None):
-        transcripts = []
-        # For each gene, you can choose only one transcript to plot.
-        genes = defaultdict(list)
-        for transcript in data:
-            if transcript.category == 'interval':
-                continue
-            genes[transcript.gene_id].append(transcript)
-
-        for _, transcripts_list in genes.items():
-            primary_transcripts = sorted(
-                transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
-            transcripts.append(primary_transcripts.transcript_id)
-    elif choose_primary and (len(transcripts) != 0 or transcripts is not None):
-        logger.debug(
-            "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
-    else:
-        pass
-
     """
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
     """
-
     for transcript in data:
-        # ignore the unwanted transcript
-        if transcripts and not (set(transcripts) & set(transcript.ids())):
-            continue
-
-        # ignore transcripts without any exons
-        if remove_empty_transcripts and not transcript.exons:
-            continue
-
         strand = transcript.strand
         # @2018.12.20 add transcript id, based on fixed coordinates
         if transcript.transcript:
@@ -458,10 +427,12 @@ def plot_annotation(
             ]
             ax.fill(x, y, color, lw=.5, zorder=20)
 
-            if show_exon_id:
+            if show_exon_id and exon.name:
                 y_loc_offset = 0.1 if ind % 2 == 0 else - 0.2
-                ax.text(x=(graph_coords[s] + graph_coords[s]) / 2, y=y_loc + y_loc_offset,
-                        s=exon.name, fontsize=font_size / 2, ha="right")
+                ax.text(x=(graph_coords[s] + graph_coords[e]) / 2,
+                        y=y_loc + y_loc_offset,
+                        s=exon.name, fontsize=font_size / 2,
+                        ha="center", color="red")
 
         # @2018.12.21
         # change the intron range
