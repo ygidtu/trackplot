@@ -13,7 +13,7 @@ COLORMAP = [
     'pink', 'spring', 'summer', 'autumn', 'winter',
     'cool', 'Wistia', 'hot', 'afmhot', 'gist_heat',
     'copper', 'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
-    'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic'
+    'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic', "RdYlBu_r"
 ]
 
 DISTANCE_METRIC = [

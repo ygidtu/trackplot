@@ -31,6 +31,11 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
+__version__ = "0.2.8"
+__author__ = "ygidtu & Ran Zhou"
+__email__ = "ygidtu@gmail.com"
+
+
 def __load__(args):
     p, args, kwargs = args
     p.load(*args, **kwargs)
@@ -144,6 +149,18 @@ class PlotInfo(object):
         return self
 
 
+def add_object_error(func):
+    def inner(*args, **kwargs):
+        # calling the actual function now
+        # inside the wrapper function.
+        try:
+            func(*args, **kwargs)
+        except Exception as err:
+            logger.error(f"trackplot will ignore this object, {err}")
+
+    return inner
+
+
 class Plot(object):
     u"""
     this class is the main framework of sashimi
@@ -178,7 +195,9 @@ class Plot(object):
         self.link = []
 
         if logfile:
-            logger.add(logfile, level="TRACE")
+            logger.add(logfile, level="DEBUG")
+
+        logger.info(f"Create trackplot version: {__version__}")
 
         # print warning info about backend
         if backend:
@@ -221,6 +240,7 @@ class Plot(object):
         if self.annotation:
             return self.annotation.exons
 
+    @add_object_error
     def set_region(self, chromosome: str = "",
                    start: int = 0, end: int = 0,
                    strand: str = "+",
@@ -236,6 +256,7 @@ class Plot(object):
         logger.info(f"set region to {self.region}")
         return self
 
+    @add_object_error
     def add_sites(self, sites):
         u"""
         highlight specific sites
@@ -243,8 +264,9 @@ class Plot(object):
         :return:
         """
         assert self.region is not None, f"please set plot region first."
-        logger.info(f"add sites: {sites}")
+
         if sites is not None:
+            logger.info(f"add sites: {sites}")
             if isinstance(sites, str):
                 sites = [int(x) for x in sites.split(",")]
 
@@ -262,6 +284,7 @@ class Plot(object):
                     self.sites[sites] = "red"
         return self
 
+    @add_object_error
     def add_focus(self, focus: Optional[str] = None, start: int = 0, end: int = 0):
         u"""
         set focus region
@@ -288,6 +311,7 @@ class Plot(object):
             self.focus[start] = max(end, self.focus.get(start, -1))
         return self
 
+    @add_object_error
     def add_stroke(
             self,
             stroke: Optional[str] = None,
@@ -315,6 +339,7 @@ class Plot(object):
             self.stroke.append(Stroke(start - self.start, end - self.end, color, label))
         return self
 
+    @add_object_error
     def add_links(
             self,
             link: Optional[str] = None,
@@ -343,6 +368,7 @@ class Plot(object):
             self.link.append([Stroke(start - self.start, end - self.end, color, label)])
         return self
 
+    @add_object_error
     def set_sequence(self, fasta: str):
         u"""
         set sequence info for
@@ -353,6 +379,7 @@ class Plot(object):
         self.sequence = Fasta.create(fasta)
         return self
 
+    @add_object_error
     def set_annotation(self, gtf: str,
                        add_domain: bool = False,
                        local_domain: Optional[str] = False,
@@ -422,6 +449,7 @@ class Plot(object):
 
         return self
 
+    @add_object_error
     def add_interval(self, interval: str, interval_label: str):
         assert self.annotation is not None, "please set_annotation first."
         logger.info(f"add interval: {interval} - {interval_label}")
@@ -486,7 +514,7 @@ class Plot(object):
                 del_ratio_ignore=del_ratio_ignore,
                 exon_focus=exon_focus
             )
-        elif category == "hic":
+        elif category == "hic" or category == "h5":
             obj = HiCTrack.create(
                 path=path,
                 label=label,
@@ -504,15 +532,17 @@ class Plot(object):
             obj = Depth.create(path, label=label, title=title)
         else:
             raise ValueError(
-                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg], instead of {category}")
+                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg, h5], instead of {category}")
 
         obj.log_trans = log_trans
         return obj, category
 
+    @add_object_error
     def add_customized_junctions(self, path: str):
         if path and os.path.exists(path) and os.path.isfile(path):
             self.junctions = load_custom_junction(path)
 
+    @add_object_error
     def add_density(self,
                     path: str,
                     category: str = "bam",
@@ -590,7 +620,8 @@ class Plot(object):
         if show_site_plot and category == "bam":
             type_ = "site-plot"
         elif show_site_plot:
-            logger.debug("show_site_plot only works with bam files")
+            if category != "bam":
+                raise ValueError("show_site_plot only works with bam files")
 
         info = PlotInfo(obj=obj, type_=type_, category=category)
 
@@ -624,6 +655,7 @@ class Plot(object):
             }
         return self
 
+    @add_object_error
     def add_heatmap(self,
                     path: str,
                     group: str = "",
@@ -723,6 +755,7 @@ class Plot(object):
 
         return self
 
+    @add_object_error
     def add_line(self,
                  path: str,
                  group: str = "",
@@ -815,6 +848,7 @@ class Plot(object):
 
         return self
 
+    @add_object_error
     def add_hic(
             self,
             path: str,
@@ -850,9 +884,9 @@ class Plot(object):
             "show_y_label": show_y_label,
             "theme": theme
         }
-
         return self
 
+    @add_object_error
     def add_igv(
             self,
             path: str,
@@ -922,6 +956,7 @@ class Plot(object):
 
         return self
 
+    @add_object_error
     def add_motif(self,
                   path: str,
                   category: str = "motif",
@@ -944,6 +979,7 @@ class Plot(object):
         self.params[info] = {"width": width, "theme": theme}
         return self
 
+    @add_object_error
     def add_manual(self,
                    data: np.array,
                    image_type: str = "line",
@@ -1254,11 +1290,12 @@ class Plot(object):
         if self.annotation is not None:
             logger.info(f"plotting annotation at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             ax_var = plt.subplot(gs[curr_idx:curr_idx + self.annotation.len(scale=annotation_scale), 0])
-            plot_annotation(ax=ax_var, obj=self.annotation,
-                           graph_coords=self.graph_coords,
-                           plot_domain=self.annotation.add_domain,
-                           distance_between_label_axis=distance_between_label_axis,
-                           **self.params["annotation"])
+            plot_annotation(
+                ax=ax_var, obj=self.annotation,
+                graph_coords=self.graph_coords,
+                plot_domain=self.annotation.add_domain,
+                distance_between_label_axis=distance_between_label_axis,
+                **self.params["annotation"])
 
             # adjust indicator lines and focus background
             set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)

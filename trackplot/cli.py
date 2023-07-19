@@ -18,11 +18,7 @@ from loguru import logger
 from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
 from trackplot.file.ATAC import ATAC
-from trackplot.plot import Plot
-
-__version__ = "0.2.7"
-__author__ = "ygidtu & Ran Zhou"
-__email__ = "ygidtu@gmail.com"
+from trackplot.plot import Plot, __version__
 
 
 def decode_region(region: str):

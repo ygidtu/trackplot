@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import {Delete, View} from "@element-plus/icons-vue"
 import AddComp from '../components/Add.vue'
+import Annotation from '../components/Annotation.vue'
 import ParamComp from '../components/Param.vue'
-import Reference from '../components/Reference.vue'
 import LogComp from "../components/Log.vue"
 </script>
 
@@ -17,8 +17,7 @@ import LogComp from "../components/Log.vue"
         <el-steps align-center
                   finish-status="success"
                   process-status="process"
-                  :active="active"
-        >
+                  :active="active">
           <el-step title="Set target region"/>
           <el-step title="Set annotation"/>
           <el-step title="Set plot details"/>
@@ -53,7 +52,7 @@ import LogComp from "../components/Log.vue"
             <el-tab-pane label="Annotation" :name="1">
               <el-scrollbar :max-height="windowHeight" always>
                 <el-col :span="24">
-                  <reference @select-data="makeProgress"/>
+                  <annotation @select-data="makeProgress"/>
                 </el-col>
               </el-scrollbar>
             </el-tab-pane>
@@ -87,7 +86,7 @@ import LogComp from "../components/Log.vue"
                   </el-descriptions>
                 </el-row>
 
-                <el-row v-if="progress.reference !== null" >
+                <el-row v-if="progress.annotation !== null" >
                   <el-col :span="24">
                     <el-descriptions class="margin-top" title="Reference" :column="4" border>
                     <el-descriptions-item label="Path">
@@ -98,10 +97,13 @@ import LogComp from "../components/Log.vue"
                         trigger="hover"
                       >
                         <template #reference>
-                          <el-text type="info">{{ progress.reference.path }}<el-icon><View /></el-icon></el-text>
+                          <el-text type="info">{{ progress.annotation.path }}<el-icon><View /></el-icon></el-text>
                         </template>
                         <el-descriptions title="Parameters" :column="3" border>
-                          <el-descriptions-item v-for="p in showParam(progress.reference.param)" :key="p.key" :label="p.key">{{ p.default }}</el-descriptions-item>
+                          <el-descriptions-item
+                              v-for="p in showParam(progress.annotation.param)"
+                              :key="p.key" :label="p.key">{{ p.default }}
+                          </el-descriptions-item>
                         </el-descriptions>
                       </el-popover>
                     </el-descriptions-item>
@@ -111,22 +113,27 @@ import LogComp from "../components/Log.vue"
 
                 <el-row v-if="progress.files.length > 0" >
                   <el-col :span="24">
-                    <el-descriptions class="margin-top" title="Files" :column="1" border>
-                      <el-descriptions-item v-for="file in progress.files" :key="`${file.path}:${file.type}`" :label="file.type.replace(/add_/, '')">
-                        <el-popover
-                          placement="top-start"
-                          title="Detailed"
-                          :width="'70%'"
-                          trigger="hover"
-                        >
-                          <template #reference><el-text type="info">{{ file.path }}<el-icon><View /></el-icon></el-text></template>
-                          <el-descriptions title="Parameters" :column="3" border>
-                            <el-descriptions-item v-for="p in showParam(file.param)" :key="p.key" :label="p.key">
-                              {{ p.default }}
-                            </el-descriptions-item>
-                          </el-descriptions>
-                        </el-popover>
-                      </el-descriptions-item>
+                    <el-descriptions class="margin-top" title="Files" :column="2" border>
+                      <div v-for="(file, idx) in progress.files" :key="`${file.path}:${file.type}`">
+                          <el-descriptions-item :label="file.type.replace(/add_/, '')">
+                            <el-popover
+                              placement="top-start"
+                              title="Detailed"
+                              :width="'70%'"
+                              trigger="hover"
+                            >
+                              <template #reference><el-text type="info">{{ file.path }}<el-icon><View /></el-icon></el-text></template>
+                              <el-descriptions title="Parameters" :column="3" border>
+                                <el-descriptions-item v-for="p in showParam(file.param)" :key="p.key" :label="p.key">
+                                  {{ p.default }}
+                                </el-descriptions-item>
+                              </el-descriptions>
+                            </el-popover>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="Remove this">
+                          <el-button type="danger" :icon="Delete" circle @click="removeThis(idx)" />
+                        </el-descriptions-item>
+                      </div>
                     </el-descriptions>
                   </el-col>
                 </el-row>
@@ -209,7 +216,7 @@ interface FilePath {
 
 interface Progress {
   region: string | null,
-  reference: FilePath | null,
+  annotation: FilePath | null,
   files: FilePath[] | null,
   draw: FilePath | null
 }
@@ -229,7 +236,7 @@ export default defineComponent({
   data() {
     let progress: Progress = {
       region: null,
-      reference: null,
+      annotation: null,
       files: [],
       draw: null
     }
@@ -280,8 +287,8 @@ export default defineComponent({
     },
     handleClose() { this.img = null },
     makeProgress(file: FilePath) {
-      if (file.type === "reference") {
-        this.progress.reference = file
+      if (file.type === "annotation") {
+        this.progress.annotation = file
       } else if (file.type !== "plot" && file.type !== "save") {
         this.progress.files?.push(file)
       } else if (file.type === "plot" || file.type == "save") {
@@ -335,6 +342,15 @@ export default defineComponent({
         loading.close()
       })
     },
+    removeThis(idx: Number) {
+      let kept = [];
+      for (let i = 0; i < this.progress.files.length; i++) {
+        if (i !== idx) {
+          kept.push(this.progress.files[i])
+        }
+      }
+      this.progress.files = kept
+    }
   },
   computed: {
     showImage() { return this.img !== null },
@@ -350,7 +366,10 @@ export default defineComponent({
     this.$cookie.setCookie("plot", (Math.random() + 1).toString(36).substring(7))
     // this.$cookie.setCookie("plot", "test")
     this.pid = this.$cookie.getCookie("plot")
-  }
+  },
+  beforeUnmount() {
+      this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
+  },
 })
 </script>
 

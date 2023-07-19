@@ -64,8 +64,8 @@ class Annotation(File):
             logger.info(f"Using proxy: {proxy}")
 
     def __add__(self, other):
-        assert isinstance(other, Reference), "only Reference and Reference could be added"
-        new_ref = Reference(self.path, category=self.category)
+        assert isinstance(other, Annotation), "only Annotation and Annotation could be added"
+        new_ref = Annotation(self.path, category=self.category)
         new_ref.data += self.data
         new_ref.data += other.data
         new_ref.data = sorted(new_ref.data)
@@ -75,7 +75,7 @@ class Annotation(File):
         if self.domain:
             new_ref.__add_domain__()
         if self.add_local_domain:
-            new_ref.__load_local_domain__()
+            new_ref.__load_local_domain__(self.region)
         return new_ref
 
     def len(self, scale: Union[int, float] = .25) -> int:
@@ -112,7 +112,7 @@ class Annotation(File):
         :param domain_exclude: the domain will be included in reference plot
         :param domain_include: the domain will be excluded in reference plot
         :param category: the type of reference file, include gtf and bam: customized reads as references
-        :return: Reference obj
+        :return: Annotation obj
         """
         assert os.path.exists(path), f"{path} not exists"
 

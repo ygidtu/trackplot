@@ -116,6 +116,30 @@ class Transcript(GenomicLoci):
         exons = sorted([str(x.__hash__()) for x in self.exons])
         return hash((self.chromosome, self.start, self.end, self.strand, " ".join(exons)))
 
+    def __lt__(self, other):
+        if self.chromosome != other.chromosome:
+            return self.chromosome < other.chromosome
+
+        if self.start != other.start:
+            return self.start < other.start
+
+        if self.end != other.end:
+            return self.end < other.end
+
+        return len(self.exons) < len(other.exons)
+
+    def __gt__(self, other):
+        if self.chromosome != other.chromosome:
+            return self.chromosome > other.chromosome
+
+        if self.start != other.start:
+            return self.start > other.start
+
+        if self.end != other.end:
+            return self.end > other.end
+
+        return len(self.exons) > len(other.exons)
+
     def ids(self) -> List[str]:
         return [self.transcript, self.transcript_id, self.gene, self.gene_id]
 

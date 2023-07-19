@@ -2,7 +2,7 @@
   <div>
     <el-row :gutter="20">
       <el-col :span="20" :offset="2">
-        <param-comp func="set_reference" @select-data="valid" :postfix="/.(gtf|gff\d?)(.gz)?$/" />
+        <param-comp func="set_annotation" @select-data="valid" :postfix="/.(gtf|gff\d?)(.gz)?$/" />
       </el-col>
     </el-row>
   </div>
@@ -18,7 +18,7 @@ import urls from '../url';
 import {errorPrint, Notification} from "../error";
 
 export default {
-  name: "reference",
+  name: "annotation",
   data() {
     return {
 
@@ -31,7 +31,7 @@ export default {
         params: {"target": data.path, valid: true},
       }).then((response: any) => {
         if (response.data) {
-          data.type = "reference"
+          data.type = "annotation"
           this.submit(data)
         } else {
           let msg: Notification = {

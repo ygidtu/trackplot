@@ -326,7 +326,7 @@ And a more detailed tutorial could be found at [here.](https://trackplot.readthe
 
 ```bash
 # example of basic plot types
-python main.py \
+python ../main.py \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --interval example/interval_list.tsv \
@@ -345,6 +345,7 @@ python main.py \
   --barcode example/barcode_list.tsv \
   --domain --remove-duplicate-umi \
   --normalize-format cpm \
+  --annotation-scale .3 \
   -p 4
 ```
 
@@ -377,6 +378,7 @@ docker run -v $PWD:$PWD --rm ygidtu/trackplot \
   --barcode $PWD/example/barcode_list.tsv \
   --domain --remove-duplicate-umi \
   --normalize-format cpm \
+  --annotation-scale .3 \
   -p 4
 
 ```

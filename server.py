@@ -8,18 +8,28 @@ import re
 from glob import glob
 
 import click
-
 from flask import Flask, render_template, jsonify, send_file, request
 
 from trackplot.cli import load_barcodes, __version__
+from trackplot.conf.config import COLORMAP
 from trackplot.plot import *
+
 
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "ui")
 __PLOT__ = os.path.join(os.path.dirname(__file__), "plots")
 
-app = Flask( __name__, static_url_path="/static", static_folder=__UI__, template_folder=__UI__)
+app = Flask(__name__, static_url_path="/static", static_folder=__UI__, template_folder=__UI__)
 
+
+__SUPPORT_FORMAT__ = {
+    "add_density": ['bam', 'bigwig', 'bedgraph', 'depth', 'atac'],
+    "add_line": ['bam', 'bigwig', 'bedgraph', 'depth', 'atac'],
+    "add_heatmap": ['bam', 'bigwig', 'bedgraph', 'depth', 'atac'],
+    "add_igv": ['bam', 'bed'],
+    "add_hic": ['h5'],
+
+}
 
 # supported trackplot settings
 __COMMON_PARAMS__ = [
@@ -31,9 +41,9 @@ __COMMON_PARAMS__ = [
     },
     {
         "key": "category",
-        "annotation": "str",
+        "annotation": "choice",
         "default": "bam",
-        "note": "The category of input file"
+        "note": "The input file category can be selected from options such as BAM, ATAC, IGV, Hi-C, BigWig/BW, BedGraph/BG, and Depth."
     },
     {
         "key": "size_factor",
@@ -63,13 +73,13 @@ __COMMON_PARAMS__ = [
         "key": "library",
         "annotation": "choice['frr', 'frs', 'fru']",
         "default": "fru",
-        "note": "The strand preference of input file, frf => fr-firststrand; frs => fr-secondstrand; fru => fr-unstrand"
+        "note": "The strand pannotation of input file, frf => fr-firststrand; frs => fr-secondstrand; fru => fr-unstrand"
     },
     {
         "key": "n_y_ticks",
         "annotation": "int",
         "default": "4",
-        "note": "Number of y ticks"
+        "note": "Set the number of ticks for the y-axis."
     },
     {
         "key": "show_y_label",
@@ -87,7 +97,7 @@ __COMMON_PARAMS__ = [
         "key": "color",
         "annotation": "color",
         "default": "#409EFF",
-        "note": "The fill color of density"
+        "note": "The color of the current track."
     },
     {
         "key": "font_size",
@@ -99,19 +109,17 @@ __COMMON_PARAMS__ = [
         "key": "log_trans",
         "annotation": "choice['0', '2', '10']",
         "default": "0",
-        "note": "Whether to perform log transformation, 0 -> not log transform;2 -> log2;10 -> log10"
+        "note": "Choose whether to perform a log transformation for coverage. Use '0' for no transformation, '2' for log2 transformation, and '10' for log10 transformation."
+    },
+    {
+        "key": "group",
+        "annotation": "str",
+        "default": "default",
+        "note": "The group name of heatmap/line track"
     },
 ]
 
 __PARAMS__ = {
-    "add_customized_junctions": [
-        {
-            "key": "path",
-            "annotation": "str",
-            "default": "<class 'inspect._empty'>",
-            "note": "Path to junction table column name needs to be bam name or bam alias."
-        }
-    ],
     "add_density": [
         [
             "path", "category", "size_factor", "label", "title",
@@ -123,37 +131,31 @@ __PARAMS__ = {
             "key": "density_by_strand",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether draw density plot by strand"
+            "note": "Whether draw density plot in a strand-aware manner. If enabled, the tool will consider the library parameter (frf or frs) to perform strand-aware coverage calculation."
         },
         {
             "key": "show_junction_number",
             "annotation": "bool",
             "default": "true",
-            "note": "Whether to show junction number"
+            "note": "Whether to show the depth of each splicing junction. If activated, the tool will display the depth of each splicing junction which will be visualized at the midpoint of the junction span line."
         },
         {
             "key": "junction_number_font_size",
             "annotation": "int",
             "default": "5",
-            "note": "The font size of junction number"
+            "note": "The font size of the depth of splicing junction."
         },
         {
             "key": "show_site_plot",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether to show site plot"
+            "note": "Whether to include a site coverage plot for the current track as well. If enabled, only the most 3' end site of each read will be counted in the coverage matrix. When strand-aware mode is enabled, this allows for easy distinction of alternative polyadenylation events in 3'-tag sequencing datasets."
         },
         {
             "key": "strand_choice",
             "annotation": "choice['all', '+', '-']",
             "default": "all",
-            "note": "Which strand kept for site plot, default use all"
-        },
-        {
-            "key": "only_customized_junction",
-            "annotation": "bool",
-            "default": "false",
-            "note": "Only used customized junctions."
+            "note": "The coverage matrix used for generating the site plot can be specified by strand. By default, coverage from all strands is used. If the + or - option is enabled, only the coverage matrix from the chosen strand will be displayed."
         }
     ],
     "add_focus": [
@@ -161,7 +163,7 @@ __PARAMS__ = {
             "key": "start",
             "annotation": "int",
             "default": "0",
-            "note": "The start site of focus region"
+            "note": "The start site of focus region. More detailed instructions please refer to https://trackplot.readthedocs.io/en/latest/command/#additional-annotation"
         },
         {
             "key": "end",
@@ -175,56 +177,56 @@ __PARAMS__ = {
          "barcode_groups", "barcode_tag", "umi_tag", "library", "color",
          "font_size", "show_y_label", "log_trans"],
         {
-            "key": "group",
-            "annotation": "str",
-            "default": "<class 'inspect._empty'>",
-            "note": "The heatmap group"
-        },
-        {
             "key": "do_scale",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether to scale the matrix"
+            "note": "Whether perform a scale for the coverage matrix by samples."
         },
         {
             "key": "clustering",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether reorder matrix by clustering"
+            "note": "Whether perform a cluster analysis for the samples."
         },
         {
             "key": "clustering_method",
             "annotation": "str",
             "default": "ward",
-            "note": "same as  scipy.cluster.hierarchy.linkage"
+            "note": "If `clustering` enabled, user could select a clustering method for downstream analysis. More clustering method please refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html ."
         },
         {
             "key": "distance_metric",
             "annotation": "str",
             "default": "euclidean",
-            "note": "same as scipy.spatial.distance.pdist"
+            "note": "The method to perform pairwise distances analysis. More detail please refer to https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html ."
         },
         {
             "key": "show_row_names",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether to show row names"
+            "note": "Whether to add the filename as the row name of the heatmap."
         },
         {
             "key": "vmin",
             "annotation": "float",
             "default": "<class 'inspect._empty'>",
-            "note": "Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments."
+            "note": "The parameter Vmin determines the minimum value used for the colormap. If not specified, the minimum value will be inferred from the data and other keyword arguments."
         },
         {
             "key": "vmax",
             "annotation": "float",
             "default": "<class 'inspect._empty'>",
-            "note": "Values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments."
+            "note": "The parameter Vmax determines the maximum value used for the colormap. If not specified, the maximum value will be inferred from the data and other keyword arguments."
         }
     ],
     "add_hic": [
-        ["path", "category", "label", "color", "font_size", "n_y_ticks", "show_y_label"],
+        ["path", "category", "label", "font_size", "n_y_ticks", "show_y_label"],
+        {
+            "key": "color",
+            "annotation": f"select[{','.join(COLORMAP)}]",
+            "default": "RdYlBu_r",
+            "note": "The color of the current track."
+        },
         {
             "key": "trans",
             "annotation": "Optional[str]",
@@ -235,13 +237,13 @@ __PARAMS__ = {
             "key": "show_legend",
             "annotation": "bool",
             "default": "true",
-            "note": "Whether to show legend"
+            "note": "Whether to show the legend of each line."
         },
         {
             "key": "depth",
             "annotation": "int",
             "default": "30000",
-            "note": "The default depth for HiCMatrix"
+            "note": "The length of region to visualize genomic interaction."
         },
     ],
     "add_igv": [
@@ -256,31 +258,31 @@ __PARAMS__ = {
             "key": "deletion_ignore",
             "annotation": "Optional[int]",
             "default": "true",
-            "note": "Whether ignore the gap in full length sequencing data"
+            "note": "Whether to ignore deletion regions in full-length sequencing data can be specified. Full-length sequencing data, especially nanopore data, often contains a high ratio of deletions. By enabling this option, users can exclude these deletion regions from visualization."
         },
         {
             "key": "del_ratio_ignore",
             "annotation": "float",
             "default": "0.5",
-            "note": "Ignore the deletion gap in nanopore or pacbio reads"
+            "note": "The threshold for ignoring deletions in full-length sequencing data. For example, if a deletion ignore ratio of 0.5 is selected and a 1000 bp isoform is captured in sequencing, deletions within 1000 * 0.5 length will be filled and not visualized."
         },
         {
             "key": "exon_color",
             "annotation": "color",
             "default": "#000000",
-            "note": "The color of exons"
+            "note": "The color of exon structure in current track."
         },
         {
             "key": "intron_color",
             "annotation": "color",
             "default": "#000000",
-            "note": "The color of introns"
+            "note": "The color of intron structure in current track."
         },
         {
             "key": "exon_width",
             "annotation": "float",
             "default": "0.3",
-            "note": "The default width of exons"
+            "note": "The exon width of current track"
         }
     ],
     "add_interval": [
@@ -305,19 +307,19 @@ __PARAMS__ = {
             "key": "show_legend",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether to show legend"
+            "note": "Whether to show the legend of each line."
         },
         {
             "key": "legend_position",
             "annotation": "str",
             "default": "upper right",
-            "note": "The position of legend"
+            "note": "The position of the legend for current track, default: upper right. Other layout such as upper left, lower left, lower right, right, center left, center right, lower center, upper center, and center will place the legend at the corresponding corner of the track."
         },
         {
             "key": "legend_ncol",
             "annotation": "int",
             "default": "0",
-            "note": "The number of columns of legend"
+            "note": "The number of columns for current legend."
         }
     ],
     "add_links": [
@@ -325,7 +327,7 @@ __PARAMS__ = {
             "key": "start",
             "annotation": "int",
             "default": "0",
-            "note": "The start site of link"
+            "note": "The start site of link line. If the \"Links\" option is enabled, a pseudo span line will be added at the bottom of the tracks. This can be used by users to indicate the back-splice junction of circular RNA (circRNA). A detailed instruction please refer to https://trackplot.readthedocs.io/en/latest/command/#circrna-plot ."
         },
         {
             "key": "end",
@@ -336,14 +338,14 @@ __PARAMS__ = {
         {
             "key": "label",
             "annotation": "str",
-            "default": "<class 'inspect._empty'>",
+            "default": "",
             "note": "The label of link"
         },
         {
             "key": "color",
             "annotation": "color",
             "default": "#409EFF",
-            "note": "The color of link"
+            "note": "The color of link line."
         }
     ],
     "add_sites": [
@@ -351,7 +353,7 @@ __PARAMS__ = {
             "key": "sites",
             "annotation": "str",
             "default": "",
-            "note": "Where to plot additional indicator lines, comma separated int"
+            "note": "Where to plot additional indicator lines. The user is required to provide an integer number within the region of interest. If there are multiple lines, the integer numbers should be separated by commas."
         }
     ],
     "add_stroke": [
@@ -359,7 +361,7 @@ __PARAMS__ = {
             "key": "start",
             "annotation": "int",
             "default": "0",
-            "note": "The start site of stroke"
+            "note": "The start site of stroke. More detailed instructions please refer to https://trackplot.readthedocs.io/en/latest/command/#additional-annotation"
         },
         {
             "key": "end",
@@ -382,16 +384,16 @@ __PARAMS__ = {
     ],
     "plot": [
         {
-            "key": "reference_scale",
+            "key": "annotation_scale",
             "annotation": "Union[int, float]",
             "default": "0.25",
-            "note": "The size of reference plot in final plot"
+            "note": "The height of annotation track, the height = (number of annotation) * annotation_scale"
         },
         {
             "key": "stroke_scale",
             "annotation": "Union[int, float]",
             "default": "0.25",
-            "note": "The size of stroke plot in final image"
+            "note": "The height of stroke track, the height = (number of strokes) * stroke_scale"
         },
         {
             "key": "dpi",
@@ -403,37 +405,37 @@ __PARAMS__ = {
             "key": "width",
             "annotation": "Union[int, float]",
             "default": "10",
-            "note": "The width of output file, default adjust image width by content"
+            "note": "The width of output file"
         },
         {
             "key": "height",
             "annotation": "Union[int, float]",
             "default": "1",
-            "note": "The height of single subplot, default adjust image height by content"
+            "note": "The height of each track, the igv/annotation/stroke tracks will adjust the height according to their scales"
         },
         {
             "key": "raster",
             "annotation": "bool",
             "default": "false",
-            "note": "The would convert heatmap and site plot to raster image (speed up rendering and produce smaller files), only affects pdf, svg and PS"
+            "note": "Choose whether to convert the heatmap and site plot to a raster image format, which can speed up rendering and result in smaller file sizes. Note that this option only affects the output formats of PDF, SVG, and PS. If enabled, the resolution of the output will decrease."
         },
         {
             "key": "distance_ratio",
             "annotation": "float",
             "default": "0",
-            "note": "The distance between transcript label and transcript line"
+            "note": "Adjust the distance between transcript label and transcript structure in the annotation track. And the distacne between track title and the track"
         },
         {
             "key": "n_jobs",
             "annotation": "int",
             "default": "1",
-            "note": "How many cpu to use"
+            "note": "Number of cores to perform data preparation."
         },
         {
             "key": "fill_step",
             "annotation": "str",
             "default": "post",
-            "note": "Define step if the filling should be a step function, i.e. constant in between x. The value determines where the step will occur:\n"
+            "note": "The step parameter of matplotlib.axes.Axes.fill_between. Define step if the filling should be a step function, i.e. constant in between x. The value determines where the step will occur:\n"
                     "pre:The y value is continued constantly to the left from every x position, i.e. the interval (x[i-1], x[i]] has the value y[i].\n"
                     "post:The y value is continued constantly to the right from every x position, i.e. the interval [x[i], x[i+1]) has the value y[i].\n"
                     "mid:Steps occur half-way between the x positions."
@@ -442,37 +444,19 @@ __PARAMS__ = {
             "key": "same_y",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether different sashimi/line plots shared same y-axis boundaries"
-        },
-        {
-            "key": "remove_duplicate_umi",
-            "annotation": "bool",
-            "default": "false",
-            "note": "Drop duplicated UMIs by barcode"
+            "note": "13.Whether share a same y-axis among all data tracks."
         },
         {
             "key": "threshold",
             "annotation": "int",
             "default": "0",
-            "note": "Threshold to filter low abundance junctions"
+            "note": "The threshold for filter these splicing junction by depth."
         },
         {
             "key": "normalize_format",
             "annotation": "choice['normal', 'cpm', 'rpkm']",
             "default": "normal",
-            "note": "The normalize format for bam file"
-        },
-        {
-            "key": "fill_step",
-            "annotation": "choice['post', 'pre', 'mid']",
-            "default": "post",
-            "note": "Define step if the filling should be a step function, i.e. constant in between x. Detailed info please check: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html"
-        },
-        {
-            "key": "normalize_format",
-            "annotation": "choice['count', 'cpm', 'rpkm']",
-            "default": "count",
-            "note": "The normalize format for bam file"
+            "note": "The normalize format for bam file."
         },
         {
             "key": "smooth_bin",
@@ -481,30 +465,42 @@ __PARAMS__ = {
             "note": "The bin size used to smooth ATAC fragments."
         }
     ],
-    "set_reference": [
+    "set_annotation": [
         {
             "key": "gtf",
             "annotation": "str",
             "default": "<class 'inspect._empty'>",
-            "note": "Path to reference file, in sorted and gzipped gtf format"
+            "note": "Path to annotation file, in sorted and gzipped gtf format"
         },
         {
             "key": "add_domain",
             "annotation": "bool",
             "default": "false",
-            "note": "Add domain information into reference track"
+            "note": "Whether add domain information into the annotation track at bottom. "
+                    "When the parameter is activated, "
+                    "Trackplot will initiate a request to the EBI and UNIPROT APIs to retrieve protein annotation. "
+                    "The retrieved annotation is then converted into genomic coordinates, "
+                    "and the resulting domain information is visualized in a manner similar to a transcript structure. "
+                    "This can be seen in Supplementary Figure 2A."
         },
         {
             "key": "remove_empty_transcripts",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether show transcripts without any exons in target region"
+            "note": "Whether show transcripts without any exons in the target region. "
+                    "Sometimes, "
+                    "the region of interest may be located within a large intron of a transcript, "
+                    "which contains less informative data. "
+                    "To exclude these transcript structures and focus on the relevant regions, "
+                    "users can activate this parameter."
         },
         {
             "key": "choose_primary",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether choose primary transcript to plot."
+            "note": "Whether choose primary transcript to plot. "
+                    "Once the parameter is activated, "
+                    "the tool will display the longest transcript of each gene within the region of interest."
         },
         {
             "key": "color",
@@ -516,43 +512,53 @@ __PARAMS__ = {
             "key": "font_size",
             "annotation": "int",
             "default": "5",
-            "note": "The font size of reference"
+            "note": "The font size of the annotation tracks."
         },
         {
             "key": "no_gene",
             "annotation": "bool",
             "default": "false",
-            "note": "Do not show gene id next to transcript id"
+            "note": "Do not show gene id next to transcript id. "
+                    "If set to false, the format \"isoform1|gene_id\" will be displayed. "
+                    "If set to true, only the \"isoform1\" ID will be shown."
         },
         {
             "key": "show_id",
             "annotation": "bool",
             "default": "false",
-            "note": "Show gene name or gene id"
+            "note": "Show gene name (ensemble ID) or gene id (gene symbol). "
+                    "If set to false, an ensemble ID will be presented. "
+                    "If set to true, a symbol ID will be shown."
         },
         {
             "key": "show_exon_id",
             "annotation": "bool",
             "default": "false",
-            "note": "Whether show gene id or gene name"
+            "note": "Show exon id/exon name."
         },
         {
             "key": "transcripts_to_show",
             "annotation": "str",
             "default": "",
-            "note": "Which transcript to show, transcript name or id in gtf file, eg: transcript1,transcript2"
+            "note": "To display specific transcripts, "
+                    "their names or IDs must be included in the annotation file (GTF file). "
+                    "If there are multiple transcripts to show, "
+                    "please separate each transcript by a comma (iso1, iso2, iso3)."
         },
         {
             "key": "intron_scale",
             "annotation": "float",
             "default": "0.5",
-            "note": "The scale of intron"
+            "note": "The degree of intron scaling. "
+                    "The intron shrinkage scale determines the degree of intron length reduction. "
+                    "A smaller value will result in a shorter intron length,"
+                    " effectively highlighting the exon structures."
         },
         {
             "key": "exon_scale",
             "annotation": "float",
             "default": "1",
-            "note": "The scale of exon"
+            "note": "The degree of exon scaling. See intron_scale."
         },
     ],
     "set_region": [
@@ -608,7 +614,6 @@ class Param:
 
 
 class PlotParam:
-
     __slots__ = ["path", "type", "param"]
 
     def __init__(self, path: str, type: Optional[str], param: List[Param]):
@@ -639,11 +644,11 @@ class PlotParam:
 
 
 class PostForm:
-    __slots__ = ["region", "reference", "files", "draw"]
+    __slots__ = ["region", "annotation", "files", "draw"]
 
-    def __init__(self, region: PlotParam, reference: PlotParam, files: List[PlotParam], draw: PlotParam):
+    def __init__(self, region: PlotParam, annotation: PlotParam, files: List[PlotParam], draw: PlotParam):
         self.region = region
-        self.reference = reference
+        self.annotation = annotation
         self.files = files
         self.draw = draw
 
@@ -746,13 +751,23 @@ def params():
     target = request.args.get("target")
     res = []
 
+    category = None
     for p in __PARAMS__[target]:
         if not isinstance(p, dict):
             for cp in __COMMON_PARAMS__:
                 if cp["key"] in p:
-                    res.append(cp)
+
+                    if cp["key"] == "category" and target in __SUPPORT_FORMAT__:
+                        category = cp
+                        category["annotation"] = f"choice[{','.join(__SUPPORT_FORMAT__[target])}]"
+                        category["default"] = __SUPPORT_FORMAT__[target][0]
+                    else:
+                        res.append(cp)
         else:
             res.append(p)
+
+    if category:
+        res.append(category)
 
     return jsonify(res)
 
@@ -767,7 +782,7 @@ def plot(pid: str):
     if os.path.exists(log):
         os.remove(log)
 
-    p = Plot(log)
+    p = Plot(logfile=log, backend="agg")
 
     if param:
         with open(os.path.join(__PLOT__, pid), "wb+") as w:
@@ -794,8 +809,8 @@ def plot(pid: str):
         # set region
         p.set_region(**plot_form_to_dict(param.region))
 
-        # set reference
-        p.set_reference(param.reference.path, **plot_form_to_dict(param.reference))
+        # set annotation
+        p.set_annotation(param.annotation.path, **plot_form_to_dict(param.annotation))
 
         # set files
         for param_ in param.files:
@@ -834,7 +849,7 @@ def plot(pid: str):
             return send_file(o, mimetype=f"image/pdf", as_attachment=True, download_name=f"{p.region}.pdf")
 
     except Exception as err:
-        logger.error(err)
+        logger.exception(err)
         return jsonify(str(err)), 501
     return jsonify("")
 
@@ -868,19 +883,22 @@ def logs():
         with open(logfile) as r:
             for line in r:
                 try:
-                    time, level, info = line.strip().split("|")
-                    infos = info.split("-")
-                    source = infos[0]
+                    if "|" not in line and len(log_info) > 0:
+                        log_info[-1]['message'] = f"{log_info[-1]['message']}\n{line}"
+                    else:
+                        time, level, info = line.strip().split("|")
+                        infos = info.split("-")
+                        source = infos[0]
 
-                    if not debug and "DEBUG" in level:
-                        continue
+                        if not debug and "DEBUG" in level:
+                            continue
 
-                    log_info.append(vars(Logs(
-                        time=time.strip(),
-                        level=level.strip(),
-                        source=source.strip(),
-                        message=info.replace(source, "").strip()
-                    )))
+                        log_info.append(vars(Logs(
+                            time=time.strip(),
+                            level=level.strip(),
+                            source=source.strip(),
+                            message=info.replace(source, "").strip()
+                        )))
                 except Exception as err:
                     log_info.append(vars(Logs(
                         time="",
@@ -910,7 +928,7 @@ def main(host: str, port: int, plots: str, data: str):
         __DIR__ = data
     os.makedirs(__PLOT__, exist_ok=True)
 
-    app.run(host=host, port=port)
+    app.run(host=host, port=port, debug=False)
 
 
 if __name__ == '__main__':

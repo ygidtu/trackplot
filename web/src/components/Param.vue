@@ -18,6 +18,10 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
                 <el-radio v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-radio>
               </el-radio-group>
 
+              <el-select v-model="p.default" :default="p.default" v-else-if="p.annotation === 'select'">
+                <el-option v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-option>
+              </el-select>
+
               <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>
               <el-input v-else-if="p.default.match(/empty/) === null" v-model="p.default"></el-input>
             </el-form-item>
@@ -107,12 +111,12 @@ interface Data {
 
 const decodeChoice = (choices: String) => {
   let res = Array<String>();
-  let choiceMatch = choices.match(/choice\[(.*)\]/);
+  let choiceMatch = choices.match(/(choice|select)\[(.*)\]/);
   if (choiceMatch === null) {
     return res
   }
   
-  let choice = choiceMatch[1].toString().replaceAll("'", "").replaceAll('"', '').split(',');
+  let choice = choiceMatch[2].toString().replaceAll("'", "").replaceAll('"', '').split(',');
 
   for (let c of choice) {
     res.push(c.trim())
@@ -158,6 +162,9 @@ export default defineComponent({
           } else if (row.annotation.startsWith("choice")) {
             row.choice = decodeChoice(row.annotation)
             row.annotation = "choice"
+          } else if (row.annotation.startsWith("select")) {
+            row.choice = decodeChoice(row.annotation)
+            row.annotation = "select"
           }
 
           this.param.push(row)

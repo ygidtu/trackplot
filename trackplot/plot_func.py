@@ -417,7 +417,7 @@ def plot_annotation(
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
     """
 
-    for transcript in obj.data:
+    for transcript in data:
         # ignore the unwanted transcript
         if transcripts and not (set(transcripts) & set(transcript.ids())):
             continue
@@ -494,7 +494,6 @@ def plot_annotation(
                     ax.plot(x, y, lw=.5, color=color, rasterized=raster)
 
         y_loc += 1  # if transcript.transcript else .5
-
         if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
             current_domains = obj.domain.pep[transcript.transcript_id]
 
@@ -521,8 +520,7 @@ def plot_annotation(
                             y_loc - exon_width / 4, y_loc - exon_width / 4,
                             y_loc + exon_width / 4, y_loc + exon_width / 4
                         ]
-                        ax.fill(x, y, color, lw=.5,
-                                zorder=20, rasterized=raster)
+                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
 
                     # @2022.05.13
                     intron_relative_s = region.relative(
@@ -541,8 +539,8 @@ def plot_annotation(
                     intron_sites = [graph_coords[intron_relative_s],
                                     graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc],
-                                color=color, lw=0.2, rasterized=raster)
+                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
+
                 if show_id:
                     ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript_id}",
                             fontsize=font_size / 2, ha="right")
@@ -550,10 +548,8 @@ def plot_annotation(
                     ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript}",
                             fontsize=font_size / 2, ha="right")
 
-                y_loc += 0.25
+                y_loc += .5
 
-        # offset for next term.
-        y_loc += 0.75
     if obj.local_domain:
         for base_name, current_domain in obj.local_domain.items():
             for sub_current_domain in current_domain:
