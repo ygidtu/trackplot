@@ -48,7 +48,7 @@ and each track on output corresponds these datasets from config file.
 
 Trackplot is based on **Python3** `(python_requires='>=3.8')`, 
 and we have simplified the installation process on the main page. 
-For a more comprehensive installation guide, please refer to [this link](./command.md).
+For a more comprehensive installation guide, please refer to [this link](./docs/installation.md).
 
 ### For impatient
 
@@ -96,7 +96,7 @@ pip install trackplot
 
 2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
 
-For a binary version of the tool and more comprehensive information, please visit [this link](./command.md).
+For a binary version of the tool and more comprehensive information, please visit [this link](./docs/installation.md).
 
 ```bash
 # example with version v0.3.2, please using your interested version according to your needs
