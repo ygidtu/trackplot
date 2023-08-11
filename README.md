@@ -46,18 +46,37 @@ and each track on output corresponds these datasets from config file.
 
 ## Usage
 
-The trackplot is written in **Python3** `(python_requires='>=3.8')`, and user could install it in a variety of ways as follows
+Trackplot is based on **Python3** `(python_requires='>=3.8')`, 
+and we have simplified the installation process on the main page. 
+For a more comprehensive installation guide, please refer to [this link](./docs/installation.md).
 
+### For impatient
+
+```shell
+pip install trackplot
+trackplot --help
+
+# or
+
+conda create -n trackplot -c bioconda -c conda-forge trackplot
+conda activate trackplot
+trackplot --help
+
+```
 
 ###### Notes
->1. For **microsoft windows**, **mac (apple silicon)** and **other arm platform** users, 
-    due to pysam, pybigwig and hicmatrix do not support those platforms, 
-    trackplot couldn't be installed by pypi or conda,
-    pleas use docker image as alternative 
->2. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
->3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
-    [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
-    to solve their requirements.
+>1. For users on **Microsoft Windows**, **Mac (Apple Silicon)**, 
+    and **other ARM platforms**, 
+    please note that Trackplot may not be installable via PyPI or Conda due to compatibility issues with pysam, 
+    pybigwig, and hicmatrix libraries on these platforms. 
+    As an alternative, we recommend using the Docker image for installation.
+
+>2. If you encounter a `segment fault` error during multiple processing, 
+    you may want to consider using the Docker image or running the command with the `-p 1` flag. 
+
+>3. If you encounter the message `Please install pyBigWig and hicmatrix`, 
+    you can refer to the official documentation for [pyBigWig](https://github.com/deeptools/pyBigWig) and 
+    [hicmatrix](https://github.com/deeptools/HiCMatrix) to fulfill their requirements and resolve the issue.
 
 
 ### Using trackplot by a command line
@@ -77,25 +96,7 @@ pip install trackplot
 
 2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
 
-
-All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
-- Arch: `appimagecrafters/tests-env:archlinux-latest`
-- Fedora: `appimagecrafters/tests-env:fedora-30`
-- Debian: `appimagecrafters/tests-env:debian-stable`
-- Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
-- Centos: `appimagecrafters/tests-env:centos-7`
-
->Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for Linux (x86_64 platform) users.
-Once you have installation issues and not familiar with docker, 
-please download the AppImage file from our releases.
-> 
-> Once the AppImage file couldn't work properly please open an issue in this repo, 
-and provide us the system platform and full error messages for us to debug.
-> 
-> **Notes:** 
-> 1. the AppImage will decompress all bundled files before execution, 
-> therefore it will a little bit slower than command line tools and source code
-> 2. please use absolute path instead of relative path.
+For a binary version of the tool and more comprehensive information, please visit [this link](./docs/installation.md).
 
 ```bash
 # example with version v0.3.2, please using your interested version according to your needs
@@ -108,8 +109,6 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 
 3. using docker image
 
-> Known issue: the logging time may have several hours mismatch with your local time, due to timezone settings inner the image.
-
 ```bash
 docker pull ygidtu/trackplot
 docker run --rm ygidtu/trackplot --help
@@ -119,17 +118,6 @@ docker run --rm ygidtu/trackplot --help
 
 
 4. install from bioconda
-
-First make sure your conda is properly installed.
-
-```bash
-# Check if conda has been successfully installed.
-conda --version
-
-# if conda is not installed, refer to https://conda.io/projects/conda/en/latest/user-guide/install/download.html
-```
-
-After successful installation
 
 ```bash
 # install trackplot into the default conda env 
@@ -144,8 +132,6 @@ trackplot --help
 ```
 
 ---
-
-For additional installation information please visit [here.](https://trackplot.readthedocs.io/en/latest/)  
 
 ### Using trackplot by a local webserver
 
@@ -189,7 +175,7 @@ docker run --name trackplot \
 `-p`: public and private port for the server, default:5000(public):5000(private)
 - `-v`, `--volume`: mount the working directory to docker container, for example, the `$PWD/data` could replace by the path to your directory contains all necessary data
 - `--user`: prevent docker read and write file using root privileges
-- the rest usage please check [Command line usage](./command.md)
+
 
 ---
 

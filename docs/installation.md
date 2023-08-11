@@ -1,14 +1,6 @@
+## Using trackplot by a command line
 
-## Install with pypi, conda or docker
-
-### Notes
->1. For **windows**, **mac(apple silicon)** and **other arm** users, due to several requirements pysam, pybigwig and hicmatrix do not support those platforms, pleas use docker image as alternative 
->2. if `segment fault` with multiple processing, please try to use docker image, or just run with `-p 1`.
->3. if `Please install pyBigWig and hicmatrix` occurs, please check the official document of 
-    [pyBigWig](https://github.com/deeptools/pyBigWig) and [hicmatrix](https://github.com/deeptools/HiCMatrix) 
-    to solve their requirements.
-
-### PyPi
+1. install from PyPi 
 
 Before running this command line, please check python (>=3.8) was installed.
 
@@ -19,10 +11,13 @@ pip install pybigwig hicmatrix
 pip install trackplot
 # __Note:__ We noticed some pypi mirrors are not syncing some packages we depend on, 
 # therefore please try another pypi mirror once you encounter 
-# `No local packages or working download links found for xxx` 
+# `No local packages or working download links found for xxx`
 ```
+
 ---
-### AppImage (Linux/WSL x86_64 platform only)
+
+2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
+
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
 - Arch: `appimagecrafters/tests-env:archlinux-latest`
@@ -31,7 +26,7 @@ All the AppImage files were tested on the official pre-built GNU/Linux distribut
 - Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
 - Centos: `appimagecrafters/tests-env:centos-7`
 
->Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for linux (x86_64 platform) users.
+>Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for Linux (x86_64 platform) users.
 Once you have installation issues and not familiar with docker, 
 please download the AppImage file from our releases.
 > 
@@ -52,8 +47,7 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 
 ---
 
-
-### Docker
+3. using docker image
 
 > Known issue: the logging time may have several hours mismatch with your local time, due to timezone settings inner the image.
 
@@ -65,20 +59,12 @@ docker run --rm ygidtu/trackplot --help
 git clone https://github.com/ygidtu/trackplot trackplot
 cd trackplot
 docker build -t ygidtu/docker .
-
-docker run --rm -v $PWD:$PWD --user $(id -u):$(id -g) ygidtu/trackplot --help
-
+docker run --rm ygidtu/trackplot --help
 ```
-- `-v`, `--volume`: mount the working directory to docker container
-- `--user`: prevent docker read and write file using root privileges
-- the rest usage please check [Command line usage](./command.md)
-
-**Note: ** detailed command line usage please check [Command line Usage](./command.md)
-
 
 ---
 
-### Install from source
+4. install from source code
 
 Prior to installing the tool from the source code, users should verify their Python version (>=3.8).
 
@@ -87,9 +73,11 @@ python --version
 # Python 3.10.8
 ```
 
-#### python3 is not available 
+    4.1 python3 is not available 
 
-If your Python version does not match the requirements of Trackplot, users could follow the cmd to install and more detailed instruction for different system please refer to [here](https://realpython.com/installing-python/).  
+If your Python version does not match the requirements of Trackplot, 
+users could follow the cmd to install and 
+more detailed instruction for different system please refer to [here](https://realpython.com/installing-python/).  
 
 ```bash
 # If the default Python version does not meet the requirements of Trackplot, 
@@ -117,7 +105,7 @@ $PWD/Python-3.10.12/Python-3.10.12/Python/bin/trackplot --help
 
 ```
 
-#### python3 is available
+    4.2 python3 is available
 
 ```bash
 # 1. download the trackplot
@@ -137,7 +125,7 @@ python main.py --help
 
 ---
 
-### Conda
+5. install from bioconda
 
 First make sure your conda is properly installed.
 
@@ -173,7 +161,7 @@ trackplot --help
 
 ---
 
-### for `pipenv` or `poetry` users
+6. for `pipenv` or `poetry` users
 
 > Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
 
@@ -206,47 +194,50 @@ poetry shell  && python main.py --help
 poetry run python main.py --help
 ```
 
-** Note: **
-If there is any problem with installation of `cairocffi`
+## Using trackplot by a local webserver
 
-- Please install the requirements according to the [Official Documentation of cairocffi](https://cairocffi.readthedocs.io/en/stable/overview.html)
-- Or try to use another backend, including `Agg`, `Pdf`, `Svg`, etc..., instead of `Cairo` by default.
+1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
 
-But:
-- the `Agg`, `PDF`, etc. backends may have problems with the small protein domains, so use as appropriate.
-- ![](imgs/cmd/1.svg)
+```bash
+# example with version v0.3.2, please using your interested version according to your needs
+export VERSION=0.3.2
+gunzip trackplot-${VERSION}-x86_64.AppImage
+chmod +x trackplot-${VERSION}-x86_64.AppImage
+./trackplot-${VERSION}-x86_64.AppImage --help
+
+# startup webserver
+./trackplot-${VERSION}-x86_64.AppImage --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+
+```
+    
+**Note:** the `--plots` were required while using appimages
 
 ---
-### Build Web interface from source
 
-For this tutorial, we will assume that you have already installed Conda on your system.
+2. Running using command line
 
-1.nodejs (18.14.0 LTS above)
-
-```shell
-# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
-
-conda install -c conda-forge nodejs
+```bash
+trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 ```
 
-Or user could download and install nodejs from [here](https://nodejs.org/en/).
+---
 
-2.install from source code
+3. Install from a docker image
+   
+```bash
+docker pull ygidtu/trackplot
 
-Before this, please make sure that Trackplot has been properly installed in the same env.
-
-
-```shell
-git clone https://github.com/ygidtu/trackplot trackplot
-cd trackplot/web
-
-# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
-npm install -g vue-cli vite && npm install
-vite build
-
-# check whether the ui is successfully compiled
-ls ../ui
-
-# then install trackplot from source code and start server as follow
-python main.py --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+# Deploy the server
+docker run --name trackplot \
+  --rm -v $PWD/example:/data -v $PWD/plots/:/plots -p 5000:5000 ygidtu/trackplot \
+  --start-server \
+  --host 0.0.0.0 \
+  --data /data \
+  --plots /plots
+  
 ```
+
+`-p`: public and private port for the server, default:5000(public):5000(private)
+- `-v`, `--volume`: mount the working directory to docker container, for example, the `$PWD/data` could replace by the path to your directory contains all necessary data
+- `--user`: prevent docker read and write file using root privileges
+- the rest usage please check [Command line usage](./command.md)
