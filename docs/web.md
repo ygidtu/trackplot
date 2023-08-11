@@ -1,19 +1,25 @@
 # Web UI
 
-## Installation
+## Start server
+
+### Command line tools
+
+```bash
+trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+```
 
 ### AppImage (Linux/WSL x86_64 users only)
 
-Download the trackplotweb appimage file from our [release](https://github.com/ygidtu/trackplot/releases)
+Download the trackplot appimage file from our [release](https://github.com/ygidtu/trackplot/releases)
 
 ```bash
-# example with version v0.3.1, please using your interested version according to your needs
-export VERSION=0.3.1
-chmod +x trackplotweb-${VERSION}-x86_64.AppImage
-./trackplotweb-${VERSION}-x86_64.AppImage --help
+# example with version v0.3.2, please using your interested version according to your needs
+export VERSION=0.3.2
+chmod +x trackplot-${VERSION}-x86_64.AppImage
+./trackplot-${VERSION}-x86_64.AppImage --help
 
 # startup webserver
-./trackplotweb-${VERSION}-x86_64.AppImage --host 127.0.0.1 --port 5000 --plots ./plots
+./trackplot-${VERSION}-x86_64.AppImage --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 ```
     
 **Note:** the `--plots` were required while using appimages
@@ -25,17 +31,15 @@ chmod +x trackplotweb-${VERSION}-x86_64.AppImage
 We also prepared a docker image of web server, uses could access this by following this,
 
 ```shell
-docker pull ygidtu/trackplotweb
+docker pull ygidtu/trackplot
 
 # Deploy the server
-docker run --name trackplotweb \
-  --rm \
-  -v $PWD/data:/data \
-  -v $PWD/plots/:/plots
-  -p 5000:5000 \
+docker run --name trackplot \
+  --rm -v $PWD/example:/data -v $PWD/plots/:/plots -p 5000:5000 ygidtu/trackplot \
+  --start-server \
+  --host 0.0.0.0 \
   --data /data \
-  --plots /plots \
-  ygidtu/trackplotweb 
+  --plots /plots
 ```
 
 `-p`: public and private port for the server, default:5000(public):5000(private)
@@ -43,58 +47,6 @@ docker run --name trackplotweb \
 - `--user`: prevent docker read and write file using root privileges
 - the rest usage please check [Command line usage](./command.md)
 
----
-
-### Build Web interface from source
-
-For this tutorial, we will assume that you have already installed Conda on your system.
-
-1.nodejs (18.14.0 LTS above)
-
-```shell
-# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
-
-conda install -c conda-forge nodejs
-```
-
-Or user could download and install nodejs from [here](https://nodejs.org/en/).
-
-2.install from source code
-
-Before this, please make sure that Trackplot has been properly installed in the same env.
-
-
-```shell
-git clone https://github.com/ygidtu/trackplot trackplot
-cd trackplot/web
-
-# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
-npm install -g vue-cli vite && npm install
-vite build
-
-# check whether the ui is successfully compiled
-ls ../ui
-
-# prepare the backend server
-pip install flask
-
-# before startup, check whether the trackplot properly installed
-python -c "import trackplot; print(trackplot.__version__)"
-
-cd ../
-python server.py --help
-
-Usage: server.py [OPTIONS]
-
-Options:
-  -h, --host TEXT     the ip address binding to
-  -p, --port INTEGER  the port to listen on
-  --plots PATH        the path to directory where to save the backend plot
-                      data and logs, required while using appImage.
-  --data PATH         the path to directory contains all necessary data files.
-  --version           Show the version and exit.
-  --help              Show this message and exit.
-```
 ---
 
 ## Usage

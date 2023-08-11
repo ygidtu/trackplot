@@ -3,11 +3,11 @@
 u"""
 This script contains the functions to draw different images
 """
+import gzip
 import math
-from collections import defaultdict
 from copy import deepcopy
 from decimal import Decimal
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple, Set
 
 import matplotlib as mpl
 import numpy as np
@@ -34,6 +34,39 @@ from trackplot.file.Annotation import Annotation
 from trackplot.file.File import File
 from trackplot.file.HiCMatrixTrack import HiCTrack
 from trackplot.file.ReadSegments import ReadSegment
+
+
+def load_barcodes(barcode: str) -> Tuple[Dict[str, Dict[str, Set[str]]], Dict[str, str]]:
+    u"""
+    as name says
+    :param barcode: the path to barcode file
+    """
+    r = gzip.open(barcode, "rt") if barcode.endswith(".gz") else open(barcode, "r")
+    res = {}
+    colors = {}
+    for line in r:
+        line = line.strip().split()
+        if len(line) >= 4:
+            key, bc, group, color = line[:4]
+            colors[group] = color
+        elif len(line) == 3:
+            key, bc, group = line[:3]
+        elif len(line) == 2:
+            key, bc = line
+            group = ""
+        else:
+            continue
+
+        if key not in res.keys():
+            res[key] = {}
+
+        if group not in res[key]:
+            res[key][group] = set()
+
+        res[key][group].add(bc)
+
+    r.close()
+    return res, colors
 
 
 def get_limited_index(num, length):
@@ -962,6 +995,10 @@ def plot_heatmap(
     if not show_row_names:
         labels = False
 
+    if vmin == vmax == 0 and (mtx.max() != 0 or mtx.min() != 0):
+        logger.debug("The vmin and vmax == 0, but input matrix not != 0")
+        vmin, vmax = None, None
+
     sns.heatmap(mtx, ax=ax, cmap=color, cbar_ax=cbar_ax,
                 xticklabels=False, yticklabels=labels,
                 center=False, rasterized=raster, vmin=vmin, vmax=vmax)
@@ -1156,6 +1193,7 @@ def plot_igv_like(
     assert len(obj) == 1, "IGV-like plot only support one file"
 
     obj = list(obj.values())[0]
+    assert isinstance(obj, ReadSegment), "the input obj should be ReadSegment"
     assert obj.region is not None, "please load data first"
 
     region = obj.region

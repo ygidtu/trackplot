@@ -44,8 +44,8 @@ and provide us the system platform and full error messages for us to debug.
 > 2. please use absolute path instead of relative path.
 
 ```bash
-# example with version v0.3.1, please using your interested version according to your needs
-export VERSION=0.3.1
+# example with version v0.3.2, please using your interested version according to your needs
+export VERSION=0.3.2
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 ```
@@ -217,3 +217,36 @@ But:
 - ![](imgs/cmd/1.svg)
 
 ---
+### Build Web interface from source
+
+For this tutorial, we will assume that you have already installed Conda on your system.
+
+1.nodejs (18.14.0 LTS above)
+
+```shell
+# if conda is getting stuck at solving environment', please refer to https://stackoverflow.com/a/66963979
+
+conda install -c conda-forge nodejs
+```
+
+Or user could download and install nodejs from [here](https://nodejs.org/en/).
+
+2.install from source code
+
+Before this, please make sure that Trackplot has been properly installed in the same env.
+
+
+```shell
+git clone https://github.com/ygidtu/trackplot trackplot
+cd trackplot/web
+
+# build the frontend static files; If npm was not found, please install nodejs(https://nodejs.org).
+npm install -g vue-cli vite && npm install
+vite build
+
+# check whether the ui is successfully compiled
+ls ../ui
+
+# then install trackplot from source code and start server as follow
+python main.py --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+```

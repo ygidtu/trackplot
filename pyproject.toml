@@ -1,11 +1,16 @@
 [tool.poetry]
 name = "trackplot"
-version = "0.3.1"
+version = "0.3.2"
 description = "The trackplot is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. https://sashimi.readthedocs.io/"
 authors = ["ygidtu <ygidtu@gmail.com>"]
 license = "BSD-3"
 readme = "README.md"
 packages = [{include = "trackplot"}]
+include = [
+    {path="pyproject.toml", format = ["sdist", "wheel"]},
+    {path="ui/*", format = ["sdist", "wheel"]},
+    {path="ui/assets/*", format = ["sdist", "wheel"]}
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
@@ -25,20 +30,16 @@ requests = "^2.28.2"
 scipy = "^1.10.0"
 seaborn = "^0.12.2"
 xmltodict = "^0.13.0"
-
+flask = "^2.3.2"
 
 [[tool.poetry.source]]
 name = "mirrors"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-default = true
-secondary = false
-
+priority = "primary"
 
 [[tool.poetry.source]]
-name = "official"
-url = "https://pypi.org/simple"
-default = false
-secondary = true
+name = "PyPI"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]

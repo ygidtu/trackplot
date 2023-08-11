@@ -48,6 +48,7 @@ export default {
   name: 'LogComp',
   props: {
     pid: {required: false, type: String, default: "test"},
+    load: {required: true, type: Boolean, default: true}
   },
   data() {
     let logs: Array<Log> = []
@@ -85,6 +86,15 @@ export default {
   },
   mounted() {
     this.timer = setInterval(this.loadParams, 1000);
+  },
+  watch: {
+    load: function() {
+      if (this.load) {
+        this.timer = setInterval(this.loadParams, 1000);
+      } else {
+        clearInterval(this.timer);
+      }
+    }
   },
   beforeUnmount() {
     clearInterval(this.timer);

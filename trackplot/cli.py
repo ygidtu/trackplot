@@ -5,7 +5,6 @@ Created at 2022.05.31
 
 This script contains all the command line parameters
 """
-import gzip
 import os
 import sys
 from multiprocessing import cpu_count
@@ -19,6 +18,8 @@ from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot, __version__
+from trackplot.plot_func import load_barcodes
+from trackplot.server import run, __PLOT__
 
 
 def decode_region(region: str):
@@ -67,39 +68,6 @@ class FileList(object):
     def __str__(self):
         return f"path: {self.path} \nlabel: {self.label} \ngroup: {self.group} \n" \
                f"color: {self.color} \ncategory: {self.category} \nlibrary: {self.library}"
-
-
-def load_barcodes(barcode: str) -> Tuple[Dict[str, Dict[str, Set[str]]], Dict[str, str]]:
-    u"""
-    as name says
-    :param barcode: the path to barcode file
-    """
-    r = gzip.open(barcode, "rt") if barcode.endswith(".gz") else open(barcode, "r")
-    res = {}
-    colors = {}
-    for line in r:
-        line = line.strip().split()
-        if len(line) >= 4:
-            key, bc, group, color = line[:4]
-            colors[group] = color
-        elif len(line) == 3:
-            key, bc, group = line[:3]
-        elif len(line) == 2:
-            key, bc = line
-            group = ""
-        else:
-            continue
-
-        if key not in res.keys():
-            res[key] = {}
-
-        if group not in res[key]:
-            res[key][group] = set()
-
-        res[key][group].add(bc)
-
-    r.close()
-    return res, colors
 
 
 def __read_iter__(path):
@@ -250,7 +218,7 @@ def process_file_list(infile: str, category: str = "density"):
 @click.version_option(__version__, message="Current version %(version)s")
 @click.option("--verbose", is_flag=True, default=False, help="enable debug level log")
 @click.option("--logfile", type=click.Path(), help="save log info into file")
-@click.option("-e", "--event", type=click.STRING, required=True,
+@click.option("-e", "--event", type=click.STRING,
               help="Event range eg: chr1:100-200:+")
 @optgroup.group("Common input files configuration")
 @optgroup.option("--color-factor", default=1, type=click.IntRange(min=1),
@@ -488,6 +456,14 @@ def process_file_list(infile: str, category: str = "density"):
                  help="y axis log transformed, 0 -> not log transform;2 -> log2;10 -> log10")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
 @optgroup.option("--font", type=click.STRING, default=None, help="Fonts", show_default=True)
+@optgroup.group("Web settings")
+@optgroup.option("--start-server", type=click.BOOL, is_flag=True, help="Start web ui instead of running in cmd mode")
+@optgroup.option("--host", type=click.STRING, default="localhost", help="The ip address binding to")
+@optgroup.option("--port", type=click.INT, default=5000, help="The port to listen on")
+@optgroup.option("--plots", type=click.Path(), default=__PLOT__,
+              help="The path to directory where to save the backend plot data and logs, required while using appImage.")
+@optgroup.option("--data", type=click.Path(exists=True), default="./",
+              help="The path to directory contains all necessary data files.")
 def main(**kwargs):
     u"""
     Welcome to use trackplot
@@ -496,6 +472,12 @@ def main(**kwargs):
     logger.remove()
     logger.add(sys.stderr, level="DEBUG" if kwargs["verbose"] else "INFO")
     logger.debug("DEBUG" if kwargs["verbose"] else "INFO")
+
+    if kwargs["start_server"]:
+        run(host=kwargs["host"], port=kwargs["port"], plots=kwargs["plots"], data=kwargs["data"])
+        exit(0)
+    else:
+        assert kwargs["event"], "-e, --event required"
 
     # print warning info about backend
     if (kwargs["domain"] or kwargs["local_domain"]) and kwargs["backend"].lower() != "cairo":

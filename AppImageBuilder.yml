@@ -1,0 +1,61 @@
+version: 1
+script:
+  # Remove any previous build
+  - rm -rf AppDir  | true
+  # Copy the python application code into the AppDir
+  - mamba create -y -p AppDir python=3.11
+  - mkdir AppDir/opt && cp -r main.py trackplot pyproject.toml poetry.lock README.md ui AppDir/opt
+  - AppDir/bin/pip install -e AppDir/opt
+
+AppDir:
+  app_info:
+    id: org.appimage-crafters.trackplot
+    name: trackplot
+    version: 0.3.2
+    # Set the python executable as entry point
+    exec: "bin/python3"
+    # Set the application main script path as argument. Use '$@' to forward CLI parameters
+    exec_args: "$APPDIR/opt/main.py $@"
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: 'deb [arch=amd64] http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal main restricted universe multiverse'
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C'
+
+    include:
+      - libc6-dev
+      - samtools
+      - tabix
+    exclude: []
+
+  runtime:
+    env:
+      # Set python home
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+      PYTHONHOME: '${APPDIR}/'
+      # Path to the site-packages dir or other modules dirs
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+      PYTHONPATH: '${APPDIR}/lib/python3.11/site-packages'
+
+  test:
+    fedora:
+      image: appimagecrafters/tests-env:fedora-30
+      command: ./AppRun
+    debian:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun
+    arch:
+      image: appimagecrafters/tests-env:archlinux-latest
+      command: ./AppRun
+    ubuntu:
+      image: appimagecrafters/tests-env:ubuntu-bionic
+      command: ./AppRun
+    centos:
+      image: appimagecrafters/tests-env:centos-7
+      command: ./AppRun
+
+AppImage:
+  update-information: 'gh-releases-zsync|AppImageCrafters|*x86_64.AppImage.zsync'
+  sign-key: None
+  arch: x86_64

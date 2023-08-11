@@ -20,6 +20,7 @@ requests = "*"
 scipy = "*"
 seaborn = "*"
 xmltodict = "*"
+flask = "*"
 
 [dev-packages]
 

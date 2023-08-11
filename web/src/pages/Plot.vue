@@ -165,7 +165,7 @@ import LogComp from "../components/Log.vue"
           <el-tab-pane label="Process log" name="log" v-if="progress.draw !== null">
             <el-scrollbar :height="windowHeight">
               <el-col :span="24">
-                <log-comp v-if="pid !== ''" :pid="pid" />
+                <log-comp :pid="pid" :load="load_log" />
               </el-col>
             </el-scrollbar>
           </el-tab-pane>
@@ -251,7 +251,7 @@ export default defineComponent({
         ]
       },
       progress: progress,
-      img: img,
+      img: img, load_log: false
     };
   },
   methods: {
@@ -303,7 +303,7 @@ export default defineComponent({
         text: 'Loading',
         background: 'rgba(0, 0, 0, 0.7)',
       })
-
+      this.load_log = true
       let config: AxiosRequestConfig = {responseType: "application/json"}
       if (type === "plot" || type === "save") {
         config["responseType"] = "blob"
@@ -340,6 +340,7 @@ export default defineComponent({
         errorPrint(error)
       }).finally(() => {
         loading.close()
+        this.load_log = false
       })
     },
     removeThis(idx: Number) {

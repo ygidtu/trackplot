@@ -310,6 +310,15 @@ Options:
                                   transform;2 -> log2;10 -> log10
     --title TEXT                  Title
     --font TEXT                   Fonts
+  Web settings:
+    --start-server                Start web ui instead of running in cmd mode
+    --host TEXT                   The ip address binding to
+    --port INTEGER                The port to listen on
+    --plots PATH                  The path to directory where to save the
+                                  backend plot data and logs, required while
+                                  using appImage.
+    --data PATH                   The path to directory contains all necessary
+                                  data files.
   -h, --help                      Show this message and exit.
 ```
 

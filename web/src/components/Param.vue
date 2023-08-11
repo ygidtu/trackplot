@@ -14,12 +14,12 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
               <el-input-number v-else-if="p.annotation === 'float'" :precision='2' v-model="p.default" :step=".1"/>
               <el-color-picker v-else-if="p.annotation === 'color'" v-model="p.default" />
 
-              <el-radio-group v-model="p.default" :default="p.default" v-else-if="p.annotation === 'choice'">
+              <el-radio-group v-model="p.default" v-else-if="p.annotation === 'choice'">
                 <el-radio v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-radio>
               </el-radio-group>
 
-              <el-select v-model="p.default" :default="p.default" v-else-if="p.annotation === 'select'">
-                <el-option v-for="i in p.choice" type="primary" :key="i" :label="i">{{i}}</el-option>
+              <el-select v-model="p.default" v-else-if="p.annotation === 'select'">
+                <el-option v-for="i in p.choice" type="primary" :key="i" :value="i" :label="i">{{i}}</el-option>
               </el-select>
 
               <el-switch v-else-if="p.annotation === 'bool'" v-model="p.default" active-text="True" inactive-text="False"/>

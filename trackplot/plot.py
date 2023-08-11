@@ -9,7 +9,6 @@ import io
 import logging
 import os
 from multiprocessing import Pool
-from typing import Set
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -31,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -109,10 +108,11 @@ class PlotInfo(object):
         elif self.type == "site-plot" and self.category[0] == "bam":
             n += 2
         elif self.type == "igv":
+            # seems igv scale will produce float
             n += self.obj[0].len(scale / 8)
         else:
             n += 1
-        return n
+        return int(n)
 
     def add(self, obj: File, category: str = "", type_: str = ""):
         u"""
@@ -479,7 +479,7 @@ class Plot(object):
                             size_factor=None,
 
                             log_trans: Optional[str] = None,
-                            ):
+                            ) -> File:
         self.__n_objs__ += 1
         path = os.path.expanduser(path)
         logger.info(f"add {category} {label} {path}")
@@ -505,6 +505,7 @@ class Plot(object):
                 size_factors=size_factor
             )
         elif category == "igv":
+            print("igv?")
             obj = ReadSegment.create(
                 path=path,
                 label=label,
@@ -932,7 +933,7 @@ class Plot(object):
         """
         obj, category = self.__init_input_file__(
             path=path,
-            category=category,
+            category="igv",
             library=library,
             features=features,
             deletion_ignore=deletion_ignore,
@@ -1131,6 +1132,7 @@ class Plot(object):
             else:
                 height_ratio.append(1)
 
+        plots_n_rows = int(plots_n_rows)
         height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
 
         logger.debug(f"plots n_rows={plots_n_rows}; n_cols = {plots_n_cols}")
