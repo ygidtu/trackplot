@@ -1,8 +1,0 @@
-FROM ygidtu/trackplot
-
-ENV ROOT_DIR=/opt/trackplot
-
-COPY ./ui $ROOT_DIR/ui
-RUN cd $ROOT_DIR && pip install flask
-
-ENTRYPOINT ["python", "/opt/trackplot/server.py", "--host", "0.0.0.0"]
