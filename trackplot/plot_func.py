@@ -670,44 +670,48 @@ def plot_density(
 
     if data is None:
         data = obj.data
-    jxns = data.junctions_dict
+
+    try:
+        jxns = data.junctions_dict
+    except AttributeError:
+        # depth do not have junctions
+        jxns = {}
 
     fixed_max_used_y, fixed_min_used_y = max_used_y_val is not None, min_used_y_val is not None
     if max_used_y_val is None:
-        max_used_y_val = max(data.plus)
+        if isinstance(data, dict):
+            for k, v in data.items():
+                max_used_y_val = max(v.plus.max(), max_used_y_val if max_used_y_val else 0)
+        else:
+            max_used_y_val = max(data.plus)
         if max_used_y_val % 2 == 1:
             max_used_y_val += 1
 
     if min_used_y_val is None:
-        min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
+        if isinstance(data, dict):
+            min_used_y_val = [v.minus.max() if v.minus else 0 for v in data.values()]
+            min_used_y_val = -1 * max(min_used_y_val)
+        else:
+            min_used_y_val = -1 * max(data.minus) if data.minus is not None else 0
 
     # Reduce memory footprint by using incremented graph_coords.
     x, y1, y2 = [], [], []
     for i in range(len(graph_coords)):
         x.append(graph_coords[i])
-        y1.append(data.plus[i] if data.plus is not None else 0)
-        y2.append(-data.minus[i] if data.minus is not None else 0)
+
+        if isinstance(data, dict):
+            y1.append(max([v.plus[i] if v.plus is not None else 0 for v in data.values()]))
+            y2.append(min([-v.minus[i] if v.minus is not None else 0 for v in data.values()]))
+        else:
+            y1.append(data.plus[i] if data.plus is not None else 0)
+            y2.append(-data.minus[i] if data.minus is not None else 0)
 
     ax.fill_between(x, y1, y2=y2, color=color, lw=0, step=fill_step, rasterized=raster)
 
-    # if isinstance(obj, ATAC):
-    #     for idx, y in enumerate([y1, y2]):
-    #         if np.sum(y) > 0:
-    #             array_hist = np.repeat(graph_coords, np.abs(y1).astype(np.int32))
-    #             try:
-    #                 kde = gaussian_kde(array_hist)
-    #                 fit_value = kde.pdf(graph_coords)
-    #             except (ValueError, np.linalg.LinAlgError):
-    #                 # logger.debug(err)
-    #                 # logger.debug(traceback.format_exc())
-    #                 continue
-    #
-    #             fit_value = fit_value / fit_value.max()
-    #             ax.plot(graph_coords, fit_value * np.max(y), c=color, lw=1)
-
-    if data.strand_aware:
-        max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
-        min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
+    if not isinstance(data, dict):
+        if data.strand_aware:
+            max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
+            min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
 
     if jxns:
         # sort the junctions by intron length for better plotting look
@@ -828,7 +832,7 @@ def plot_density(
     if max_used_y_val == min_used_y_val == 0:
         min_used_y_val, max_used_y_val = ax.get_ylim()
 
-    if data.strand_aware and kwargs.get("density_by_strand"):
+    if not isinstance(data, dict) and data.strand_aware and kwargs.get("density_by_strand"):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
         min_used_y_val = -max_used_y_val
     elif not kwargs.get("density_by_strand") and not jxns:
@@ -844,7 +848,7 @@ def plot_density(
         distance_between_label_axis=distance_between_label_axis,
         font_size=font_size,
         show_y_label=show_y_label,
-        y_axis_skip_zero=False if data.strand_aware else True
+        y_axis_skip_zero=False if not isinstance(data, dict) and data.strand_aware else True
     )
 
 

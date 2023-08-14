@@ -101,18 +101,33 @@ class PlotInfo(object):
                 data[obj.label] = obj.data
         return data
 
-    def len(self, scale: Union[int, float] = .25) -> int:
+    def len(self, scale: Union[int, float] = .25, sc_height_ratio: Optional[Dict[str, float]] = None) -> Tuple[int, List]:
         n = 0
+        height_ratio = []
+
+        if self.is_single_cell:
+            if sc_height_ratio is None:
+                sc_height_ratio = {"density": .2, "heatmap": .2}
+            height_ratio = [sc_height_ratio.get(self.type, 1)]
+
         if not self.category:
             pass
         elif self.type == "site-plot" and self.category[0] == "bam":
-            n += 2
+            curr_n = 2 if not isinstance(self.obj[0], Depth) else 2 * len(self.obj[0])
+            n += curr_n
+            height_ratio = [height_ratio[0] for _ in range(curr_n)]
         elif self.type == "igv":
             # seems igv scale will produce float
             n += self.obj[0].len(scale / 8)
+            height_ratio = [self.obj[0].len((scale / 8))]
+        elif isinstance(self.obj[0], Depth):
+            n += len(self.obj[0])
+            height_ratio += [1 for _ in range(len(self.obj[0]))]
         else:
             n += 1
-        return int(n)
+            height_ratio.append(1)
+
+        return int(n), height_ratio
 
     def add(self, obj: File, category: str = "", type_: str = ""):
         u"""
@@ -479,7 +494,7 @@ class Plot(object):
                             size_factor=None,
 
                             log_trans: Optional[str] = None,
-                            ) -> File:
+                            ) -> Tuple[File, str]:
         self.__n_objs__ += 1
         path = os.path.expanduser(path)
         logger.info(f"add {category} {label} {path}")
@@ -505,7 +520,6 @@ class Plot(object):
                 size_factors=size_factor
             )
         elif category == "igv":
-            print("igv?")
             obj = ReadSegment.create(
                 path=path,
                 label=label,
@@ -1103,11 +1117,24 @@ class Plot(object):
             assert isinstance(p, PlotInfo), f"unrecognized data type: {type(p)}"
             # only enable the multiprocessing while n_jobs > 1
             if self.__n_objs__ / len(self.plots) >= n_jobs > 1:
-                p.load(self.region, n_jobs, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                if isinstance(p.obj[0].label, list):
+                    juncs = {}
+                    for i in p.obj[0].label:
+                        juncs.update(self.junctions.get(i, {}))
+                    p.load(self.region, junctions=juncs, *args, **kwargs)
+                else:
+                    p.load(self.region, n_jobs, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
             elif n_jobs > 1:
                 temp = copy.deepcopy(kwargs)
                 temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]
-                temp["junctions"] = self.junctions.get(p.obj[0].label, {})
+
+                if isinstance(p.obj[0].label, list):
+                    juncs = {}
+                    for i in p.obj[0].label:
+                        juncs.update(self.junctions.get(i, {}))
+                    temp["junctions"] = juncs
+                else:
+                    temp["junctions"] = self.junctions.get(p.obj[0].label, {})
                 cmds.append([p, args, temp])
 
         if len(cmds) > 0:
@@ -1117,20 +1144,20 @@ class Plot(object):
         # count the plots size
         for p in self.plots:
             if n_jobs <= 1:
-                p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                if isinstance(p.obj[0].label, list):
+                    juncs = {}
+                    for i in p.obj[0].label:
+                        juncs.update(self.junctions.get(i, {}))
+                    p.load(self.region, junctions=juncs, *args, **kwargs)
+                else:
+                    p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
-            plots_n_rows += p.len(annotation_scale)
+            n_rows, n_height = p.len(annotation_scale, sc_height_ratio=sc_height_ratio)
+            plots_n_rows += n_rows
+            height_ratio += n_height
+
             if p.type in ["heatmap", "hic"]:
                 plots_n_cols = 2
-
-            if p.is_single_cell:
-                height_ratio.append(sc_height_ratio.get(p.type, 1))
-            elif p.type == "igv":
-                height_ratio.append(p.len(annotation_scale))
-            elif p.type == "site-plot":
-                height_ratio += [1, 1]
-            else:
-                height_ratio.append(1)
 
         plots_n_rows = int(plots_n_rows)
         height_ratio += [1 for _ in range(plots_n_rows - len(height_ratio))]
@@ -1172,7 +1199,7 @@ class Plot(object):
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
-                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale), 0])
+                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale)[0], 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
@@ -1187,17 +1214,35 @@ class Plot(object):
 
             logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             if p.type == "density":
-                plot_density(
-                    ax=ax_var,
-                    obj=p.obj[0],
-                    graph_coords=self.graph_coords,
-                    max_used_y_val=max_y_val_,
-                    min_used_y_val=min_y_val_,
-                    distance_between_label_axis=distance_between_label_axis,
-                    raster=raster,
-                    fill_step=fill_step,
-                    **self.params[p]
-                )
+                if isinstance(p.obj[0], Depth):
+                    for _, readDepth in p.obj[0].data.items():
+                        plot_density(
+                            ax=ax_var,
+                            data=readDepth,
+                            region=self.region,
+                            graph_coords=self.graph_coords,
+                            max_used_y_val=max_y_val_,
+                            min_used_y_val=min_y_val_,
+                            distance_between_label_axis=distance_between_label_axis,
+                            raster=raster,
+                            fill_step=fill_step,
+                            **self.params.get(p, {})
+                        )
+                        curr_idx += 1
+                        ax_var = plt.subplot(gs[curr_idx, 0])
+                    curr_idx -= 1
+                else:
+                    plot_density(
+                        ax=ax_var,
+                        obj=p.obj[0],
+                        graph_coords=self.graph_coords,
+                        max_used_y_val=max_y_val_,
+                        min_used_y_val=min_y_val_,
+                        distance_between_label_axis=distance_between_label_axis,
+                        raster=raster,
+                        fill_step=fill_step,
+                        **self.params.get(p, {})
+                    )
             elif p.type == "hic":
                 plot_hic(
                     ax=ax_var,
@@ -1205,7 +1250,7 @@ class Plot(object):
                     obj=p.obj,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
             elif p.type == "site-plot":
                 plot_density(
@@ -1216,7 +1261,7 @@ class Plot(object):
                     min_used_y_val=min_y_val_,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
 
                 curr_idx += 1
@@ -1225,7 +1270,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
             elif p.type == "heatmap":
                 plot_heatmap(
@@ -1236,7 +1281,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
             elif p.type == "line":
                 plot_line(
@@ -1247,7 +1292,7 @@ class Plot(object):
                     min_used_y_val=min_y_val_,
                     graph_coords=self.graph_coords,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
             elif p.type == "igv":
                 plot_igv_like(
@@ -1256,7 +1301,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params[p]
+                    **self.params.get(p, {})
                 )
             elif p.type == "motif":
                 plot_motif(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords, **self.params[p])
@@ -1270,7 +1315,7 @@ class Plot(object):
             if p.type != "igv":
                 curr_idx += 1
             else:
-                curr_idx += p.len(annotation_scale)
+                curr_idx += p.len(annotation_scale)[0]
 
         if self.link:
             logger.info(f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")

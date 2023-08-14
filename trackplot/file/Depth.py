@@ -30,6 +30,12 @@ class Depth(File):
         self.title = title
         self.region = None
 
+    def __hash__(self):
+        return hash(tuple([hash(v) for v in self.data.items()]))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def __len__(self) -> int:
         return len(self.data)
 

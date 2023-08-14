@@ -5,3 +5,4 @@ example/bams/3.bam bam  3bam    blue
 #example/bws/2.bw    bw bw green
 example/bams/sc.bam bam sc	red	frf	1000000
 example/bams/sc.bam bam sc1	blue	frf	1000000
+example/depth.bgz   depth   depth

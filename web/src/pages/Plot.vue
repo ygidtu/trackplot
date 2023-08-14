@@ -231,6 +231,41 @@ const validRegion = (_: any, value: any, callback: any) => {
   callback();
 }
 
+
+function deepCopy(obj) {
+    var copy;
+
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) return obj;
+
+    // Handle Date
+    if (obj instanceof Date) {
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = deepCopy(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = deepCopy(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
 export default defineComponent({
   name: "Plot",
   data() {
@@ -290,7 +325,7 @@ export default defineComponent({
       if (file.type === "annotation") {
         this.progress.annotation = file
       } else if (file.type !== "plot" && file.type !== "save") {
-        this.progress.files?.push(file)
+        this.progress.files?.push(deepCopy(file))
       } else if (file.type === "plot" || file.type == "save") {
         this.progress.draw = file
         this.setting = "log"
