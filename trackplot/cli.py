@@ -93,7 +93,7 @@ def process_file_list(infile: str, category: str = "density"):
             for idx, line in __read_iter__(infile):
                 path, category = line[0], line[1]
 
-                if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac"]:
+                if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac", "bedgraph", "bg"]:
                     raise ValueError(f"{category} is not supported in density plot.")
 
                 if len(line) < 3:
@@ -112,7 +112,7 @@ def process_file_list(infile: str, category: str = "density"):
             for idx, line in __read_iter__(infile):
                 path, category = line[0], line[1]
 
-                if category not in ["bam", "bigwig", "bw", "depth", "atac"]:
+                if category not in ["bam", "bigwig", "bw", "depth", "atac", "bedgraph", "bg"]:
                     raise ValueError(f"{category} is not supported in heatmap plot.")
 
                 if len(line) < 3:
@@ -134,7 +134,7 @@ def process_file_list(infile: str, category: str = "density"):
             for idx, line in __read_iter__(infile):
                 path, category = line[0], line[1]
 
-                if category not in ["bam", "bigwig", "bw", "depth"]:
+                if category not in ["bam", "bigwig", "bw", "depth", "bedgraph", "bg"]:
                     raise ValueError(f"{category} is not supported in density plot.")
 
                 if len(line) < 3:

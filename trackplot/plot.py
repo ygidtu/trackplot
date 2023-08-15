@@ -30,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -1215,7 +1215,7 @@ class Plot(object):
             logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             if p.type == "density":
                 if isinstance(p.obj[0], Depth):
-                    for _, readDepth in p.obj[0].data.items():
+                    for key, readDepth in p.obj[0].data.items():
                         plot_density(
                             ax=ax_var,
                             data=readDepth,
@@ -1226,6 +1226,7 @@ class Plot(object):
                             distance_between_label_axis=distance_between_label_axis,
                             raster=raster,
                             fill_step=fill_step,
+                            y_label=key,
                             **self.params.get(p, {})
                         )
                         curr_idx += 1

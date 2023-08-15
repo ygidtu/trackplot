@@ -31,13 +31,29 @@ class Depth(File):
         self.region = None
 
     def __hash__(self):
-        return hash(tuple([hash(v) for v in self.data.items()]))
+        if self.data:
+            return hash(tuple([hash(v) for v in self.data.items()]))
+        return hash(tuple(self.label))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
 
     def __len__(self) -> int:
         return len(self.data)
+
+    @property
+    def plus(self):
+        if self.data:
+            return np.array(self.data.values()).max(axis=0)
+        return np.array(0)
+
+    @property
+    def minus(self):
+        return None
+
+    @property
+    def wiggle(self):
+        return self.plus
 
     @classmethod
     def create(cls, path: str, label: List[str] = None, title: str = ""):
@@ -94,4 +110,10 @@ class Depth(File):
 
 
 if __name__ == '__main__':
+    values = [
+        np.array([1, 2, 3, 4, 5]),
+        np.array([5, 4, 3, 2, 1])
+    ]
+
+    print(np.zeros())
     pass
