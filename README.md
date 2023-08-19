@@ -56,7 +56,7 @@ For a more comprehensive installation guide, please refer to [this link](./docs/
 pip install trackplot
 trackplot --help
 
-# or
+# or using trackplot by conda
 
 conda create -n trackplot -c bioconda -c conda-forge trackplot
 conda activate trackplot
@@ -78,8 +78,9 @@ trackplot --help
     you can refer to the official documentation for [pyBigWig](https://github.com/deeptools/pyBigWig) and 
     [hicmatrix](https://github.com/deeptools/HiCMatrix) to fulfill their requirements and resolve the issue.
 
+<details><summary>Using trackplot by a command line (click me) </summary>
+<p>
 
-### Using trackplot by a command line
 
 1. install from PyPi 
 
@@ -131,21 +132,27 @@ conda activate trackplot
 trackplot --help
 ```
 
----
 
-### Using trackplot by a local webserver
+</p>
+</details>
+
+
+---
+<details><summary>Using trackplot by a local webserver (click me) </summary>
+<p>
+
 
 1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
+# example with version v0.3.3, please using your interested version according to your needs
+export VERSION=0.3.3
 gunzip trackplot-${VERSION}-x86_64.AppImage
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 
 # startup webserver
-./trackplot-${VERSION}-x86_64.AppImage --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+./trackplot-${VERSION}-x86_64.AppImage --start-server --host 0.0.0.0 --port 5000 --plots ./plots
 ```
     
 **Note:** the `--plots` were required while using appimages
@@ -155,7 +162,7 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 2. Running using command line
 
 ```bash
-trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+trackplot --start-server --host 0.0.0.0 --port 5000 --plots ./plots
 ```
 
 3. Running using docker image
@@ -176,6 +183,8 @@ docker run --name trackplot \
 - `-v`, `--volume`: mount the working directory to docker container, for example, the `$PWD/data` could replace by the path to your directory contains all necessary data
 - `--user`: prevent docker read and write file using root privileges
 
+</p>
+</details>
 
 ---
 
