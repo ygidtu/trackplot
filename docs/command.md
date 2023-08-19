@@ -517,63 +517,25 @@ trackplot \
 
 ![](imgs/cmd/2.png)
 
-### 3. Filter junction counts and include the specific junction
+### 3. Sample preparetion
 
-User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
+TODO: 更改了doc顺序，先准备文件，在做测试。需要检查命令用法是否有错
 
-Here is the command,
-```bash
-
-# panel A, show all junctions
-
-trackplot \
-  -e chr9:112296343-112335026 \
-  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
-  --density example/Article_figures/FigS1/b/bam.tsv \
-  -o PTBP3.raw.pdf \
-  --dpi 300 \
-  --width 6 \
-  --height 1 --show-junction-num
-
-# panel B, show the junctions with more 10 counts.
-
-trackplot \
-  -e chr9:112296343-112335026 \
-  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
-  --density example/Article_figures/FigS1/b/bam.tsv \
-  -o PTBP3.filter.pdf \
-  --dpi 300 \
-  --width 6 \
-  --height 1 --show-junction-num -t 10
-
-# panel C, show the specific junctions.
-trackplot \
-  -e chr9:112296343-112335026 \
-  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
-  --density example/Article_figures/FigS1/b/bam.tsv \
-  -o PTBP3.include.pdf \
-  --dpi 300 \
-  --width 6 \
-  --height 1 --show-junction-num \
-  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
-
-```
-
-![](imgs/cmd/junction_manu.png)
-
-### 4. Sample aggregation
-
-User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
-
+Sample aggregation
 
 Firstly, prepare the example datas
 
 ```bash
+# annotation gtf file
+wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
+
+# bam files
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF125RUG/@@download/ENCFF125RUG.bam
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF854PFR/@@download/ENCFF854PFR.bam
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF709LHN/@@download/ENCFF709LHN.bam
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF613CGT/@@download/ENCFF613CGT.bam
 
+# bigWig files
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF936SHU/@@download/ENCFF936SHU.bigWig
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF363UDO/@@download/ENCFF363UDO.bigWig
 aria2c -x 16 https://www.encodeproject.org/files/ENCFF051PIE/@@download/ENCFF051PIE.bigWig
@@ -584,8 +546,7 @@ aria2c -x 16 https://www.encodeproject.org/files/ENCFF476HFB/@@download/ENCFF476
 aria2c -x 16 http://hgdownload.cse.ucsc.edu/goldenpath/hg38/phastCons470way/hg38.phastCons470way.bw%
 ```
 
-
-Here is the configure file,
+Here is the configure file `bam.tsv` for next section `4`, `5`, `6`,
 ```
 # we use third column to group the different data to aggregate datasets.
 ENCFF125RUG.bam	bam	PTBP1_KD_agg	#0084d1	frf
@@ -593,11 +554,59 @@ ENCFF854PFR.bam	bam	PTBP1_KD_agg	#0084d1	frf
 ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf
 ```
 
+### 4. Filter junction counts and include the specific junction
+
+User could also filter the minimum number of reads supporting the junction, and show the specific junction in plot.
+
+Here is the command,
+```bash
+# panel A, show all junctions
+
+trackplot \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.raw.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num
+
+# panel B, show the junctions with more 10 counts.
+
+trackplot \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.filter.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num -t 10
+
+# panel C, show the specific junctions.
+trackplot \
+  -e chr9:112296343-112335026 \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
+  --density bam.tsv \
+  -o PTBP3.include.pdf \
+  --dpi 300 \
+  --width 6 \
+  --height 1 --show-junction-num \
+  --included-junctions chr9:112297917-112330441:-,chr9:112297917-112333470:-,chr9:112330475-112333470:-
+
+```
+
+![](imgs/cmd/junction_manu.png)
+
+### 5. Sample aggregation
+
+User could aggregate multiple files into one track, like scRNAseq from smart-seq2 or splice-QTL datasets.
+
+
 ```bash
 
 trackplot \
   -e chr9:112296343-112335026 \
-  -r example/Article_figures/FigS1/b/Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --density bam.tsv \
   -o PTBP3.agg.pdf \
   --dpi 300 \
@@ -611,7 +620,7 @@ The `PTBP1_KD_agg` is the mean of ENCFF854PFR.bam and ENCFF125RUG.bam
 
 ![](imgs/cmd/agg.png)
 
-### 5. The intron shrinkage
+### 6. The intron shrinkage
 
 The shrinkage of intron 
 
@@ -620,7 +629,7 @@ The shrinkage of intron
 # Without shrinkage of the intron (shrinkage_scale: 1)
 trackplot \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --density bam.tsv \
   -o PTBP3.1.pdf \
   --dpi 300 \
@@ -632,7 +641,7 @@ trackplot \
 # with shrinkage of the intron (shrinkage_scale: 0.001)
 trackplot \
   -e chr9:112296343-112335026 \
-  -r Homo_sapiens.GRCh38.101.sorted.gtf.gz \
+  -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
   --density bam.tsv \
   -o PTBP3.001.pdf \
   --dpi 300 \
@@ -645,26 +654,24 @@ trackplot \
 
 ![](imgs/cmd/intron_scale.png)
 
-### 6. Visualize coverage by cpm or rpkm
+### 7. Visualize coverage by cpm or rpkm
 
 We also support to visualize the coverage by normalized values.
 
 Inspired by `rpkm_per_region` from [MISO](https://github.com/yarden/MISO/blob/b71402188000465e3430736a11ea118fd5639a4a/misopy/sam_rpkm.py#L51)
 
-here is the configuration file,
+here is the configuration `bam.tsv` file,
 ```bash
 # get https://www.encodeproject.org/files/ENCFF854PFR/@@download/ENCFF854PFR.bam
 ENCFF854PFR.bam	bam	PTBP1_KD_2	#0084d1	frf 6830944
 ```
 
 ```bash
-wget -c https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.chr.gtf.gz
-
 # No any normalize
 trackplot \
   -e chr9:112296343-112335026 \
   -r Homo_sapiens.GRCh38.101.chr.gtf.gz \
-  --density example/bam.tsv \
+  --density bam.tsv \
   -o PTBP3.count.pdf \
   --dpi 300 \
   --width 6 \
@@ -863,11 +870,12 @@ example/bams/0.bam	igv	bam
 
 here is the plotting command line
 ```bash
+TODO: 图与命令行对不上，现在的文件，在该region数据为空
 trackplot \
   -e 1:10024601-10038168:+ \
   -r example/example.sorted.gtf.gz \
   --igv example/igv.tsv \
-  -o test_igv_plot.1.pdf \
+  -o igv.1.pdf \
   --dpi 300 \
   --width 10 \
   --height 1

@@ -30,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -103,7 +103,7 @@ class PlotInfo(object):
 
     def len(self, scale: Union[int, float] = .25, sc_height_ratio: Optional[Dict[str, float]] = None) -> Tuple[int, List]:
         n = 0
-        height_ratio = []
+        height_ratio = [1]
 
         if self.is_single_cell:
             if sc_height_ratio is None:
@@ -113,21 +113,16 @@ class PlotInfo(object):
         if not self.category:
             pass
         elif self.type == "site-plot" and self.category[0] == "bam":
-            curr_n = 2 if not isinstance(self.obj[0], Depth) else 2 * len(self.obj[0])
-            n += curr_n
-            height_ratio = [height_ratio[0] for _ in range(curr_n)]
+            n += 2 if not isinstance(self.obj[0], Depth) else 2 * len(self.obj[0])
         elif self.type == "igv":
             # seems igv scale will produce float
             n += self.obj[0].len(scale / 8)
-            height_ratio = [self.obj[0].len((scale / 8))]
         elif isinstance(self.obj[0], Depth):
             n += len(self.obj[0])
-            height_ratio += [1 for _ in range(len(self.obj[0]))]
         else:
             n += 1
-            height_ratio.append(1)
 
-        return int(n), height_ratio
+        return int(n), [height_ratio[0] for _ in range(n)]
 
     def add(self, obj: File, category: str = "", type_: str = ""):
         u"""
@@ -171,7 +166,7 @@ def add_object_error(func):
         try:
             func(*args, **kwargs)
         except Exception as err:
-            logger.error(f"trackplot will ignore this object, {err}")
+            logger.debug(f"trackplot will ignore this object, {err}")
 
     return inner
 

@@ -334,6 +334,7 @@ def logs():
 
     return jsonify(log_info[::-1])
 
+
 def run(host: str, port: int, plots: str, data: str):
     os.makedirs(plots, exist_ok=True)
     app.config["PLOTTING"] = plots
