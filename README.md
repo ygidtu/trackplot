@@ -195,7 +195,7 @@ And a more detailed tutorial could be found at [here.](https://trackplot.readthe
 
 ```bash
 # example of basic plot types
-python ../main.py \
+trackplot \
   -e chr1:1270656-1284730:+ \
   -r example/example.sorted.gtf.gz \
   --interval example/interval_list.tsv \
@@ -228,7 +228,7 @@ cat $PWD/example/density_list.tsv |grep -v '^#' | while read line; do echo $PWD/
 cat $PWD/example/igv.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/igv.abspath.tsv
 cat $PWD/example/heatmap_list.tsv |grep -v '^#' | while read line; do echo $PWD/${line}; done > $PWD/example/heatmap_list.abspath.tsv
 
-docker run -v $PWD:$PWD --rm ygidtu/trackplot \
+docker run -v $PWD:$PWD -w $PWD --rm ygidtu/trackplot \
   -e chr1:1270656-1284730:+ \
   -r $PWD/example/example.sorted.gtf.gz \
   --interval $PWD/example/interval_list.tsv \
