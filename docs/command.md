@@ -519,10 +519,6 @@ trackplot \
 
 ### 3. Sample preparetion
 
-TODO: 更改了doc顺序，先准备文件，在做测试。需要检查命令用法是否有错
-
-Sample aggregation
-
 Firstly, prepare the example datas
 
 ```bash
@@ -870,7 +866,6 @@ example/bams/0.bam	igv	bam
 
 here is the plotting command line
 ```bash
-TODO: 图与命令行对不上，现在的文件，在该region数据为空
 trackplot \
   -e 1:10024601-10038168:+ \
   -r example/example.sorted.gtf.gz \
