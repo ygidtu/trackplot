@@ -1380,10 +1380,8 @@ def plot_motif(ax: mpl.axes.Axes,
         bbox_to_left = max(xmin / len(graph_coords) - axin_width - .1, 0)
         draw_left = True
 
-    axins = inset_axes(ax, width=f"{axin_width * 100}%", height="100%",
-                       loc='center left',
-                       bbox_to_anchor=(bbox_to_left, 0, 1, 1),
-                       bbox_transform=ax.transAxes)
+    # update insert_axes to matplotlib 3.7.2
+    axins = ax.inset_axes(bounds=[bbox_to_left, 0, axin_width, 1], transform=ax.transAxes)
 
     start_site = min(list(data.keys()))
     site = 0
