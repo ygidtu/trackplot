@@ -100,8 +100,8 @@ pip install trackplot
 For a binary version of the tool and more comprehensive information, please visit [this link](./docs/installation.md).
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
+# example with version v0.3.4, please using your interested version according to your needs
+export VERSION=0.3.4
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 ```
