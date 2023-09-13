@@ -100,8 +100,8 @@ pip install trackplot
 For a binary version of the tool and more comprehensive information, please visit [this link](./docs/installation.md).
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
+# example with version v0.3.5, please using your interested version according to your needs
+export VERSION=0.3.5
 chmod +x trackplot-${VERSION}-x86_64.AppImage
 ./trackplot-${VERSION}-x86_64.AppImage --help
 ```
@@ -265,4 +265,4 @@ contact [Yiming Zhang](https://github.com/ygidtu) or
 
 If you use the tool in your publication, please cite by
 
-[Zhang et al. bioRxiv, 2022.11.02.514803.](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
+[Zhang Y, Zhou R, Liu L, et al. Trackplot: A flexible toolkit for combinatorial analysis of genomic data[J]. PLoS computational biology, 2023, 19(9): e1011477.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011477)
