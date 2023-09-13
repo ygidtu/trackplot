@@ -385,12 +385,23 @@ class Annotation(File):
                 if rec.transcript_id not in exons.keys():
                     exons[rec.transcript_id] = []
 
+                # fix exon_id error
+                exon_id = ""
+                if "exon_id" in rec.keys():
+                    exon_id = rec.exon_id
+                elif "ID" in rec.keys():
+                    exon_id = rec["ID"]
+                elif "id" in rec.keys():
+                    exon_id = rec["id"]
+                elif "_id" in rec.keys():
+                    exon_id = rec["_id"]
+
                 exons[rec.transcript_id].append(
                     GenomicLoci(
                         chromosome=rec.contig,
                         start=start, end=end,
                         strand=rec.strand,
-                        name=rec.exon_id
+                        name=exon_id
                     )
                 )
 

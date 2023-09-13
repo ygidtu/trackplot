@@ -6,3 +6,4 @@ example/bams/3.bam bam  3bam    blue
 example/bams/sc.bam bam sc	red	frf	1000000
 example/bams/sc.bam bam sc1	blue	frf	1000000
 example/depth.bgz   depth   depth
+example/bedgraph/ENCFF260QGF_lung_filter.bedgraph.gz bedgraph bedgraph

@@ -30,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.3.4"
+__version__ = "0.3.5"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 

@@ -9,3 +9,4 @@ example/bws/2.bw    bw  bw  YlOrBr
 example/bws/3.bw    bw  bw  YlOrBr
 example/bws/4.bw    bw  bw  YlOrBr
 example/bws/0.bw    bw  bw  YlOrBr
+example/bedgraph/ENCFF260QGF_lung_filter.bedgraph.gz bedgraph bedgraph
