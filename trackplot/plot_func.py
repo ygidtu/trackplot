@@ -889,6 +889,7 @@ def plot_site_plot(
     max_height, min_height = max(plus), min(minus)
     max_val = max(max_height, abs(min_height))
 
+    patches = []
     for label, array_plot in zip(['plus', 'minus'], [plus, minus]):
         if strand_choice != "all" and label != strand_choice:
             continue
@@ -903,11 +904,14 @@ def plot_site_plot(
             continue
 
         fit_value = fit_value / fit_value.max()
-        ax.bar(graph_coords, array_plot, color=color, rasterized=raster)
+
+        for x, y in zip(graph_coords, array_plot):
+            patches.append(plt.Rectangle((x, 0), height=y, width=.6, color=color, rasterized=raster))
         ax.plot(graph_coords,
                 fit_value * array_plot.max() if label == 'plus' else fit_value * array_plot.min(),
                 c=color, lw=1)
 
+    ax.add_collection(PatchCollection(patches, match_original=True))
     # set the y limit
     # set y ticks, y label and label
     set_y_ticks(
