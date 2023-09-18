@@ -16,12 +16,13 @@ import seaborn as sns
 from adjustText import adjust_text
 from loguru import logger
 from matplotlib import pylab
+from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.patches import PathPatch, Polygon
+from matplotlib.collections import PatchCollection
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.stats import gaussian_kde, zscore
 
@@ -427,6 +428,7 @@ def plot_annotation(
     @2018.12.26
     Maybe I'm too stupid for this, using 30% of total length of x axis as the gap between text with axis
     """
+    patches, arrows = [], {}
     for transcript in data:
         strand = transcript.strand
         # @2018.12.20 add transcript id, based on fixed coordinates
@@ -450,15 +452,12 @@ def plot_annotation(
         for ind, exon in enumerate(transcript.exons):
             s, e, strand = region.relative(
                 exon.start), region.relative(exon.end), exon.strand
-            x = [
-                graph_coords[s], graph_coords[e],
-                graph_coords[e], graph_coords[s]
-            ]
-            y = [
-                y_loc - exon_width / 2, y_loc - exon_width / 2,
-                y_loc + exon_width / 2, y_loc + exon_width / 2
-            ]
-            ax.fill(x, y, color, lw=.5, zorder=20)
+
+            patches.append(plt.Rectangle(
+                (graph_coords[s], y_loc - exon_width / 2),
+                width=graph_coords[e]-graph_coords[s], height=exon_width,
+                lw=.5, zorder=20,rasterized=raster, color=color
+            ))
 
             if show_exon_id and exon.name:
                 y_loc_offset = 0.1 if ind % 2 == 0 else - 0.2
@@ -490,12 +489,10 @@ def plot_annotation(
 
                 for i in range(narrows):
                     loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
-                    if strand == '+':
-                        x = [loc - spread, loc, loc - spread]
-                    else:
-                        x = [loc + spread, loc, loc + spread]
-                    y = [y_loc - exon_width / 5, y_loc, y_loc + exon_width / 5]
-                    ax.plot(x, y, lw=.5, color=color, rasterized=raster)
+
+                    arrows[(loc - spread if strand == "+" else loc + spread, y_loc - exon_width / 5)] = Path.MOVETO
+                    arrows[(loc, y_loc)] = Path.LINETO
+                    arrows[(loc - spread if strand == "+" else loc + spread, y_loc + exon_width / 5)] = Path.LINETO
 
         y_loc += 1  # if transcript.transcript else .5
         if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
@@ -516,15 +513,11 @@ def plot_annotation(
                         s = 0 if s < 0 else s
                         e = len(region) - 1 if e > len(region) else e
 
-                        x = [
-                            graph_coords[s], graph_coords[e],
-                            graph_coords[e], graph_coords[s]
-                        ]
-                        y = [
-                            y_loc - exon_width / 4, y_loc - exon_width / 4,
-                            y_loc + exon_width / 4, y_loc + exon_width / 4
-                        ]
-                        ax.fill(x, y, color, lw=.5, zorder=20, rasterized=raster)
+                        patches.append(plt.Rectangle(
+                            (graph_coords[s], y_loc - exon_width / 2),
+                            width=graph_coords[e] - graph_coords[s], height=exon_width,
+                            lw=.5, zorder=20,rasterized=raster, color=color
+                        ))
 
                     # @2022.05.13
                     intron_relative_s = region.relative(
@@ -540,11 +533,12 @@ def plot_annotation(
                     if intron_relative_e <= 0:
                         continue
 
-                    intron_sites = [graph_coords[intron_relative_s],
-                                    graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc], color=color, lw=0.2, rasterized=raster)
-
+                        patches.append(plt.Rectangle(
+                            (graph_coords[intron_relative_s], y_loc),
+                            width=graph_coords[intron_relative_e] - graph_coords[intron_relative_s],
+                            height=0, color=color, lw=0.2, rasterized=raster
+                        ))
                 if show_id:
                     ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{transcript.transcript_id}",
                             fontsize=font_size / 2, ha="right")
@@ -571,16 +565,11 @@ def plot_annotation(
                         s = 0 if s < 0 else s
                         e = len(region) - 1 if e > len(region) else e
 
-                        x = [
-                            graph_coords[s], graph_coords[e],
-                            graph_coords[e], graph_coords[s]
-                        ]
-                        y = [
-                            y_loc - exon_width / 4, y_loc - exon_width / 4,
-                            y_loc + exon_width / 4, y_loc + exon_width / 4
-                        ]
-                        ax.fill(x, y, color, lw=.5,
-                                zorder=20, rasterized=raster)
+                        patches.append(plt.Rectangle(
+                            (graph_coords[s], y_loc - exon_width / 2),
+                            width=graph_coords[e] - graph_coords[s], height=exon_width,
+                            lw=.5, zorder=20, rasterized=raster, color=color
+                        ))
 
                     # @2022.05.13
                     intron_relative_s = region.relative(
@@ -596,16 +585,20 @@ def plot_annotation(
                     if intron_relative_e <= 0:
                         continue
 
-                    intron_sites = [graph_coords[intron_relative_s],
-                                    graph_coords[intron_relative_e]]
                     if len(sub_exon) != 1:
-                        ax.plot(intron_sites, [y_loc, y_loc],
-                                color=color, lw=0.2, rasterized=raster)
+                        patches.append(plt.Rectangle(
+                            (graph_coords[intron_relative_s], y_loc),
+                            width=graph_coords[intron_relative_e]-graph_coords[intron_relative_s],
+                            height=0, color=color, lw=0.2, rasterized=raster
+                        ))
 
                 ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{base_name}",
                         fontsize=font_size / 2, ha="right")
 
             y_loc += 1
+
+    ax.add_collection(PatchCollection(patches, match_original=True))
+    ax.add_patch(PathPatch(Path(list(arrows.keys()), list(arrows.values())), lw=.5, color=color, rasterized=raster))
 
     # @2022.05.13 Set y lim using y_loc value.
     ax.set_xlim(min(graph_coords), max(graph_coords))
@@ -1208,6 +1201,7 @@ def plot_igv_like(
         y_label = obj.label
     y_loc = 0.5
 
+    patches, scatters_x, scatters_y = [], [], []
     # Add this to skip zero coverage regions.
     if obj.meta is not None:
 
@@ -1228,17 +1222,12 @@ def plot_igv_like(
                     s = 0 if s < 0 else s
                     e = len(region) - 1 if e >= len(region) else e
 
-                    x = [
-                        graph_coords[s], graph_coords[e],
-                        graph_coords[e], graph_coords[s]
-                    ]
-                    y = [
-                        y_loc - exon_width, y_loc - exon_width,
-                        y_loc + exon_width, y_loc + exon_width
-                    ]
+                    patches.append(plt.Rectangle((graph_coords[s], y_loc - exon_width),
+                                             width=graph_coords[e] - graph_coords[s],
+                                             height=exon_width * 2,
+                                             facecolor='k' if not exon_color else exon_color,
+                                             lw=.5, zorder=20))
 
-                    ax.fill(x, y, 'k' if not exon_color else exon_color,
-                            lw=.5, zorder=20)
                     add_plot = add_plot | True
 
                 for intron in c_data.introns:
@@ -1253,9 +1242,12 @@ def plot_igv_like(
                         graph_coords[s],
                         graph_coords[e]
                     ]
-                    ax.plot(intron_sites, [y_loc, y_loc],
-                            color="#4d4d4d" if not intron_color else intron_color,
-                            lw=0.2, rasterized=raster)
+                    patches.append(plt.Rectangle(
+                        (graph_coords[s], y_loc),
+                        width=graph_coords[e]-graph_coords[s], height=0,
+                        color="#4d4d4d" if not intron_color else intron_color,
+                        lw=.2, rasterized=raster
+                    ))
 
                 for feature in c_data.features:
                     if feature.start == -1:
@@ -1275,30 +1267,32 @@ def plot_igv_like(
                     s = 0 if s < 0 else s
                     e = len(region) - 1 if e >= len(region) else e
 
-                    x = [
-                        graph_coords[s], graph_coords[e],
-                        graph_coords[e], graph_coords[s]
-                    ]
                     width_ratio = 0.75 if not is_site else 1.5
 
-                    y = [
-                        y_loc - exon_width * width_ratio, y_loc - exon_width * width_ratio,
-                        y_loc + exon_width * width_ratio, y_loc + exon_width * width_ratio
-                    ]
-
                     if is_site:
-                        ax.fill(x, y, 'b' if not feature_color else feature_color, lw=.2, zorder=20)
-                        ax.scatter(graph_coords[s],
-                                   y_loc + exon_width * width_ratio,
-                                   c='b' if not feature_color else feature_color,
-                                   s=.5,
-                                   linewidths=(0,),
-                                   rasterized=raster
-                                   )
+                        patches.append(plt.Rectangle((graph_coords[s], y_loc - exon_width * width_ratio),
+                                                 width=graph_coords[e] - graph_coords[s],
+                                                 height=exon_width * 2,
+                                                 facecolor='blue' if not feature_color else feature_color,
+                                                 lw=.2, zorder=20, rasterized = raster))
+
+                        scatters_x.append(graph_coords[s])
+                        scatters_y.append(y_loc + exon_width * width_ratio)
                     else:
-                        ax.fill(x, y, 'r' if not feature_color else feature_color, lw=.2, zorder=20)
+                        patches.append(plt.Rectangle((graph_coords[s], y_loc - exon_width * width_ratio),
+                                                 width=graph_coords[e] - graph_coords[s],
+                                                 height=exon_width * 2,
+                                                 facecolor='red' if not feature_color else feature_color,
+                                                 lw=.2, zorder=20, rasterized = raster))
             if add_plot:
                 y_loc += 1
+
+    # using patches and draw scatter in bath to reduce time
+    ax.add_collection(PatchCollection(patches, match_original=True))
+    ax.scatter(
+        scatters_x, scatters_y, rasterized=raster,
+        color='b' if not feature_color else feature_color, s=.5, linewidths=(0,)
+    )
 
     set_y_ticks(
         ax, label=y_label, theme=theme,
