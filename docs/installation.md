@@ -1,6 +1,8 @@
-## Using trackplot by a command line
+## Installation
 
-1. install from PyPi 
+### Using trackplot by a command line
+
+#### 1. install from PyPi 
 
 Before running this command line, please check python (>=3.8) was installed.
 
@@ -16,7 +18,7 @@ pip install trackplot
 
 ---
 
-2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
+#### 2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
 
 
 All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
@@ -47,7 +49,7 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 
 ---
 
-3. using docker image
+#### 3. using docker image
 
 > Known issue: the logging time may have several hours mismatch with your local time, due to timezone settings inner the image.
 
@@ -64,7 +66,7 @@ docker run --rm ygidtu/trackplot --help
 
 ---
 
-4. install from source code
+#### 4. install from source code
 
 Prior to installing the tool from the source code, users should verify their Python version (>=3.8).
 
@@ -73,7 +75,7 @@ python --version
 # Python 3.10.8
 ```
 
-    4.1 python3 is not available 
+##### 4.1 python3 is not available 
 
 If your Python version does not match the requirements of Trackplot, 
 users could follow the cmd to install and 
@@ -105,7 +107,7 @@ $PWD/Python-3.10.12/Python-3.10.12/Python/bin/trackplot --help
 
 ```
 
-    4.2 python3 is available
+##### 4.2 python3 is available
 
 ```bash
 # 1. download the trackplot
@@ -125,7 +127,7 @@ python main.py --help
 
 ---
 
-5. install from bioconda
+#### 5. install from bioconda
 
 First make sure your conda is properly installed.
 
@@ -161,7 +163,7 @@ trackplot --help
 
 ---
 
-6. for `pipenv` or `poetry` users
+#### 6. for `pipenv` or `poetry` users
 
 > Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
 
@@ -194,9 +196,9 @@ poetry shell  && python main.py --help
 poetry run python main.py --help
 ```
 
-## Using trackplot by a local webserver
+### Using trackplot by a local webserver
 
-1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
+#### 1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
 
 ```bash
 # example with version v0.3.2, please using your interested version according to your needs
@@ -214,7 +216,7 @@ chmod +x trackplot-${VERSION}-x86_64.AppImage
 
 ---
 
-2. Running using command line
+#### 2. Running using command line
 
 ```bash
 trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
@@ -222,7 +224,7 @@ trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 
 ---
 
-3. Install from a docker image
+#### 3. Install from a docker image
    
 ```bash
 docker pull ygidtu/trackplot

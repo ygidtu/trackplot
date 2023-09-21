@@ -10,7 +10,6 @@ import logging
 import os
 from multiprocessing import Pool
 
-import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
@@ -30,7 +29,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
