@@ -5,7 +5,7 @@
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/trackplot/README.html)
 [![Documentation Status](https://readthedocs.org/projects/trackplot/badge/?version=latest)](https://trackplot.readthedocs.io/en/latest/)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%20v3-clause.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.11.02.514803%20-blue)](https://www.biorxiv.org/content/10.1101/2022.11.02.514803v1)
+[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.11.02.514803%20-blue)](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011477)
 
 ---
 
