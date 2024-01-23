@@ -20,6 +20,7 @@
 </template>
 
 <script lang="ts" setup>
+import axios from 'axios'
 import ParamComp from './Param.vue'
 
 interface Path {
@@ -57,7 +58,7 @@ export default {
     fill_path (path: string) {
       this.options.file = path;
 
-      this.axios.get(urls.file, {
+      axios.get(urls.file, {
         params: {"target": path}
       }).then((response: AxiosResponse) => {
         this.options.files = response.data;
@@ -66,7 +67,7 @@ export default {
       })
     },
     valid (data: any) {
-      this.axios.get(urls.file, {
+      axios.get(urls.file, {
         params: {"target": data.path, valid: true},
       }).then((response: AxiosResponse) => {
         if (response.data) {

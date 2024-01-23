@@ -16,11 +16,11 @@ export function createURL(...urls: string[]) {
 
 const urls = {
     static: createURL("/static"),
-    del: createURL('/api/del'),
-    file: createURL('/api/file'),
-    params: createURL('/api/params'),
-    plot: createURL('/api/plot'),
-    log: createURL('/api/log')
+    del: createURL("/api/del"),
+    file: createURL("/api/file"),
+    params: createURL("/api/params"),
+    plot: createURL("/api/plot"),
+    log: createURL("/api/log")
 };
 
 export default urls;

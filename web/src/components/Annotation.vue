@@ -13,12 +13,13 @@ import ParamComp from './Param.vue'
 </script>
 
 <script lang="ts">
+import axios from 'axios'
 import {h} from 'vue'
 import urls from '../url';
 import {errorPrint, Notification} from "../error";
 
 export default {
-  name: "annotation",
+  name: "AnnotationComp",
   data() {
     return {
 
@@ -27,7 +28,7 @@ export default {
   emits: ["select-data"],
   methods: {
     valid (data: any) {
-      this.axios.get(urls.file, {
+      axios.get(urls.file, {
         params: {"target": data.path, valid: true},
       }).then((response: any) => {
         if (response.data) {

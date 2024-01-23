@@ -78,8 +78,8 @@ import {Message, Document, Folder, View, Download} from '@element-plus/icons-vue
 
 <script lang="ts">
 import {defineComponent} from 'vue'
+import axios from 'axios'
 import {AxiosResponse, AxiosError} from 'axios'
-
 import urls from '../url'
 
 import { errorPrint } from "../error.ts";
@@ -151,7 +151,7 @@ export default defineComponent({
     },
     loadParams() {
       // 👇️ const data: GetUsersResponse
-      this.axios.get(urls.params, {params: {target: this.$props.func}}
+      axios.get(urls.params, {params: {target: this.$props.func}}
       ).then((response: AxiosResponse) => {
         this.param = []
         for (let row of response.data) {
@@ -175,7 +175,7 @@ export default defineComponent({
     },
     fill_path (path: string) {
       this.file = path
-      this.axios.get(urls.file, {params: {target: path}}).then((response: any) => {
+      axios.get(urls.file, {params: {target: path}}).then((response: any) => {
         let files: Files = {Dirs: [], Files: []}
         for (let d of response.data) {
           if (d.isdir) {

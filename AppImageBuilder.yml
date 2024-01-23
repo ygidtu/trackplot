@@ -3,7 +3,7 @@ script:
   # Remove any previous build
   - rm -rf AppDir  | true
   # Copy the python application code into the AppDir
-  - mamba create -y -p AppDir python=3.11
+  - micromamba create -y -p ./AppDir python=3.11
   - mkdir AppDir/opt && cp -r main.py trackplot pyproject.toml poetry.lock README.md ui AppDir/opt
   - AppDir/bin/pip install -e AppDir/opt
 
@@ -11,7 +11,7 @@ AppDir:
   app_info:
     id: org.appimage-crafters.trackplot
     name: trackplot
-    version: 0.3.6
+    version: 0.3.7
     # Set the python executable as entry point
     exec: "bin/python3"
     # Set the application main script path as argument. Use '$@' to forward CLI parameters

@@ -294,3 +294,5 @@ ui/
 *.zip
 example/
 recipes/
+AppDir/
+appimage-build/

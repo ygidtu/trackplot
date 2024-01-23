@@ -32,6 +32,7 @@
 </template>
 
 <script lang="ts" setup>
+import axios from 'axios'
 import urls from "../url";
 </script>
 
@@ -61,7 +62,7 @@ export default {
   methods: {
     loadParams() {
       // 👇️ const data: GetUsersResponse
-      this.axios.get(urls.log, { params: {pid: this.$props.pid}}
+      axios.get(urls.log, { params: {pid: this.$props.pid}}
       ).then((response: AxiosResponse) => {
         this.logs = response.data
       }).catch((error: AxiosError) => {

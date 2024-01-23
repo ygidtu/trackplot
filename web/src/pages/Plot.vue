@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {Delete, View} from "@element-plus/icons-vue"
 import AddComp from '../components/Add.vue'
-import Annotation from '../components/Annotation.vue'
+import AnnotationComp from '../components/Annotation.vue'
 import ParamComp from '../components/Param.vue'
 import LogComp from "../components/Log.vue"
 </script>
@@ -52,7 +52,7 @@ import LogComp from "../components/Log.vue"
             <el-tab-pane label="Annotation" :name="1">
               <el-scrollbar :max-height="windowHeight" always>
                 <el-col :span="24">
-                  <annotation @select-data="makeProgress"/>
+                  <annotation-comp @select-data="makeProgress"/>
                 </el-col>
               </el-scrollbar>
             </el-tab-pane>
@@ -191,8 +191,9 @@ import LogComp from "../components/Log.vue"
   </div>
 </template>
 
-<script lang="ts">
 
+<script lang="ts">
+import axios from "axios";
 import {defineComponent} from "vue";
 import {AxiosRequestConfig, AxiosResponse, AxiosError} from "axios";
 import {saveAs} from "file-saver";
@@ -307,7 +308,7 @@ export default defineComponent({
       }
     },
     reset() {
-      this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
+      axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
       location.reload()
     },
     showParam(params: Param[]) {
@@ -353,7 +354,7 @@ export default defineComponent({
         return
       }
 
-      this.axios.post(
+      axios.post(
           `${urls.plot}/${this.$cookie.getCookie("plot")}`,
           this.progress, config
       ).then((response: AxiosResponse) => {
@@ -396,7 +397,7 @@ export default defineComponent({
   },
   mounted() {
     if (this.$cookie.isCookieAvailable("plot")) {
-      this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
+      axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
     }
 
     this.$cookie.setCookie("plot", (Math.random() + 1).toString(36).substring(7))
@@ -404,7 +405,7 @@ export default defineComponent({
     this.pid = this.$cookie.getCookie("plot")
   },
   beforeUnmount() {
-      this.axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
+      axios.get(`${urls.del}?pid=${this.$cookie.getCookie("plot")}`)
   },
 })
 </script>
