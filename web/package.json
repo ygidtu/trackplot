@@ -11,20 +11,20 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@types/file-saver": "^2.0.7",
-    "axios": "^1.6.5",
-    "element-plus": "^2.5.3",
+    "axios": "^1.6.8",
+    "element-plus": "^2.7.2",
     "file-saver": "^2.0.5",
-    "typescript": "^5.3.3",
-    "vue": "^3.4.15",
+    "typescript": "^5.4.5",
+    "vue": "^3.4.27",
     "vue-cookie-next": "^1.3.0",
-    "vue-cookies": "^1.8.3",
+    "vue-cookies": "^1.8.4",
     "vue-cookies-ts": "^1.5.19",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^3.2.0",
     "unplugin-auto-import": "^0.11.5",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^3.2.8"
+    "vite": "^3.2.10"
   }
 }
