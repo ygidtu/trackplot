@@ -807,8 +807,7 @@ def plot_density(
                 jxn_numbers.append(t)
 
         try:
-            adjust_text(jxn_numbers, force_text=0.2, arrowprops=dict(arrowstyle="-", color='black', lw=1),
-                        autoalign="y")
+            adjust_text(jxn_numbers, force_text=(0.2, 0.2), arrowprops=dict(arrowstyle="-", color='black', lw=1))
         except IndexError as err:
             logger.debug(err)
 
@@ -1366,6 +1365,9 @@ def plot_motif(ax: mpl.axes.Axes,
         graph_coords = init_graph_coords(region)
 
     # 在原始坐标轴上画motif
+    if not data:
+        logger.info("there is no any motif information to plot")
+        return
     ymin, ymax, xmin, xmax = 0, 0, \
                              graph_coords[min(data.keys()) - region.start], \
                              graph_coords[max(data.keys()) - region.start] + (1 + width) / 2
