@@ -147,17 +147,21 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 intron = [exons[i - 1][1], exons[i][0]]
 
                 for j in range(intron[0], intron[1]):
-                    graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                            j - intron[0] + 1) * intron_scale
+                    if j >= region.start:
+                        graph_coords[j - region.start] = graph_coords[intron[0] - region.start - 1] + (
+                                j - intron[0] + 1) * intron_scale
 
             for j in range(exon[0], exon[1] + 1):
-                graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (
-                        j - exon[0] + 1) * exon_scale
+                if j >= region.start:
+                    graph_coords[j - region.start] = graph_coords[exon[0] - region.start - 1] + (
+                            j - exon[0] + 1) * exon_scale
 
         intron = [exons[-1][-1], region.end]
         for i in range(intron[0], intron[1]):
-            graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (
-                    i - intron[0] + 1) * intron_scale
+            if i >= region.start:
+                graph_coords[i - region.start] = graph_coords[intron[0] - region.start - 1] + (
+                        i - intron[0] + 1) * intron_scale
+
     else:
         # if there is not any exons, just init graph_coords by region
         for i, j in enumerate(range(region.start, region.end + 1)):
@@ -450,8 +454,11 @@ def plot_annotation(
         # @2022.05.13
         # add index to avoid label overlapping of neighbor exon
         for ind, exon in enumerate(transcript.exons):
-            s, e, strand = region.relative(
-                exon.start), region.relative(exon.end), exon.strand
+            s, e, strand = (region.relative(exon.start),
+                            region.relative(exon.end), exon.strand)
+
+            if s < 0 or e < 0:
+                continue
 
             patches.append(plt.Rectangle(
                 (graph_coords[s], y_loc - exon_width / 2),

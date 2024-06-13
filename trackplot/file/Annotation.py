@@ -538,15 +538,9 @@ class Annotation(File):
                         strand = "*"
                         rec_name = ""
 
-                    interval_target.append(
-                        GenomicLoci(
-                            chromosome=rec.contig,
-                            start=rec.start,
-                            end=rec.end,
-                            strand=strand,
-                            name=rec_name
-                        )
-                    )
+                    interval_target.append(GenomicLoci(
+                        chromosome=rec.contig, start=start, end=end, strand=strand, name=rec_name
+                    ))
 
                 if len(interval_target) != 0 and rec is not None:
                     self.data.append(Transcript(

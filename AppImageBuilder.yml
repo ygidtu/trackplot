@@ -11,7 +11,7 @@ AppDir:
   app_info:
     id: org.appimage-crafters.trackplot
     name: trackplot
-    version: 0.3.8
+    version: 0.4.0
     # Set the python executable as entry point
     exec: "bin/python3"
     # Set the application main script path as argument. Use '$@' to forward CLI parameters
