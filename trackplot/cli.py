@@ -452,6 +452,21 @@ def process_file_list(infile: str, category: str = "density"):
                  help="Whether different density/line plots shared same y-axis boundaries")
 @optgroup.option("--same-y-sc", default=False, is_flag=True, type=click.BOOL,
                  help="Similar with --same-y, but only shared same y-axis boundaries between same single cell files")
+@optgroup.option("--same-y-by-groups", type=click.Path(), default=None,
+                 help="""
+                 Set groups for --same-y, this parameter is path to a file with 2 columns, 
+                 - 1st is the label to specific input,
+                 - 2nd the the group labels
+                 - the input files not listed will use the global y limits
+                 """
+                 )
+@optgroup.option("--y-limit", default=None, type=click.Path(), help="""
+                 Manully set the y limit for all plots supported, this parameter is path to a file with 3 columns,
+                 - 1st is the label to specific input,
+                 - 2nd the maximum y
+                 - 3rd the minimum y
+                 - the input files not listed will use the default
+                 """)
 @optgroup.option('--log', type=click.Choice(["0", "2", "10", "zscore"]), default="0",
                  help="y axis log transformed, 0 -> not log transform;2 -> log2;10 -> log10")
 @optgroup.option("--title", type=click.STRING, default=None, help="Title", show_default=True)
@@ -749,6 +764,8 @@ def main(**kwargs):
         stroke_scale=kwargs["stroke_scale"],
         same_y=kwargs["same_y"],
         same_y_sc=kwargs.get("same_y_sc", False),
+        same_y_groups=kwargs.get("same_y_by_groups", None),
+        y_limit=kwargs.get("y_limit", None),
         remove_duplicate_umi=kwargs["remove_duplicate_umi"],
         threshold=kwargs["threshold"],
         sc_height_ratio={

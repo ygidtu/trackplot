@@ -8,6 +8,7 @@ import faulthandler
 import io
 import logging
 import os
+from datetime import datetime
 from multiprocessing import Pool
 
 from matplotlib import gridspec
@@ -29,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -1178,17 +1179,72 @@ class Plot(object):
             gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
                                    wspace=.7, hspace=.15)
 
-        max_used_y_val, min_used_y_val = {}, {}
+        max_used_y_val, min_used_y_val, same_y_by_groups = {}, {}, {}
+        
+        default_y = {}
+        if kwargs.get("y_limit") and os.path.exists(kwargs.get("y_limit")):
+            default_y = {}
+            with open(kwargs.get("y_limit")) as r:
+                for line in r:
+                    if line.startswith("#"):
+                        continue
+                    line = line.split()
+                    
+                    if len(line) > 1:
+                        try:
+                            default_y[line[0]] = [float(x) for x in default_y[1:]]
+                        except Exception as err:
+                            logger.warning(f"The y limit of {line[0]} is invalid: {err}")
+                        
+            
         if kwargs.get("same_y") or kwargs.get("same_y_sc"):
+            logger.info("--same-y is enabled")
+            # read the y groups            
+            if kwargs.get("same_y_groups") and os.path.exists(kwargs.get("same_y_groups")):
+                logger.info("Reading the same y by groups from: %s" % kwargs.get("same_y_groups"))
+                with open(kwargs.get("same_y_groups")) as r:
+                    for line in r:
+                        if line.startswith("#"):
+                            continue
+                        
+                        line = line.split()
+
+                        # use hashlib to avoid potential repeat group names
+                        same_y_by_groups[line[0]] = f"samy_y_groups_of_{line[1]} {datetime.now()}"
+            
             for p in self.plots:
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
-                        max_used_y_val[obj.path] = max(max(obj.data.wiggle), max_used_y_val.get(obj.path, 0))
+                        if kwargs.get("y_max") is not None:
+                            logger.info("")
 
+                        # if object is assigned y groups then record one group y axis
+                        if obj.label in same_y_by_groups:
+                            key = same_y_by_groups[obj.label]
+                            
+                            max_used_y_val[key] = max(max(obj.data.wiggle), max_used_y_val.get(key, 0))
+                            if obj.data.minus is None:
+                                min_used_y_val[key] = min(min(obj.data.wiggle), min_used_y_val.get(key, 0))
+                            else:
+                                min_used_y_val[key] = min(min(obj.data.minus), min_used_y_val.get(obj.path, 0))
+                            
+                        max_used_y_val[obj.path] = max(max(obj.data.wiggle), max_used_y_val.get(obj.path, 0))
                         if obj.data.minus is None:
                             min_used_y_val[obj.path] = min(min(obj.data.wiggle), min_used_y_val.get(obj.path, 0))
                         else:
                             min_used_y_val[obj.path] = min(min(obj.data.minus), min_used_y_val.get(obj.path, 0))
+
+                        # set y limit
+                        if obj.label in default_y:
+                            max_used_y_val[obj.path] = default_y[obj.label][0]
+                            
+                            if len(default_y[obj.label]) > 1:
+                                min_used_y_val[obj.path] = default_y[obj.label][1]
+                            
+                            if same_y_by_groups and obj.label in same_y_by_groups:
+                                key = same_y_by_groups[obj.label]
+                                max_used_y_val[key] = max_used_y_val[obj.path]
+                                min_used_y_val[key] = min_used_y_val[obj.path]
 
         curr_idx = 0
         for p in self.plots:
@@ -1201,10 +1257,16 @@ class Plot(object):
                 ax_var.set_title(str(self.region), loc="left")
 
             max_y_val_, min_y_val_ = None, None
+            
             if kwargs.get("same_y_sc") and p.obj[0].is_single_cell:
                 max_y_val_, min_y_val_ = max_used_y_val[p.obj[0].path], min_used_y_val[p.obj[0].path]
+                logger.info(f"Set for {p.obj[0].label} by single cell: max_y={max_y_val_}; min_y={min_y_val_}")
+            elif kwargs.get("same_y_groups") and p.obj[0].label in same_y_by_groups:
+                max_y_val_, min_y_val_ = max_used_y_val[same_y_by_groups[p.obj[0].label]], min_used_y_val[same_y_by_groups[p.obj[0].label]]
+                logger.info(f"Set for {p.obj[0].label} by group {same_y_by_groups[p.obj[0].label]}: max_y={max_y_val_}; min_y={min_y_val_}")
             elif kwargs.get("same_y"):
                 max_y_val_, min_y_val_ = max(max_used_y_val.values()), min(min_used_y_val.values())
+                logger.info(f"Set for {p.obj[0].label} by global: max_y={max_y_val_}; min_y={min_y_val_}")
 
             logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             if p.type == "density":

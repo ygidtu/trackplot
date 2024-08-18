@@ -46,7 +46,7 @@ Options:
   --version                       Show the version and exit.
   --verbose                       enable debug level log
   --logfile PATH                  save log info into file
-  -e, --event TEXT                Event range eg: chr1:100-200:+  [required]
+  -e, --event TEXT                Event range eg: chr1:100-200:+
   Common input files configuration: 
     --color-factor INTEGER RANGE  Index of column with color levels (1-based);
                                   NOTE: LUAD|red -> LUAD while be labeled in
@@ -66,7 +66,7 @@ Options:
                                   [default: CB]
     --umi-tag TEXT                The default UMI barcode tag label  [default:
                                   UB]
-    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=12]
+    -p, --process INTEGER RANGE   How many cpu to use  [1<=x<=128]
     --group-by-cell               Group by cell types in density/line plot
     --remove-duplicate-umi        Drop duplicated UMIs by barcode
     --normalize-format [count|cpm|rpkm]
@@ -85,7 +85,7 @@ Options:
                                   image width by content  [default: 10; x>=0]
     --backend TEXT                Recommended backend  [default: Agg]
   Reference settings: 
-    -r, --annotation PATH          Path to gtf file, both transcript and exon
+    -r, --annotation PATH         Path to gtf file, both transcript and exon
                                   tags are necessary
     --interval PATH               Path to list of interval files in bed
                                   format, 1st column is path to file, 2nd
@@ -100,8 +100,8 @@ Options:
     --timeout INTEGER RANGE       The requests timeout when `--domain` is
                                   True.  [default: 10; x>=1]
     --local-domain TEXT           Load local domain folder and load into
-                                  annotation track, download from https://hgdow
-                                  nload.soe.ucsc.edu/gbdb/hg38/uniprot/
+                                  annotation track, download from https://hgdo
+                                  wnload.soe.ucsc.edu/gbdb/hg38/uniprot/
     --domain-include TEXT         Which domain will be included in annotation
                                   plot
     --domain-exclude TEXT         Which domain will be excluded in annotation
@@ -291,8 +291,8 @@ Options:
   Layout settings: 
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]
     --distance-ratio FLOAT        The distance between transcript label and
-                                  transcript line  [default: 0.1]
-    --annotation-scale FLOAT       The size of annotation plot in final plot
+                                  transcript line  [default: 0]
+    --annotation-scale FLOAT      The size of annotation plot in final plot
                                   [default: 0.25]
     --stroke-scale FLOAT          The size of stroke plot in final image
                                   [default: 0.25]
@@ -306,11 +306,22 @@ Options:
     --same-y-sc                   Similar with --same-y, but only shared same
                                   y-axis boundaries between same single cell
                                   files
+    --same-y-by-groups PATH       Set groups for --same-y, this parameter is
+                                  path to a file with 2 columns,  - 1st is the
+                                  label to specific input, - 2nd the the group
+                                  labels - the input files not listed will use
+                                  the global y limits
+    --y-limit PATH                Manully set the y limit for all plots
+                                  supported, this parameter is path to a file
+                                  with 3 columns, - 1st is the label to
+                                  specific input, - 2nd the maximum y - 3rd
+                                  the minimum y - the input files not listed
+                                  will use the default
     --log [0|2|10|zscore]         y axis log transformed, 0 -> not log
                                   transform;2 -> log2;10 -> log10
     --title TEXT                  Title
     --font TEXT                   Fonts
-  Web settings:
+  Web settings: 
     --start-server                Start web ui instead of running in cmd mode
     --host TEXT                   The ip address binding to
     --port INTEGER                The port to listen on
