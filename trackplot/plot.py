@@ -30,7 +30,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __author__ = "ygidtu & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -1181,22 +1181,24 @@ class Plot(object):
 
         max_used_y_val, min_used_y_val, same_y_by_groups = {}, {}, {}
         
+                 
         default_y = {}
-        if kwargs.get("y_limit") and os.path.exists(kwargs.get("y_limit")):
-            default_y = {}
-            with open(kwargs.get("y_limit")) as r:
-                for line in r:
-                    if line.startswith("#"):
-                        continue
-                    line = line.split()
-                    
-                    if len(line) > 1:
-                        try:
-                            default_y[line[0]] = [float(x) for x in default_y[1:]]
-                        except Exception as err:
-                            logger.warning(f"The y limit of {line[0]} is invalid: {err}")
-                        
-            
+        if kwargs.get("y_limit"):
+            if not os.path.exists(kwargs.get("y_limit")):
+                logger.warning(f'{kwargs.get("y_limit")} not exists')
+            else:
+                logger.info("load y-limit settings from: " + kwargs.get("y_limit"))
+                with open(kwargs.get("y_limit")) as r:
+                    for line in r:
+                        if line.startswith("#"):
+                            continue
+                        line = line.split()
+                        if len(line) > 1:
+                            try:
+                                default_y[line[0]] = [float(x) for x in line[1:]]
+                            except Exception as err:
+                                logger.warning(f"The y limit of {line[0]} is invalid: {err}")
+      
         if kwargs.get("same_y") or kwargs.get("same_y_sc"):
             logger.info("--same-y is enabled")
             # read the y groups            
@@ -1246,6 +1248,7 @@ class Plot(object):
                                 max_used_y_val[key] = max_used_y_val[obj.path]
                                 min_used_y_val[key] = min_used_y_val[obj.path]
 
+
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
@@ -1267,7 +1270,24 @@ class Plot(object):
             elif kwargs.get("same_y"):
                 max_y_val_, min_y_val_ = max(max_used_y_val.values()), min(min_used_y_val.values())
                 logger.info(f"Set for {p.obj[0].label} by global: max_y={max_y_val_}; min_y={min_y_val_}")
-
+            elif default_y:
+                if p.type in ["density", "site-plot", "line"]:
+                    for obj in p.obj:
+                        # set y limit
+                        if obj.label in default_y:
+                            max_y_val_ = default_y[obj.label][0]
+                            
+                            if len(default_y[obj.label]) > 1:
+                                min_y_val_ = default_y[obj.label][1]
+                            
+                            if same_y_by_groups and obj.label in same_y_by_groups:
+                                key = same_y_by_groups[obj.label]
+                                max_y_val_ = max_used_y_val[obj.path]
+                                min_y_val_ = min_used_y_val[obj.path]
+                            logger.info(f"Set for {p.obj[0].label} by limited: max_y={max_y_val_}; min_y={min_y_val_}")
+                            break
+                
+                
             logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
             if p.type == "density":
                 if isinstance(p.obj[0], Depth):
