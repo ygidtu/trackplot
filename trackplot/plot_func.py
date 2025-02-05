@@ -436,7 +436,13 @@ def plot_annotation(
     for transcript in data:
         strand = transcript.strand
         # @2018.12.20 add transcript id, based on fixed coordinates
-        if transcript.transcript:
+        # @2025.02.04 add warnings for transcript name and id check
+        if transcript.transcript or transcript.transcript_id:
+            show_text = transcript.transcript
+            if not transcript.transcript:
+                logger.warning(f"there is not transcript_name, using transcript_id instead")
+                show_text = transcript.transcript_id
+            
             if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
                 if show_id:
                     ax.text(x=-.01 * max(graph_coords), y=y_loc + 0.25,
@@ -445,9 +451,11 @@ def plot_annotation(
                             s=transcript.transcript_id, fontsize=font_size, ha="right")
                 else:
                     ax.text(x=-.01 * max(graph_coords), y=y_loc,
-                            s=transcript.gene + " | " + transcript.transcript, fontsize=font_size, ha="right")
+                            s=transcript.gene + " | " + show_text, fontsize=font_size, ha="right")
             else:
-                ax.text(x=-1, y=y_loc - 0.1, s=transcript.transcript, fontsize=font_size, ha="right")
+                ax.text(x=-1, y=y_loc - 0.1, s=show_text, fontsize=font_size, ha="right")
+        else:
+            logger.warning(f"there is no transcript_name and transcript_id")
 
         # @2018.12.19
         # s and e is the start and end site of single exon

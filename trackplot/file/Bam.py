@@ -161,8 +161,7 @@ class Bam(SingleCell):
         spanned_junctions = kwargs.get("junctions", {})
         included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
-        spanned_junctions_plus = dict()
-        spanned_junctions_minus = dict()
+        spanned_junctions_plus, spanned_junctions_minus = {}, {}
         plus, minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
         site_plus, site_minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
 

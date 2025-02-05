@@ -8,7 +8,7 @@ This script contains all the command line parameters
 import os
 import sys
 from multiprocessing import cpu_count
-from typing import Optional, Dict, Set, Tuple
+from typing import Optional
 
 import click
 from click_option_group import optgroup
