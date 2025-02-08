@@ -20,7 +20,7 @@ from trackplot.base.Junction import Junction
 from trackplot.base.ReadDepth import ReadDepth
 from trackplot.base.Readder import Reader
 from trackplot.conf.config import NORMALIZATION
-from trackplot.file.File import SingleCell
+from trackplot.file.File import SingleCell  
 
 
 class Bam(SingleCell):
@@ -275,14 +275,32 @@ class Bam(SingleCell):
                     site_minus[start - region.start] += 1
 
             for k, v in spanned_junctions.items():
-                if included_junctions and str(k) not in included_junctions:
+                kept = v >= threshold
+                
+                # if the number of junctiosn is lower than threshold, then skip
+                if not kept:
                     continue
+                
+                # if included_junctions is provided, then skip all junctions by default
+                if included_junctions:
+                    kept = False
+                
+                # check whether junctions should be kept
+                if k.str(with_strand = True) in included_junctions:
+                    logger.debug(f"{str(k)} is included")
+                    kept = True
+                elif k.str(with_strand = False) in included_junctions:
+                    logger.debug(f"{str(k)} is included, but strand is ignored")
+                    kept = True
 
-                if v >= threshold:
+                if not kept:
+                    logger.debug(f"{str(k)} is not included")
+                else:
                     if k.strand == "+":
                         spanned_junctions_plus[k] = 1 + spanned_junctions_plus.get(k, v)
                     elif k.strand == "-":
                         spanned_junctions_minus[k] = -1 + spanned_junctions_minus.get(k, v)
+                        
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)

@@ -134,6 +134,19 @@ class Junction(object):
 
         return self.start > other.end
 
+    def str(self, with_strand: bool = True) -> str:
+        u"""convert junctions to string, with or without strand
+        
+        Keyword arguments:
+        :param with_strand: as name says
+        Return: chr:strat-end:strand or chr:start-end
+        """
+        if with_strand:
+            return str(self)
+        return f"{self.chromosome}:{self.start}-{self.end}"
+        
+        
+
 
 if __name__ == '__main__':
     pass
