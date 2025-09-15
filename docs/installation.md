@@ -165,35 +165,22 @@ trackplot --help
 
 #### 6. for `pipenv` or `poetry` users
 
-> Install [pipenv](https://pipenv.pypa.io/en/latest/) or [poetry](https://python-poetry.org)  
+> Install [uv](https://github.com/astral-sh/uv)  
 
 ```bash
 git clone https://github.com/ygidtu/trackplot
 cd trackplot
 
-# pipenv
+# uv
+# once facing installation issues, please try to change PyPi mirror
 # create virtualenv and install required packages
-pipenv install
-# optional, with `--pypi-mirror https://pypi.tuna.tsinghua.edu.cn/simple` to specify your faverate PyPi mirror
-# optional, with `--skip-lock` once encounter locking issues
+uv sync
 
 # switch to virtualenv
-pipenv shell && python main.py --help
+source .venv/bin/activate  && python main.py --help
 
-# or just run with pipenv
-pipenv run python main.py --help
-
-
-# poetry
-# once facing installation issues, please try to change PyPi mirror in tool.poetry.source section of pyproject.toml 
-# create virtualenv and install required packages
-poetry install
-
-# switch to virtualenv
-poetry shell  && python main.py --help
-
-# or just run with poetry
-poetry run python main.py --help
+# or just run with uv
+uv run main.py --help
 ```
 
 ### Using trackplot by a local webserver
