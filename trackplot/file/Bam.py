@@ -9,7 +9,7 @@ changelog:
 """
 import gzip
 import os
-from typing import Optional, Set
+from typing import Optional, Set, List
 
 import numpy as np
 import pysam
@@ -21,6 +21,25 @@ from trackplot.base.ReadDepth import ReadDepth
 from trackplot.base.Readder import Reader
 from trackplot.conf.config import NORMALIZATION
 from trackplot.file.File import SingleCell  
+
+
+def check_junction_exists(ref: List[Junction], dst: Junction, with_strand: bool = False):
+    u"""
+    判断junction是否存在于included_junctions
+    """
+    
+    ref = sorted([Junction.create_junction(x) for x in ref])
+    
+    for i in ref:
+        if abs(i.start - dst.start) < 2 and abs(i.end - dst.end) < 2:
+            logger.warning(f"1 bp mismatch between {i} (from bam file) and {dst} (user input), please check the coordinates")
+        
+        if i.is_downstream(dst):
+            return False
+        if i.eq(dst, with_strand):
+            return True
+        
+    return False
 
 
 class Bam(SingleCell):
@@ -283,24 +302,22 @@ class Bam(SingleCell):
                 
                 # if included_junctions is provided, then skip all junctions by default
                 if included_junctions:
-                    kept = False
-                
-                # check whether junctions should be kept
-                if k.str(with_strand = True) in included_junctions:
-                    logger.debug(f"{str(k)} is included")
-                    kept = True
-                elif k.str(with_strand = False) in included_junctions:
-                    logger.debug(f"{str(k)} is included, but strand is ignored")
-                    kept = True
+                    kept = check_junction_exists(included_junctions, k, with_strand=True)
+                    if kept:
+                        logger.debug(f"{str(k)} is included")
+                    else:
+                        kept = check_junction_exists(included_junctions, k, with_strand=False)
+                        logger.debug(f"{str(k)} is included, but strand is ignored")
 
-                if not kept:
-                    logger.debug(f"{str(k)} is not included")
-                else:
+                        if not kept:
+                            logger.debug(f"{str(k)} is not included")
+
+                if kept:
                     if k.strand == "+":
                         spanned_junctions_plus[k] = 1 + spanned_junctions_plus.get(k, v)
                     elif k.strand == "-":
                         spanned_junctions_minus[k] = -1 + spanned_junctions_minus.get(k, v)
-                        
+                            
         except IOError as err:
             logger.error('There is no .bam file at {0}'.format(self.path))
             logger.error(err)

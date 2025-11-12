@@ -145,7 +145,9 @@ class Junction(object):
             return str(self)
         return f"{self.chromosome}:{self.start}-{self.end}"
         
-        
+    def eq(self, other, with_strand: bool = False):
+        u""" 判断两个位点是否一致 """
+        return self.str(with_strand) == other.str(with_strand)
 
 
 if __name__ == '__main__':

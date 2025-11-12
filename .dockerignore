@@ -19,3 +19,5 @@ WebDockerfile
 *.sh
 *.tar.gz
 *.zsync
+.venv
+*_issue
