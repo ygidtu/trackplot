@@ -190,9 +190,6 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 for i in range(exons[1][1] +1, len(region)):
                     steps[i] = step
             graph_coords = list(map(int, itertools.accumulate(steps)))
-            #increments match exactly with original code
-            #for i, e in enumerate(graph_objects):
-            #    print(f"{i}\t{e}")
     else:
         # if there is not any exons, just init graph_coords by region
         for i, j in enumerate(range(region.start, region.end + 1)):
@@ -764,6 +761,7 @@ def plot_density(
         if data.strand_aware:
             max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
             min_used_y_val = -max(abs(min_used_y_val), max_used_y_val) if data.minus is not None else 0
+            
     if jxns:
         # sort the junctions by intron length for better plotting look
         jxns_sorted_list = sorted(jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True)
@@ -775,11 +773,8 @@ def plot_density(
             min_junction_count = min(jxns.values())
         junction_count_gap = max_junction_count - min_junction_count
 
-        #recorded_pts = set()
         jxn_numbers = []
-
         for jxn_idx, jxn in enumerate(jxns_sorted_list):
-            #logger.info(f"junctions of {y_label}: {jxn} - {round(jxns[jxn], 2)}")
             leftss, rightss = jxn.start, jxn.end
 
             # junction must at least have one anchor located in plotted region
@@ -792,18 +787,15 @@ def plot_density(
             # the junction out of boundaries, set the boundaries as coordinate
             ss1_idx, ss1_modified = get_limited_index(leftss - region.start, len(graph_coords))
             ss2_idx, ss2_modified = get_limited_index(rightss - region.start, len(graph_coords))
-            #logger.info(f"{y_label} ss1_idx {ss1_idx} ss1_modified {ss1_modified} ss2_idx {ss2_idx} ss2_modified {ss2_modified}")
             u"""
             @2019.01.14
             add two new variables to make it clear which one is index, which one is genomic site 
             """
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
             # AD = keep junction arcs on top
-            #min_used_y_val = 1
             jxn_on_top = True
-            min_used_y_val = 0
-            # draw junction on bottom
-            """
+
+            # draw junction on bottom 
             if kwargs.get("density_by_strand"):
                 jxn_on_top = jxn.strand == "+"
             else:
@@ -811,7 +803,7 @@ def plot_density(
                 #jxn_on_top = True # AD - keep all junctions on same strand
                 if abs(min_used_y_val) < max_used_y_val:
                     min_used_y_val = -max_used_y_val
-            """
+            
             if fill_step == "post":
                 ss1_idx = max(0, ss1_idx - 1)
             elif fill_step == "pre":
@@ -835,14 +827,7 @@ def plot_density(
                     -right_dens - current_height,
                     -right_dens if not ss2_modified else -right_dens - current_height
                 ]
-            """
-            if sum(pts) > 0:
-                pts_ = "_".join([str(x) for x in pts])
-                while pts_ in recorded_pts:
-                    pts[1], pts[2] = pts[1] * 1.1, pts[2] * 1.1
-                    pts_ = "_".join([str(x) for x in pts])
-                recorded_pts.add(pts_)
-            """
+  
             """
             @2018.12.26
             scale the junctions line width
@@ -853,39 +838,26 @@ def plot_density(
             else:
                 line_width = 0
             #line_width = max(.5,np.log())
-            #pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
-            
 
-            temp = np.linspace(0, 1.0, 100)
-            bdist = beta.pdf(temp, 3, 3)  # or  2, 2
-            bdist /= np.max(bdist) # max = 1
-            bdist *= jxns[jxn]
-            pts_x = np.linspace(ss1, ss2, 100)
-            
-            #pts = [(ss1, 0), (ss1+5, jxns[jxn]), (ss2-5, jxns[jxn]), (ss2, 0)]
-            path = Path(np.array([pts_x, bdist]).T)
-            patch = PathPatch(path, facecolor='none', edgecolor="#BA55D3", linewidth=line_width)
-            ax.add_patch(patch)
-            """
-            # pts = [(ss1, 0), (midpt-5, jxns[jxn]), (midpt+5, jxns[jxn]), (ss2, 0)]
+            pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
             ax.add_patch(PathPatch(Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
-                                   ec="#BA55D3", lw=line_width, fc='none'))
-                                   #ec=color, lw=line_width + 0.2, fc='none'))
-            """
+                                   ec=color, lw=line_width + 0.2, fc='none'))
+            
             if show_junction_number:
-                t = ax.text( (ss1+ss2)/2, jxns[jxn] * 1.1, 
-                            '{0}'.format(round(jxns[jxn], 2)),
-                            fontsize=junction_number_font_size, ha='center', va='center')
-                            #, backgroundcolor='w' ) AD - white here overrides transparency below
+                midpt = cubic_bezier(pts, .5)
+
+                t = ax.text(
+                    midpt[0], midpt[1],
+                    '{0}'.format(round(jxns[jxn], 2)),
+                    fontsize=junction_number_font_size,
+                    ha='center', va='center',
+                    backgroundcolor='w'
+                )
+
                 # @2018.12.19 transparent background
                 t.set_bbox(dict(alpha=0))
                 jxn_numbers.append(t)
 
-        # AD - this adds  a dot next to the counts
-        #try:
-        #    adjust_text(jxn_numbers, force_text=(0.2, 0.2), arrowprops=dict(arrowstyle="-", color='black', lw=1))
-        #except IndexError as err:
-        #    logger.debug(err)
 
     if obj and obj.title:
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
