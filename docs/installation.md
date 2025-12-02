@@ -163,7 +163,7 @@ trackplot --help
 
 ---
 
-#### 6. for `pipenv` or `poetry` users
+#### 6. for `uv` users
 
 > Install [uv](https://github.com/astral-sh/uv)  
 

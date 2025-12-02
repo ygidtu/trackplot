@@ -21,13 +21,13 @@ class ReadDepth(object):
     """
 
     __slots__ = [
-        "_junction_dict_plus_", "_junction_dict_minus_",
-        "_minus_", "_plus_", "_number_of_merged_",
+        "__junction_dict__plus___", "__junction_dict__minus__",
+        "__minus__", "__plus__", "__number_of_merged__",
         "strand_aware", "site_plus", "site_minus",
     ]
 
     def __init__(self,
-                 wiggle: np.array,
+                 wiggle: np.ndarray,
                  site_plus: Optional[np.array] = None,
                  site_minus: Optional[np.array] = None,
                  minus: Optional[np.array] = None,
@@ -45,58 +45,65 @@ class ReadDepth(object):
         :param junction_dict_plus: these splice junction from plus strand
         :param junction_dict_minus: these splice junction from minus strand
         """
-        self._plus_ = wiggle
+        self.__plus__ = wiggle
         self.strand_aware = strand_aware
-        self._minus_ = abs(minus) if minus is not None else minus
-        self._junction_dict_plus_ = junction_dict_plus
-        self._junction_dict_minus_ = junction_dict_minus
+        self.__minus__ = abs(minus) if minus is not None else minus
+        self.__junction_dict__plus___ = junction_dict_plus
+        self.__junction_dict__minus__ = junction_dict_minus
         self.site_plus = site_plus
         self.site_minus = site_minus * -1 if site_minus is not None else site_minus
 
-        self._number_of_merged_ = 1
+        self.__number_of_merged__ = 1
 
     @property
     def plus(self) -> Optional[np.array]:
-        if self._plus_ is not None and self._number_of_merged_ > 0:
-            return self._plus_ / self._number_of_merged_
-        return self._plus_
+        if self.__plus__ is not None and self.__number_of_merged__ > 0:
+            return self.__plus__ / self.__number_of_merged__
+        return self.__plus__
 
     @property
     def minus(self) -> Optional[np.array]:
-        if self._minus_ is not None and self._number_of_merged_ > 0:
-            return self._minus_ / self._number_of_merged_
-        return self._minus_
+        if self.__minus__ is not None and self.__number_of_merged__ > 0:
+            return self.__minus__ / self.__number_of_merged__
+        return self.__minus__
 
     @property
-    def wiggle(self) -> np.array:
-        if (self._plus_ is None or not self._plus_.any()) and self._minus_ is not None:
+    def wiggle(self) -> np.ndarray:
+        if (self.__plus__ is None or not self.__plus__.any()) and self.__minus__ is not None:
             return self.minus
 
-        if self._plus_ is not None and self._minus_ is not None:
+        if self.__plus__ is not None and self.__minus__ is not None:
             return self.plus + self.minus
 
         return self.plus
 
     @property
-    def junctions_plus(self) -> dict:
-        if self._number_of_merged_ > 1:
-            return {k: v / self._number_of_merged_ for k, v in self._junction_dict_plus_.items()}
-        return self._junction_dict_plus_
+    def mean_junctions_plus(self) -> dict:
+        if self.__number_of_merged__ > 1:
+            return {k: v / self.__number_of_merged__ for k, v in self.__junction_dict__plus___.items()}
+        return self.__junction_dict__plus___
 
     @property
-    def junctions_minus(self) -> dict:
-        if self._number_of_merged_ > 1:
-            return {k: v / self._number_of_merged_ for k, v in self._junction_dict_minus_.items()}
-        return self._junction_dict_minus_
+    def mean_junctions_minus(self) -> dict:
+        if self.__number_of_merged__ > 1:
+            return {k: v / self.__number_of_merged__ for k, v in self.__junction_dict__minus__.items()}
+        return self.__junction_dict__minus__
 
-    @property
-    def junctions_dict(self) -> dict:
+    def junctions_dict(self, show_mean_jxn_number: bool = False) -> dict:
         res = {}
-        if self._junction_dict_plus_:
-            res.update(self.junctions_plus)
 
-        if self._junction_dict_minus_:
-            res.update(self.junctions_minus)
+        if show_mean_jxn_number:
+            if self.__junction_dict__plus___:
+                res.update(self.mean_junctions_plus)
+
+            if self.__junction_dict__minus__:
+                res.update(self.mean_junctions_minus)
+        else:
+            if self.__junction_dict__plus___:
+                res.update(self.__junction_dict__plus___)
+
+            if self.__junction_dict__minus__:
+                res.update(self.__junction_dict__minus__)
         return res
 
     @property
@@ -117,27 +124,27 @@ class ReadDepth(object):
             if len(self.wiggle) == len(other.wiggle):
                 junc_plus, junc_minus = {}, {}
 
-                for i in [self._junction_dict_plus_, other._junction_dict_plus_]:
+                for i in [self.__junction_dict__plus___, other.__junction_dict__plus___]:
                     if i:
                         junc_plus.update(i)
-                for i in [self._junction_dict_minus_, other._junction_dict_minus_]:
+                for i in [self.__junction_dict__minus__, other.__junction_dict__minus__]:
                     if i:
                         junc_minus.update(i)
 
                 minus = None
-                if self._minus_ is not None and other._minus_ is not None:
-                    minus = self._minus_ + other._minus_
-                elif self._minus_ is None and other._minus_ is not None:
+                if self.__minus__ is not None and other.__minus__ is not None:
+                    minus = self.__minus__ + other.__minus__
+                elif self.__minus__ is None and other.__minus__ is not None:
                     minus = other.minus
-                elif self._minus_ is not None and other._minus_ is None:
-                    minus = self._minus_
+                elif self.__minus__ is not None and other.__minus__ is None:
+                    minus = self.__minus__
 
                 merged = ReadDepth(
-                    self._plus_ + other._plus_, minus=minus,
+                    self.__plus__ + other.__plus__, minus=minus,
                     junction_dict_plus=junc_plus,
                     junction_dict_minus=junc_minus
                 )
-                merged._number_of_merged_ = self._number_of_merged_ + other._number_of_merged_
+                merged.__number_of_merged__ = self.__number_of_merged__ + other.__number_of_merged__
                 return merged
             else:
                 raise ValueError(f"ReadDepth objects are not equal length: {len(self.wiggle)} != {len(other.wiggle)}")
@@ -164,11 +171,11 @@ class ReadDepth(object):
         :return:
         """
 
-        for k, v in other._junction_dict_plus_:
-            self._junction_dict_plus_[k] = v + self._junction_dict_plus_.get(k, 0)
+        for k, v in other.__junction_dict__plus___:
+            self.__junction_dict__plus___[k] = v + self.__junction_dict__plus___.get(k, 0)
 
-        for k, v in other._junction_dict_minus_:
-            self._junction_dict_minus_[k] = v + self._junction_dict_minus_.get(k, 0)
+        for k, v in other.__junction_dict__minus__:
+            self.__junction_dict__minus__[k] = v + self.__junction_dict__minus__.get(k, 0)
 
         return self.junctions_dict
 
@@ -176,11 +183,11 @@ class ReadDepth(object):
         funcs = {"10": np.log10, "2": np.log2, "zscore": zscore, "e": np.log}
 
         if log_trans in funcs.keys():
-            if self._plus_ is not None:
-                self._plus_ = funcs[log_trans](self._plus_ + 1)
+            if self.__plus__ is not None:
+                self.__plus__ = funcs[log_trans](self.__plus__ + 1)
 
             if self.minus is not None:
-                self._minus_ = funcs[log_trans](self._minus_ + 1)
+                self.__minus__ = funcs[log_trans](self.__minus__ + 1)
 
     def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 0):
         u"""
@@ -192,35 +199,35 @@ class ReadDepth(object):
 
         if format_ == "rpkm" and read_length > 0:
             # for rpkm the size_factor is total reads
-            self._plus_ = np.divide(
-                self._plus_,
+            self.__plus__ = np.divide(
+                self.__plus__,
                 np.multiply(
-                    (np.sum(self._plus_ != 0) - read_length + 1) / 1e3,
+                    (np.sum(self.__plus__ != 0) - read_length + 1) / 1e3,
                     size_factor / 1e6
                 )
             )
-            if self._minus_ is not None:
-                self._minus_ = np.divide(
-                    self._minus_,
+            if self.__minus__ is not None:
+                self.__minus__ = np.divide(
+                    self.__minus__,
                     np.multiply(
-                        (np.sum(self._minus_ != 0) - read_length + 1) / 1e3,
+                        (np.sum(self.__minus__ != 0) - read_length + 1) / 1e3,
                         size_factor / 1e6
                     )
                 )
             elif format_ == "cpm" and read_length > 0:
                 # for cpm the size_factor is total reads
-                self._plus_ = np.divide(self._plus_, np.divide(size_factor, 1e6))
-                if self._minus_ is not None:
-                    self._minus_ = np.divide(self._minus_, np.divide(size_factor, 1e6))
+                self.__plus__ = np.divide(self.__plus__, np.divide(size_factor, 1e6))
+                if self.__minus__ is not None:
+                    self.__minus__ = np.divide(self.__minus__, np.divide(size_factor, 1e6))
         elif format_ == "cpm" and read_length > 0:
             # for cpm the size_factor is total reads
-            self._plus_ = np.divide(self._plus_, np.divide(size_factor, 1e6))
-            if self._minus_ is not None:
-                self._minus_ = np.divide(self._minus_, np.divide(size_factor, 1e6))
+            self.__plus__ = np.divide(self.__plus__, np.divide(size_factor, 1e6))
+            if self.__minus__ is not None:
+                self.__minus__ = np.divide(self.__minus__, np.divide(size_factor, 1e6))
         elif size_factor is not None and size_factor > 0 and format_ == "atac":
-            self._plus_ = np.divide(self._plus_, size_factor)  # * 100
-            if self._minus_ is not None:
-                self._minus_ = np.divide(self._minus_, size_factor)
+            self.__plus__ = np.divide(self.__plus__, size_factor)  # * 100
+            if self.__minus__ is not None:
+                self.__minus__ = np.divide(self.__minus__, size_factor)
 
 
 if __name__ == '__main__':

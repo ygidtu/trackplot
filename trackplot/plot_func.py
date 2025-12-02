@@ -5,10 +5,10 @@ This script contains the functions to draw different images
 Modified by AD 2025/01/13
 """
 import itertools # AD - for cumulative sum of graph_coords
-#import gzip
+import gzip
 import math
 from copy import deepcopy
-#from decimal import Decimal
+
 from typing import Dict, List, Optional, Union, Tuple, Set
 
 import matplotlib as mpl
@@ -27,7 +27,6 @@ from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
 from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.stats import gaussian_kde, zscore
-from scipy.stats import beta # AD
 
 from trackplot.anno.theme import Theme
 from trackplot.base.GenomicLoci import GenomicLoci
@@ -126,7 +125,7 @@ def __merge_exons__(exons: List[List[int]]):
 
 
 def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = None, exon_scale=1,
-                      intron_scale=0.5) -> np.array:
+                      intron_scale=0.5) -> np.ndarray:
     u"""
     init the default
     :param region: the plot region
@@ -169,7 +168,7 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 exons = exons[:-1]
             exons[0][0] = max(exons[0][0], region.start)
             exons[-1][1] = min(exons[-1][1], region.end)
-            last_interval = region.end - exons[-1][1]
+
             for i, e in enumerate(exons):
                 exons[i][0] -= region.start
                 exons[i][1] -= region.start
@@ -184,7 +183,7 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
                 step = intron_scale / interval
                 for i in range(exons[e-1][1], exons[e][0]):
                     steps[i] = step
-                interval = exons[e][0] - exons[e-1][1] - 2
+
             if last_interval := len(region) - exons[-1][1] - 1:
                 step = intron_scale / last_interval
                 for i in range(exons[1][1] +1, len(region)):
@@ -204,7 +203,7 @@ def init_graph_coords(region: GenomicLoci, exons: Optional[List[List[int]]] = No
     return graph_coords
 
 def set_x_ticks(
-        ax: mpl.axes.Axes,
+        ax,
         region: GenomicLoci,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         sequence: Optional[Dict[int, str]] = None,
@@ -263,7 +262,7 @@ def set_x_ticks(
 
 
 def set_y_ticks(
-        ax: mpl.axes.Axes,
+        ax,
         label: str,
         graph_coords: Union[Dict, np.array],
         max_used_y_val: Union[int, float],
@@ -274,7 +273,6 @@ def set_y_ticks(
         font_size: int = 5,
         show_y_label: bool = True,
         set_label_only: bool = False,
-        y_axis_skip_zero: bool = True,
         **kwargs
 ):
     u"""
@@ -355,7 +353,7 @@ def set_y_ticks(
 
 
 def set_focus(
-        ax: mpl.axes.Axes,
+        ax,
         graph_coords: Union[Dict, np.array],
         focus: Dict[int, int]
 ):
@@ -372,7 +370,7 @@ def set_focus(
 
 
 def set_indicator_lines(
-        ax: mpl.axes.Axes,
+        ax,
         graph_coords: Union[Dict, np.array],
         sites: Dict[int, str],
         min_y_used: Union[int, float] = 0,
@@ -399,7 +397,7 @@ def set_indicator_lines(
 
 
 def plot_stroke(
-        ax: mpl.axes.Axes,
+        ax,
         data: List[Stroke],
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         font_size: int = 5,
@@ -425,7 +423,7 @@ def plot_stroke(
 
 
 def plot_annotation(
-        ax: mpl.axes.Axes,
+        ax,
         obj: Annotation,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         font_size: int = 5,
@@ -650,7 +648,7 @@ def plot_annotation(
 
 
 def plot_density(
-        ax: mpl.axes.Axes,
+        ax,
         obj: Optional[File] = None,
         data: Optional[ReadDepth] = None,
         region: Optional[GenomicLoci] = None,
@@ -658,6 +656,7 @@ def plot_density(
         color="blue",
         font_size: int = 8,
         show_junction_number: bool = True,
+        show_mean_jxn_number: bool = False,
         junction_number_font_size: int = 12,
         n_y_ticks: int = 4,
         distance_between_label_axis: float = .1,
@@ -665,34 +664,11 @@ def plot_density(
         y_label: str = "",
         theme: str = "ticks_blank",
         max_used_y_val: Optional[float] = None,
-        min_used_y_val: Optional[float] = None,
         raster: bool = False,
         fill_step: str = "post",
         **kwargs
 ):
-    u"""
-    draw density plot
-    :param ax: mpl.axes.Axes
-    :param data: File
-    :param data: ReadDepth
-    :param region: GenomicLoci
-    :param graph_coords:
-    :param font_size: the font size for ticks, y-axis label and title
-    :param show_junction_number: whether to show the number of junctions
-    :param distance_between_label_axis: distance between y-axis label and y-axis ticks
-    :param n_y_ticks: number of y ticks
-    :param junction_number_font_size:
-    :param obj: Bam or Bigwig object
-    :param color: color for this density plot
-    :param show_y_label: whether to show y-axis label
-    :param y_label: the text of y-axis title
-    :param theme: the theme name
-    :param max_used_y_val: used to set same max y-axis
-    :param raster:
-    :param fill_step:
-    :param kwargs:
-    :return:
-    """
+    u""" draw density plot """
     # max_used_y_val is None
     # distance_between_label_axis: 0
     if obj:
@@ -711,21 +687,21 @@ def plot_density(
         data = obj.data
 
     try:
-        jxns = data.junctions_dict
+        jxns = data.junctions_dict(show_mean_jxn_number)
     except AttributeError:
         # depth do not have junctions
         jxns = {}
-    
-    # AD - convert junction counts to log scale early if requested
-    if obj.log_trans and obj.log_trans.isdigit() and int(obj.log_trans) > 0: # in ["2", "10"]:
 
+    # AD - convert junction counts to log scale early if requested
+    jxn_number_log_transformed = False
+    if obj.log_trans and obj.log_trans.isdigit() and int(obj.log_trans) > 0: # in ["2", "10"]:
+        jxn_number_log_transformed = True
         y_label += f" (log{obj.log_trans})"
         denominator = np.log(int(obj.log_trans))
         for k, v in jxns.items():
             jxns[k] = np.log1p(v)  / denominator
 
     min_used_y_val = 0 # AD
-    fixed_min_used_y = True #  AD
     fixed_max_used_y, fixed_min_used_y = max_used_y_val is not None, min_used_y_val is not None
     if max_used_y_val is None:
         if isinstance(data, dict):
@@ -792,15 +768,11 @@ def plot_density(
             add two new variables to make it clear which one is index, which one is genomic site 
             """
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
-            # AD = keep junction arcs on top
-            jxn_on_top = True
-
             # draw junction on bottom 
             if kwargs.get("density_by_strand"):
                 jxn_on_top = jxn.strand == "+"
             else:
                 jxn_on_top = jxn_idx % 2 == 0
-                #jxn_on_top = True # AD - keep all junctions on same strand
                 if abs(min_used_y_val) < max_used_y_val:
                     min_used_y_val = -max_used_y_val
             
@@ -846,9 +818,15 @@ def plot_density(
             if show_junction_number:
                 midpt = cubic_bezier(pts, .5)
 
+                val = jxns[jxn]
+                if jxn_number_log_transformed or show_mean_jxn_number:
+                    val = round(val, 2)
+                else:
+                    val = int(val)
+
                 t = ax.text(
                     midpt[0], midpt[1],
-                    '{0}'.format(round(jxns[jxn], 2)),
+                    '{0}'.format(val),
                     fontsize=junction_number_font_size,
                     ha='center', va='center',
                     backgroundcolor='w'
@@ -893,7 +871,7 @@ def plot_density(
 
 
 def plot_site_plot(
-        ax: mpl.axes.Axes,
+        ax,
         obj: File,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         color="blue",
@@ -975,8 +953,8 @@ def plot_site_plot(
 
 
 def plot_heatmap(
-        ax: mpl.axes.Axes,
-        cbar_ax: mpl.axes.Axes,
+        ax,
+        cbar_ax,
         data: Dict[str, ReadDepth],
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         color="viridis",
@@ -1067,8 +1045,8 @@ def plot_heatmap(
 
 
 def plot_hic(
-        ax: mpl.axes.Axes,
-        cbar_ax: mpl.axes.Axes,
+        ax,
+        cbar_ax,
         obj: List[HiCTrack],
         show_legend: bool = True,
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
@@ -1142,7 +1120,7 @@ def plot_hic(
 
 
 def plot_line(
-        ax: mpl.axes.Axes,
+        ax,
         data: Dict[str, ReadDepth],
         graph_coords: Union[Dict, np.ndarray],
         font_size: int = 8,
@@ -1222,7 +1200,7 @@ def plot_line(
 
 
 def plot_igv_like(
-        ax: mpl.axes.Axes,
+        ax,
         obj: Dict[str, ReadSegment],
         graph_coords: Optional[Union[Dict, np.ndarray]] = None,
         y_label: str = "",
@@ -1356,7 +1334,7 @@ def plot_igv_like(
     )
 
 
-def plot_links(ax: mpl.axes.Axes,
+def plot_links(ax,
                data: List[Stroke],
                graph_coords: Optional[Union[Dict, np.ndarray]] = None,
                max_y: int = -10, **kwargs):
@@ -1394,7 +1372,7 @@ def make_text_elements(text, x=0.0, y=0.0, width=1.0, height=1.0,
     return PathPatch(tp, facecolor=color, edgecolor=edgecolor)
 
 
-def plot_motif(ax: mpl.axes.Axes,
+def plot_motif(ax,
                obj,  # list of weighted text
                graph_coords: Optional[Union[Dict, np.ndarray]] = None,
                width: float = 0.8,

@@ -315,6 +315,8 @@ def process_file_list(infile: str, category: str = "density"):
                  help="The junction id for including, chr1:1-100", show_default=True)
 @optgroup.option("--show-junction-num", type=click.BOOL, is_flag=True, show_default=True,
                  help="Whether to show the number of junctions")
+@optgroup.option("--show-mean-junction-num", type=click.BOOL, is_flag=True, show_default=True,
+                 help="Whether to show the mean junction count averaged across multiple samples.")
 @optgroup.option("--fill-step", type=click.Choice(["pre", "post", "mid"]), default="post", show_default=True,
                  help="""
                  Define step if the filling should be a step function, i.e. constant in between x. 
@@ -523,8 +525,6 @@ def main(**kwargs):
 
     size_factors = {}
 
-    # add annotation
-    # print(kwargs.keys())
     for key in kwargs.keys():
         if key in IMAGE_TYPE and kwargs[key] and os.path.exists(kwargs[key]):
             if key == "annotation":
@@ -573,6 +573,7 @@ def main(**kwargs):
                                           color=sc_colors.get(group, f.color),
                                           font_size=kwargs["font_size"],
                                           show_junction_number=kwargs["show_junction_num"],
+                                          show_mean_jxn_number=kwargs["show_mean_junction_num"],
                                           n_y_ticks=kwargs["n_y_ticks"],
                                           show_y_label=not kwargs["hide_y_label"],
                                           show_site_plot=kwargs["show_site"],
@@ -591,6 +592,7 @@ def main(**kwargs):
                                       color=f.color,
                                       font_size=kwargs["font_size"],
                                       show_junction_number=kwargs["show_junction_num"],
+                                      show_mean_jxn_number=kwargs["show_mean_junction_num"],
                                       n_y_ticks=kwargs["n_y_ticks"],
                                       show_y_label=not kwargs["hide_y_label"],
                                       show_site_plot=kwargs["show_site"],

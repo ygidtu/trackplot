@@ -5,7 +5,6 @@ u"""
 Handle the customized junction
 """
 import os
-import re
 from typing import Dict
 
 from trackplot.base.Junction import Junction

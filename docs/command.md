@@ -102,6 +102,7 @@ Options:
     --local-domain TEXT           Load local domain folder and load into
                                   annotation track, download from https://hgdo
                                   wnload.soe.ucsc.edu/gbdb/hg38/uniprot/
+                                  [default: ""]
     --domain-include TEXT         Which domain will be included in annotation
                                   plot
     --domain-exclude TEXT         Which domain will be excluded in annotation
@@ -109,6 +110,7 @@ Options:
     --remove-empty                Whether to plot empty transcript
     --transcripts-to-show TEXT    Which transcript to show, transcript name or
                                   id in gtf file, eg: transcript1,transcript2
+                                  [default: ""]
     --choose-primary              Whether choose primary transcript to plot.
     --ref-color TEXT              The color of exons  [default: black]
     --intron-scale FLOAT          The scale of intron  [default: 0.5]
@@ -143,6 +145,8 @@ Options:
                                   all  [default: all]
     --included-junctions TEXT     The junction id for including, chr1:1-100
     --show-junction-num           Whether to show the number of junctions
+    --show-mean-junction-num      Whether to show the mean junction count
+                                  averaged across multiple samples.
     --fill-step [pre|post|mid]    Define step if the filling should be a step
                                   function, i.e. constant in between x.  The
                                   value determines where the step will occur:
@@ -286,7 +290,7 @@ Options:
                                   the following 4 columns is the weight of
                                   ATCG.
     --motif-region TEXT           The region of motif to plot in start-end
-                                  format
+                                  format  [default: ""]
     --motif-width FLOAT           The width of ATCG characters  [default: 0.8]
   Layout settings: 
     --n-y-ticks INTEGER RANGE     The number of ticks of y-axis  [x>=0]

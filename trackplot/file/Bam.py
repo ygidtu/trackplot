@@ -32,7 +32,9 @@ def check_junction_exists(ref: List[Junction], dst: Junction, with_strand: bool 
     
     for i in ref:
         if abs(i.start - dst.start) < 2 and abs(i.end - dst.end) < 2:
-            logger.warning(f"1 bp mismatch between {i} (from bam file) and {dst} (user input), please check the coordinates")
+            if not with_strand:
+                # in outer code, this function will called twice, with with_strand = True and False. therefore, only print log once is enough
+                logger.warning(f"1 bp mismatch between {i} (from bam file) and {dst} (user input), please check the coordinates")
         
         if i.is_downstream(dst):
             return False
@@ -269,7 +271,8 @@ class Bam(SingleCell):
                                     logger.info(region)
                                     logger.info(cigar_string)
                                     logger.info(start, i)
-                                    exit(err)
+                                    logger.error(err)
+                                    exit(1)
 
                     # remove the deletion.
                     if cigar not in (1, 4, 5):  # I, S, H

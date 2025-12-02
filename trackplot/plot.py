@@ -30,8 +30,8 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.5.5"
-__author__ = "ygidtu & Ran Zhou"
+__version__ = "0.5.6"
+__author__ = "Yiming Zhang & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
 
@@ -572,6 +572,7 @@ class Plot(object):
                     color="blue",
                     font_size: int = 8,
                     show_junction_number: bool = True,
+                    show_mean_jxn_number: bool = False,
                     junction_number_font_size: int = 5,
                     n_y_ticks: int = 4,
                     show_y_label: bool = True,
@@ -601,6 +602,7 @@ class Plot(object):
         :param library: should be one of [frf: "fr-firststrand", frs:"fr-secondstrand", fru:"fr-unstrand"], default: fru
         :param font_size: the font size for ticks, y-axis label and title
         :param show_junction_number: whether to show the number of junctions
+        :param show_mean_jxn_number:
         :param n_y_ticks: number of y ticks
         :param junction_number_font_size:
         :param color: color for this density plot
@@ -652,6 +654,7 @@ class Plot(object):
             self.plots.append(info)
             self.params[info] = {
                 "show_junction_number": show_junction_number,
+                "show_mean_jxn_number": show_mean_jxn_number,
                 "junction_number_font_size": junction_number_font_size,
                 "color": color,
                 "font_size": font_size,
