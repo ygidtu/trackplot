@@ -27,20 +27,20 @@ def check_junction_exists(ref: List[Junction], dst: Junction, with_strand: bool 
     u"""
     判断junction是否存在于included_junctions
     """
-    
-    ref = sorted([Junction.create_junction(x) for x in ref])
-    
+    ref = sorted([Junction.create_junction(x) for x in ref], key=lambda  x: (x.chromosome, x.start, x.end))
     for i in ref:
-        if abs(i.start - dst.start) < 2 and abs(i.end - dst.end) < 2:
-            if not with_strand:
-                # in outer code, this function will called twice, with with_strand = True and False. therefore, only print log once is enough
-                logger.warning(f"1 bp mismatch between {i} (from bam file) and {dst} (user input), please check the coordinates")
-        
         if i.is_downstream(dst):
             return False
         if i.eq(dst, with_strand):
             return True
-        
+        elif abs(i.start - dst.start) < 2 and abs(i.end - dst.end) < 2:
+            if (not with_strand) or (with_strand and i.strand == dst.strand):
+                # in outer code, this function will twice,
+                # with with_strand = True and False. therefore, only print log once is enough
+                logger.warning(
+                    f"1 bp mismatch between {i} (from bam file) and {dst} (user input), please check the coordinates"
+                )
+
     return False
 
 
@@ -310,10 +310,11 @@ class Bam(SingleCell):
                         logger.debug(f"{str(k)} is included")
                     else:
                         kept = check_junction_exists(included_junctions, k, with_strand=False)
-                        logger.debug(f"{str(k)} is included, but strand is ignored")
 
                         if not kept:
                             logger.debug(f"{str(k)} is not included")
+                        else:
+                            logger.debug(f"{str(k)} is included, but strand is ignored")
 
                 if kept:
                     if k.strand == "+":

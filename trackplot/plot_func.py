@@ -799,7 +799,6 @@ def plot_density(
                     -right_dens - current_height,
                     -right_dens if not ss2_modified else -right_dens - current_height
                 ]
-  
             """
             @2018.12.26
             scale the junctions line width
