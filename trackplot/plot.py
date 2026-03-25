@@ -15,7 +15,6 @@ from matplotlib import gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_pdf import FigureCanvasPdf
 
-from trackplot.file.ATAC import ATAC
 from trackplot.file.Bam import Bam
 from trackplot.file.BedGraph import Bedgraph
 from trackplot.file.Bigwig import Bigwig
@@ -506,6 +505,7 @@ class Plot(object):
                 size_factor=size_factor
             )
         elif category == "atac":
+            from trackplot.file.ATAC import ATAC
             obj = ATAC.create(
                 path,
                 label=label,
