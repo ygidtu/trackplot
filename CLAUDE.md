@@ -149,17 +149,29 @@ if kwargs["start_server"]:
 
 The 200+ line nested if-elif was refactored with centralized validation (`_CATEGORY_VALIDATORS` dict) and cleaner variable naming (`cat` instead of shadowing `category`). Use `category == "x"` instead of `category in ["x"]` for single-value checks.
 
+### main() Refactoring
+
+Extracted plotting dispatch into handler functions:
+- `_handle_density()` — density plot processing with barcode/ATAC support
+- `_handle_heatmap()` — heatmap plot processing
+- `_handle_line()` — line plot processing with barcode support
+- `_handle_igv()` — IGV read visualization
+- `_handle_hic()` — Hi-C matrix visualization
+- `_handle_motif()` — motif sequence visualization
+
+Dispatch uses `_CATEGORY_HANDLERS` dict, reducing `main()` from ~300 lines to ~100 lines.
+
+### ATAC Lazy Import
+
+`ATAC` module moved to lazy import in both `cli.py` (via `_get_atac()`) and `plot.py` (import inside `__load__` conditional). ATAC is no longer loaded at CLI startup.
+
 ### Remaining Optimization Opportunities
 
-1. **`os.path.exists()` bottleneck**: `FileList.__init__` calls `os.path.exists()` on every entry. For large file lists (1000+), this dominates runtime (~3ms for 1000 entries). Could defer validation to load time.
+1. **`os.path.exists()` overhead**: Benchmark shows ~1.5ms for 1000 calls — not a real bottleneck despite earlier estimates.
 
-2. **Repeated `groups.get()` pattern in line parsing**: Each branch repeats `groups[line[2]] = groups.get(line[2], 0) + 1`. Could extract once before the if-elif chain.
+2. **`plot_func.py` wildcard import**: `from trackplot.plot_func import *` pulls in `ReadSegment` and `HiCTrack` at import time. Could be refactored to selective imports.
 
-3. **Import graph**: `cli.py` still imports `ATAC` at top level even when not used. Could lazy-import similar to server.
-
-4. **`main()` function is ~300 lines**: The click-decorated `main()` function handles all plotting dispatch. Extracting per-category handlers (e.g., `_handle_density()`, `_handle_heatmap()`) would improve readability.
-
-### Benchmark Scripts
+3. **Import graph depth**: 1741 modules loaded at CLI startup. Further reduction would require refactoring `plot.py`'s top-level imports of heavy dependencies (pysam, hicmatrix).
 
 ```bash
 # Test import time improvement

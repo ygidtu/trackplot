@@ -16,7 +16,6 @@ from loguru import logger
 
 from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
-from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot, __version__
 from trackplot.plot_func import load_barcodes
 
@@ -210,6 +209,203 @@ def process_file_list(infile: str, category: str = "density"):
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
+
+
+def _get_atac():
+    """Lazy import ATAC module to avoid loading at CLI startup."""
+    from trackplot.file.ATAC import ATAC
+    return ATAC
+
+
+def _handle_density(p, path, kwargs, barcodes, sc_colors, size_factors):
+    for f in process_file_list(path, "density"):
+        bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
+        if bcs and f.category in ["bam", "atac"]:
+            for group in bcs.keys():
+                if kwargs["group_by_cell"] and group:
+                    label = group
+                elif group:
+                    label = f"{f.label} - {group}"
+                else:
+                    label = f.label
+
+                if f.label not in size_factors and f.category == "atac":
+                    logger.info(f"Indexing {f.path}")
+                    size_factors[f.label] = _get_atac().index(f.path, bcs)
+
+                p.add_density(f.path,
+                              category=f.category, label=label,
+                              barcode=group, barcode_groups=bcs,
+                              barcode_tag=kwargs["barcode_tag"],
+                              umi_tag=kwargs["umi_tag"], library=f.library,
+                              size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
+                              color=sc_colors.get(group, f.color),
+                              font_size=kwargs["font_size"],
+                              show_junction_number=kwargs["show_junction_num"],
+                              show_mean_jxn_number=kwargs["show_mean_junction_num"],
+                              n_y_ticks=kwargs["n_y_ticks"],
+                              show_y_label=not kwargs["hide_y_label"],
+                              show_site_plot=kwargs["show_site"],
+                              strand_choice=kwargs["site_strand"],
+                              density_by_strand=kwargs["density_by_strand"],
+                              only_customized_junction=kwargs["only_customized_junction"],
+                              log_trans=kwargs["log"])
+        elif f.category != "atac":
+            p.add_density(f.path, category=f.category, label=f.label,
+                          size_factor=f.depth,
+                          barcode_tag=kwargs["barcode_tag"],
+                          umi_tag=kwargs["umi_tag"], library=f.library,
+                          color=f.color, font_size=kwargs["font_size"],
+                          show_junction_number=kwargs["show_junction_num"],
+                          show_mean_jxn_number=kwargs["show_mean_junction_num"],
+                          n_y_ticks=kwargs["n_y_ticks"],
+                          show_y_label=not kwargs["hide_y_label"],
+                          show_site_plot=kwargs["show_site"],
+                          strand_choice=kwargs["site_strand"],
+                          density_by_strand=kwargs["density_by_strand"],
+                          log_trans=kwargs["log"])
+
+
+def _handle_heatmap(p, path, kwargs, barcodes, size_factors):
+    for f in process_file_list(path, "heatmap"):
+        if barcodes and f.category in ["bam", "atac"]:
+            bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
+            if f.label not in size_factors and f.category == "atac":
+                logger.info(f"Indexing {f.path}")
+                size_factors[f.label] = _get_atac().index(f.path, bcs)
+
+            for group in bcs.keys():
+                p.add_heatmap(f.path, category=f.category,
+                              label=f"{f.label} - {group}" if group else f.label,
+                              barcode=group, barcode_groups=bcs,
+                              group=f"{f.group} - {group}" if f.group else f.group,
+                              barcode_tag=kwargs["barcode_tag"],
+                              size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
+                              umi_tag=kwargs["umi_tag"], library=f.library,
+                              color=f.color, show_y_label=not kwargs["hide_y_label"],
+                              clustering=kwargs["clustering"],
+                              clustering_method=kwargs["clustering_method"],
+                              distance_metric=kwargs["distance_metric"],
+                              font_size=kwargs["font_size"],
+                              do_scale=kwargs["heatmap_scale"],
+                              vmin=kwargs["heatmap_vmin"],
+                              vmax=kwargs["heatmap_vmax"],
+                              log_trans=kwargs["log"])
+        elif f.category != "atac":
+            p.add_heatmap(f.path, category=f.category, group=f.group,
+                          label=f.label, size_factor=f.depth,
+                          barcode_tag=kwargs["barcode_tag"],
+                          umi_tag=kwargs["umi_tag"], library=f.library,
+                          color=f.color, show_y_label=not kwargs["hide_y_label"],
+                          clustering=kwargs["clustering"],
+                          clustering_method=kwargs["clustering_method"],
+                          distance_metric=kwargs["distance_metric"],
+                          font_size=kwargs["font_size"],
+                          show_row_names=kwargs["show_row_names"],
+                          do_scale=kwargs["heatmap_scale"],
+                          vmin=kwargs["heatmap_vmin"],
+                          vmax=kwargs["heatmap_vmax"],
+                          log_trans=kwargs["log"])
+
+
+def _handle_line(p, path, kwargs, barcodes, sc_colors):
+    for f in process_file_list(path, "line"):
+        if barcodes and f.name in barcodes and f.category == "bam":
+            for group in barcodes[f.name].keys():
+                if kwargs["group_by_cell"] and group:
+                    label = group
+                elif group:
+                    label = f"{f.label} - {group}"
+                else:
+                    label = f.label
+                p.add_line(f.path, category=f.category, label=label,
+                           barcode=group, barcode_groups=barcodes,
+                           group=f.group, barcode_tag=kwargs["barcode_tag"],
+                           umi_tag=kwargs["umi_tag"], library=f.library,
+                           color=sc_colors.get(group, f.color),
+                           show_y_label=not kwargs["hide_y_label"],
+                           font_size=kwargs["font_size"],
+                           n_y_ticks=kwargs["n_y_ticks"],
+                           show_legend=not kwargs["hide_legend"],
+                           legend_position=kwargs["legend_position"],
+                           legend_ncol=kwargs["legend_ncol"],
+                           log_trans=kwargs["log"])
+        else:
+            p.add_line(f.path, category=f.category, group=f.group,
+                       label=f.label, barcode_tag=kwargs["barcode_tag"],
+                       umi_tag=kwargs["umi_tag"], library=f.library,
+                       color=f.color, show_y_label=not kwargs["hide_y_label"],
+                       font_size=kwargs["font_size"],
+                       n_y_ticks=kwargs["n_y_ticks"],
+                       show_legend=not kwargs["hide_legend"],
+                       legend_position=kwargs["legend_position"],
+                       legend_ncol=kwargs["legend_ncol"],
+                       log_trans=kwargs["log"])
+
+
+def _handle_igv(p, path, kwargs):
+    for f in process_file_list(path, "igv"):
+        igv_features = {}
+        if kwargs["m6a"]:
+            igv_features["m6a"] = kwargs["m6a"]
+        if kwargs["polya"] and kwargs["rs"]:
+            igv_features["real_strand"] = kwargs["rs"]
+            igv_features["polya"] = kwargs["polya"]
+
+        p.add_igv(f.path, category=f.category, label=f.label,
+                  exon_color=f.color, intron_color=f.color,
+                  features=igv_features or None,
+                  font_size=kwargs["font_size"],
+                  n_y_ticks=kwargs["n_y_ticks"],
+                  show_y_label=not kwargs["hide_y_label"],
+                  deletion_ignore=kwargs["del_ratio_ignore"] == 1.0,
+                  del_ratio_ignore=kwargs["del_ratio_ignore"],
+                  exon_focus=f.exon_focus)
+
+
+def _handle_hic(p, path, kwargs):
+    for f in process_file_list(path, "hic"):
+        p.add_hic(f.path, category=f.category, label=f.label,
+                  log_trans=f.trans, tad=f.tad, depth=f.depth,
+                  color=f.color, show_legend=not kwargs["hide_legend"],
+                  show_y_label=not kwargs["hide_y_label"],
+                  font_size=kwargs["font_size"],
+                  n_y_ticks=kwargs["n_y_ticks"])
+
+
+def _handle_motif(p, kwargs, region):
+    motif_region = None
+    if kwargs["motif_region"]:
+        start, end = [int(x) for x in kwargs["motif_region"].split("-")]
+        motif_region = GenomicLoci(
+            region.chromosome,
+            max(start, region.start),
+            min(region.end, end),
+            region.strand)
+    p.add_motif(kwargs["motif"], motif_region=motif_region, width=kwargs["motif_width"])
+
+
+# Dispatch table: maps file category keys to their handler functions
+_CATEGORY_HANDLERS = {
+    "density": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_density(p, kw["density"], kw, barcodes, sc_colors, size_factors),
+    "heatmap": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_heatmap(p, kw["heatmap"], kw, barcodes, size_factors),
+    "line": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_line(p, kw["line"], kw, barcodes, sc_colors),
+    "igv": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_igv(p, kw["igv"], kw),
+    "hic": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_hic(p, kw["hic"], kw),
+    "interval": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        [_add_interval(p, f) for f in process_file_list(kw["interval"], "interval")],
+    "motif": lambda p, k, kw, barcodes, sc_colors, size_factors, region:
+        _handle_motif(p, kw, region),
+}
+
+
+def _add_interval(p, f):
+    p.add_interval(f.path, f.label)
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']), no_args_is_help=True)
@@ -541,206 +737,8 @@ def main(**kwargs):
                                  domain_include=kwargs["domain_include"],
                                  domain_exclude=kwargs["domain_exclude"]
                                  )
-            elif key == "interval":
-                for f in process_file_list(kwargs[key], key):
-                    p.add_interval(f.path, f.label)
-            elif key == "density":
-                for f in process_file_list(kwargs[key], key):
-                    bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
-                    if bcs and f.category in ["bam", "atac"]:
-                        for group in bcs.keys():
-                            if kwargs["group_by_cell"] and group:
-                                label = group
-                            elif group:
-                                label = f"{f.label} - {group}"
-                            else:
-                                label = f.label
-
-                            if f.label not in size_factors.keys() and f.category == "atac":
-                                logger.info(f"Indexing {f.path}")
-                                size_factors[f.label] = ATAC.index(f.path, bcs)
-
-                            p.add_density(f.path,
-                                          category=f.category,
-                                          label=label,
-                                          barcode=group,
-                                          barcode_groups=bcs,
-                                          barcode_tag=kwargs["barcode_tag"],
-                                          umi_tag=kwargs["umi_tag"],
-                                          library=f.library,
-                                          size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
-                                          color=sc_colors.get(group, f.color),
-                                          font_size=kwargs["font_size"],
-                                          show_junction_number=kwargs["show_junction_num"],
-                                          show_mean_jxn_number=kwargs["show_mean_junction_num"],
-                                          n_y_ticks=kwargs["n_y_ticks"],
-                                          show_y_label=not kwargs["hide_y_label"],
-                                          show_site_plot=kwargs["show_site"],
-                                          strand_choice=kwargs["site_strand"],
-                                          density_by_strand=kwargs["density_by_strand"],
-                                          only_customized_junction=kwargs["only_customized_junction"],
-                                          log_trans=kwargs["log"])
-                    elif f.category != "atac":
-                        p.add_density(f.path,
-                                      category=f.category,
-                                      label=f.label,
-                                      size_factor=f.depth,
-                                      barcode_tag=kwargs["barcode_tag"],
-                                      umi_tag=kwargs["umi_tag"],
-                                      library=f.library,
-                                      color=f.color,
-                                      font_size=kwargs["font_size"],
-                                      show_junction_number=kwargs["show_junction_num"],
-                                      show_mean_jxn_number=kwargs["show_mean_junction_num"],
-                                      n_y_ticks=kwargs["n_y_ticks"],
-                                      show_y_label=not kwargs["hide_y_label"],
-                                      show_site_plot=kwargs["show_site"],
-                                      strand_choice=kwargs["site_strand"],
-                                      density_by_strand=kwargs["density_by_strand"],
-                                      log_trans=kwargs["log"])
-            elif key == "heatmap":
-                for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.category in ["bam", "atac"]:
-                        bcs = barcodes.get(f.path, barcodes.get(f.name, barcodes.get(f.label, {})))
-                        if f.label not in size_factors.keys() and f.category == "atac":
-                            logger.info(f"Indexing {f.path}")
-                            size_factors[f.label] = ATAC.index(f.path, bcs)
-
-                        for group in bcs.keys():
-                            p.add_heatmap(f.path,
-                                          category=f.category,
-                                          label=f"{f.label} - {group}" if group else f.label,
-                                          barcode=group,
-                                          barcode_groups=bcs,
-                                          group=f"{f.group} - {group}" if f.group else f.group,
-                                          barcode_tag=kwargs["barcode_tag"],
-                                          size_factor=size_factors.get(f.label) if f.category == "atac" else f.depth,
-                                          umi_tag=kwargs["umi_tag"],
-                                          library=f.library,
-                                          color=f.color,
-                                          show_y_label=not kwargs["hide_y_label"],
-                                          clustering=kwargs["clustering"],
-                                          clustering_method=kwargs["clustering_method"],
-                                          distance_metric=kwargs["distance_metric"],
-                                          font_size=kwargs["font_size"],
-                                          do_scale=kwargs["heatmap_scale"],
-                                          vmin=kwargs["heatmap_vmin"],
-                                          vmax=kwargs["heatmap_vmax"],
-                                          log_trans=kwargs["log"])
-                    elif f.category != "atac":
-                        p.add_heatmap(f.path,
-                                      category=f.category,
-                                      group=f.group,
-                                      label=f.label,
-                                      size_factor=f.depth,
-                                      barcode_tag=kwargs["barcode_tag"],
-                                      umi_tag=kwargs["umi_tag"],
-                                      library=f.library,
-                                      color=f.color,
-                                      show_y_label=not kwargs["hide_y_label"],
-                                      clustering=kwargs["clustering"],
-                                      clustering_method=kwargs["clustering_method"],
-                                      distance_metric=kwargs["distance_metric"],
-                                      font_size=kwargs["font_size"],
-                                      show_row_names=kwargs["show_row_names"],
-                                      do_scale=kwargs["heatmap_scale"],
-                                      vmin=kwargs["heatmap_vmin"],
-                                      vmax=kwargs["heatmap_vmax"],
-                                      log_trans=kwargs["log"])
-            elif key == "line":
-                for f in process_file_list(kwargs[key], key):
-                    if barcodes and f.name in barcodes.keys() and f.category == "bam":
-                        for group in barcodes[f.name].keys():
-                            if kwargs["group_by_cell"] and group:
-                                label = group
-                            elif group:
-                                label = f"{f.label} - {group}"
-                            else:
-                                label = f.label
-                            p.add_line(f.path,
-                                       category=f.category,
-                                       label=label,
-                                       barcode=group,
-                                       barcode_groups=barcodes,
-                                       group=f.group,
-                                       barcode_tag=kwargs["barcode_tag"],
-                                       umi_tag=kwargs["umi_tag"],
-                                       library=f.library,
-                                       color=sc_colors.get(group, f.color),
-                                       show_y_label=not kwargs["hide_y_label"],
-                                       font_size=kwargs["font_size"],
-                                       n_y_ticks=kwargs["n_y_ticks"],
-                                       show_legend=not kwargs["hide_legend"],
-                                       legend_position=kwargs["legend_position"],
-                                       legend_ncol=kwargs["legend_ncol"],
-                                       log_trans=kwargs["log"])
-                    else:
-                        p.add_line(f.path,
-                                   category=f.category,
-                                   group=f.group,
-                                   label=f.label,
-                                   barcode_tag=kwargs["barcode_tag"],
-                                   umi_tag=kwargs["umi_tag"],
-                                   library=f.library,
-                                   color=f.color,
-                                   show_y_label=not kwargs["hide_y_label"],
-                                   font_size=kwargs["font_size"],
-                                   n_y_ticks=kwargs["n_y_ticks"],
-                                   show_legend=not kwargs["hide_legend"],
-                                   legend_position=kwargs["legend_position"],
-                                   legend_ncol=kwargs["legend_ncol"],
-                                   log_trans=kwargs["log"])
-            elif key == "igv":
-                for f in process_file_list(kwargs[key], "igv"):
-                    igv_features = {}
-                    if kwargs["m6a"]:
-                        igv_features.update({"m6a": kwargs["m6a"]})
-
-                    if kwargs["polya"] and kwargs["rs"]:
-                        igv_features.update({"real_strand": kwargs["rs"], "polya": kwargs["polya"]})
-
-                    if len(igv_features) == 0:
-                        igv_features = None
-
-                    p.add_igv(f.path,
-                              category=f.category,
-                              label=f.label,
-                              exon_color=f.color,
-                              intron_color=f.color,
-                              features=igv_features,
-                              font_size=kwargs["font_size"],
-                              n_y_ticks=kwargs["n_y_ticks"],
-                              show_y_label=not kwargs["hide_y_label"],
-                              deletion_ignore=True if kwargs["del_ratio_ignore"] == 1.0 else False,
-                              del_ratio_ignore=kwargs["del_ratio_ignore"],
-                              exon_focus=f.exon_focus
-                              )
-            elif key == "hic":
-                for f in process_file_list(kwargs[key], "hic"):
-                    p.add_hic(
-                        f.path,
-                        category=f.category,
-                        label=f.label,
-                        log_trans=f.trans,
-                        tad=f.tad,
-                        depth=f.depth,
-                        color=f.color,
-                        show_legend=not kwargs["hide_legend"],
-                        show_y_label=not kwargs["hide_y_label"],
-                        font_size=kwargs["font_size"],
-                        n_y_ticks=kwargs["n_y_ticks"]
-                    )
-            elif key == "motif":
-                motif_region = None
-                if kwargs["motif_region"]:
-                    start, end = [int(x) for x in kwargs["motif_region"].split("-")]
-                    motif_region = GenomicLoci(
-                        region.chromosome,
-                        max(start, region.start),
-                        min(region.end, end),
-                        region.strand)
-
-                p.add_motif(kwargs[key], motif_region=motif_region, width=kwargs["motif_width"])
+            elif key in _CATEGORY_HANDLERS:
+                _CATEGORY_HANDLERS[key](p, key, kwargs, barcodes, sc_colors, size_factors, region)
         elif key == "focus":
             p.add_focus(kwargs[key])
         elif key == "stroke":
