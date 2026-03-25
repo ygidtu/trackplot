@@ -8,7 +8,7 @@ This script contains all the command line parameters
 import os
 import sys
 from multiprocessing import cpu_count
-from typing import Optional
+from typing import Optional, Dict, List
 
 import click
 from click_option_group import optgroup
@@ -19,7 +19,11 @@ from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_
 from trackplot.file.ATAC import ATAC
 from trackplot.plot import Plot, __version__
 from trackplot.plot_func import load_barcodes
-from trackplot.server import run, __PLOT__
+
+# Lazy import for server to avoid loading Flask in CLI mode
+__PLOT__ = "./plots"
+def get_plot_dir():
+    return __PLOT__
 
 
 def decode_region(region: str):
@@ -81,134 +85,128 @@ def __read_iter__(path):
             yield idx, line
 
 
+# File type validators for each category
+_CATEGORY_VALIDATORS: Dict[str, List[str]] = {
+    "density": ["bam", "bigwig", "bw", "depth", "igv", "atac", "bedgraph", "bg"],
+    "heatmap": ["bam", "bigwig", "bw", "depth", "atac", "bedgraph", "bg"],
+    "line": ["bam", "bigwig", "bw", "depth", "bedgraph", "bg"],
+    "igv": ["bam", "bigwig", "bw", "depth", "igv"],
+}
+
+
 def process_file_list(infile: str, category: str = "density"):
     u"""
     Process and check the file list format_
     :param infile: path to input file list
     :param category: the image type of file list used for
     """
+    valid_categories = _CATEGORY_VALIDATORS.get(category, [])
 
     try:
-        if category in ["density"]:
+        if category == "density":
             for idx, line in __read_iter__(infile):
-                path, category = line[0], line[1]
-
-                if category not in ["bam", "bigwig", "bw", "depth", "igv", "atac", "bedgraph", "bg"]:
-                    raise ValueError(f"{category} is not supported in density plot.")
-
+                if valid_categories and line[1] not in valid_categories:
+                    raise ValueError(f"{line[1]} is not supported in density plot.")
+                path, cat = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                    yield FileList(path=path, category=cat, color=COLORS[idx % len(COLORS)])
                 elif len(line) < 4:
-                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
+                    yield FileList(path=path, category=cat, color=COLORS[idx % len(COLORS)], label=line[2])
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category, color=line[3], label=line[2])
+                    yield FileList(path=path, category=cat, color=line[3], label=line[2])
                 elif len(line) < 6:
-                    yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4])
+                    yield FileList(path=path, category=cat, color=line[3], label=line[2], library=line[4])
                 else:
-                    yield FileList(path=path, category=category, color=line[3], label=line[2], library=line[4],
+                    yield FileList(path=path, category=cat, color=line[3], label=line[2], library=line[4],
                                    depth=int(line[5]))
-        elif category in ["heatmap"]:
+        elif category == "heatmap":
             groups = {}
             for idx, line in __read_iter__(infile):
-                path, category = line[0], line[1]
-
-                if category not in ["bam", "bigwig", "bw", "depth", "atac", "bedgraph", "bg"]:
-                    raise ValueError(f"{category} is not supported in heatmap plot.")
-
+                if valid_categories and line[1] not in valid_categories:
+                    raise ValueError(f"{line[1]} is not supported in heatmap plot.")
+                path, cat = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category, color=COLORMAP[0])
+                    yield FileList(path=path, category=cat, color=COLORMAP[0])
                 elif len(line) < 4:
                     groups[line[2]] = 0
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    color=COLORMAP[len(groups) % len(COLORMAP)], group=line[2])
                 else:
                     groups[line[2]] = 0
                     depth = None
                     if len(line) > 4:
                         depth = int(line[4])
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    color=line[3], group=line[2], library=line[4] if len(line) > 4 else "fru",
                                    depth=depth)
-        elif category in ["line"]:
+        elif category == "line":
             groups = {}
             for idx, line in __read_iter__(infile):
-                path, category = line[0], line[1]
-
-                if category not in ["bam", "bigwig", "bw", "depth", "bedgraph", "bg"]:
-                    raise ValueError(f"{category} is not supported in density plot.")
-
+                if valid_categories and line[1] not in valid_categories:
+                    raise ValueError(f"{line[1]} is not supported in line plot.")
+                path, cat = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
-                elif len(line) < 4:
-                    if line[2] not in groups:
-                        groups[line[2]] = 0
-                    groups[line[2]] += 1
-                    yield FileList(path=path, category=category,
-                                   color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
-                elif len(line) < 5:
-                    if line[2] not in groups:
-                        groups[line[2]] = 0
-                    groups[line[2]] += 1
-                    yield FileList(path=path, category=category, label=line[3],
-                                   color=COLORS[groups[line[2]] % len(COLORS)], group=line[2])
-                elif len(line) < 6:
-                    if line[2] not in groups:
-                        groups[line[2]] = 0
-                    groups[line[2]] += 1
-                    yield FileList(path=path, category=category, label=line[3],
-                                   color=line[4], group=line[2])
+                    yield FileList(path=path, category=cat, color=COLORS[idx % len(COLORS)])
                 else:
-                    if line[2] not in groups:
-                        groups[line[2]] = 0
-                    groups[line[2]] += 1
-                    yield FileList(path=path, category=category, label=line[3],
-                                   color=line[4], group=line[2], depth=int(line[5]))
-        elif category in ["interval"]:
+                    groups[line[2]] = groups.get(line[2], 0) + 1
+                    grp_color = COLORS[groups[line[2]] % len(COLORS)]
+                    if len(line) < 4:
+                        yield FileList(path=path, category=cat, color=grp_color, group=line[2])
+                    elif len(line) < 5:
+                        yield FileList(path=path, category=cat, label=line[3],
+                                       color=grp_color, group=line[2])
+                    elif len(line) < 6:
+                        yield FileList(path=path, category=cat, label=line[3],
+                                       color=line[4], group=line[2])
+                    else:
+                        yield FileList(path=path, category=cat, label=line[3],
+                                       color=line[4], group=line[2], depth=int(line[5]))
+        elif category == "interval":
             for idx, line in __read_iter__(infile):
                 if len(line) < 2:
                     yield FileList(path=line[0], category="interval")
                 else:
                     yield FileList(path=line[0], category="interval", label=line[1])
-        elif category in ["igv"]:
+        elif category == "igv":
             for idx, line in __read_iter__(infile):
-                path, category = line[0], line[1]
-
-                if category not in ["bam", "bigwig", "bw", "depth", "igv"]:
-                    raise ValueError(f"{category} is not supported in density plot.")
-
+                if valid_categories and line[1] not in valid_categories:
+                    raise ValueError(f"{line[1]} is not supported in igv plot.")
+                path, cat = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)])
+                    yield FileList(path=path, category=cat, color=COLORS[idx % len(COLORS)])
                 elif len(line) < 4:
-                    yield FileList(path=path, category=category, color=COLORS[idx % len(COLORS)], label=line[2])
+                    yield FileList(path=path, category=cat, color=COLORS[idx % len(COLORS)], label=line[2])
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category, color=line[3], label=line[2])
+                    yield FileList(path=path, category=cat, color=line[3], label=line[2])
                 else:
-                    yield FileList(path=path, category=category, color=line[3], label=line[2], exon_focus=line[4])
-        elif category in ["hic"]:
+                    yield FileList(path=path, category=cat, color=line[3], label=line[2], exon_focus=line[4])
+        elif category == "hic":
             default_depth = 30000
             for idx, line in __read_iter__(infile):
-                path, category = line[0], line[1]
+                path, cat = line[0], line[1]
                 if len(line) < 3:
-                    yield FileList(path=path, category=category, depth=default_depth)
+                    yield FileList(path=path, category=cat, depth=default_depth)
                 elif len(line) < 4:
-                    yield FileList(path=path, category=category, label=line[2], depth=default_depth)
+                    yield FileList(path=path, category=cat, label=line[2], depth=default_depth)
                 elif len(line) < 5:
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    label=line[2], color=line[3],
                                    depth=default_depth)
                 elif len(line) < 6:
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    label=line[2], color=line[3],
                                    trans=line[4], depth=default_depth)
                 elif len(line) < 7:
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    label=line[2], color=line[3],
                                    trans=line[4], depth=int(line[5]))
                 else:
-                    yield FileList(path=path, category=category,
+                    yield FileList(path=path, category=cat,
                                    label=line[2], color=line[3],
                                    trans=line[4], depth=int(line[5]),
                                    tad=line[6])
+        else:
+            raise ValueError(f"Unknown category: {category}")
     except FileNotFoundError as err:
         logger.error(f"{infile} -> {err}")
         exit(1)
@@ -491,6 +489,7 @@ def main(**kwargs):
     logger.debug("DEBUG" if kwargs["verbose"] else "INFO")
 
     if kwargs["start_server"]:
+        from trackplot.server import run
         run(host=kwargs["host"], port=kwargs["port"], plots=kwargs["plots"], data=kwargs["data"])
         exit(0)
     else:
