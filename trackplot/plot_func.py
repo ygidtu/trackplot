@@ -694,7 +694,7 @@ def plot_density(
 
     # AD - convert junction counts to log scale early if requested
     jxn_number_log_transformed = False
-    if obj.log_trans and obj.log_trans.isdigit() and int(obj.log_trans) > 0: # in ["2", "10"]:
+    if obj and obj.log_trans and obj.log_trans.isdigit() and int(obj.log_trans) > 0: # in ["2", "10"]:
         jxn_number_log_transformed = True
         y_label += f" (log{obj.log_trans})"
         denominator = np.log(int(obj.log_trans))

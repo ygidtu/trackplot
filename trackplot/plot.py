@@ -29,7 +29,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 faulthandler.enable()
 
 
-__version__ = "0.5.7"
+__version__ = "0.5.8"
 __author__ = "Yiming Zhang & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -366,7 +366,7 @@ class Plot(object):
         :param color: color of stroke
         :return:
         """
-        assert self.region is not None, f"please set plot region first."
+        assert self.region is not None, "please set plot region first."
 
         if link:
             logger.info(f"add link: {link}")
@@ -1088,7 +1088,7 @@ class Plot(object):
         """
         if sc_height_ratio is None:
             sc_height_ratio = {"density": .2, "heatmap": .2}
-        assert self.region is not None, f"please set the plotting region first."
+        assert self.region is not None, "please set the plotting region first."
 
         plots_n_rows, plots_n_cols = 1, 1
 
