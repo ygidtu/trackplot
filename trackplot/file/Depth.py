@@ -72,7 +72,6 @@ class Depth(File):
                 else:
                     label = list(range(1, len(lines) - 1))
                 break
-
         return cls(path, label, title)
 
     def load(self, region: GenomicLoci, required_sample: List[str] = None, log_trans: Optional[str] = None, **kwargs):
@@ -88,7 +87,7 @@ class Depth(File):
         self.region = region
         self.log_trans = log_trans
         if not required_sample:
-            required_sample = self.label
+            required_sample = [self.label]
 
         required_sample = [x for x in required_sample if x in self.label]
         depth_vector = {x: np.zeros(len(region), dtype='f') for x in required_sample}
@@ -97,10 +96,10 @@ class Depth(File):
             chrom, site = row[0], int(row[1]) - region.start
 
             if site < len(region):
-                vals = {x: float(y) for x, y in zip(self.label, row[2:])}
+                vals = {x: float(y) for x, y in zip([self.label], row[2:])}
                 for x in depth_vector.keys():
                     depth_vector[x] += vals[x]
-
+   
         self.data = {x: ReadDepth(y) for x, y in depth_vector.items()}
 
     def items(self):
