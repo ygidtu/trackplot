@@ -18,11 +18,7 @@ from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.conf.config import CLUSTERING_METHOD, COLORS, COLORMAP, DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION
 from trackplot.plot import Plot, __version__
 from trackplot.plot_func import load_barcodes
-
-# Lazy import for server to avoid loading Flask in CLI mode
-__PLOT__ = "./plots"
-def get_plot_dir():
-    return __PLOT__
+from trackplot.server import run, __PLOT__
 
 
 def decode_region(region: str):
