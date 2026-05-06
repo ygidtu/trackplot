@@ -594,6 +594,9 @@ def _add_interval(p, f):
                  then the deletion gap will be filled. \n
                  currently the del_ratio_ignore was 1.0.
                  """)
+@optgroup.option("--igv-height-scale", default=None, type=click.FLOAT,
+                 help="Relative IGV/read-track height scaled by read count. "
+                      "Use larger values, e.g. 0.6-1.0, to make individual isoforms easier to inspect.")
 @optgroup.group("HiC settings")
 @optgroup.option("--hic", type=click.Path(exists=True),
                  help="""
@@ -761,6 +764,7 @@ def main(**kwargs):
         same_y_sc=kwargs.get("same_y_sc", False),
         same_y_groups=kwargs.get("same_y_by_groups", None),
         y_limit=kwargs.get("y_limit", None),
+        igv_height_scale=kwargs.get("igv_height_scale"),
         remove_duplicate_umi=kwargs["remove_duplicate_umi"],
         threshold=kwargs["threshold"],
         sc_height_ratio={

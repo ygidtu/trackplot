@@ -45,7 +45,7 @@ class PlotInfo(object):
     this class is used to collect all the plot information.
     """
 
-    __slots__ = ["obj", "group", "type", "category"]
+    __slots__ = ["obj", "group", "type", "category", "height_scale"]
 
     def __init__(self, obj: File, category: str = "", type_: str = "", group: str = ""):
         u"""
@@ -59,6 +59,7 @@ class PlotInfo(object):
         self.group = group
         self.type = type_
         self.category = [category]
+        self.height_scale = None
 
     def __str__(self) -> str:
         return ";".join([obj.path for obj in self.obj])
@@ -100,7 +101,10 @@ class PlotInfo(object):
                 data[obj.label] = obj.data
         return data
 
-    def len(self, scale: Union[int, float] = .25, sc_height_ratio: Optional[Dict[str, float]] = None) -> Tuple[int, List]:
+    def len(self,
+            scale: Union[int, float] = .25,
+            sc_height_ratio: Optional[Dict[str, float]] = None,
+            igv_scale: Optional[float] = None) -> Tuple[int, List]:
         n = 0
         height_ratio = [1]
 
@@ -115,7 +119,9 @@ class PlotInfo(object):
             n += 2 if not isinstance(self.obj[0], Depth) else 2 * len(self.obj[0])
         elif self.type == "igv":
             # seems igv scale will produce float
-            n += self.obj[0].len(scale / 8)
+            read_scale = self.height_scale
+            read_scale = igv_scale if read_scale is None else read_scale
+            n += self.obj[0].len(scale / 8 if read_scale is None else read_scale)
         elif isinstance(self.obj[0], Depth):
             n += len(self.obj[0])
         else:
@@ -918,6 +924,7 @@ class Plot(object):
             intron_color: Optional[str] = None,
             feature_color: Optional[str] = None,
             exon_width: float = .3,
+            height_scale: Optional[float] = None,
             font_size: int = 8,
             n_y_ticks: int = 1,
             show_y_label: bool = True,
@@ -937,6 +944,7 @@ class Plot(object):
         :param intron_color:
         :param feature_color:
         :param exon_width:
+        :param height_scale: relative height for the IGV/read track, scaled by read count
         :param font_size:
         :param n_y_ticks:
         :param show_y_label:
@@ -954,6 +962,7 @@ class Plot(object):
         )
 
         info = PlotInfo(obj=obj, category=category, type_="igv")
+        info.height_scale = height_scale
         self.plots.append(info)
         self.params[info] = {
             "y_label": label,
@@ -1091,6 +1100,7 @@ class Plot(object):
         assert self.region is not None, "please set the plotting region first."
 
         plots_n_rows, plots_n_cols = 1, 1
+        igv_height_scale = kwargs.get("igv_height_scale")
 
         height_ratio = []
         if self.annotation is not None:
@@ -1150,7 +1160,7 @@ class Plot(object):
                 else:
                     p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
 
-            n_rows, n_height = p.len(annotation_scale, sc_height_ratio=sc_height_ratio)
+            n_rows, n_height = p.len(annotation_scale, sc_height_ratio=sc_height_ratio, igv_scale=igv_height_scale)
             plots_n_rows += n_rows
             height_ratio += n_height
 
@@ -1255,7 +1265,7 @@ class Plot(object):
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
-                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale)[0], 0])
+                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale, igv_scale=igv_height_scale)[0], 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
@@ -1399,7 +1409,7 @@ class Plot(object):
             if p.type != "igv":
                 curr_idx += 1
             else:
-                curr_idx += p.len(annotation_scale)[0]
+                curr_idx += p.len(annotation_scale, igv_scale=igv_height_scale)[0]
 
         if self.link:
             logger.info(f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")

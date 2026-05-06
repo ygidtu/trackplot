@@ -205,7 +205,7 @@ class ReadSegment(File):
         self.del_ratio_ignore = del_ratio_ignore
         self.features = features
         self.is_bed = is_bed
-        self.exon_focus = set(map(lambda x: x.strip(), exon_focus.split(','))) if exon_focus else exon_focus
+        self.exon_focus = list(dict.fromkeys(x.strip() for x in exon_focus.split(',') if x.strip())) if exon_focus else []
 
     @classmethod
     def create(
@@ -510,8 +510,45 @@ class ReadSegment(File):
             logger.error(self.path)
             logger.error(err)
 
+    @staticmethod
+    def __parse_focus_exon__(focus: str):
+        try:
+            start, end = focus.split("-", 1)
+            return int(start), int(end)
+        except (AttributeError, TypeError, ValueError):
+            return None
+
+    @classmethod
+    def __read_has_focus_exon__(cls, read: Reads, focus: str) -> bool:
+        interval = cls.__parse_focus_exon__(focus)
+        if interval is None:
+            return focus in str(read)
+
+        start, end = interval
+        for exon in read.exons:
+            if exon.start <= end and exon.end >= start:
+                return True
+        return False
+
+    def __focus_state__(self, read: Reads):
+        return tuple(
+            1 if self.__read_has_focus_exon__(read, focus) else 0
+            for focus in self.exon_focus
+        )
+
     def __order_data__(self):
         if len(self.data) <= 1:
+            return
+
+        if self.exon_focus:
+            self.data.sort(
+                key=lambda read: (
+                    tuple(-state for state in self.__focus_state__(read)),
+                    read.start,
+                    read.end,
+                    read.id,
+                )
+            )
             return
 
         mtx = np.zeros((len(self.data), len(self.region)))
@@ -553,10 +590,7 @@ class ReadSegment(File):
         if self.exon_focus:
             e_f_use = []
             for read in self.data:
-                tmp_ind = []
-                for f_e in self.exon_focus:
-                    tmp_ind.append("1" if f_e in str(read) else "0")
-                e_f_use.append("_".join(tmp_ind))
+                e_f_use.append("_".join(str(state) for state in self.__focus_state__(read)))
             tmp_df["exon_group"] = e_f_use
         else:
             tmp_df["exon_group"] = "0"
