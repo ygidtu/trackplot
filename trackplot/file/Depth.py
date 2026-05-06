@@ -93,7 +93,7 @@ class Depth(File):
         depth_vector = {x: np.zeros(len(region), dtype='f') for x in required_sample}
 
         for row in Reader.read_depth(self.path, region):
-            chrom, site = row[0], int(row[1]) - region.start
+            site = int(row[1]) - region.start
 
             if site < len(region):
                 vals = {x: float(y) for x, y in zip([self.label], row[2:])}
