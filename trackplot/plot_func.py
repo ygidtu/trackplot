@@ -741,6 +741,8 @@ def plot_density(
     if jxns:
         # sort the junctions by intron length for better plotting look
         jxns_sorted_list = sorted(jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True)
+        junction_min_used_y_val = min_used_y_val
+        junction_max_used_y_val = max_used_y_val
 
         if not jxns:
             max_junction_count, min_junction_count = 0, 0
@@ -811,6 +813,8 @@ def plot_density(
             #line_width = max(.5,np.log())
 
             pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
+            junction_min_used_y_val = min(junction_min_used_y_val, *(p[1] for p in pts))
+            junction_max_used_y_val = max(junction_max_used_y_val, *(p[1] for p in pts))
             ax.add_patch(PathPatch(Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
                                    ec=color, lw=line_width + 0.2, fc='none'))
             
@@ -835,6 +839,8 @@ def plot_density(
                 t.set_bbox(dict(alpha=0))
                 jxn_numbers.append(t)
 
+        min_used_y_val = min(min_used_y_val, junction_min_used_y_val)
+        max_used_y_val = max(max_used_y_val, junction_max_used_y_val)
 
     if obj and obj.title:
         ax.text(max(graph_coords) - len(obj.title), max_used_y_val, obj.title, color=color, fontsize=font_size)
