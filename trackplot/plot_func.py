@@ -1074,6 +1074,8 @@ def plot_density(
         jxns_sorted_list = sorted(
             jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True
         )
+        junction_min_used_y_val = min_used_y_val
+        junction_max_used_y_val = max_used_y_val
 
         if not jxns:
             max_junction_count, min_junction_count = 0, 0
@@ -1157,7 +1159,12 @@ def plot_density(
                 line_width = 0
 
             pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
+            junction_min_used_y_val = min(junction_min_used_y_val, *(p[1] for p in pts))
+            junction_max_used_y_val = max(junction_max_used_y_val, *(p[1] for p in pts))
 
+            min_used_y_val = min(min_used_y_val, junction_min_used_y_val)
+            max_used_y_val = max(max_used_y_val, junction_max_used_y_val)
+            
             ax.add_patch(
                 PathPatch(
                     Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
