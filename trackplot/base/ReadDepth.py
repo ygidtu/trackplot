@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2019.12.06
 
 Changelog:
     1. move several attributes and functions to corresponding file objects, turn this into pure data class
     2. add transform to log2, log10 or zscore transform the data while plotting
 """
+
 from typing import Optional
 
 import numpy as np
@@ -14,27 +15,34 @@ from scipy.stats import zscore
 
 
 class ReadDepth(object):
-    u"""
+    """
     Migrated from SplicePlot ReadDepth class
 
     add a parent class to handle all the position comparison
     """
 
     __slots__ = [
-        "__junction_dict__plus___", "__junction_dict__minus__",
-        "__minus__", "__plus__", "__number_of_merged__",
-        "strand_aware", "site_plus", "site_minus",
+        "__junction_dict__plus___",
+        "__junction_dict__minus__",
+        "__minus__",
+        "__plus__",
+        "__number_of_merged__",
+        "strand_aware",
+        "site_plus",
+        "site_minus",
     ]
 
-    def __init__(self,
-                 wiggle: np.ndarray,
-                 site_plus: Optional[np.array] = None,
-                 site_minus: Optional[np.array] = None,
-                 minus: Optional[np.array] = None,
-                 junction_dict_plus: Optional[np.array] = None,
-                 junction_dict_minus: Optional[np.array] = None,
-                 strand_aware: bool = False):
-        u"""
+    def __init__(
+        self,
+        wiggle: np.ndarray,
+        site_plus: Optional[np.array] = None,
+        site_minus: Optional[np.array] = None,
+        minus: Optional[np.array] = None,
+        junction_dict_plus: Optional[np.array] = None,
+        junction_dict_minus: Optional[np.array] = None,
+        strand_aware: bool = False,
+    ):
+        """
         init this class
         :param wiggle: a numpy.ndarray object represented the whole read coverage,
                        should be summation of plus and minus or plus
@@ -69,7 +77,9 @@ class ReadDepth(object):
 
     @property
     def wiggle(self) -> np.ndarray:
-        if (self.__plus__ is None or not self.__plus__.any()) and self.__minus__ is not None:
+        if (
+            self.__plus__ is None or not self.__plus__.any()
+        ) and self.__minus__ is not None:
             return self.minus
 
         if self.__plus__ is not None and self.__minus__ is not None:
@@ -80,13 +90,19 @@ class ReadDepth(object):
     @property
     def mean_junctions_plus(self) -> dict:
         if self.__number_of_merged__ > 1:
-            return {k: v / self.__number_of_merged__ for k, v in self.__junction_dict__plus___.items()}
+            return {
+                k: v / self.__number_of_merged__
+                for k, v in self.__junction_dict__plus___.items()
+            }
         return self.__junction_dict__plus___
 
     @property
     def mean_junctions_minus(self) -> dict:
         if self.__number_of_merged__ > 1:
-            return {k: v / self.__number_of_merged__ for k, v in self.__junction_dict__minus__.items()}
+            return {
+                k: v / self.__number_of_merged__
+                for k, v in self.__junction_dict__minus__.items()
+            }
         return self.__junction_dict__minus__
 
     def junctions_dict(self, show_mean_jxn_number: bool = False) -> dict:
@@ -124,10 +140,16 @@ class ReadDepth(object):
             if len(self.wiggle) == len(other.wiggle):
                 junc_plus, junc_minus = {}, {}
 
-                for i in [self.__junction_dict__plus___, other.__junction_dict__plus___]:
+                for i in [
+                    self.__junction_dict__plus___,
+                    other.__junction_dict__plus___,
+                ]:
                     if i:
                         junc_plus.update(i)
-                for i in [self.__junction_dict__minus__, other.__junction_dict__minus__]:
+                for i in [
+                    self.__junction_dict__minus__,
+                    other.__junction_dict__minus__,
+                ]:
                     if i:
                         junc_minus.update(i)
 
@@ -140,14 +162,19 @@ class ReadDepth(object):
                     minus = self.__minus__
 
                 merged = ReadDepth(
-                    self.__plus__ + other.__plus__, minus=minus,
+                    self.__plus__ + other.__plus__,
+                    minus=minus,
                     junction_dict_plus=junc_plus,
-                    junction_dict_minus=junc_minus
+                    junction_dict_minus=junc_minus,
                 )
-                merged.__number_of_merged__ = self.__number_of_merged__ + other.__number_of_merged__
+                merged.__number_of_merged__ = (
+                    self.__number_of_merged__ + other.__number_of_merged__
+                )
                 return merged
             else:
-                raise ValueError(f"ReadDepth objects are not equal length: {len(self.wiggle)} != {len(other.wiggle)}")
+                raise ValueError(
+                    f"ReadDepth objects are not equal length: {len(self.wiggle)} != {len(other.wiggle)}"
+                )
         elif self.wiggle is None:
             return other
         else:
@@ -165,17 +192,21 @@ class ReadDepth(object):
         return self.minus[pos] if self.minus is not None else 0
 
     def add_customized_junctions(self, other):
-        u"""
+        """
         Add customized junctions to plot
         :param other:
         :return:
         """
 
         for k, v in other.__junction_dict__plus___:
-            self.__junction_dict__plus___[k] = v + self.__junction_dict__plus___.get(k, 0)
+            self.__junction_dict__plus___[k] = v + self.__junction_dict__plus___.get(
+                k, 0
+            )
 
         for k, v in other.__junction_dict__minus__:
-            self.__junction_dict__minus__[k] = v + self.__junction_dict__minus__.get(k, 0)
+            self.__junction_dict__minus__[k] = v + self.__junction_dict__minus__.get(
+                k, 0
+            )
 
         return self.junctions_dict
 
@@ -189,8 +220,10 @@ class ReadDepth(object):
             if self.minus is not None:
                 self.__minus__ = funcs[log_trans](self.__minus__ + 1)
 
-    def normalize(self, size_factor: float, format_: str = "normal", read_length: float = 0):
-        u"""
+    def normalize(
+        self, size_factor: float, format_: str = "normal", read_length: float = 0
+    ):
+        """
         Convert reads counts to cpm, fpkm or just scale with scale_factor
 
         Inspired by `rpkm_per_region` from
@@ -203,22 +236,24 @@ class ReadDepth(object):
                 self.__plus__,
                 np.multiply(
                     (np.sum(self.__plus__ != 0) - read_length + 1) / 1e3,
-                    size_factor / 1e6
-                )
+                    size_factor / 1e6,
+                ),
             )
             if self.__minus__ is not None:
                 self.__minus__ = np.divide(
                     self.__minus__,
                     np.multiply(
                         (np.sum(self.__minus__ != 0) - read_length + 1) / 1e3,
-                        size_factor / 1e6
-                    )
+                        size_factor / 1e6,
+                    ),
                 )
             elif format_ == "cpm" and read_length > 0:
                 # for cpm the size_factor is total reads
                 self.__plus__ = np.divide(self.__plus__, np.divide(size_factor, 1e6))
                 if self.__minus__ is not None:
-                    self.__minus__ = np.divide(self.__minus__, np.divide(size_factor, 1e6))
+                    self.__minus__ = np.divide(
+                        self.__minus__, np.divide(size_factor, 1e6)
+                    )
         elif format_ == "cpm" and read_length > 0:
             # for cpm the size_factor is total reads
             self.__plus__ = np.divide(self.__plus__, np.divide(size_factor, 1e6))
@@ -230,5 +265,5 @@ class ReadDepth(object):
                 self.__minus__ = np.divide(self.__minus__, size_factor)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

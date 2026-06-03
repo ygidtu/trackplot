@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2019.12.06
 
 Changelog:
     1. remove attributes
 """
+
 from typing import List
 
 from trackplot.base.GenomicLoci import GenomicLoci
 
 
 class Transcript(GenomicLoci):
-    u"""
+    """
     Created by ygidtu at 2018.12.21
 
     A class inherit from GenomicLoci, to collect transcript information
@@ -28,26 +29,26 @@ class Transcript(GenomicLoci):
         "domain_category",
         "domain_type",
         "domain_description",
-        "plot_intron"
+        "plot_intron",
     ]
 
     def __init__(
-            self,
-            chromosome: str,
-            start: int,
-            end: int,
-            strand: str,
-            exons: list,
-            gene: str = "",
-            gene_id: str = "",
-            transcript: str = "",
-            transcript_id: str = "",
-            category: str = "exon",
-            domain_category: str = "",
-            domain_type: str = "",
-            domain_description: str = ""
+        self,
+        chromosome: str,
+        start: int,
+        end: int,
+        strand: str,
+        exons: list,
+        gene: str = "",
+        gene_id: str = "",
+        transcript: str = "",
+        transcript_id: str = "",
+        category: str = "exon",
+        domain_category: str = "",
+        domain_type: str = "",
+        domain_description: str = "",
     ):
-        u"""
+        """
         :param chromosome:
         :param start:
         :param end:
@@ -63,12 +64,7 @@ class Transcript(GenomicLoci):
         :param domain_type: if category is protein, the type information of the given domain
         """
 
-        super().__init__(
-            chromosome=chromosome,
-            start=start,
-            end=end,
-            strand=strand
-        )
+        super().__init__(chromosome=chromosome, start=start, end=end, strand=strand)
         self.transcript = transcript
         self.transcript_id = transcript_id
         self.gene = gene
@@ -106,7 +102,7 @@ class Transcript(GenomicLoci):
             self.end,
             self.strand,
             self.transcript,
-            "|".join(exons_str)
+            "|".join(exons_str),
         )
 
     def __len__(self):
@@ -114,7 +110,9 @@ class Transcript(GenomicLoci):
 
     def __hash__(self):
         exons = sorted([str(x.__hash__()) for x in self.exons])
-        return hash((self.chromosome, self.start, self.end, self.strand, " ".join(exons)))
+        return hash(
+            (self.chromosome, self.start, self.end, self.strand, " ".join(exons))
+        )
 
     def __lt__(self, other):
         if self.chromosome != other.chromosome:

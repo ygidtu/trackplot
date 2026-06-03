@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2020.05.07
 This scripts contains the class handle the reference file
 
 Modified by AD 2025/01/12 to include only specified transcripts, otherwise their exon coordinates still occupy the alignments.
 
 """
+
 import glob
 import gzip
 import os
 import re
-from collections import namedtuple, defaultdict
-from typing import List, Union, Optional
+from collections import defaultdict, namedtuple
+from typing import List, Optional, Union
 
 import filetype
 import pysam
@@ -26,25 +27,42 @@ from trackplot.file.File import File
 
 
 class Annotation(File):
-    u"""
+    """
     The reference file, support gtf and gff format
     """
 
-    __slots__ = "category", "add_domain", "domain", \
-        "interval_file", "add_local_domain", "local_domain", "proxy", "timeout", \
-                "domain_include", "domain_exclude"
+    __slots__ = (
+        "category",
+        "add_domain",
+        "domain",
+        "interval_file",
+        "add_local_domain",
+        "local_domain",
+        "proxy",
+        "timeout",
+        "domain_include",
+        "domain_exclude",
+    )
 
-    def __init__(self, path: str, category: str = "gtf",
-                 add_domain: bool = False, add_local_domain: Optional[str] = False,
-                 domain_include: Optional[str] = False,
-                 domain_exclude: Optional[str] = False,
-                 proxy: Optional[str] = None, timeout: int = 10):
-        u"""
+    def __init__(
+        self,
+        path: str,
+        category: str = "gtf",
+        add_domain: bool = False,
+        add_local_domain: Optional[str] = False,
+        domain_include: Optional[str] = False,
+        domain_exclude: Optional[str] = False,
+        proxy: Optional[str] = None,
+        timeout: int = 10,
+    ):
+        """
         init func
         :param path: path to input file
         """
         categories = ["gtf", "bam", "bed"]
-        assert category in categories, f"category should be one of {categories}, instead of {category}"
+        assert category in categories, (
+            f"category should be one of {categories}, instead of {category}"
+        )
 
         super().__init__(path=self.index_gtf(path) if category == "gtf" else path)
         self.category = category
@@ -66,7 +84,9 @@ class Annotation(File):
             logger.info(f"Using proxy: {proxy}")
 
     def __add__(self, other):
-        assert isinstance(other, Annotation), "only Annotation and Annotation could be added"
+        assert isinstance(other, Annotation), (
+            "only Annotation and Annotation could be added"
+        )
         new_ref = Annotation(self.path, category=self.category)
         new_ref.data += self.data
         new_ref.data += other.data
@@ -80,8 +100,8 @@ class Annotation(File):
             new_ref.__load_local_domain__(self.region)
         return new_ref
 
-    def len(self, scale: Union[int, float] = .25) -> int:
-        u"""
+    def len(self, scale: Union[int, float] = 0.25) -> int:
+        """
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """
         size = len(self.data)
@@ -100,13 +120,16 @@ class Annotation(File):
         return sorted(res, key=lambda x: [x[0], x[1]])
 
     @classmethod
-    def create(cls, path: str,
-               add_domain: bool = False,
-               add_local_domain: Optional[str] = False,
-               domain_include: Optional[str] = None,
-               domain_exclude: Optional[str] = None,
-               category: str = "gtf"):
-        u"""
+    def create(
+        cls,
+        path: str,
+        add_domain: bool = False,
+        add_local_domain: Optional[str] = False,
+        domain_include: Optional[str] = None,
+        domain_exclude: Optional[str] = None,
+        category: str = "gtf",
+    ):
+        """
         create reference file object
         :param path: path to input file
         :param add_domain: whether plot domain
@@ -127,19 +150,20 @@ class Annotation(File):
             add_local_domain=add_local_domain,
             domain_include=domain_include,
             domain_exclude=domain_exclude,
-            category=category)
+            category=category,
+        )
 
     def __load_local_domain__(self, region: GenomicLoci):
 
         if self.local_domain:
-            u"""
+            """
             Because there is no gene or transcript id, we don't merge multiple domain here.
             """
             pass
 
         Domain_region = namedtuple(
             "DomainGenomicRegion",
-            ["category", "type", "description", "unique_id", "start", "end"]
+            ["category", "type", "description", "unique_id", "start", "end"],
         )
         protein_info = defaultdict(list)
 
@@ -159,25 +183,28 @@ class Annotation(File):
                     for index in range(len(block_starts)):
                         current_domain_res.append(
                             Domain_region._make(
-                                [current_id,
-                                 current_id,
-                                 current_desc,
-                                 current_id,
-                                 current_start + 1 + block_starts[index],
-                                 current_start + 1 + block_starts[index] + block_sizes[index] - 1
-                                 ]
+                                [
+                                    current_id,
+                                    current_id,
+                                    current_desc,
+                                    current_id,
+                                    current_start + 1 + block_starts[index],
+                                    current_start
+                                    + 1
+                                    + block_starts[index]
+                                    + block_sizes[index]
+                                    - 1,
+                                ]
                             )
                         )
                     domain_res[current_id].extend([current_domain_res])
 
                 for domain_unique_id, domain_list in domain_res.items():
-                    start_site = min([
-                        min(map(lambda x: x.start, i)) for i in domain_list
-                    ])
+                    start_site = min(
+                        [min(map(lambda x: x.start, i)) for i in domain_list]
+                    )
 
-                    end_site = max([
-                        max(map(lambda x: x.end, i)) for i in domain_list
-                    ])
+                    end_site = max([max(map(lambda x: x.end, i)) for i in domain_list])
 
                     protein_info[base_name].append(
                         Transcript(
@@ -190,7 +217,7 @@ class Annotation(File):
                             domain_type=domain_list[0][0].type,
                             domain_description=domain_list[0][0].description,
                             domain_category=domain_list[0][0].category,
-                            category="protein"
+                            category="protein",
                         )
                     )
 
@@ -221,7 +248,7 @@ class Annotation(File):
                 self.domain = domain_info
 
     def add_interval(self, interval: str, label: str):
-        u"""
+        """
         Add another annotation in to data, and each annotation has a track
         :param interval: a bed file
         :param label
@@ -233,7 +260,7 @@ class Annotation(File):
 
     @staticmethod
     def is_gtf(infile):
-        u"""
+        """
         check if input file is gtf
         :param infile: path to input file
         :return:
@@ -281,7 +308,11 @@ class Annotation(File):
 
         try:
             w = open(output_gtf.replace(".gz", ""), "w+")
-            r = gzip.open(input_gtf, "rt") if input_gtf.endswith(".gz") else open(input_gtf)
+            r = (
+                gzip.open(input_gtf, "rt")
+                if input_gtf.endswith(".gz")
+                else open(input_gtf)
+            )
             for line in r:
                 if line.startswith("#"):
                     w.write(line)
@@ -294,8 +325,11 @@ class Annotation(File):
 
                 data.append(
                     GenomicLoci(
-                        chromosome=lines[0], start=lines[3], end=lines[4],
-                        strand=lines[6], gtf_line=line
+                        chromosome=lines[0],
+                        start=lines[3],
+                        end=lines[4],
+                        strand=lines[6],
+                        gtf_line=line,
                     )
                 )
             r.close()
@@ -312,7 +346,7 @@ class Annotation(File):
 
     @classmethod
     def index_gtf(cls, input_gtf):
-        u"""
+        """
         Check the tabix index of input gtf file
 
         Extract only exon tags and keep it clean
@@ -331,10 +365,7 @@ class Annotation(File):
             logger.info(f"Create index for {input_gtf}")
             try:
                 pysam.tabix_index(
-                    output_gtf,
-                    preset="gff",
-                    force=True,
-                    keep_original=True
+                    output_gtf, preset="gff", force=True, keep_original=True
                 )
             except OSError as err:
                 logger.debug(f"Guess gtf needs to be sorted: {err}")
@@ -344,19 +375,21 @@ class Annotation(File):
                     return sorted_gtf
 
                 cls.sort_gtf(input_gtf, sorted_gtf)
-                pysam.tabix_index(sorted_gtf, preset="gff", force=True, keep_original=True)
+                pysam.tabix_index(
+                    sorted_gtf, preset="gff", force=True, keep_original=True
+                )
                 return sorted_gtf
         elif os.path.getctime(output_gtf) < os.path.getctime(output_gtf):
             logger.info("the tbi index is older than the gtf file")
 
         return output_gtf
 
-    def __load_gtf__(self, transcripts_to_show: list[str]|None = None):
-        u"""
+    def __load_gtf__(self, transcripts_to_show: list[str] | None = None):
+        """
         Load transcripts inside of region from gtf file
         :param region: target region
         :return: list of Transcript
-        """ 
+        """
         # AD - passing transcripts_to_show
         transcripts = {}
         exons = {}
@@ -370,9 +403,12 @@ class Annotation(File):
                 break
 
             if re.search(r"(rna|transcript|cds)", rec.feature, re.I):
-
                 if transcripts_to_show:
-                    _name = rec.transcript_name if "transcript_name" in rec.attributes else rec.transcript_id
+                    _name = (
+                        rec.transcript_name
+                        if "transcript_name" in rec.attributes
+                        else rec.transcript_id
+                    )
                     if _name not in transcripts_to_show:
                         logger.info(f"Skipping transcript {_name}")
                         continue
@@ -386,9 +422,11 @@ class Annotation(File):
                         transcript_id=rec.transcript_id,
                         gene_id=rec.gene_id,
                         gene=rec.gene_name if "gene_name" in rec.attributes else "",
-                        transcript=rec.transcript_name if "transcript_name" in rec.attributes else "",
-                        exons=[]
-                 )
+                        transcript=rec.transcript_name
+                        if "transcript_name" in rec.attributes
+                        else "",
+                        exons=[],
+                    )
 
             elif re.search(r"(exon)", rec.feature, re.I):
                 if rec.transcript_id not in exons.keys():
@@ -408,9 +446,10 @@ class Annotation(File):
                 exons[rec.transcript_id].append(
                     GenomicLoci(
                         chromosome=rec.contig,
-                        start=start, end=end,
+                        start=start,
+                        end=end,
                         strand=rec.strand,
-                        name=exon_id
+                        name=exon_id,
                     )
                 )
 
@@ -421,7 +460,7 @@ class Annotation(File):
         self.data += sorted(transcripts.values())
 
     def __load_bam__(self, threshold_of_reads: int = 0):
-        u"""
+        """
         Load transcripts inside of region from bam file
         :param threshold_of_reads: only kept reads with minimum frequency
         :return: list of Transcript
@@ -438,22 +477,32 @@ class Annotation(File):
 
                     if cigar == 0:  # M
                         if cur_start < self.region.end < cur_end:
-                            exons_in_read.append(GenomicLoci(
-                                chromosome=read.reference_name,
-                                start=cur_start if cur_start > self.region.start else self.region.start,
-                                end=cur_end if cur_end <= self.region.end else self.region.end,
-                                strand="+",
-                            ))
+                            exons_in_read.append(
+                                GenomicLoci(
+                                    chromosome=read.reference_name,
+                                    start=cur_start
+                                    if cur_start > self.region.start
+                                    else self.region.start,
+                                    end=cur_end
+                                    if cur_end <= self.region.end
+                                    else self.region.end,
+                                    strand="+",
+                                )
+                            )
 
                     elif cigar not in (1, 2, 4, 5):  # I, D, S, H
                         start += length
 
                 t = Transcript(
                     chromosome=read.reference_name,
-                    start=read.reference_start + 1 if read.reference_start + 1 > self.region.start else self.region.start,
-                    end=read.reference_end + 1 if read.reference_end + 1 < self.region.end else self.region.end,
+                    start=read.reference_start + 1
+                    if read.reference_start + 1 > self.region.start
+                    else self.region.start,
+                    end=read.reference_end + 1
+                    if read.reference_end + 1 < self.region.end
+                    else self.region.end,
                     strand=strand,
-                    exons=exons_in_read
+                    exons=exons_in_read,
                 )
                 transcripts[t] = transcripts.get(t, 0) + 1
         except IOError as err:
@@ -461,7 +510,9 @@ class Annotation(File):
         except ValueError as err:
             logger.debug(f"{self.path}: {err}")
 
-        self.data += sorted([x for x, y in transcripts.items() if y > threshold_of_reads])
+        self.data += sorted(
+            [x for x, y in transcripts.items() if y > threshold_of_reads]
+        )
 
     def __load_bed__(self):
         try:
@@ -481,11 +532,10 @@ class Annotation(File):
                             start=current_start + 1,
                             end=current_end,
                             strand=self.region.strand,
-                            name="exon"
+                            name="exon",
                         )
                     )
                 else:
-
                     block_sizes = [int(x) for x in rec[10].split(",") if x]
                     block_starts = [int(x) for x in rec[11].split(",") if x]
 
@@ -494,9 +544,13 @@ class Annotation(File):
                             GenomicLoci(
                                 chromosome=self.region.chromosome,
                                 start=current_start + 1 + block_starts[i],
-                                end=current_start + 1 + block_starts[i] + block_sizes[i] - 1,
+                                end=current_start
+                                + 1
+                                + block_starts[i]
+                                + block_sizes[i]
+                                - 1,
                                 strand=self.region.strand,
-                                name="exon"
+                                name="exon",
                             )
                         )
 
@@ -524,10 +578,7 @@ class Annotation(File):
             try:
                 if not os.path.exists(interval_file + ".tbi"):
                     interval_file = pysam.tabix_index(
-                        interval_file,
-                        preset="bed",
-                        force=True,
-                        keep_original=True
+                        interval_file, preset="bed", force=True, keep_original=True
                     )
 
                 interval_target = []
@@ -547,23 +598,31 @@ class Annotation(File):
                         strand = "*"
                         rec_name = ""
 
-                    interval_target.append(GenomicLoci(
-                        chromosome=rec.contig, start=start, end=end, strand=strand, name=rec_name
-                    ))
+                    interval_target.append(
+                        GenomicLoci(
+                            chromosome=rec.contig,
+                            start=start,
+                            end=end,
+                            strand=strand,
+                            name=rec_name,
+                        )
+                    )
 
                 if len(interval_target) != 0 and rec is not None:
-                    self.data.append(Transcript(
-                        chromosome=rec.contig,
-                        start=start,
-                        end=end,
-                        strand=strand,
-                        exons=interval_target,
-                        transcript_id=interval_label,
-                        gene_id=interval_label,
-                        gene=interval_label,
-                        transcript=interval_label,
-                        category="interval"
-                    ))
+                    self.data.append(
+                        Transcript(
+                            chromosome=rec.contig,
+                            start=start,
+                            end=end,
+                            strand=strand,
+                            exons=interval_target,
+                            transcript_id=interval_label,
+                            gene_id=interval_label,
+                            gene=interval_label,
+                            transcript=interval_label,
+                            category="interval",
+                        )
+                    )
 
             except NameError:
                 raise "Target region was not found, run load before add_bed."
@@ -571,14 +630,16 @@ class Annotation(File):
             except OSError:
                 raise f"Error found when build index for {interval_file}, please sort file manually"
 
-    def load(self,
-             region: GenomicLoci,
-             threshold_of_reads: int = 0,
-             transcripts: Optional[List[str]] = None,
-             remove_empty_transcripts: bool = False,
-             choose_primary: bool = False,
-             **kwargs):
-        u"""
+    def load(
+        self,
+        region: GenomicLoci,
+        threshold_of_reads: int = 0,
+        transcripts: Optional[List[str]] = None,
+        remove_empty_transcripts: bool = False,
+        choose_primary: bool = False,
+        **kwargs,
+    ):
+        """
         Load transcripts inside of region
         :param region: target region
         :param threshold_of_reads: used for bam file, only kept reads with minimum frequency
@@ -617,24 +678,30 @@ class Annotation(File):
             # For each gene, you can choose only one transcript to plot.
             genes = defaultdict(list)
             for transcript in self.data:
-                if transcript.category == 'interval':
+                if transcript.category == "interval":
                     continue
                 genes[transcript.gene_id].append(transcript)
 
             for _, transcripts_list in genes.items():
                 primary_transcripts = sorted(
-                    transcripts_list, key=lambda i_: len(i_), reverse=True)[0]
+                    transcripts_list, key=lambda i_: len(i_), reverse=True
+                )[0]
                 transcripts.append(primary_transcripts.transcript_id)
         elif choose_primary and len(transcripts) != 0:
             logger.debug(
-                "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented.")
+                "--transcripts-to-show is prior to --choose-primary, and primary transcript won't be presented."
+            )
         else:
             pass
 
         if remove_empty_transcripts or len(transcripts) > 0:
             data = []
             for i in self.data:
-                if len(transcripts) > 0 and i.transcript not in transcripts and i.transcript_id not in transcripts:
+                if (
+                    len(transcripts) > 0
+                    and i.transcript not in transcripts
+                    and i.transcript_id not in transcripts
+                ):
                     continue
 
                 if remove_empty_transcripts and len(i.exons) < 1:

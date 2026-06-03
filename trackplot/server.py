@@ -1,27 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-u"""
+"""
 Web UI of sashimi
 """
+
 import pickle
 import re
 from glob import glob
 
-from flask import Flask, render_template, jsonify, send_file, request
+from flask import Flask, jsonify, render_template, request, send_file
 
-from trackplot.conf.ui import __SUPPORT_FORMAT__, __COMMON_PARAMS__, __PARAMS__
+from trackplot.conf.ui import __COMMON_PARAMS__, __PARAMS__, __SUPPORT_FORMAT__
 from trackplot.plot import *
-
 
 __DIR__ = os.path.abspath(os.path.dirname(__file__))
 __UI__ = os.path.join(__DIR__, "../ui")
 __PLOT__ = os.path.join(os.path.dirname(__file__), "../plots")
 
 
-app = Flask(__name__, static_url_path="/static", static_folder=__UI__, template_folder=__UI__)
+app = Flask(
+    __name__, static_url_path="/static", static_folder=__UI__, template_folder=__UI__
+)
 
 # from flask_cors import CORS
 # CORS(app)
+
 
 # backend and frontend data format restriction
 class Path:
@@ -31,7 +34,14 @@ class Path:
 
 
 class Param:
-    def __init__(self, key: str, annotation: str, default: str, note: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        key: str,
+        annotation: str,
+        default: str,
+        note: Optional[str] = None,
+        **kwargs,
+    ):
         self.key = key
         self.annotation = annotation
         self.default = default
@@ -50,7 +60,7 @@ class PlotParam:
         return {
             "path": self.path,
             "type": self.type,
-            "param": [vars(x) for x in self.param]
+            "param": [vars(x) for x in self.param],
         }
 
     @classmethod
@@ -71,7 +81,13 @@ class PlotParam:
 class PostForm:
     __slots__ = ["region", "annotation", "files", "draw"]
 
-    def __init__(self, region: PlotParam, annotation: PlotParam, files: List[PlotParam], draw: PlotParam):
+    def __init__(
+        self,
+        region: PlotParam,
+        annotation: PlotParam,
+        files: List[PlotParam],
+        draw: PlotParam,
+    ):
         self.region = region
         self.annotation = annotation
         self.files = files
@@ -101,7 +117,7 @@ class Logs:
 
 
 def get_value(param: Param):
-    u"""
+    """
     convert parameters in post param to specific format
     """
 
@@ -144,7 +160,7 @@ def root():
 
 @app.route("/api/file")
 def file():
-    target = request.args.get('target', app.config["DATA"])
+    target = request.args.get("target", app.config["DATA"])
 
     if not target.strip("/"):
         target = app.config["DATA"]
@@ -181,10 +197,11 @@ def params():
         if not isinstance(p, dict):
             for cp in __COMMON_PARAMS__:
                 if cp["key"] in p:
-
                     if cp["key"] == "category" and target in __SUPPORT_FORMAT__:
                         category = cp
-                        category["annotation"] = f"choice[{','.join(__SUPPORT_FORMAT__[target])}]"
+                        category["annotation"] = (
+                            f"choice[{','.join(__SUPPORT_FORMAT__[target])}]"
+                        )
                         category["default"] = __SUPPORT_FORMAT__[target][0]
                     else:
                         res.append(cp)
@@ -271,7 +288,12 @@ def plot(pid: str):
         elif param_.type == "save":
             o = p.plot(return_image="pdf", **kwargs)
             o.seek(0)
-            return send_file(o, mimetype=f"image/pdf", as_attachment=True, download_name=f"{p.region}.pdf")
+            return send_file(
+                o,
+                mimetype=f"image/pdf",
+                as_attachment=True,
+                download_name=f"{p.region}.pdf",
+            )
 
     except Exception as err:
         logger.exception(err)
@@ -301,7 +323,9 @@ def logs():
     logfile = os.path.join(app.config["PLOTTING"], pid + ".log")
 
     if download:
-        return send_file(logfile, as_attachment=True, download_name=os.path.basename(logfile))
+        return send_file(
+            logfile, as_attachment=True, download_name=os.path.basename(logfile)
+        )
 
     log_info = []
     if os.path.exists(logfile):
@@ -309,7 +333,7 @@ def logs():
             for line in r:
                 try:
                     if "|" not in line and len(log_info) > 0:
-                        log_info[-1]['message'] = f"{log_info[-1]['message']}\n{line}"
+                        log_info[-1]["message"] = f"{log_info[-1]['message']}\n{line}"
                     else:
                         time, level, info = line.strip().split("|")
                         infos = info.split("-")
@@ -318,19 +342,27 @@ def logs():
                         if not debug and "DEBUG" in level:
                             continue
 
-                        log_info.append(vars(Logs(
-                            time=time.strip(),
-                            level=level.strip(),
-                            source=source.strip(),
-                            message=info.replace(source, "").strip()
-                        )))
+                        log_info.append(
+                            vars(
+                                Logs(
+                                    time=time.strip(),
+                                    level=level.strip(),
+                                    source=source.strip(),
+                                    message=info.replace(source, "").strip(),
+                                )
+                            )
+                        )
                 except Exception as err:
-                    log_info.append(vars(Logs(
-                        time="",
-                        level="WARN",
-                        source="log api",
-                        message=str(err)
-                    )))
+                    log_info.append(
+                        vars(
+                            Logs(
+                                time="",
+                                level="WARN",
+                                source="log api",
+                                message=str(err),
+                            )
+                        )
+                    )
 
     return jsonify(log_info[::-1])
 
@@ -343,5 +375,5 @@ def run(host: str, port: int, plots: str, data: str):
     app.run(host=host, port=port, debug=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

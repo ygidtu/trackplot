@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 This file contains the object to handle bam file related issues.
 
 changelog:
     1. add library parameter for determining of read strand at 2022.4.28.
 
 """
+
 import gzip
 import os
-from typing import Optional, Set, List
+from typing import List, Optional, Set
 
 import numpy as np
 import pysam
@@ -20,14 +21,19 @@ from trackplot.base.Junction import Junction
 from trackplot.base.ReadDepth import ReadDepth
 from trackplot.base.Readder import Reader
 from trackplot.conf.config import NORMALIZATION
-from trackplot.file.File import SingleCell  
+from trackplot.file.File import SingleCell
 
 
-def check_junction_exists(ref: List[Junction], dst: Junction, with_strand: bool = False):
-    u"""
+def check_junction_exists(
+    ref: List[Junction], dst: Junction, with_strand: bool = False
+):
+    """
     判断junction是否存在于included_junctions
     """
-    ref = sorted([Junction.create_junction(x) for x in ref], key=lambda  x: (x.chromosome, x.start, x.end))
+    ref = sorted(
+        [Junction.create_junction(x) for x in ref],
+        key=lambda x: (x.chromosome, x.start, x.end),
+    )
     for i in ref:
         if i.is_downstream(dst):
             return False
@@ -45,16 +51,21 @@ def check_junction_exists(ref: List[Junction], dst: Junction, with_strand: bool 
 
 
 class Bam(SingleCell):
-
     __slots__ = "title", "label", "library", "density_by_strand"
 
-    def __init__(self,
-                 path: str, label: str = "",
-                 title: str = "", barcodes: Optional[Set[str]] = None,
-                 barcode_tag: str = "CB", umi_tag: str = "UB",
-                 library: str = "fru", density_by_strand: bool = False,
-                 size_factor: Optional[int] = None):
-        u"""
+    def __init__(
+        self,
+        path: str,
+        label: str = "",
+        title: str = "",
+        barcodes: Optional[Set[str]] = None,
+        barcode_tag: str = "CB",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        density_by_strand: bool = False,
+        size_factor: Optional[int] = None,
+    ):
+        """
         init this object
         :param label: the left axis label
         :param title: the default title to show in the upper-right of density plot
@@ -73,18 +84,19 @@ class Bam(SingleCell):
         self.size_factor = size_factor
 
     @classmethod
-    def create(cls,
-               path: str,
-               label: str = "",
-               title: str = "",
-               barcodes: Optional[Set[str]] = None,
-               barcode_tag: str = "CB",
-               umi_tag: str = "UB",
-               library: str = "fru",
-               density_by_strand: bool = False,
-               size_factor: Optional[int] = None
-               ):
-        u"""
+    def create(
+        cls,
+        path: str,
+        label: str = "",
+        title: str = "",
+        barcodes: Optional[Set[str]] = None,
+        barcode_tag: str = "CB",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        density_by_strand: bool = False,
+        size_factor: Optional[int] = None,
+    ):
+        """
 
         :param path: the path to bam file
         :param label: the left axis label
@@ -106,7 +118,9 @@ class Bam(SingleCell):
         path = os.path.abspath(path)
         if not barcodes:
             barcode = set()
-            barcodes = os.path.join(os.path.dirname(path), "filtered_feature_bc_matrix/barcodes.tsv.gz")
+            barcodes = os.path.join(
+                os.path.dirname(path), "filtered_feature_bc_matrix/barcodes.tsv.gz"
+            )
 
             if os.path.exists(barcodes):
                 with gzip.open(barcodes, "rt") as r:
@@ -121,7 +135,7 @@ class Bam(SingleCell):
             umi_tag=umi_tag,
             library=library,
             density_by_strand=density_by_strand,
-            size_factor=size_factor
+            size_factor=size_factor,
         )
 
     def __hash__(self):
@@ -150,14 +164,15 @@ class Bam(SingleCell):
 
         return ",".join(temp)
 
-    def load(self,
-             region: GenomicLoci,
-             threshold: int = 0,
-             reads1: Optional[bool] = None,
-             required_strand: Optional[str] = None,
-             normalize_format: Optional[str] = None,
-             **kwargs
-             ):
+    def load(
+        self,
+        region: GenomicLoci,
+        threshold: int = 0,
+        reads1: Optional[bool] = None,
+        required_strand: Optional[str] = None,
+        normalize_format: Optional[str] = None,
+        **kwargs,
+    ):
         """
             determine_depth determines the coverage at each base between start_coord and end_coord, inclusive.
 
@@ -183,14 +198,22 @@ class Bam(SingleCell):
         included_junctions = kwargs.get("included_junctions", {})
         remove_duplicate_umi = kwargs.get("remove_duplicate_umi", False)
         spanned_junctions_plus, spanned_junctions_minus = {}, {}
-        plus, minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
-        site_plus, site_minus = np.zeros(len(region), dtype=np.int32), np.zeros(len(region), dtype=np.int32)
+        plus, minus = (
+            np.zeros(len(region), dtype=np.int32),
+            np.zeros(len(region), dtype=np.int32),
+        )
+        site_plus, site_minus = (
+            np.zeros(len(region), dtype=np.int32),
+            np.zeros(len(region), dtype=np.int32),
+        )
 
         umis = {}
         read_lens = []
         scatac_alert = True
         try:
-            for read, strand in Reader.read_bam(path=self.path, region=region, library=self.library):
+            for read, strand in Reader.read_bam(
+                path=self.path, region=region, library=self.library
+            ):
                 # make sure that the read can be used
                 cigar_string = read.cigartuples
 
@@ -205,13 +228,18 @@ class Bam(SingleCell):
                 if reads1 is False and not read.is_read2:
                     continue
 
-                if normalize_format != NORMALIZATION[0] and normalize_format is not None:
+                if (
+                    normalize_format != NORMALIZATION[0]
+                    and normalize_format is not None
+                ):
                     read_lens.append(read.query_alignment_length)
 
                 # filter reads by 10x barcodes
                 # @20220924, add `not` before has_barcode and skip these reads without umi tag.
                 if self.barcodes:
-                    if not read.has_tag(self.barcode_tag) or not self.has_barcode(read.get_tag(self.barcode_tag)):
+                    if not read.has_tag(self.barcode_tag) or not self.has_barcode(
+                        read.get_tag(self.barcode_tag)
+                    ):
                         continue
 
                     if remove_duplicate_umi:
@@ -224,11 +252,15 @@ class Bam(SingleCell):
                             umi = read.get_tag(self.umi_tag)
                         else:
                             if scatac_alert:
-                                logger.debug(f"Is {self.path} an scATAC-seq bam? There is no {self.umi_tag}")
+                                logger.debug(
+                                    f"Is {self.path} an scATAC-seq bam? There is no {self.umi_tag}"
+                                )
                                 scatac_alert = False
                             umi = read.query_name
 
-                        if umi in umis[barcode].keys() and umis[barcode][umi] != hash(read.query_name):
+                        if umi in umis[barcode].keys() and umis[barcode][umi] != hash(
+                            read.query_name
+                        ):
                             continue
 
                         if len(umis[barcode]) == 0:
@@ -280,17 +312,29 @@ class Bam(SingleCell):
 
                     if cigar == 3 and not kwargs.get("only_customized_junction"):  # N
                         try:
-                            junction_name = Junction(region.chromosome, cur_start, cur_end, strand)
+                            junction_name = Junction(
+                                region.chromosome, cur_start, cur_end, strand
+                            )
 
                             if junction_name not in spanned_junctions:
                                 spanned_junctions[junction_name] = 0
 
-                            spanned_junctions[junction_name] = spanned_junctions[junction_name] + 1
+                            spanned_junctions[junction_name] = (
+                                spanned_junctions[junction_name] + 1
+                            )
                         except ValueError as err:
                             logger.debug(err)
                             continue
-                start = read.reference_start + 1 if read.reference_start + 1 > region.start else region.start
-                end = read.reference_end + 1 if read.reference_end + 1 < region.end else region.end
+                start = (
+                    read.reference_start + 1
+                    if read.reference_start + 1 > region.start
+                    else region.start
+                )
+                end = (
+                    read.reference_end + 1
+                    if read.reference_end + 1 < region.end
+                    else region.end
+                )
                 if strand == "+" and 0 <= start - region.start < len(plus):
                     site_plus[end - region.start] += 1
                 elif strand == "-" and 0 <= end - region.start < len(minus):
@@ -298,18 +342,22 @@ class Bam(SingleCell):
 
             for k, v in spanned_junctions.items():
                 kept = v >= threshold
-                
+
                 # if the number of junctiosn is lower than threshold, then skip
                 if not kept:
                     continue
-                
+
                 # if included_junctions is provided, then skip all junctions by default
                 if included_junctions:
-                    kept = check_junction_exists(included_junctions, k, with_strand=True)
+                    kept = check_junction_exists(
+                        included_junctions, k, with_strand=True
+                    )
                     if kept:
                         logger.debug(f"{str(k)} is included")
                     else:
-                        kept = check_junction_exists(included_junctions, k, with_strand=False)
+                        kept = check_junction_exists(
+                            included_junctions, k, with_strand=False
+                        )
 
                         if not kept:
                             logger.debug(f"{str(k)} is not included")
@@ -320,10 +368,12 @@ class Bam(SingleCell):
                     if k.strand == "+":
                         spanned_junctions_plus[k] = 1 + spanned_junctions_plus.get(k, v)
                     elif k.strand == "-":
-                        spanned_junctions_minus[k] = -1 + spanned_junctions_minus.get(k, v)
-                            
+                        spanned_junctions_minus[k] = -1 + spanned_junctions_minus.get(
+                            k, v
+                        )
+
         except IOError as err:
-            logger.error('There is no .bam file at {0}'.format(self.path))
+            logger.error("There is no .bam file at {0}".format(self.path))
             logger.error(err)
         except ValueError as err:
             logger.error(self.path)
@@ -336,17 +386,24 @@ class Bam(SingleCell):
             minus=minus if self.density_by_strand else None,
             junction_dict_plus=spanned_junctions_plus,
             junction_dict_minus=spanned_junctions_minus,
-            strand_aware=False if self.library == "fru" else True)
+            strand_aware=False if self.library == "fru" else True,
+        )
 
         if normalize_format != NORMALIZATION[0] and normalize_format is not None:
             if self.size_factor is None:
                 logger.info(f"Counting total number of reads: {self.path}")
                 self.size_factor = Reader.total_reads_of_bam(self.path)
             else:
-                logger.info(f"Using given total number of reads [{self.size_factor}] for {self.path}")
-            self.data.normalize(size_factor=self.size_factor, format_=normalize_format, read_length=np.mean(read_lens))
+                logger.info(
+                    f"Using given total number of reads [{self.size_factor}] for {self.path}"
+                )
+            self.data.normalize(
+                size_factor=self.size_factor,
+                format_=normalize_format,
+                read_length=np.mean(read_lens),
+            )
         return self
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

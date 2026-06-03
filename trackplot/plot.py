@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
+
 import copy
 import faulthandler
 import io
@@ -24,12 +25,12 @@ from trackplot.file.Junction import load_custom_junction
 from trackplot.file.Motif import Motif
 from trackplot.plot_func import *
 
-logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 faulthandler.enable()
 
 
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 __author__ = "Yiming Zhang & Ran Zhou"
 __email__ = "ygidtu@gmail.com"
 
@@ -41,14 +42,14 @@ def __load__(args):
 
 
 class PlotInfo(object):
-    u"""
+    """
     this class is used to collect all the plot information.
     """
 
     __slots__ = ["obj", "group", "type", "category", "height_scale"]
 
     def __init__(self, obj: File, category: str = "", type_: str = "", group: str = ""):
-        u"""
+        """
         init this class
         :param obj: the input file object
         :param category: the input file category
@@ -67,7 +68,14 @@ class PlotInfo(object):
     def __hash__(self) -> int:
         if self.type in ["heatmap", "line"]:
             return hash(self.group)
-        return hash((tuple([hash(x) for x in self.obj]), self.group, self.type, tuple(self.category)))
+        return hash(
+            (
+                tuple([hash(x) for x in self.obj]),
+                self.group,
+                self.type,
+                tuple(self.category),
+            )
+        )
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -101,16 +109,18 @@ class PlotInfo(object):
                 data[obj.label] = obj.data
         return data
 
-    def len(self,
-            scale: Union[int, float] = .25,
-            sc_height_ratio: Optional[Dict[str, float]] = None,
-            igv_scale: Optional[float] = None) -> Tuple[int, List]:
+    def len(
+        self,
+        scale: Union[int, float] = 0.25,
+        sc_height_ratio: Optional[Dict[str, float]] = None,
+        igv_scale: Optional[float] = None,
+    ) -> Tuple[int, List]:
         n = 0
         height_ratio = [1]
 
         if self.is_single_cell:
             if sc_height_ratio is None:
-                sc_height_ratio = {"density": .2, "heatmap": .2}
+                sc_height_ratio = {"density": 0.2, "heatmap": 0.2}
             height_ratio = [sc_height_ratio.get(self.type, 1)]
 
         if not self.category:
@@ -130,7 +140,7 @@ class PlotInfo(object):
         return int(n), [height_ratio[0] for _ in range(n)]
 
     def add(self, obj: File, category: str = "", type_: str = ""):
-        u"""
+        """
         add new input file to specific group
         """
         assert type_ in ["heatmap", "line"], "only heatmap/line plot needs add"
@@ -177,22 +187,33 @@ def add_object_error(func):
 
 
 class Plot(object):
-    u"""
+    """
     this class is the main framework of sashimi
     """
 
     __slots__ = [
-        "__n_objs__", "region", "sites",
-        "focus", "stroke", "events",
-        "sequence", "annotation", "graph_coords",
-        "plots", "params", "junctions", "link"
+        "__n_objs__",
+        "region",
+        "sites",
+        "focus",
+        "stroke",
+        "events",
+        "sequence",
+        "annotation",
+        "graph_coords",
+        "plots",
+        "params",
+        "junctions",
+        "link",
     ]
 
-    def __init__(self,
-                 logfile: Optional[str] = None,
-                 backend: Optional[str] = None,
-                 font_family: Optional[str] = None):
-        u"""
+    def __init__(
+        self,
+        logfile: Optional[str] = None,
+        backend: Optional[str] = None,
+        font_family: Optional[str] = None,
+    ):
+        """
         init this class
         """
         self.__n_objs__ = 0
@@ -226,9 +247,9 @@ class Plot(object):
                     logger.debug(f"backend error, switch back to Agg: {err}")
                 plt.switch_backend("Agg")
 
-        plt.rcParams['pdf.fonttype'] = 42
+        plt.rcParams["pdf.fonttype"] = 42
         if font_family:
-            plt.rcParams['font.family'] = font_family
+            plt.rcParams["font.family"] = font_family
 
     @property
     def chrom(self) -> Optional[str]:
@@ -256,11 +277,15 @@ class Plot(object):
             return self.annotation.exons
 
     @add_object_error
-    def set_region(self, chromosome: str = "",
-                   start: int = 0, end: int = 0,
-                   strand: str = "+",
-                   region: Optional[GenomicLoci] = None):
-        u"""
+    def set_region(
+        self,
+        chromosome: str = "",
+        start: int = 0,
+        end: int = 0,
+        strand: str = "+",
+        region: Optional[GenomicLoci] = None,
+    ):
+        """
         change the plot region
         """
 
@@ -273,7 +298,7 @@ class Plot(object):
 
     @add_object_error
     def add_sites(self, sites):
-        u"""
+        """
         highlight specific sites
         :param sites: string in 100,200 format or int
         :return:
@@ -301,7 +326,7 @@ class Plot(object):
 
     @add_object_error
     def add_focus(self, focus: Optional[str] = None, start: int = 0, end: int = 0):
-        u"""
+        """
         set focus region
         :param focus: string in 100-200:300-400
         :param start: start site
@@ -328,14 +353,14 @@ class Plot(object):
 
     @add_object_error
     def add_stroke(
-            self,
-            stroke: Optional[str] = None,
-            start: int = 0,
-            end: int = 0,
-            label: str = "",
-            color: str = "black"
+        self,
+        stroke: Optional[str] = None,
+        start: int = 0,
+        end: int = 0,
+        label: str = "",
+        color: str = "black",
     ):
-        u"""
+        """
         add stroke to plot
         :param stroke: stroke string in 100-200@red;300-400 format
         :param start: start site of stroke
@@ -356,14 +381,14 @@ class Plot(object):
 
     @add_object_error
     def add_links(
-            self,
-            link: Optional[str] = None,
-            start: int = 0,
-            end: int = 0,
-            label: str = "",
-            color: str = "blue"
+        self,
+        link: Optional[str] = None,
+        start: int = 0,
+        end: int = 0,
+        label: str = "",
+        color: str = "blue",
     ):
-        u"""
+        """
         add stroke to plot
         :param link: string in 100-200@red;300-400 format
         :param start: start site of stroke
@@ -385,7 +410,7 @@ class Plot(object):
 
     @add_object_error
     def set_sequence(self, fasta: str):
-        u"""
+        """
         set sequence info for
         :param fasta: path to indexed fasta file
         :return:
@@ -395,28 +420,29 @@ class Plot(object):
         return self
 
     @add_object_error
-    def set_annotation(self, gtf: str,
-                       add_domain: bool = False,
-                       local_domain: Optional[str] = False,
-                       domain_include: Optional[str] = False,
-                       domain_exclude: Optional[str] = False,
-                       interval: Optional[str] = None,
-                       interval_label: Optional[str] = None,
-                       transcripts: Optional[List[str]] = None,
-                       remove_empty_transcripts: bool = False,
-                       choose_primary: bool = False,
-                       color: Optional[str] = "black",
-
-                       # transcripts related parameters
-                       font_size: int = 5,
-                       show_gene: bool = True,
-                       show_id: bool = False,
-                       exon_width: float = .3,
-                       show_exon_id: bool = False,
-                       theme: str = "blank",
-                       **kwargs
-                       ):
-        u"""
+    def set_annotation(
+        self,
+        gtf: str,
+        add_domain: bool = False,
+        local_domain: Optional[str] = False,
+        domain_include: Optional[str] = False,
+        domain_exclude: Optional[str] = False,
+        interval: Optional[str] = None,
+        interval_label: Optional[str] = None,
+        transcripts: Optional[List[str]] = None,
+        remove_empty_transcripts: bool = False,
+        choose_primary: bool = False,
+        color: Optional[str] = "black",
+        # transcripts related parameters
+        font_size: int = 5,
+        show_gene: bool = True,
+        show_id: bool = False,
+        exon_width: float = 0.3,
+        show_exon_id: bool = False,
+        theme: str = "blank",
+        **kwargs,
+    ):
+        """
         add transcripts to this region
         :param gtf: the path of gtf file
         :param add_domain: whether add domain information into annotation plot
@@ -443,7 +469,7 @@ class Plot(object):
             add_domain=add_domain,
             add_local_domain=local_domain,
             domain_exclude=domain_exclude,
-            domain_include=domain_include
+            domain_include=domain_include,
         )
 
         if interval and interval_label:
@@ -459,7 +485,7 @@ class Plot(object):
             "show_id": show_id,
             "exon_width": exon_width,
             "show_exon_id": show_exon_id,
-            "theme": theme
+            "theme": theme,
         }
 
         return self
@@ -471,30 +497,30 @@ class Plot(object):
         self.annotation.add_interval(interval, interval_label)
         return self
 
-    def __init_input_file__(self, path: str,
-                            category: str = "bam",
-                            label: Union[str, List[str]] = "",
-                            title: str = "",
-                            barcode: str = "",
-                            barcode_groups: Dict[str, Set[str]] = None,
-                            barcode_tag: str = "BC",
-                            umi_tag: str = "UB",
-                            library: str = "fru",
-                            features: Optional[dict] = None,
-                            deletion_ignore: Optional[int] = True,
-                            del_ratio_ignore: float = .5,
-                            exon_focus: Optional[str] = None,
-                            density_by_strand: bool = False,
-
-                            # for hic plot
-                            # trans: Optional[str] = None,
-                            depth: Optional[int] = 30000,
-                            tad: Optional[str] = None,
-                            # for ATAC
-                            size_factor=None,
-
-                            log_trans: Optional[str] = None,
-                            ) -> Tuple[File, str]:
+    def __init_input_file__(
+        self,
+        path: str,
+        category: str = "bam",
+        label: Union[str, List[str]] = "",
+        title: str = "",
+        barcode: str = "",
+        barcode_groups: Dict[str, Set[str]] = None,
+        barcode_tag: str = "BC",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        features: Optional[dict] = None,
+        deletion_ignore: Optional[int] = True,
+        del_ratio_ignore: float = 0.5,
+        exon_focus: Optional[str] = None,
+        density_by_strand: bool = False,
+        # for hic plot
+        # trans: Optional[str] = None,
+        depth: Optional[int] = 30000,
+        tad: Optional[str] = None,
+        # for ATAC
+        size_factor=None,
+        log_trans: Optional[str] = None,
+    ) -> Tuple[File, str]:
         self.__n_objs__ += 1
         path = os.path.expanduser(path)
         logger.info(f"add {category} {label} {path}")
@@ -508,17 +534,18 @@ class Plot(object):
                 umi_tag=umi_tag,
                 library=library,
                 density_by_strand=density_by_strand,
-                size_factor=size_factor
+                size_factor=size_factor,
             )
         elif category == "atac":
             from trackplot.file.ATAC import ATAC
+
             obj = ATAC.create(
                 path,
                 label=label,
                 title=title,
                 barcode=barcode,
                 barcode_groups=barcode_groups,
-                size_factors=size_factor
+                size_factors=size_factor,
             )
         elif category == "igv":
             obj = ReadSegment.create(
@@ -528,15 +555,11 @@ class Plot(object):
                 features=features,
                 deletion_ignore=deletion_ignore,
                 del_ratio_ignore=del_ratio_ignore,
-                exon_focus=exon_focus
+                exon_focus=exon_focus,
             )
         elif category == "hic" or category == "h5":
             obj = HiCTrack.create(
-                path=path,
-                label=label,
-                log_trans=log_trans,
-                depth=depth,
-                tad=tad
+                path=path, label=label, log_trans=log_trans, depth=depth, tad=tad
             )
         elif category == "bigwig" or category == "bw":
             category = "bw"
@@ -548,7 +571,8 @@ class Plot(object):
             obj = Depth.create(path, label=label, title=title)
         else:
             raise ValueError(
-                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg, h5], instead of {category}")
+                f"the category should be one of [bam, bigwig, bw, depth, bedgraph, bg, h5], instead of {category}"
+            )
 
         obj.log_trans = log_trans
         return obj, category
@@ -559,40 +583,37 @@ class Plot(object):
             self.junctions = load_custom_junction(path)
 
     @add_object_error
-    def add_density(self,
-                    path: str,
-                    category: str = "bam",
-                    size_factor=None,
-
-                    # file loading parameters
-                    label: Union[str, List[str]] = "",
-                    title: str = "",
-                    barcode: str = "",
-                    barcode_groups: Dict[str, Set[str]] = None,
-                    barcode_tag: str = "BC",
-                    umi_tag: str = "UB",
-                    library: str = "fru",
-                    density_by_strand: bool = False,
-
-                    # plotting parameters
-                    color="blue",
-                    font_size: int = 8,
-                    show_junction_number: bool = True,
-                    show_mean_jxn_number: bool = False,
-                    junction_number_font_size: int = 5,
-                    n_y_ticks: int = 4,
-                    show_y_label: bool = True,
-                    y_label: str = "",
-                    theme: str = "ticks_blank",
-                    log_trans: Optional[str] = None,
-
-                    # site plot parameters
-                    show_site_plot: bool = False,
-                    strand_choice: Optional[str] = None,
-
-                    only_customized_junction: bool = False
-                    ):
-        u"""
+    def add_density(
+        self,
+        path: str,
+        category: str = "bam",
+        size_factor=None,
+        # file loading parameters
+        label: Union[str, List[str]] = "",
+        title: str = "",
+        barcode: str = "",
+        barcode_groups: Dict[str, Set[str]] = None,
+        barcode_tag: str = "BC",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        density_by_strand: bool = False,
+        # plotting parameters
+        color="blue",
+        font_size: int = 8,
+        show_junction_number: bool = True,
+        show_mean_jxn_number: bool = False,
+        junction_number_font_size: int = 5,
+        n_y_ticks: int = 4,
+        show_y_label: bool = True,
+        y_label: str = "",
+        theme: str = "ticks_blank",
+        log_trans: Optional[str] = None,
+        # site plot parameters
+        show_site_plot: bool = False,
+        strand_choice: Optional[str] = None,
+        only_customized_junction: bool = False,
+    ):
+        """
         add density object to plot
         :param path: the path to input file
         :param category: the input file type
@@ -631,7 +652,7 @@ class Plot(object):
             library=library,
             size_factor=size_factor,
             density_by_strand=density_by_strand,
-            log_trans=log_trans
+            log_trans=log_trans,
         )
 
         type_ = "density"
@@ -670,40 +691,40 @@ class Plot(object):
                 "theme": theme,
                 "strand_choice": strand_choice,
                 "density_by_strand": density_by_strand,
-                "only_customized_junction": only_customized_junction
+                "only_customized_junction": only_customized_junction,
             }
         return self
 
     @add_object_error
-    def add_heatmap(self,
-                    path: str,
-                    group: str = "",
-                    category: str = "bam",
-                    size_factor=None,
-
-                    # file loading parameters
-                    label: Union[str, List[str]] = "",
-                    title: str = "",
-                    barcode: str = "",
-                    barcode_groups: Dict[str, Set[str]] = None,
-                    barcode_tag: str = "BC",
-                    umi_tag: str = "UB",
-                    library: str = "fru",
-
-                    # plotting parameters
-                    color="viridis",
-                    font_size: int = 8,
-                    show_y_label: bool = True,
-                    theme: str = "ticks_blank",
-                    do_scale: bool = False,
-                    clustering: bool = False,
-                    clustering_method: str = "ward",
-                    distance_metric: str = "euclidean",
-                    show_row_names: bool = False,
-                    vmin=None, vmax=None,
-                    log_trans: Optional[str] = None,
-                    ):
-        u"""
+    def add_heatmap(
+        self,
+        path: str,
+        group: str = "",
+        category: str = "bam",
+        size_factor=None,
+        # file loading parameters
+        label: Union[str, List[str]] = "",
+        title: str = "",
+        barcode: str = "",
+        barcode_groups: Dict[str, Set[str]] = None,
+        barcode_tag: str = "BC",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        # plotting parameters
+        color="viridis",
+        font_size: int = 8,
+        show_y_label: bool = True,
+        theme: str = "ticks_blank",
+        do_scale: bool = False,
+        clustering: bool = False,
+        clustering_method: str = "ward",
+        distance_metric: str = "euclidean",
+        show_row_names: bool = False,
+        vmin=None,
+        vmax=None,
+        log_trans: Optional[str] = None,
+    ):
+        """
         add multiple objects for a group of heatmap
         :param path: path to input files
         :param group: the heatmap group
@@ -746,7 +767,7 @@ class Plot(object):
             umi_tag=umi_tag,
             library=library,
             size_factor=size_factor,
-            log_trans=log_trans
+            log_trans=log_trans,
         )
 
         exists = False
@@ -769,39 +790,39 @@ class Plot(object):
                 "clustering_method": clustering_method,
                 "distance_metric": distance_metric,
                 "show_row_names": show_row_names,
-                "vmin": vmin, "vmax": vmax
+                "vmin": vmin,
+                "vmax": vmax,
             }
 
         return self
 
     @add_object_error
-    def add_line(self,
-                 path: str,
-                 group: str = "",
-                 category: str = "bam",
-
-                 # file loading parameters
-                 label: Union[str, List[str]] = "",
-                 title: str = "",
-                 barcode: str = "",
-                 barcode_groups: Dict[str, Set[str]] = None,
-                 barcode_tag: str = "BC",
-                 umi_tag: str = "UB",
-                 library: str = "fru",
-
-                 # plotting parameters
-                 color="blue",
-                 font_size: int = 8,
-                 show_y_label: bool = True,
-                 line_attrs: Optional[Dict] = None,
-                 theme: str = "ticks_blank",
-                 n_y_ticks: int = 4,
-                 show_legend: bool = False,
-                 legend_position: str = "upper right",
-                 legend_ncol: int = 0,
-                 log_trans: Optional[str] = None,
-                 ):
-        u"""
+    def add_line(
+        self,
+        path: str,
+        group: str = "",
+        category: str = "bam",
+        # file loading parameters
+        label: Union[str, List[str]] = "",
+        title: str = "",
+        barcode: str = "",
+        barcode_groups: Dict[str, Set[str]] = None,
+        barcode_tag: str = "BC",
+        umi_tag: str = "UB",
+        library: str = "fru",
+        # plotting parameters
+        color="blue",
+        font_size: int = 8,
+        show_y_label: bool = True,
+        line_attrs: Optional[Dict] = None,
+        theme: str = "ticks_blank",
+        n_y_ticks: int = 4,
+        show_legend: bool = False,
+        legend_position: str = "upper right",
+        legend_ncol: int = 0,
+        log_trans: Optional[str] = None,
+    ):
+        """
         add multiple objects for a group of heatmap
         :param path: path to input files
         :param group: the heatmap group
@@ -834,7 +855,7 @@ class Plot(object):
             barcode_tag=barcode_tag,
             umi_tag=umi_tag,
             library=library,
-            log_trans=log_trans
+            log_trans=log_trans,
         )
 
         if not line_attrs:
@@ -862,26 +883,26 @@ class Plot(object):
                 "show_y_label": show_y_label,
                 "theme": theme,
                 "legend_position": legend_position,
-                "legend_ncol": legend_ncol
+                "legend_ncol": legend_ncol,
             }
 
         return self
 
     @add_object_error
     def add_hic(
-            self,
-            path: str,
-            category: str = "hic",
-            label: str = "",
-            color: str = "RdYlBu_r",
-            log_trans: Optional[str] = None,
-            tad: Optional[str] = None,
-            show_legend: bool = True,
-            depth: int = 30000,
-            font_size: int = 8,
-            n_y_ticks: int = 4,
-            show_y_label: bool = True,
-            theme: str = "ticks"
+        self,
+        path: str,
+        category: str = "hic",
+        label: str = "",
+        color: str = "RdYlBu_r",
+        log_trans: Optional[str] = None,
+        tad: Optional[str] = None,
+        show_legend: bool = True,
+        depth: int = 30000,
+        font_size: int = 8,
+        n_y_ticks: int = 4,
+        show_y_label: bool = True,
+        theme: str = "ticks",
     ):
         obj, category = self.__init_input_file__(
             path=path,
@@ -889,7 +910,7 @@ class Plot(object):
             label=label,
             depth=depth,
             tad=tad,
-            log_trans=log_trans
+            log_trans=log_trans,
         )
 
         info = PlotInfo(obj=obj, category=category, type_="hic")
@@ -901,36 +922,34 @@ class Plot(object):
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
             "show_y_label": show_y_label,
-            "theme": theme
+            "theme": theme,
         }
         return self
 
     @add_object_error
     def add_igv(
-            self,
-            path: str,
-            category: str = "igv",
-            label: str = "",
-            exon_focus: Optional[str] = None,
-
-            # file loading parameters
-            library: str = "fru",
-            features: Optional[dict] = None,
-            deletion_ignore: Optional[int] = True,
-            del_ratio_ignore: float = .5,
-
-            # plotting parameters
-            exon_color: Optional[str] = None,
-            intron_color: Optional[str] = None,
-            feature_color: Optional[str] = None,
-            exon_width: float = .3,
-            height_scale: Optional[float] = None,
-            font_size: int = 8,
-            n_y_ticks: int = 1,
-            show_y_label: bool = True,
-            theme: str = "ticks_blank"
+        self,
+        path: str,
+        category: str = "igv",
+        label: str = "",
+        exon_focus: Optional[str] = None,
+        # file loading parameters
+        library: str = "fru",
+        features: Optional[dict] = None,
+        deletion_ignore: Optional[int] = True,
+        del_ratio_ignore: float = 0.5,
+        # plotting parameters
+        exon_color: Optional[str] = None,
+        intron_color: Optional[str] = None,
+        feature_color: Optional[str] = None,
+        exon_width: float = 0.3,
+        height_scale: Optional[float] = None,
+        font_size: int = 8,
+        n_y_ticks: int = 1,
+        show_y_label: bool = True,
+        theme: str = "ticks_blank",
     ):
-        u"""
+        """
         Add igv-like plot into track
         :param path: path to input files
         :param category: file category for the input file
@@ -958,7 +977,7 @@ class Plot(object):
             features=features,
             deletion_ignore=deletion_ignore,
             del_ratio_ignore=del_ratio_ignore,
-            exon_focus=exon_focus
+            exon_focus=exon_focus,
         )
 
         info = PlotInfo(obj=obj, category=category, type_="igv")
@@ -973,19 +992,21 @@ class Plot(object):
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
             "show_y_label": show_y_label,
-            "theme": theme
+            "theme": theme,
         }
 
         return self
 
     @add_object_error
-    def add_motif(self,
-                  path: str,
-                  category: str = "motif",
-                  motif_region: GenomicLoci = None,
-                  width: float = 0.8,
-                  theme: str = "blank",
-                  **kwargs):
+    def add_motif(
+        self,
+        path: str,
+        category: str = "motif",
+        motif_region: GenomicLoci = None,
+        width: float = 0.8,
+        theme: str = "blank",
+        **kwargs,
+    ):
 
         if motif_region.start < self.region.start:
             motif_region.start = self.region.start
@@ -1002,18 +1023,19 @@ class Plot(object):
         return self
 
     @add_object_error
-    def add_manual(self,
-                   data: np.array,
-                   image_type: str = "line",
-                   label: str = "",
-                   group: str = "",
-                   color: str = "blue",
-                   font_size: int = 8,
-                   n_y_ticks: int = 1,
-                   show_y_label: bool = True,
-                   theme: str = "ticks_blank",
-                   **kwargs
-                   ):
+    def add_manual(
+        self,
+        data: np.array,
+        image_type: str = "line",
+        label: str = "",
+        group: str = "",
+        color: str = "blue",
+        font_size: int = 8,
+        n_y_ticks: int = 1,
+        show_y_label: bool = True,
+        theme: str = "ticks_blank",
+        **kwargs,
+    ):
         obj = File("")
         obj.label = label
         obj.data = ReadDepth(data)
@@ -1036,7 +1058,7 @@ class Plot(object):
                 "show_y_label": show_y_label,
                 "theme": theme,
                 "color": color,
-                "line_attrs": {obj.label: {"color": color}}
+                "line_attrs": {obj.label: {"color": color}},
             }
             self.params[info].update(kwargs)
 
@@ -1067,20 +1089,24 @@ class Plot(object):
     def copy(self):
         return deepcopy(self)
 
-    def plot(self,
-             output: Optional[str] = None,
-             annotation_scale: Union[int, float] = .25,
-             stroke_scale: Union[int, float] = .25,
-             dpi: int = 300,
-             width: Union[int, float] = 0,
-             height: Union[int, float] = 0,
-             raster: bool = False,
-             return_image: Optional[str] = None,
-             sc_height_ratio: Optional[Dict[str, float]] = None,
-             distance_between_label_axis: float = .3,
-             n_jobs: int = 1, fill_step: str = "post",
-             *args, **kwargs):
-        u"""
+    def plot(
+        self,
+        output: Optional[str] = None,
+        annotation_scale: Union[int, float] = 0.25,
+        stroke_scale: Union[int, float] = 0.25,
+        dpi: int = 300,
+        width: Union[int, float] = 0,
+        height: Union[int, float] = 0,
+        raster: bool = False,
+        return_image: Optional[str] = None,
+        sc_height_ratio: Optional[Dict[str, float]] = None,
+        distance_between_label_axis: float = 0.3,
+        n_jobs: int = 1,
+        fill_step: str = "post",
+        *args,
+        **kwargs,
+    ):
+        """
         draw image
         :param output: if output is empty then show this image by plt.showfig
         :param annotation_scale: to adjust the size of annotation plot
@@ -1096,7 +1122,7 @@ class Plot(object):
         :param return_image: used for interactive ui
         """
         if sc_height_ratio is None:
-            sc_height_ratio = {"density": .2, "heatmap": .2}
+            sc_height_ratio = {"density": 0.2, "heatmap": 0.2}
         assert self.region is not None, "please set the plotting region first."
 
         plots_n_rows, plots_n_cols = 1, 1
@@ -1131,10 +1157,18 @@ class Plot(object):
                         juncs.update(self.junctions.get(i, {}))
                     p.load(self.region, junctions=juncs, *args, **kwargs)
                 else:
-                    p.load(self.region, n_jobs, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                    p.load(
+                        self.region,
+                        n_jobs,
+                        junctions=self.junctions.get(p.obj[0].label, {}),
+                        *args,
+                        **kwargs,
+                    )
             elif n_jobs > 1:
                 temp = copy.deepcopy(kwargs)
-                temp["region"] = self.region if p.type != "motif" else self.params[p]["region"]
+                temp["region"] = (
+                    self.region if p.type != "motif" else self.params[p]["region"]
+                )
 
                 if isinstance(p.obj[0].label, list):
                     juncs = {}
@@ -1158,9 +1192,18 @@ class Plot(object):
                         juncs.update(self.junctions.get(i, {}))
                     p.load(self.region, junctions=juncs, *args, **kwargs)
                 else:
-                    p.load(self.region, junctions=self.junctions.get(p.obj[0].label, {}), *args, **kwargs)
+                    p.load(
+                        self.region,
+                        junctions=self.junctions.get(p.obj[0].label, {}),
+                        *args,
+                        **kwargs,
+                    )
 
-            n_rows, n_height = p.len(annotation_scale, sc_height_ratio=sc_height_ratio, igv_scale=igv_height_scale)
+            n_rows, n_height = p.len(
+                annotation_scale,
+                sc_height_ratio=sc_height_ratio,
+                igv_scale=igv_height_scale,
+            )
             plots_n_rows += n_rows
             height_ratio += n_height
 
@@ -1173,12 +1216,14 @@ class Plot(object):
         logger.debug(f"plots n_rows={plots_n_rows}; n_cols = {plots_n_cols}")
         logger.info("init graph_coords")
         exon_scale = kwargs.get("exon_scale", 1)
-        intron_scale = kwargs.get("intron_scale", .5)
+        intron_scale = kwargs.get("intron_scale", 0.5)
         if plots_n_cols > 1 and intron_scale != 1:
             logger.debug(f"heatmap require intron_scale = 1")
             intron_scale = 1
 
-        self.graph_coords = init_graph_coords(self.region, self.exons, exon_scale=exon_scale, intron_scale=intron_scale)
+        self.graph_coords = init_graph_coords(
+            self.region, self.exons, exon_scale=exon_scale, intron_scale=intron_scale
+        )
 
         if width and height:
             fig = plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi)
@@ -1186,19 +1231,29 @@ class Plot(object):
             fig = plt.figure(dpi=dpi)
 
         if plots_n_cols > 1:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
-                                   width_ratios=(.99, .01), wspace=0.01, hspace=.15)
+            gs = gridspec.GridSpec(
+                plots_n_rows,
+                plots_n_cols,
+                height_ratios=height_ratio,
+                width_ratios=(0.99, 0.01),
+                wspace=0.01,
+                hspace=0.15,
+            )
         else:
-            gs = gridspec.GridSpec(plots_n_rows, plots_n_cols, height_ratios=height_ratio,
-                                   wspace=.7, hspace=.15)
+            gs = gridspec.GridSpec(
+                plots_n_rows,
+                plots_n_cols,
+                height_ratios=height_ratio,
+                wspace=0.7,
+                hspace=0.15,
+            )
 
         max_used_y_val, min_used_y_val, same_y_by_groups = {}, {}, {}
-        
-                 
+
         default_y = {}
         if kwargs.get("y_limit"):
             if not os.path.exists(kwargs.get("y_limit")):
-                logger.warning(f'{kwargs.get("y_limit")} not exists')
+                logger.warning(f"{kwargs.get('y_limit')} not exists")
             else:
                 logger.info("load y-limit settings from: " + kwargs.get("y_limit"))
                 with open(kwargs.get("y_limit")) as r:
@@ -1210,62 +1265,92 @@ class Plot(object):
                             try:
                                 default_y[line[0]] = [float(x) for x in line[1:]]
                             except Exception as err:
-                                logger.warning(f"The y limit of {line[0]} is invalid: {err}")
-      
+                                logger.warning(
+                                    f"The y limit of {line[0]} is invalid: {err}"
+                                )
+
         if kwargs.get("same_y") or kwargs.get("same_y_sc"):
             logger.info("--same-y is enabled")
-            # read the y groups            
-            if kwargs.get("same_y_groups") and os.path.exists(kwargs.get("same_y_groups")):
-                logger.info("Reading the same y by groups from: %s" % kwargs.get("same_y_groups"))
+            # read the y groups
+            if kwargs.get("same_y_groups") and os.path.exists(
+                kwargs.get("same_y_groups")
+            ):
+                logger.info(
+                    "Reading the same y by groups from: %s"
+                    % kwargs.get("same_y_groups")
+                )
                 with open(kwargs.get("same_y_groups")) as r:
                     for line in r:
                         if line.startswith("#"):
                             continue
-                        
+
                         line = line.split()
 
                         # use hashlib to avoid potential repeat group names
-                        same_y_by_groups[line[0]] = f"samy_y_groups_of_{line[1]} {datetime.now()}"
-            
+                        same_y_by_groups[line[0]] = (
+                            f"samy_y_groups_of_{line[1]} {datetime.now()}"
+                        )
+
             for p in self.plots:
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
-                        if kwargs.get("y_max") is not None:
-                            logger.info("")
-
                         # if object is assigned y groups then record one group y axis
+                        max_used_y, min_used_y = precompute_y_limits(
+                            obj, data=obj.data, region=self.region, **kwargs
+                        )
+
                         if obj.label in same_y_by_groups:
                             key = same_y_by_groups[obj.label]
-                            
-                            max_used_y_val[key] = max(max(obj.data.wiggle), max_used_y_val.get(key, 0))
+
+                            max_used_y_val[key] = max(
+                                max_used_y, max_used_y_val.get(key, 0)
+                            )
                             if obj.data.minus is None:
-                                min_used_y_val[key] = min(min(obj.data.wiggle), min_used_y_val.get(key, 0))
+                                min_used_y_val[key] = min(
+                                    min_used_y, min_used_y_val.get(key, 0)
+                                )
                             else:
-                                min_used_y_val[key] = min(min(obj.data.minus), min_used_y_val.get(obj.path, 0))
-                            
-                        max_used_y_val[obj.path] = max(max(obj.data.wiggle), max_used_y_val.get(obj.path, 0))
+                                min_used_y_val[key] = min(
+                                    min_used_y, min_used_y_val.get(obj.path, 0)
+                                )
+
+                        if isinstance(obj.data, dict):
+                            continue
+
+                        max_used_y_val[obj.path] = max(
+                            max_used_y, max_used_y_val.get(obj.path, 0)
+                        )
                         if obj.data.minus is None:
-                            min_used_y_val[obj.path] = min(min(obj.data.wiggle), min_used_y_val.get(obj.path, 0))
+                            min_used_y_val[obj.path] = min(
+                                min_used_y, min_used_y_val.get(obj.path, 0)
+                            )
                         else:
-                            min_used_y_val[obj.path] = min(min(obj.data.minus), min_used_y_val.get(obj.path, 0))
+                            min_used_y_val[obj.path] = min(
+                                min_used_y, min_used_y_val.get(obj.path, 0)
+                            )
 
                         # set y limit
                         if obj.label in default_y:
                             max_used_y_val[obj.path] = default_y[obj.label][0]
-                            
+
                             if len(default_y[obj.label]) > 1:
                                 min_used_y_val[obj.path] = default_y[obj.label][1]
-                            
+
                             if same_y_by_groups and obj.label in same_y_by_groups:
                                 key = same_y_by_groups[obj.label]
                                 max_used_y_val[key] = max_used_y_val[obj.path]
                                 min_used_y_val[key] = min_used_y_val[obj.path]
 
-
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
-                ax_var = plt.subplot(gs[curr_idx: curr_idx + p.len(annotation_scale, igv_scale=igv_height_scale)[0], 0])
+                ax_var = plt.subplot(
+                    gs[
+                        curr_idx : curr_idx
+                        + p.len(annotation_scale, igv_scale=igv_height_scale)[0],
+                        0,
+                    ]
+                )
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
@@ -1273,35 +1358,53 @@ class Plot(object):
                 ax_var.set_title(str(self.region), loc="left")
 
             max_y_val_, min_y_val_ = None, None
-            
+
             if kwargs.get("same_y_sc") and p.obj[0].is_single_cell:
-                max_y_val_, min_y_val_ = max_used_y_val[p.obj[0].path], min_used_y_val[p.obj[0].path]
-                logger.info(f"Set for {p.obj[0].label} by single cell: max_y={max_y_val_}; min_y={min_y_val_}")
+                max_y_val_, min_y_val_ = (
+                    max_used_y_val[p.obj[0].path],
+                    min_used_y_val[p.obj[0].path],
+                )
+                logger.info(
+                    f"Set for {p.obj[0].label} by single cell: max_y={max_y_val_}; min_y={min_y_val_}"
+                )
             elif kwargs.get("same_y_groups") and p.obj[0].label in same_y_by_groups:
-                max_y_val_, min_y_val_ = max_used_y_val[same_y_by_groups[p.obj[0].label]], min_used_y_val[same_y_by_groups[p.obj[0].label]]
-                logger.info(f"Set for {p.obj[0].label} by group {same_y_by_groups[p.obj[0].label]}: max_y={max_y_val_}; min_y={min_y_val_}")
+                max_y_val_, min_y_val_ = (
+                    max_used_y_val[same_y_by_groups[p.obj[0].label]],
+                    min_used_y_val[same_y_by_groups[p.obj[0].label]],
+                )
+                logger.info(
+                    f"Set for {p.obj[0].label} by group {same_y_by_groups[p.obj[0].label]}: max_y={max_y_val_}; min_y={min_y_val_}"
+                )
             elif kwargs.get("same_y"):
-                max_y_val_, min_y_val_ = max(max_used_y_val.values()), min(min_used_y_val.values())
-                logger.info(f"Set for {p.obj[0].label} by global: max_y={max_y_val_}; min_y={min_y_val_}")
+                max_y_val_, min_y_val_ = (
+                    max(max_used_y_val.values()),
+                    min(min_used_y_val.values()),
+                )
+                logger.info(
+                    f"Set for {p.obj[0].label} by global: max_y={max_y_val_}; min_y={min_y_val_}"
+                )
             elif default_y:
                 if p.type in ["density", "site-plot", "line"]:
                     for obj in p.obj:
                         # set y limit
                         if obj.label in default_y:
                             max_y_val_ = default_y[obj.label][0]
-                            
+
                             if len(default_y[obj.label]) > 1:
                                 min_y_val_ = default_y[obj.label][1]
-                            
+
                             if same_y_by_groups and obj.label in same_y_by_groups:
                                 key = same_y_by_groups[obj.label]
                                 max_y_val_ = max_used_y_val[obj.path]
                                 min_y_val_ = min_used_y_val[obj.path]
-                            logger.info(f"Set for {p.obj[0].label} by limited: max_y={max_y_val_}; min_y={min_y_val_}")
+                            logger.info(
+                                f"Set for {p.obj[0].label} by limited: max_y={max_y_val_}; min_y={min_y_val_}"
+                            )
                             break
-                
-                
-            logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+
+            logger.info(
+                f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+            )
             if p.type == "density":
                 if isinstance(p.obj[0], Depth):
                     for key, readDepth in p.obj[0].data.items():
@@ -1320,8 +1423,9 @@ class Plot(object):
                             distance_between_label_axis=distance_between_label_axis,
                             raster=raster,
                             fill_step=fill_step,
-                            **temp_params
+                            **temp_params,
                         )
+
                         curr_idx += 1
                         ax_var = plt.subplot(gs[curr_idx, 0])
                     curr_idx -= 1
@@ -1335,7 +1439,7 @@ class Plot(object):
                         distance_between_label_axis=distance_between_label_axis,
                         raster=raster,
                         fill_step=fill_step,
-                        **self.params.get(p, {})
+                        **self.params.get(p, {}),
                     )
             elif p.type == "hic":
                 plot_hic(
@@ -1344,7 +1448,7 @@ class Plot(object):
                     obj=p.obj,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
                 )
             elif p.type == "site-plot":
                 plot_density(
@@ -1355,16 +1459,17 @@ class Plot(object):
                     min_used_y_val=min_y_val_,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
                 )
 
                 curr_idx += 1
                 plot_site_plot(
-                    plt.subplot(gs[curr_idx, 0]), p.obj[0],
+                    plt.subplot(gs[curr_idx, 0]),
+                    p.obj[0],
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
                 )
             elif p.type == "heatmap":
                 plot_heatmap(
@@ -1375,7 +1480,7 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
                 )
             elif p.type == "line":
                 plot_line(
@@ -1386,7 +1491,17 @@ class Plot(object):
                     min_used_y_val=min_y_val_,
                     graph_coords=self.graph_coords,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
+                )
+                max_y_val_ = (
+                    max(max_y_val_, max_used_y)
+                    if max_y_val_ is not None
+                    else max_used_y
+                )
+                min_y_val_ = (
+                    min(min_y_val_, min_used_y)
+                    if min_y_val_ is not None
+                    else min_used_y
                 )
             elif p.type == "igv":
                 plot_igv_like(
@@ -1395,15 +1510,22 @@ class Plot(object):
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
-                    **self.params.get(p, {})
+                    **self.params.get(p, {}),
                 )
             elif p.type == "motif":
-                plot_motif(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords, **self.params[p])
+                plot_motif(
+                    ax=ax_var,
+                    obj=p.obj[0],
+                    graph_coords=self.graph_coords,
+                    **self.params[p],
+                )
             else:
                 raise ValueError(f"unknown plot type {p.type}")
 
             # adjust indicator lines and focus background
-            set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
+            set_indicator_lines(
+                ax=ax_var, sites=self.sites, graph_coords=self.graph_coords
+            )
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
 
             if p.type != "igv":
@@ -1412,45 +1534,70 @@ class Plot(object):
                 curr_idx += p.len(annotation_scale, igv_scale=igv_height_scale)[0]
 
         if self.link:
-            logger.info(f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+            logger.info(
+                f"plotting links at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+            )
             for link in self.link:
-                plot_links(ax=plt.subplot(gs[curr_idx:(curr_idx + 1), 0]),
-                           data=link, graph_coords=self.graph_coords)
+                plot_links(
+                    ax=plt.subplot(gs[curr_idx : (curr_idx + 1), 0]),
+                    data=link,
+                    graph_coords=self.graph_coords,
+                )
                 curr_idx += 1
 
         # draw x label
-        logger.info(f"plotting x-axis ticks at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+        logger.info(
+            f"plotting x-axis ticks at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+        )
         set_x_ticks(
-            ax=plt.subplot(gs[curr_idx, 0]), region=self.region,
+            ax=plt.subplot(gs[curr_idx, 0]),
+            region=self.region,
             graph_coords=self.graph_coords,
             sequence=self.sequence.data if self.sequence else None,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
         curr_idx += 1
 
         if self.annotation is not None:
-            logger.info(f"plotting annotation at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
-            ax_var = plt.subplot(gs[curr_idx:curr_idx + self.annotation.len(scale=annotation_scale), 0])
+            logger.info(
+                f"plotting annotation at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+            )
+            ax_var = plt.subplot(
+                gs[curr_idx : curr_idx + self.annotation.len(scale=annotation_scale), 0]
+            )
             plot_annotation(
-                ax=ax_var, obj=self.annotation,
+                ax=ax_var,
+                obj=self.annotation,
                 graph_coords=self.graph_coords,
                 plot_domain=self.annotation.add_domain,
                 distance_between_label_axis=distance_between_label_axis,
-                **self.params["annotation"])
+                **self.params["annotation"],
+            )
 
             # adjust indicator lines and focus background
-            set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
+            set_indicator_lines(
+                ax=ax_var, sites=self.sites, graph_coords=self.graph_coords
+            )
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
             curr_idx += self.annotation.len(scale=annotation_scale)
 
         if self.stroke:
-            logger.info(f"plotting stroke at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+            logger.info(
+                f"plotting stroke at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+            )
             ax_var = plt.subplot(gs[curr_idx:plots_n_rows, 0])
-            plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, *args, **kwargs)
+            plot_stroke(
+                ax=ax_var,
+                data=self.stroke,
+                graph_coords=self.graph_coords,
+                *args,
+                **kwargs,
+            )
 
         if output:
             logger.info(f"saving fig into {output}")
-            fig.savefig(output, transparent=False, bbox_inches='tight') # AD
+            fig.savefig(output, transparent=False, bbox_inches="tight")  # AD
         elif return_image:
             output = io.BytesIO()
             if return_image == "png":
@@ -1467,5 +1614,5 @@ class Plot(object):
         return self
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

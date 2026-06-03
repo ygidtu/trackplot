@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/1/10 2:04 PM
 # __author__ = 'Zhou Ran'
-u"""
+"""
 Fetch protein information from uniprot website
 """
+
 import json
 from types import SimpleNamespace
 from typing import Optional
@@ -19,21 +20,34 @@ from trackplot.conf.DomainSetting import __VALID_DOMAIN_CATEGORY__
 
 
 class Uniprot(object):
-    u"""
+    """
     Get domain information from uniprot based uniprot id
     """
 
     __slots__ = [
-        "ui", "cds_len", "fmt",
-        "database", "timeout",
-        "proxy", "domain",
-        "__valid_fmt", "__url",
-        "request_res", "guessed_id"
+        "ui",
+        "cds_len",
+        "fmt",
+        "database",
+        "timeout",
+        "proxy",
+        "domain",
+        "__valid_fmt",
+        "__url",
+        "request_res",
+        "guessed_id",
     ]
 
-    def __init__(self, uniprot_id: str, cds_len: int, fmt="xml", database="uniprot",
-                 timeout: int = 10, proxy: Optional[str] = None):
-        u"""
+    def __init__(
+        self,
+        uniprot_id: str,
+        cds_len: int,
+        fmt="xml",
+        database="uniprot",
+        timeout: int = 10,
+        proxy: Optional[str] = None,
+    ):
+        """
         Fetch transcript's translation information based gene id
         :param uniprot_id: the ensemble transcript id works well currently
         :param cds_len: the length of CDS for checking results from uniprot
@@ -45,12 +59,9 @@ class Uniprot(object):
         self.fmt = fmt
         self.database = database
         self.timeout = timeout
-        self.proxy = {
-            "http": proxy,
-            "https": proxy
-        }
+        self.proxy = {"http": proxy, "https": proxy}
 
-        self.__valid_fmt = {'txt', 'xml', 'rdf', 'gff', 'fasta'}
+        self.__valid_fmt = {"txt", "xml", "rdf", "gff", "fasta"}
         self.__url = "https://rest.uniprot.org"
         self.request_res = self.__request_url__()
         self.guessed_id = self.__guess_protein_id__()
@@ -63,7 +74,9 @@ class Uniprot(object):
         """
         assert self.fmt in self.__valid_fmt, f"Nonlegal format was found, {self.fmt}"
 
-        request_url = f"{self.__url}/uniprotkb/search?&query={self.ui}&format={self.fmt}"
+        request_url = (
+            f"{self.__url}/uniprotkb/search?&query={self.ui}&format={self.fmt}"
+        )
 
         try:
             url_response = rq.get(request_url, timeout=self.timeout, proxies=self.proxy)
@@ -75,7 +88,7 @@ class Uniprot(object):
         return url_response
 
     def __guess_protein_id__(self):
-        u"""
+        """
         Use xml to parser the response contents and return a dict
         :return: a dict which contained the response results from the given url.
         """
@@ -90,7 +103,7 @@ class Uniprot(object):
             )["uniprot"]["entry"]
             current_uniprot_id = set()
 
-            u"""
+            """
             There were more than one protein for a transcript, like ENST00000421241.
             We selected the first protein for downstream visualization because usually was reviewed by uniprot, 
             """
@@ -99,13 +112,13 @@ class Uniprot(object):
             if isinstance(xml_dic, list):
                 features_length = []
                 for sub_domain in xml_dic:
-                    features_length.append(
-                        int(sub_domain['sequence']['length'])
-                    )
+                    features_length.append(int(sub_domain["sequence"]["length"]))
                     try:
                         for i in sub_domain["comment"]:
                             if "isoform" in i.keys():
-                                all_alternative_uniprot_id.extend(list(map(lambda x: x['id'], i["isoform"])))
+                                all_alternative_uniprot_id.extend(
+                                    list(map(lambda x: x["id"], i["isoform"]))
+                                )
                     except (KeyError, AttributeError):
                         continue
 
@@ -117,7 +130,7 @@ class Uniprot(object):
                 else:
                     length_match_index = []
 
-                u"""
+                """
                 Some protein's length was not equal to uniprot, the transcript maybe a non-canonical isoform.  
                 """
                 if len(length_match_index) != 0:
@@ -128,12 +141,13 @@ class Uniprot(object):
                     xml_dic = xml_dic[0]
 
             if int(xml_dic["sequence"]["length"]) != int(self.cds_len / 3):
-
                 if len(all_alternative_uniprot_id) == 0:
                     try:
                         for i in xml_dic["comment"]:
                             if "isoform" in i.keys():
-                                all_alternative_uniprot_id = list(map(lambda x: x['id'], i["isoform"]))
+                                all_alternative_uniprot_id = list(
+                                    map(lambda x: x["id"], i["isoform"])
+                                )
                     except KeyError:
                         pass
 
@@ -141,26 +155,26 @@ class Uniprot(object):
                     return None
 
                 for alternative_id in all_alternative_uniprot_id:
-                    request_url = f"https://www.ebi.ac.uk/proteins/api/features/{alternative_id}"
+                    request_url = (
+                        f"https://www.ebi.ac.uk/proteins/api/features/{alternative_id}"
+                    )
                     try:
                         current_uniprot_inf = rq.get(
-                            request_url,
-                            timeout=self.timeout,
-                            proxies=self.proxy
+                            request_url, timeout=self.timeout, proxies=self.proxy
                         )
                         current_uniprot_inf = json.loads(current_uniprot_inf.text)
 
                         if len(current_uniprot_inf["sequence"]) == self.cds_len / 3:
-                            current_uniprot_id.add(current_uniprot_inf['accession'])
+                            current_uniprot_id.add(current_uniprot_inf["accession"])
 
                     except ConnectionError:
                         raise f"Failed connect to for {request_url}."
                     except rq.exceptions.Timeout:
                         raise f"Timeout for {request_url}."
             else:
-                if isinstance(xml_dic['accession'], list):
-                    return xml_dic['accession'][0]
-                return xml_dic['accession']
+                if isinstance(xml_dic["accession"], list):
+                    return xml_dic["accession"][0]
+                return xml_dic["accession"]
 
         except ExpatError:
             logger.debug(f"Timeout or no domain information found, id: {self.ui}.")
@@ -177,15 +191,18 @@ class Uniprot(object):
         return list(current_uniprot_id)[0]
 
     def __domain_info__(self):
-        u"""
+        """
         Check the attribution of "feature" in the response results.
         :return: a list which contained feature's attribution
         """
-        feature_info = rq.get(f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}",
-                              timeout=self.timeout, proxies=self.proxy)
+        feature_info = rq.get(
+            f"https://www.ebi.ac.uk/proteins/api/features/{self.guessed_id}",
+            timeout=self.timeout,
+            proxies=self.proxy,
+        )
 
         try:
-            feature_info = json.loads(feature_info.text)['features']
+            feature_info = json.loads(feature_info.text)["features"]
             res = []
             if not isinstance(feature_info, list):
                 feature_info = [feature_info]
@@ -195,12 +212,16 @@ class Uniprot(object):
                     sub_feature["description"] = ""
                 else:
                     # Helical; Name=4
-                    sub_feature["description"] = sub_feature["description"].split("; ")[0]
+                    sub_feature["description"] = sub_feature["description"].split("; ")[
+                        0
+                    ]
 
                 sub_feature["unique_id"] = ",".join(
-                    [sub_feature["category"],
-                     sub_feature["type"],
-                     sub_feature["description"]]
+                    [
+                        sub_feature["category"],
+                        sub_feature["type"],
+                        sub_feature["description"],
+                    ]
                 )
 
                 sub_feature = SimpleNamespace(**sub_feature)
@@ -215,5 +236,5 @@ class Uniprot(object):
             return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

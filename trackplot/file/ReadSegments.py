@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Generate object for plotting reads like IGV track
 """
+
 import os.path
 import sys
-from typing import Optional, List, Dict, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import pysam
 from loguru import logger
-
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 from trackplot.base.CoordinateMap import Coordinate
@@ -19,30 +19,29 @@ from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.base.Readder import Reader
 from trackplot.file.File import File
 
-
-
 try:
-    np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+    np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 except AttributeError as err:
     pass
 
 
 class Reads(GenomicLoci):
-
     __slots__ = "exons", "introns", "polya_length", "m6a", "features", "id"
 
-    def __init__(self,
-                 chromosome: str,
-                 start: str,
-                 end: str,
-                 strand: str,
-                 id: str,
-                 exons: list,
-                 introns: list,
-                 polya_length: float = -1.0,
-                 m6a: float = -1.0,
-                 features: Optional[list] = None):
-        u"""
+    def __init__(
+        self,
+        chromosome: str,
+        start: str,
+        end: str,
+        strand: str,
+        id: str,
+        exons: list,
+        introns: list,
+        polya_length: float = -1.0,
+        m6a: float = -1.0,
+        features: Optional[list] = None,
+    ):
+        """
         Fetch information of each read from bam file, for stacked plot like IGV
         :param chromosome: the chromosome id of the given read
         :param start: the start site of the given read
@@ -55,12 +54,7 @@ class Reads(GenomicLoci):
         :param features: current support m6a site and polya length, like below
         """
 
-        super().__init__(
-            chromosome=chromosome,
-            start=start,
-            end=end,
-            strand=strand
-        )
+        super().__init__(chromosome=chromosome, start=start, end=end, strand=strand)
 
         self.exons = self.__collapse_read__(sorted(exons))
         self.introns = self.__collapse_read__(sorted(introns))
@@ -71,7 +65,7 @@ class Reads(GenomicLoci):
 
     @property
     def exon_list(self):
-        u"""
+        """
         return a nested list which contains exon regions
         1-based coordinate
         :return: a nested list
@@ -84,7 +78,7 @@ class Reads(GenomicLoci):
 
     @property
     def intron_list(self):
-        u"""
+        """
         return a nested list which contains intronic regions
         1-based coordinate
         :return: a nested list
@@ -92,9 +86,7 @@ class Reads(GenomicLoci):
 
         intron_nested_lst = []
         for i in self.introns:
-            intron_nested_lst.append(
-                ([i.start, i.end])
-            )
+            intron_nested_lst.append(([i.start, i.end]))
         return intron_nested_lst
 
     def __len__(self):
@@ -111,11 +103,11 @@ class Reads(GenomicLoci):
             self.end,
             self.strand,
             self.id,
-            "|".join(exons_str)
+            "|".join(exons_str),
         )
 
     def to_dict(self) -> Dict:
-        u"""
+        """
         return a dict for generate DataFrame object
         :return:
         """
@@ -125,12 +117,12 @@ class Reads(GenomicLoci):
             "end": self.end,
             "strand": self.strand,
             "polya_length": self.polya_length,
-            "m6a": self.m6a
+            "m6a": self.m6a,
         }
 
     @staticmethod
     def __collapse_read__(genomic_list: List[GenomicLoci]) -> List[GenomicLoci]:
-        u"""
+        """
         Collapse the consecutive region, because of the coordinate shift of matplotlib
         :param genomic_list: a list of GenomicLoci
         :return:
@@ -152,7 +144,7 @@ class Reads(GenomicLoci):
                         start=current_gl.start,
                         end=gl.end,
                         strand=current_gl.strand,
-                        name=current_gl.name
+                        name=current_gl.name,
                     )
                 else:
                     list_return.append(current_gl)
@@ -163,21 +155,20 @@ class Reads(GenomicLoci):
 
 
 class ReadSegment(File):
-
     def __init__(
-            self,
-            path: str,
-            label: str = "",
-            meta: Optional[pd.DataFrame] = None,
-            region: Optional[GenomicLoci] = None,
-            library: str = "fru",
-            deletion_ignore: Optional[int] = True,
-            del_ratio_ignore: float = .5,
-            features: Optional[dict] = None,
-            exon_focus: Optional[str] = None,
-            is_bed: bool = False
+        self,
+        path: str,
+        label: str = "",
+        meta: Optional[pd.DataFrame] = None,
+        region: Optional[GenomicLoci] = None,
+        library: str = "fru",
+        deletion_ignore: Optional[int] = True,
+        del_ratio_ignore: float = 0.5,
+        features: Optional[dict] = None,
+        exon_focus: Optional[str] = None,
+        is_bed: bool = False,
     ):
-        u"""
+        """
         init a class for store the information for IGV-like plot
         :param path: the path of the input file
         :param label: the label of current track
@@ -193,8 +184,7 @@ class ReadSegment(File):
         super().__init__(path)
 
         self.features = None
-        assert library in ["frf", "frs", "fru"], \
-            "Illegal library name."
+        assert library in ["frf", "frs", "fru"], "Illegal library name."
 
         self.library = library
         self.data = []
@@ -205,21 +195,24 @@ class ReadSegment(File):
         self.del_ratio_ignore = del_ratio_ignore
         self.features = features
         self.is_bed = is_bed
-        self.exon_focus = list(dict.fromkeys(x.strip() for x in exon_focus.split(',') if x.strip())) if exon_focus else []
+        self.exon_focus = (
+            list(dict.fromkeys(x.strip() for x in exon_focus.split(",") if x.strip()))
+            if exon_focus
+            else []
+        )
 
     @classmethod
     def create(
-            cls,
-            path: str,
-            label: str = "",
-            library: str = "fru",
-            deletion_ignore: Optional[int] = True,
-            del_ratio_ignore: float = .5,
-            features: Optional[dict] = None,
-            exon_focus: Optional[str] = None
-
+        cls,
+        path: str,
+        label: str = "",
+        library: str = "fru",
+        deletion_ignore: Optional[int] = True,
+        del_ratio_ignore: float = 0.5,
+        features: Optional[dict] = None,
+        exon_focus: Optional[str] = None,
     ):
-        u"""
+        """
         Load each reads and its strand, features.
         m6a tag support the genomic site
         polya tag support length of polya. if polya tag is available, then read_strand (rl) is also essential
@@ -247,9 +240,11 @@ class ReadSegment(File):
                 try:
                     path = pysam.tabix_index(path, preset="bed", force=True)
                 except OSError as e:
-                    logger.error(f"Failed to build index for {path}. \n {e} \n"
-                                 f"Please sort and index your bed file by "
-                                 f"`bedtools sort -i {path} | bgzip > {path}.gz`")
+                    logger.error(
+                        f"Failed to build index for {path}. \n {e} \n"
+                        f"Please sort and index your bed file by "
+                        f"`bedtools sort -i {path} | bgzip > {path}.gz`"
+                    )
                     sys.exit(0)
                     # path_new = re.sub(".bed.gz$", "", path) + 'sorted.bed.gz'
                     #
@@ -265,26 +260,27 @@ class ReadSegment(File):
             del_ratio_ignore=del_ratio_ignore,
             features=features,
             exon_focus=exon_focus,
-            is_bed=is_bed
+            is_bed=is_bed,
         )
 
     def get_index(self):
-        u"""
+        """
         get a nested list which presents the order of plot
         :return:
         """
         import warnings
-        warnings.simplefilter(action='ignore', category=FutureWarning)
-        assert self.meta is not None, f"Not found meta information, please `load` first."
-        for ind in self.meta.groupby(['y_loci'])['list_index'].apply(list).tolist()[::-1]:
+
+        warnings.simplefilter(action="ignore", category=FutureWarning)
+        assert self.meta is not None, (
+            f"Not found meta information, please `load` first."
+        )
+        for ind in (
+            self.meta.groupby(["y_loci"])["list_index"].apply(list).tolist()[::-1]
+        ):
             yield ind
 
-    def set_region(self,
-                   chromosome,
-                   start,
-                   end,
-                   strand):
-        u"""
+    def set_region(self, chromosome, start, end, strand):
+        """
         set the plotting region
         :param chromosome: the name of chromosome
         :param start: the start of the plotting region
@@ -293,10 +289,7 @@ class ReadSegment(File):
         :return:
         """
         self.region = GenomicLoci(
-            chromosome=chromosome,
-            start=start,
-            end=end,
-            strand=strand
+            chromosome=chromosome, start=start, end=end, strand=strand
         )
 
     def load_bed(self):
@@ -318,11 +311,10 @@ class ReadSegment(File):
                             start=current_start + 1,
                             end=current_end,
                             strand=self.region.strand,
-                            name="exon"
+                            name="exon",
                         )
                     )
                 else:
-
                     block_sizes = [int(x) for x in rec[10].split(",") if x]
                     block_starts = [int(x) for x in rec[11].split(",") if x]
 
@@ -332,19 +324,25 @@ class ReadSegment(File):
                             GenomicLoci(
                                 chromosome=self.region.chromosome,
                                 start=current_start + 1 + block_starts[i],
-                                end=current_start + 1 + block_starts[i] + block_sizes[i] - 1,
+                                end=current_start
+                                + 1
+                                + block_starts[i]
+                                + block_sizes[i]
+                                - 1,
                                 strand=self.region.strand,
-                                name="exon"
+                                name="exon",
                             )
                         )
-                    for pre_exon, next_exon in Coordinate.__slide_window__(exon_bound, 2):
+                    for pre_exon, next_exon in Coordinate.__slide_window__(
+                        exon_bound, 2
+                    ):
                         intron_bound.append(
                             GenomicLoci(
                                 chromosome=self.region.chromosome,
                                 start=pre_exon.end + 1,
                                 end=next_exon.start - 1,
                                 strand=self.region.strand,
-                                name="intron"
+                                name="intron",
                             )
                         )
 
@@ -358,7 +356,7 @@ class ReadSegment(File):
                     introns=intron_bound,
                     polya_length=-1,
                     m6a=-1,
-                    features=[]
+                    features=[],
                 )
                 if read.start < self.region.start or read.end > self.region.end:
                     continue
@@ -366,7 +364,7 @@ class ReadSegment(File):
                 self.data.append(read)
 
         except IOError as err:
-            logger.error('There is no .bed file at {0}'.format(self.path))
+            logger.error("There is no .bed file at {0}".format(self.path))
             logger.error(err)
         except ValueError as err:
             logger.error(self.path)
@@ -375,16 +373,22 @@ class ReadSegment(File):
     def load_bam(self):
         try:
             for read, _ in Reader.read_bam(self.path, self.region):
-                if read.reference_start < self.region.start or read.reference_end > self.region.end:
+                if (
+                    read.reference_start < self.region.start
+                    or read.reference_end > self.region.end
+                ):
                     continue
 
                 if not self.deletion_ignore:
                     current_ignore_num = min(
-                        [self.deletion_ignore, read.query_alignment_length * self.del_ratio_ignore])
+                        [
+                            self.deletion_ignore,
+                            read.query_alignment_length * self.del_ratio_ignore,
+                        ]
+                    )
                 else:
                     current_ignore_num = np.inf
                     # AD - AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead.
-
 
                 exon_bound = []
                 intron_bound = []
@@ -398,7 +402,7 @@ class ReadSegment(File):
                                 start=start,
                                 end=start + l - 1,
                                 strand=self.region.strand,
-                                name="exon"
+                                name="exon",
                             )
                         )
                         start += l
@@ -414,7 +418,7 @@ class ReadSegment(File):
                                     start=start,
                                     end=start + l - 1,
                                     strand=self.region.strand,
-                                    name="exon"
+                                    name="exon",
                                 )
                             )
                         start += l
@@ -426,7 +430,7 @@ class ReadSegment(File):
                                 start=start,
                                 end=start + l - 1,
                                 strand=self.region.strand,
-                                name="intron"
+                                name="intron",
                             )
                         )
                         start += l
@@ -446,22 +450,37 @@ class ReadSegment(File):
                     if read.has_tag(self.features["m6a"]):
                         # multiple m6a support
                         m6a_loci_list = list(
-                            map(float, [loci.strip() for loci in str(read.get_tag(self.features["m6a"])).split(',')])
+                            map(
+                                float,
+                                [
+                                    loci.strip()
+                                    for loci in str(
+                                        read.get_tag(self.features["m6a"])
+                                    ).split(",")
+                                ],
+                            )
                         )
                         for m6a_loci in m6a_loci_list:
-                            features_list.append(GenomicLoci(
-                                chromosome=self.region.chromosome,
-                                start=m6a_loci,
-                                end=m6a_loci,
-                                strand="*",
-                                name="m6a"
-                            ))
+                            features_list.append(
+                                GenomicLoci(
+                                    chromosome=self.region.chromosome,
+                                    start=m6a_loci,
+                                    end=m6a_loci,
+                                    strand="*",
+                                    name="m6a",
+                                )
+                            )
 
-                    if read.has_tag(self.features["real_strand"]) and read.has_tag(self.features["polya"]):
+                    if read.has_tag(self.features["real_strand"]) and read.has_tag(
+                        self.features["polya"]
+                    ):
                         polya_length = float(read.get_tag(self.features["polya"]))
                         real_strand = read.get_tag(self.features["real_strand"])
-                        assert read.get_tag(self.features["real_strand"]) in {"+", "-", "*"}, \
-                            f"strand should be *, + or -, not {real_strand}"
+                        assert read.get_tag(self.features["real_strand"]) in {
+                            "+",
+                            "-",
+                            "*",
+                        }, f"strand should be *, + or -, not {real_strand}"
                         if real_strand == "+":
                             features_list.append(
                                 GenomicLoci(
@@ -469,7 +488,7 @@ class ReadSegment(File):
                                     start=read.reference_end + 1,
                                     end=read.reference_end + polya_length - 1,
                                     strand=real_strand,
-                                    name="polya"
+                                    name="polya",
                                 )
                             )
                         elif real_strand == "-":
@@ -479,7 +498,7 @@ class ReadSegment(File):
                                     start=read.reference_start - polya_length + 1,
                                     end=read.reference_start,
                                     strand=real_strand,
-                                    name="polya"
+                                    name="polya",
                                 )
                             )
                         else:
@@ -495,7 +514,7 @@ class ReadSegment(File):
                     introns=intron_bound,
                     polya_length=polya_length,
                     m6a=m6a_loci,
-                    features=features_list
+                    features=features_list,
                 )
 
                 if read.start < self.region.start or read.end > self.region.end:
@@ -504,7 +523,7 @@ class ReadSegment(File):
                 self.data.append(read)
 
         except IOError as err:
-            logger.error('There is no .bam file at {0}'.format(self.path))
+            logger.error("There is no .bam file at {0}".format(self.path))
             logger.error(err)
         except ValueError as err:
             logger.error(self.path)
@@ -554,22 +573,23 @@ class ReadSegment(File):
         mtx = np.zeros((len(self.data), len(self.region)))
         for i, data in enumerate(self.data):
             for e_start, e_end in data.exon_list:
-                mtx[i, (e_start - self.region.start + 1):(e_end - self.region.start + 1)] = 1
+                mtx[
+                    i,
+                    (e_start - self.region.start + 1) : (e_end - self.region.start + 1),
+                ] = 1
 
         # "single", "complete", "average", "weighted", "centroid", "median", "ward"
-        order = dendrogram(linkage(mtx, method="centroid", metric="euclidean"), no_plot=True)
+        order = dendrogram(
+            linkage(mtx, method="centroid", metric="euclidean"), no_plot=True
+        )
 
         data = []
         for i in order["leaves"]:
             data.append(self.data[i])
         self.data = data
 
-    def load(
-            self,
-            region: GenomicLoci,
-            *args,
-            **kwargs):
-        u"""
+    def load(self, region: GenomicLoci, *args, **kwargs):
+        """
         loading data
         :param region: the plotting region
         :return:
@@ -590,7 +610,9 @@ class ReadSegment(File):
         if self.exon_focus:
             e_f_use = []
             for read in self.data:
-                e_f_use.append("_".join(str(state) for state in self.__focus_state__(read)))
+                e_f_use.append(
+                    "_".join(str(state) for state in self.__focus_state__(read))
+                )
             tmp_df["exon_group"] = e_f_use
         else:
             tmp_df["exon_group"] = "0"
@@ -598,12 +620,12 @@ class ReadSegment(File):
         self.meta = tmp_df
 
     def len(self, scale: Union[int, float] = 0.005) -> int:
-        u"""
+        """
         the length of reference to draw in final plots, default using the quarter of number of transcripts
         """
         size = len(self.data)
         return int(max(size * scale, 1))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

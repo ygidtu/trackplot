@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created at 2022.03.22 by ygidtu@gmail.com
 
 This is used to create heatmap images for multiple signal files contains in bigWig file
 """
+
 import os
 
 import numpy as np
@@ -16,11 +17,10 @@ from trackplot.file.File import File
 
 
 class Bedgraph(File):
-
     __slots__ = "label", "title"
 
     def __init__(self, path: str, label: str = "", title: str = ""):
-        u"""
+        """
         :param path: the path to bam file
         :param label: the left axis label
         """
@@ -44,7 +44,7 @@ class Bedgraph(File):
             if len(record) >= 4:
                 _, start, end, cov = record[:4]
                 start, end, cov = int(start), int(end), float(cov)
-                depth[(start - self.region.start):(end - self.region.start)] += cov
+                depth[(start - self.region.start) : (end - self.region.start)] += cov
         self.data = ReadDepth(depth)
 
 

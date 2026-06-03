@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*-coding:utf-8 -*-
 
-u"""
+"""
 Handle the customized junction
 """
+
 import os
 from typing import Dict
 
@@ -34,5 +35,5 @@ def load_custom_junction(path: str) -> Dict[str, Dict[Junction, int]]:
     return data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

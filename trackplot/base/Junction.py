@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2019.12.06
 """
 
 
 class Junction(object):
-    u"""
+    """
     Created by ygidtu at 2018.12.19
 
     This is used to collect information of single junction
@@ -16,7 +16,7 @@ class Junction(object):
     __slots__ = ["chromosome", "start", "end", "strand"]
 
     def __init__(self, chromosome, start, end, strand: str = "+"):
-        u"""
+        """
         init this class
         :param chromosome: the chromosome name of the given junction
         :param start: the start site of the given junction
@@ -33,14 +33,14 @@ class Junction(object):
 
     @property
     def length(self):
-        u"""
+        """
         :return: int, the length of this junction
         """
         return self.end - self.start
 
     @classmethod
     def create_junction(cls, string):
-        u"""
+        """
         create Junction from chr1:1-100:+
         :param string: str, chr1:1-100:+ format or chr1:1-100 also work
         :return:
@@ -57,21 +57,21 @@ class Junction(object):
         return cls(chromosome=chromosome, start=start, end=end, strand=strand)
 
     def __hash__(self):
-        u"""
+        """
         generate hash
         :return:
         """
         return hash((self.chromosome, self.start, self.end, self.strand))
 
     def __str__(self):
-        u"""
+        """
         convert junctions to string
         :return:
         """
         return f"{self.chromosome}:{self.start}-{self.end}:{self.strand}"
 
     def __gt__(self, other):
-        u"""
+        """
         greater than
         compare two junction by length
         :param other:
@@ -80,7 +80,7 @@ class Junction(object):
         return self.length > other.length
 
     def __lt__(self, other):
-        u"""
+        """
         less than
         compare two junction by length
         :param other:a
@@ -89,7 +89,7 @@ class Junction(object):
         return self.length < other.length
 
     def __eq__(self, other):
-        u"""
+        """
         same length
         :param other:
         :return:
@@ -97,7 +97,7 @@ class Junction(object):
         return self.length == other.length
 
     def is_overlap(self, other):
-        u"""
+        """
         whether any overlap with another Junction or GenomicLoci
         :param other:
         :return:
@@ -109,7 +109,7 @@ class Junction(object):
         return self.start < other.end and self.end > other.start
 
     def is_upstream(self, other):
-        u"""
+        """
         whether this junction is upstream of other
         :param other:
         :return:
@@ -122,7 +122,7 @@ class Junction(object):
         return self.end < self.start
 
     def is_downstream(self, other):
-        u"""
+        """
         whether this junction is downstream of other
         :param other:
         :return:
@@ -135,8 +135,8 @@ class Junction(object):
         return self.start > other.end
 
     def str(self, with_strand: bool = True) -> str:
-        u"""convert junctions to string, with or without strand
-        
+        """convert junctions to string, with or without strand
+
         Keyword arguments:
         :param with_strand: as name says
         Return: chr:strat-end:strand or chr:start-end
@@ -144,11 +144,11 @@ class Junction(object):
         if with_strand:
             return str(self)
         return f"{self.chromosome}:{self.start}-{self.end}"
-        
+
     def eq(self, other, with_strand: bool = False):
-        u""" 判断两个位点是否一致 """
+        """判断两个位点是否一致"""
         return self.str(with_strand) == other.str(with_strand)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

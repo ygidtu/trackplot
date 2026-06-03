@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Created at 2022.03.22 by ygidtu@gmail.com
 
 This is used to create heatmap images for multiple signal files contains in bigWig file
 """
+
 import os
 
 import numpy as np
@@ -16,11 +17,10 @@ from trackplot.file.File import File
 
 
 class Bigwig(File):
-
     __slots__ = "label", "title"
 
     def __init__(self, path: str, label: str = "", title: str = ""):
-        u"""
+        """
         :param path: the path to bam file
         :param label: the left axis label
         """
@@ -40,7 +40,10 @@ class Bigwig(File):
 
         vals = np.nan_to_num(
             Reader.read_bigwig(self.path, region),
-            copy=True, nan=0.0, posinf=None, neginf=None
+            copy=True,
+            nan=0.0,
+            posinf=None,
+            neginf=None,
         )
         plus, minus = np.zeros(len(vals)), np.zeros(len(vals))
         for idx, val in enumerate(vals):

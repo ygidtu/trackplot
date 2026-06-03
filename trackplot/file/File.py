@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-u"""
+"""
 The parent object of input files
 """
+
 from copy import deepcopy
-from typing import Optional, Set, List, Dict
+from typing import Dict, List, Optional, Set
 
 
 class File(object):
-
-    __slots__ = "path", "data", "label", "region", "log_trans", "title", "is_single_cell"
+    __slots__ = (
+        "path",
+        "data",
+        "label",
+        "region",
+        "log_trans",
+        "title",
+        "is_single_cell",
+    )
 
     def __init__(self, path: str, region=None):
         self.path = path
@@ -48,7 +56,11 @@ class File(object):
         return hash((self.path, self.label, self.title))
 
     def __eq__(self, other):
-        return self.path == other.path and self.label == other.label and self.title == other.title
+        return (
+            self.path == other.path
+            and self.label == other.label
+            and self.title == other.title
+        )
 
     def transform(self):
         if self.data is not None:
@@ -63,7 +75,7 @@ class File(object):
 
 
 def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
-    u"""
+    """
     separate barcodes by its first character to reduce set size
     :params barcodes: list or set of barcodes
     """
@@ -72,7 +84,7 @@ def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
     if barcodes is not None:
         for b in barcodes:
             if b:
-                f = b[:min(3, len(b))]
+                f = b[: min(3, len(b))]
 
                 if f not in res.keys():
                     res[f] = set()
@@ -83,7 +95,13 @@ def __set_barcodes__(barcodes: Optional[List[str]]) -> Dict:
 
 
 class SingleCell(File):
-    def __init__(self, path: str, barcodes: Optional[Set[str]] = None, barcode_tag: str = "CB", umi_tag: str = "UB"):
+    def __init__(
+        self,
+        path: str,
+        barcodes: Optional[Set[str]] = None,
+        barcode_tag: str = "CB",
+        umi_tag: str = "UB",
+    ):
 
         super().__init__(path)
         self.barcodes = __set_barcodes__(barcodes)
@@ -92,12 +110,12 @@ class SingleCell(File):
         self.is_single_cell = not self.empty_barcode()
 
     def has_barcode(self, barcode: str) -> bool:
-        u"""
+        """
         check whether contains barcodes
         :param barcode: barcode string
         """
         if barcode:
-            f = barcode[:min(3, len(barcode))]
+            f = barcode[: min(3, len(barcode))]
 
             temp = self.barcodes.get(f, set())
 
@@ -105,7 +123,7 @@ class SingleCell(File):
         return False
 
     def empty_barcode(self) -> bool:
-        u"""
+        """
         check whether this bam do not contain any barcodes
 
         """

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
-
-"""
+""" """
 
 
 class AxLabel(object):
-
     __slots__ = ["Ax", "Label"]
 
     def __init__(self, ax, label):
@@ -20,5 +17,5 @@ class AxLabel(object):
         return self.__hash__() == other.__hash__()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
