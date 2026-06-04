@@ -26,7 +26,7 @@ from trackplot.conf.config import (
 )
 from trackplot.plot import Plot, __version__
 from trackplot.plot_func import load_barcodes
-from trackplot.server import __PLOT__, run
+from trackplot.server import __PLOT__
 
 
 def decode_region(region: str):
