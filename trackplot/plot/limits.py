@@ -35,29 +35,49 @@ def _compute_y_limits(
 
     Returns (max_used_y_val, min_used_y_val).
     """
+    # --- Determine data-driven baseline values for arc height ---
+    # These baselines capture the "true" data range before junction expansion.
+    # Arc height (current_height) MUST be based on these baselines, not on
+    # the running max_used_y_val/min_used_y_val which may already have been
+    # expanded by previous junctions.  Using expanded values causes arc
+    # heights to grow non-convergently when _compute_y_limits is called
+    # again later (e.g. plot_density re-using a precomputed limit).
     if isinstance(data, dict):
-        if max_used_y_val is None:
-            max_used_y_val = max(
-                max(v.plus) if v.plus is not None else 0 for v in data.values()
-            )
-            if max_used_y_val % 2 == 1:
-                max_used_y_val += 1
-
-        if min_used_y_val is None:
-            minus_maxes = [
-                max(v.minus) if v.minus is not None else 0 for v in data.values()
-            ]
-            min_used_y_val = -1 * max(minus_maxes) if minus_maxes else 0
+        base_max = max(max(v.plus) if v.plus is not None else 0 for v in data.values())
+        minus_maxes = [
+            max(v.minus) if v.minus is not None else 0 for v in data.values()
+        ]
+        base_min = -1 * max(minus_maxes) if minus_maxes else 0
     else:
-        if max_used_y_val is None:
-            max_used_y_val = max(data.plus) if data.plus is not None else 0
-            if max_used_y_val % 2 == 1:
-                max_used_y_val += 1
+        base_max = max(data.plus) if data.plus is not None else 0
+        base_min = -1 * max(data.minus) if data.minus is not None else 0
 
-        if min_used_y_val is None:
-            min_used_y_val = (
-                -1 * max(data.minus) if data.minus is not None else 0
-            )
+    # Round base_max up to even for the y-axis limit
+    if base_max % 2 == 1:
+        base_max += 1
+
+    # --- Set initial y-axis limits ---
+    if max_used_y_val is None:
+        max_used_y_val = base_max
+    if min_used_y_val is None:
+        min_used_y_val = base_min
+
+    # --- Arc heights: use the LARGER of (data baseline, incoming y-limit) ---
+    # In --same-y mode, max_used_y_val may be the global limit (much larger than
+    # this panel's own baseline).  We want the arcs to look proportional to the
+    # visible axis range, so we take max(baseline, incoming_limit).
+    _arc_ref_max = base_max
+    if max_used_y_val is not None:
+        _arc_ref_max = max(base_max, max_used_y_val)
+
+    _arc_ref_min = base_min
+    if min_used_y_val is not None:
+        _arc_ref_min = min(
+            base_min, min_used_y_val
+        )  # both negative → pick the more negative
+
+    top_arc_height = abs(3 * _arc_ref_max / 4)
+    bot_arc_height = abs(3 * _arc_ref_min / 4) if _arc_ref_min != 0 else top_arc_height
 
     # Get junctions
     try:
@@ -105,7 +125,7 @@ def _compute_y_limits(
             if jxn_on_top:
                 left_dens = data.curr_max(ss1_idx)
                 right_dens = data.curr_max(ss2_idx)
-                current_height = abs(3 * max_used_y_val / 4)
+                current_height = top_arc_height
                 pts_y = [
                     left_dens if not ss1_modified else left_dens + current_height,
                     left_dens + current_height,
@@ -115,7 +135,7 @@ def _compute_y_limits(
             else:
                 left_dens = abs(data.curr_min(ss1_idx))
                 right_dens = abs(data.curr_min(ss2_idx))
-                current_height = abs(3 * min_used_y_val / 4)
+                current_height = bot_arc_height
                 pts_y = [
                     -left_dens if not ss1_modified else -left_dens - current_height,
                     -left_dens - current_height,

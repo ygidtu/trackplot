@@ -32,8 +32,8 @@ from trackplot.file.HiCMatrixTrack import HiCTrack
 from trackplot.file.ReadSegments import ReadSegment
 from trackplot.plot.coord import init_graph_coords, set_y_ticks
 from trackplot.plot.limits import _compute_y_limits
-from trackplot.plot.utils import cubic_bezier, get_limited_index, make_text_elements
-
+from trackplot.plot.utils import (cubic_bezier, get_limited_index,
+                                  make_text_elements)
 
 # ============================================================================
 # Stroke
@@ -116,21 +116,43 @@ def plot_annotation(
         if transcript.transcript or transcript.transcript_id:
             show_text = transcript.transcript
             if not transcript.transcript:
-                logger.warning("there is not transcript_name, using transcript_id instead")
+                logger.warning(
+                    "there is not transcript_name, using transcript_id instead"
+                )
                 show_text = transcript.transcript_id
 
-            if show_gene and transcript.gene and transcript.gene_id != transcript.transcript_id:
+            if (
+                show_gene
+                and transcript.gene
+                and transcript.gene_id != transcript.transcript_id
+            ):
                 if show_id:
-                    ax.text(x=-0.01 * max(graph_coords), y=y_loc + 0.25,
-                            s=transcript.gene_id, fontsize=font_size, ha="right")
-                    ax.text(x=-0.01 * max(graph_coords), y=y_loc - 0.25,
-                            s=transcript.transcript_id, fontsize=font_size, ha="right")
+                    ax.text(
+                        x=-0.01 * max(graph_coords),
+                        y=y_loc + 0.25,
+                        s=transcript.gene_id,
+                        fontsize=font_size,
+                        ha="right",
+                    )
+                    ax.text(
+                        x=-0.01 * max(graph_coords),
+                        y=y_loc - 0.25,
+                        s=transcript.transcript_id,
+                        fontsize=font_size,
+                        ha="right",
+                    )
                 else:
-                    ax.text(x=-0.01 * max(graph_coords), y=y_loc,
-                            s=transcript.gene + " | " + show_text,
-                            fontsize=font_size, ha="right")
+                    ax.text(
+                        x=-0.01 * max(graph_coords),
+                        y=y_loc,
+                        s=transcript.gene + " | " + show_text,
+                        fontsize=font_size,
+                        ha="right",
+                    )
             else:
-                ax.text(x=-1, y=y_loc - 0.1, s=show_text, fontsize=font_size, ha="right")
+                ax.text(
+                    x=-1, y=y_loc - 0.1, s=show_text, fontsize=font_size, ha="right"
+                )
         else:
             logger.warning("there is no transcript_name and transcript_id")
 
@@ -143,14 +165,23 @@ def plot_annotation(
                 plt.Rectangle(
                     (graph_coords[s], y_loc - exon_width / 2),
                     width=graph_coords[e] - graph_coords[s],
-                    height=exon_width, lw=0.5, zorder=20,
-                    rasterized=raster, color=color,
+                    height=exon_width,
+                    lw=0.5,
+                    zorder=20,
+                    rasterized=raster,
+                    color=color,
                 )
             )
             if show_exon_id and exon.name:
                 y_loc_offset = 0.1 if ind % 2 == 0 else -0.2
-                ax.text(x=(graph_coords[s] + graph_coords[e]) / 2, y=y_loc + y_loc_offset,
-                        s=exon.name, fontsize=font_size / 2, ha="center", color="red")
+                ax.text(
+                    x=(graph_coords[s] + graph_coords[e]) / 2,
+                    y=y_loc + y_loc_offset,
+                    s=exon.name,
+                    fontsize=font_size / 2,
+                    ha="center",
+                    color="red",
+                )
 
         if transcript.category != "interval":
             intron_sites = [
@@ -166,37 +197,89 @@ def plot_annotation(
             if narrows > 0:
                 spread = 0.2 * length / narrows
                 for i in range(narrows):
-                    loc = float(i) * length / narrows + graph_coords[region.relative(transcript.start)]
-                    arrows[(loc - spread if strand == "+" else loc + spread, y_loc - exon_width / 5)] = Path.MOVETO
+                    loc = (
+                        float(i) * length / narrows
+                        + graph_coords[region.relative(transcript.start)]
+                    )
+                    arrows[
+                        (
+                            loc - spread if strand == "+" else loc + spread,
+                            y_loc - exon_width / 5,
+                        )
+                    ] = Path.MOVETO
                     arrows[(loc, y_loc)] = Path.LINETO
-                    arrows[(loc - spread if strand == "+" else loc + spread, y_loc + exon_width / 5)] = Path.LINETO
+                    arrows[
+                        (
+                            loc - spread if strand == "+" else loc + spread,
+                            y_loc + exon_width / 5,
+                        )
+                    ] = Path.LINETO
 
         y_loc += 1
         if plot_domain and obj.domain and transcript.transcript_id in obj.domain.pep:
-            y_loc = _plot_domain_pep(obj, transcript, region, graph_coords,
-                                     patches, y_loc, exon_width, font_size, show_id, raster, color, ax)
+            y_loc = _plot_domain_pep(
+                obj,
+                transcript,
+                region,
+                graph_coords,
+                patches,
+                y_loc,
+                exon_width,
+                font_size,
+                show_id,
+                raster,
+                color,
+                ax,
+            )
 
     if obj.local_domain:
-        y_loc = _plot_local_domain(obj, region, graph_coords, patches,
-                                   y_loc, exon_width, font_size, raster, color, ax)
+        y_loc = _plot_local_domain(
+            obj,
+            region,
+            graph_coords,
+            patches,
+            y_loc,
+            exon_width,
+            font_size,
+            raster,
+            color,
+            ax,
+        )
 
     ax.add_collection(PatchCollection(patches, match_original=True))
     ax.add_patch(
         PathPatch(
             Path(list(arrows.keys()), list(arrows.values())),
-            lw=0.5, color=color, rasterized=raster,
+            lw=0.5,
+            color=color,
+            rasterized=raster,
         )
     )
     ax.set_xlim(min(graph_coords), max(graph_coords))
     ax.set_ylim(-0.5, y_loc + 0.5)
 
 
-def _plot_domain_pep(obj, transcript, region, graph_coords, patches,
-                     y_loc, exon_width, font_size, show_id, raster, color, ax):
+def _plot_domain_pep(
+    obj,
+    transcript,
+    region,
+    graph_coords,
+    patches,
+    y_loc,
+    exon_width,
+    font_size,
+    show_id,
+    raster,
+    color,
+    ax,
+):
     """Internal helper for plotting domain protein data."""
     current_domains = obj.domain.pep[transcript.transcript_id]
     for sub_current_domain in current_domains:
-        if not (sub_current_domain.start <= region.end and sub_current_domain.end >= region.start):
+        if not (
+            sub_current_domain.start <= region.end
+            and sub_current_domain.end >= region.start
+        ):
             continue
         for sub_exon in sub_current_domain.exons:
             for exon in sub_exon:
@@ -209,8 +292,11 @@ def _plot_domain_pep(obj, transcript, region, graph_coords, patches,
                     plt.Rectangle(
                         (graph_coords[s], y_loc - exon_width / 2),
                         width=graph_coords[e] - graph_coords[s],
-                        height=exon_width, lw=0.5, zorder=20,
-                        rasterized=raster, color=color,
+                        height=exon_width,
+                        lw=0.5,
+                        zorder=20,
+                        rasterized=raster,
+                        color=color,
                     )
                 )
             intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
@@ -218,30 +304,45 @@ def _plot_domain_pep(obj, transcript, region, graph_coords, patches,
             if intron_relative_s > len(region):
                 continue
             intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
-            intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+            intron_relative_e = (
+                len(region) - 1
+                if intron_relative_e > len(region)
+                else intron_relative_e
+            )
             if intron_relative_e <= 0:
                 continue
             if len(sub_exon) != 1:
                 patches.append(
                     plt.Rectangle(
                         (graph_coords[intron_relative_s], y_loc),
-                        width=graph_coords[intron_relative_e] - graph_coords[intron_relative_s],
-                        height=0, color=color, lw=0.2, rasterized=raster,
+                        width=graph_coords[intron_relative_e]
+                        - graph_coords[intron_relative_s],
+                        height=0,
+                        color=color,
+                        lw=0.2,
+                        rasterized=raster,
                     )
                 )
-        label_text = f"{sub_current_domain.gene}|{transcript.transcript_id}" if show_id else \
-                     f"{sub_current_domain.gene}|{transcript.transcript}"
+        label_text = (
+            f"{sub_current_domain.gene}|{transcript.transcript_id}"
+            if show_id
+            else f"{sub_current_domain.gene}|{transcript.transcript}"
+        )
         ax.text(x=-1, y=y_loc - 0.125, s=label_text, fontsize=font_size / 2, ha="right")
         y_loc += 0.5
     return y_loc
 
 
-def _plot_local_domain(obj, region, graph_coords, patches,
-                       y_loc, exon_width, font_size, raster, color, ax):
+def _plot_local_domain(
+    obj, region, graph_coords, patches, y_loc, exon_width, font_size, raster, color, ax
+):
     """Internal helper for plotting local domain data."""
     for base_name, current_domain in obj.local_domain.items():
         for sub_current_domain in current_domain:
-            if not (sub_current_domain.start <= region.end and sub_current_domain.end >= region.start):
+            if not (
+                sub_current_domain.start <= region.end
+                and sub_current_domain.end >= region.start
+            ):
                 continue
             for sub_exon in sub_current_domain.exons:
                 for exon in sub_exon:
@@ -254,28 +355,48 @@ def _plot_local_domain(obj, region, graph_coords, patches,
                         plt.Rectangle(
                             (graph_coords[s], y_loc - exon_width / 2),
                             width=graph_coords[e] - graph_coords[s],
-                            height=exon_width, lw=0.5, zorder=20,
-                            rasterized=raster, color=color,
+                            height=exon_width,
+                            lw=0.5,
+                            zorder=20,
+                            rasterized=raster,
+                            color=color,
                         )
                     )
-                intron_relative_s = region.relative(min(map(lambda x_: x_.end, sub_exon)))
+                intron_relative_s = region.relative(
+                    min(map(lambda x_: x_.end, sub_exon))
+                )
                 intron_relative_s = intron_relative_s if intron_relative_s >= 0 else 0
                 if intron_relative_s > len(region):
                     continue
-                intron_relative_e = region.relative(max(map(lambda x_: x_.start, sub_exon)))
-                intron_relative_e = len(region) - 1 if intron_relative_e > len(region) else intron_relative_e
+                intron_relative_e = region.relative(
+                    max(map(lambda x_: x_.start, sub_exon))
+                )
+                intron_relative_e = (
+                    len(region) - 1
+                    if intron_relative_e > len(region)
+                    else intron_relative_e
+                )
                 if intron_relative_e <= 0:
                     continue
                 if len(sub_exon) != 1:
                     patches.append(
                         plt.Rectangle(
                             (graph_coords[intron_relative_s], y_loc),
-                            width=graph_coords[intron_relative_e] - graph_coords[intron_relative_s],
-                            height=0, color=color, lw=0.2, rasterized=raster,
+                            width=graph_coords[intron_relative_e]
+                            - graph_coords[intron_relative_s],
+                            height=0,
+                            color=color,
+                            lw=0.2,
+                            rasterized=raster,
                         )
                     )
-            ax.text(x=-1, y=y_loc - 0.125, s=f"{sub_current_domain.gene}|{base_name}",
-                    fontsize=font_size / 2, ha="right")
+            ax.text(
+                x=-1,
+                y=y_loc - 0.125,
+                s=f"{sub_current_domain.gene}|{base_name}",
+                fontsize=font_size / 2,
+                ha="right",
+            )
         y_loc += 1
     return y_loc
 
@@ -302,6 +423,7 @@ def plot_density(
     y_label: str = "",
     theme: str = "ticks_blank",
     max_used_y_val: Optional[float] = None,
+    min_used_y_val: Optional[float] = 0,
     raster: bool = False,
     fill_step: str = "post",
     **kwargs,
@@ -333,24 +455,64 @@ def plot_density(
         for k, v in jxns.items():
             jxns[k] = np.log1p(v) / denominator
 
+    # Compute data-driven baseline arc heights BEFORE calling _compute_y_limits.
+    # These must match the internal computation in _compute_y_limits so that the
+    # drawn junction arcs have exactly the same height that was used to expand
+    # the y-axis limits.  Using the already-expanded max_used_y_val for arc
+    # height causes non-convergent growth and truncated junction arcs.
+    if isinstance(data, dict):
+        _base_max = max(max(v.plus) if v.plus is not None else 0 for v in data.values())
+        _minus_maxes = [
+            max(v.minus) if v.minus is not None else 0 for v in data.values()
+        ]
+        _base_min = -1 * max(_minus_maxes) if _minus_maxes else 0
+    else:
+        _base_max = max(data.plus) if data.plus is not None else 0
+        _base_min = -1 * max(data.minus) if data.minus is not None else 0
+
+    if _base_max % 2 == 1:
+        _base_max += 1
+
+    # Arc height reference: use the LARGER of (data baseline, incoming y-limit)
+    # so arcs look proportional to the visible axis range (especially in --same-y mode).
+    _arc_ref_max = (
+        max(_base_max, max_used_y_val) if max_used_y_val is not None else _base_max
+    )
+    _arc_ref_min = (
+        min(_base_min, min_used_y_val) if min_used_y_val is not None else _base_min
+    )
+
+    _top_arc_height = abs(3 * _arc_ref_max / 4)
+    _bot_arc_height = (
+        abs(3 * _arc_ref_min / 4) if _arc_ref_min != 0 else _top_arc_height
+    )
+
     # Compute y limits using shared logic
     fixed_max_used_y = max_used_y_val is not None
-    min_used_y_val = 0
 
     max_used_y_val, min_used_y_val = _compute_y_limits(
-        data=data, region=region, graph_coords=graph_coords,
-        max_used_y_val=max_used_y_val, min_used_y_val=min_used_y_val,
+        data=data,
+        region=region,
+        graph_coords=graph_coords,
+        max_used_y_val=max_used_y_val,
+        min_used_y_val=min_used_y_val,
         density_by_strand=kwargs.get("density_by_strand", False),
-        fill_step=fill_step, show_mean_jxn_number=show_mean_jxn_number,
+        fill_step=fill_step,
+        show_mean_jxn_number=show_mean_jxn_number,
     )
+    logger.info(f"precomputed y limits: {max_used_y_val} {min_used_y_val}")
 
     # Draw fill
     x, y1, y2 = [], [], []
     for i in range(len(graph_coords)):
         x.append(graph_coords[i])
         if isinstance(data, dict):
-            y1.append(max(v.plus[i] if v.plus is not None else 0 for v in data.values()))
-            y2.append(min(-v.minus[i] if v.minus is not None else 0 for v in data.values()))
+            y1.append(
+                max(v.plus[i] if v.plus is not None else 0 for v in data.values())
+            )
+            y2.append(
+                min(-v.minus[i] if v.minus is not None else 0 for v in data.values())
+            )
         else:
             y1.append(data.plus[i] if data.plus is not None else 0)
             y2.append(-data.minus[i] if data.minus is not None else 0)
@@ -360,7 +522,9 @@ def plot_density(
     # Draw junctions
     if jxns:
         jxns_sorted_list = sorted(
-            jxns.keys(), key=lambda x: (x.end - x.start, x.start, x.end), reverse=True,
+            jxns.keys(),
+            key=lambda x: (x.end - x.start, x.start, x.end),
+            reverse=True,
         )
 
         max_junction_count = max(jxns.values()) if jxns else 0
@@ -369,12 +533,22 @@ def plot_density(
 
         for jxn_idx, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
-            if (leftss < region.start < region.end < rightss) or rightss <= region.start or leftss >= region.end:
-                logger.debug(f"junction {jxn} of {y_label} is out of plotting region, skip")
+            if (
+                (leftss < region.start < region.end < rightss)
+                or rightss <= region.start
+                or leftss >= region.end
+            ):
+                logger.debug(
+                    f"junction {jxn} of {y_label} is out of plotting region, skip"
+                )
                 continue
 
-            ss1_idx, ss1_modified = get_limited_index(leftss - region.start, len(graph_coords))
-            ss2_idx, ss2_modified = get_limited_index(rightss - region.start, len(graph_coords))
+            ss1_idx, ss1_modified = get_limited_index(
+                leftss - region.start, len(graph_coords)
+            )
+            ss2_idx, ss2_modified = get_limited_index(
+                rightss - region.start, len(graph_coords)
+            )
             ss1, ss2 = graph_coords[ss1_idx], graph_coords[ss2_idx]
 
             if kwargs.get("density_by_strand"):
@@ -391,7 +565,7 @@ def plot_density(
 
             if jxn_on_top:
                 left_dens, right_dens = data.curr_max(ss1_idx), data.curr_max(ss2_idx)
-                current_height = abs(3 * max_used_y_val / 4)
+                current_height = _top_arc_height
                 pts = [
                     left_dens if not ss1_modified else left_dens + current_height,
                     left_dens + current_height,
@@ -399,8 +573,11 @@ def plot_density(
                     right_dens if not ss2_modified else right_dens + current_height,
                 ]
             else:
-                left_dens, right_dens = abs(data.curr_min(ss1_idx)), abs(data.curr_min(ss2_idx))
-                current_height = abs(3 * min_used_y_val / 4)
+                left_dens, right_dens = (
+                    abs(data.curr_min(ss1_idx)),
+                    abs(data.curr_min(ss2_idx)),
+                )
+                current_height = _bot_arc_height
                 pts = [
                     -left_dens if not ss1_modified else -left_dens - current_height,
                     -left_dens - current_height,
@@ -408,27 +585,49 @@ def plot_density(
                     -right_dens if not ss2_modified else -right_dens - current_height,
                 ]
 
-            line_width = 0.5 + 1.5 * (jxns[jxn] - min_junction_count) / junction_count_gap if junction_count_gap > 0 else 0
+            line_width = (
+                0.5 + 1.5 * (jxns[jxn] - min_junction_count) / junction_count_gap
+                if junction_count_gap > 0
+                else 0
+            )
             pts = [(ss1, pts[0]), (ss1, pts[1]), (ss2, pts[2]), (ss2, pts[3])]
 
             ax.add_patch(
                 PathPatch(
                     Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
-                    ec=color, lw=line_width + 0.2, fc="none",
+                    ec=color,
+                    lw=line_width + 0.2,
+                    fc="none",
                 )
             )
 
             if show_junction_number:
                 midpt = cubic_bezier(pts, 0.5)
                 val = jxns[jxn]
-                val = round(val, 2) if (jxn_number_log_transformed or show_mean_jxn_number) else int(val)
-                t = ax.text(midpt[0], midpt[1], "{0}".format(val),
-                            fontsize=junction_number_font_size, ha="center", va="center", backgroundcolor="w")
+                val = (
+                    round(val, 2)
+                    if (jxn_number_log_transformed or show_mean_jxn_number)
+                    else int(val)
+                )
+                t = ax.text(
+                    midpt[0],
+                    midpt[1],
+                    "{0}".format(val),
+                    fontsize=junction_number_font_size,
+                    ha="center",
+                    va="center",
+                    backgroundcolor="w",
+                )
                 t.set_bbox(dict(alpha=0))
 
     if obj and obj.title:
-        ax.text(max(graph_coords) - len(obj.title), max_used_y_val,
-                obj.title, color=color, fontsize=font_size)
+        ax.text(
+            max(graph_coords) - len(obj.title),
+            max_used_y_val,
+            obj.title,
+            color=color,
+            fontsize=font_size,
+        )
 
     if not fixed_max_used_y:
         _, max_used_y_val = ax.get_ylim()
@@ -437,16 +636,29 @@ def plot_density(
     if max_used_y_val == min_used_y_val == 0:
         min_used_y_val, max_used_y_val = ax.get_ylim()
 
-    if not isinstance(data, dict) and data.strand_aware and kwargs.get("density_by_strand"):
+    if (
+        not isinstance(data, dict)
+        and data.strand_aware
+        and kwargs.get("density_by_strand")
+    ):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
         min_used_y_val = -max_used_y_val
     elif not kwargs.get("density_by_strand") and not jxns:
         min_used_y_val = 0
 
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=max_used_y_val, min_used_y_val=min_used_y_val,
-                n_y_ticks=n_y_ticks, distance_between_label_axis=distance_between_label_axis,
-                font_size=font_size, show_y_label=show_y_label, y_axis_skip_zero=False)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=max_used_y_val,
+        min_used_y_val=min_used_y_val,
+        n_y_ticks=n_y_ticks,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+        y_axis_skip_zero=False,
+    )
 
 
 # ============================================================================
@@ -493,15 +705,34 @@ def plot_site_plot(
             continue
         fit_value = fit_value / fit_value.max()
         for x, y in zip(graph_coords, array_plot):
-            patches.append(plt.Rectangle((x, 0), height=y, width=0.6, color=color, rasterized=raster))
-        ax.plot(graph_coords, fit_value * array_plot.max() if label == "plus" else fit_value * array_plot.min(),
-                c=color, lw=1)
+            patches.append(
+                plt.Rectangle(
+                    (x, 0), height=y, width=0.6, color=color, rasterized=raster
+                )
+            )
+        ax.plot(
+            graph_coords,
+            fit_value * array_plot.max()
+            if label == "plus"
+            else fit_value * array_plot.min(),
+            c=color,
+            lw=1,
+        )
 
     ax.add_collection(PatchCollection(patches, match_original=True))
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=1.1 * max_val, min_used_y_val=-1.1 * max_val,
-                n_y_ticks=n_y_ticks, font_size=font_size, show_y_label=False,
-                distance_between_label_axis=distance_between_label_axis, y_axis_skip_zero=False)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=1.1 * max_val,
+        min_used_y_val=-1.1 * max_val,
+        n_y_ticks=n_y_ticks,
+        font_size=font_size,
+        show_y_label=False,
+        distance_between_label_axis=distance_between_label_axis,
+        y_axis_skip_zero=False,
+    )
 
 
 # ============================================================================
@@ -534,10 +765,17 @@ def plot_heatmap(
     mtx = np.array([x.wiggle for x in data.values()])
 
     if clustering and len(mtx) > 1:
-        assert clustering_method in CLUSTERING_METHOD, f"clustering_method {clustering_method} is not supported."
-        assert distance_metric in DISTANCE_METRIC, f"distance_metric {distance_metric} is not supported"
-        order = dendrogram(linkage(mtx, method=clustering_method, metric=distance_metric),
-                           orientation="right", no_plot=True)
+        assert clustering_method in CLUSTERING_METHOD, (
+            f"clustering_method {clustering_method} is not supported."
+        )
+        assert distance_metric in DISTANCE_METRIC, (
+            f"distance_metric {distance_metric} is not supported"
+        )
+        order = dendrogram(
+            linkage(mtx, method=clustering_method, metric=distance_metric),
+            orientation="right",
+            no_plot=True,
+        )
         mtx = mtx[order["leaves"], :]
         labels = [labels[x] for x in order["leaves"]]
 
@@ -551,17 +789,35 @@ def plot_heatmap(
         logger.debug("The vmin and vmax == 0, but input matrix not != 0")
         vmin, vmax = None, None
 
-    sns.heatmap(mtx, ax=ax, cmap=color, cbar_ax=cbar_ax, xticklabels=False,
-                yticklabels=labels, center=False, rasterized=raster, vmin=vmin, vmax=vmax)
+    sns.heatmap(
+        mtx,
+        ax=ax,
+        cmap=color,
+        cbar_ax=cbar_ax,
+        xticklabels=False,
+        yticklabels=labels,
+        center=False,
+        rasterized=raster,
+        vmin=vmin,
+        vmax=vmax,
+    )
 
     ax.tick_params(axis="both", which="major", labelsize=font_size, rotation=0)
     cbar_ax.tick_params(labelsize=font_size)
 
     ymax, ymin = ax.get_ylim()
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=ymax, min_used_y_val=ymin,
-                distance_between_label_axis=distance_between_label_axis,
-                font_size=font_size, show_y_label=show_y_label, set_label_only=True)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=ymax,
+        min_used_y_val=ymin,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+        set_label_only=True,
+    )
 
 
 # ============================================================================
@@ -594,8 +850,13 @@ def plot_hic(
         y_label = obj.label
 
     y_max = obj.matrix.shape[1]
-    ax.pcolormesh(obj.x - obj.region.start, obj.y, np.flipud(obj.matrix),
-                  cmap=color, rasterized=raster)
+    ax.pcolormesh(
+        obj.x - obj.region.start,
+        obj.y,
+        np.flipud(obj.matrix),
+        cmap=color,
+        rasterized=raster,
+    )
 
     if obj.tad:
         for tad in obj.tad_list:
@@ -606,8 +867,12 @@ def plot_hic(
             y2 = x3 - x1
             if y2 > obj.depth:
                 continue
-            triangle = Polygon([[x1, y1], [x2, y2], [x3, y1]],
-                               closed=False, edgecolor="grey", facecolor="None")
+            triangle = Polygon(
+                [[x1, y1], [x2, y2], [x3, y1]],
+                closed=False,
+                edgecolor="grey",
+                facecolor="None",
+            )
             ax.add_artist(triangle)
 
     ax.set_xlim(0, len(obj.region))
@@ -616,7 +881,9 @@ def plot_hic(
     if show_legend:
         cbar = plt.colorbar(
             mappable=mpl.cm.ScalarMappable(
-                norm=mpl.colors.Normalize(vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)),
+                norm=mpl.colors.Normalize(
+                    vmin=0, vmax=np.percentile(obj.matrix.diagonal(1), 80)
+                ),
                 cmap=color,
             ),
             cax=cbar_ax,
@@ -628,9 +895,17 @@ def plot_hic(
             cbar.set_ticklabels(legend_ticks)
 
     ax.axis("off")
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=obj.depth, distance_between_label_axis=distance_between_label_axis,
-                font_size=font_size, show_y_label=show_y_label, n_y_ticks=n_y_ticks)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=obj.depth,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+        n_y_ticks=n_y_ticks,
+    )
 
 
 # ============================================================================
@@ -669,26 +944,44 @@ def plot_line(
 
         if not show_legend:
             idx = int(distance_to_zero[idx + 1])
-            t = ax.text(x[idx], np.median(y), ylab, color=attr.get("color", "black"),
-                        fontsize=font_size, ha="center", va="center", backgroundcolor="w")
+            t = ax.text(
+                x[idx],
+                np.median(y),
+                ylab,
+                color=attr.get("color", "black"),
+                fontsize=font_size,
+                ha="center",
+                va="center",
+                backgroundcolor="w",
+            )
             t.set_bbox(dict(alpha=0))
             legend.append(t)
 
     if show_legend:
-        ax.legend(loc=legend_position,
-                  ncol=int(len(data) / 1.5) if legend_ncol <= 0 else legend_ncol,
-                  fancybox=False, shadow=False)
+        ax.legend(
+            loc=legend_position,
+            ncol=int(len(data) / 1.5) if legend_ncol <= 0 else legend_ncol,
+            fancybox=False,
+            shadow=False,
+        )
     else:
         try:
             adjust_text(legend, arrowprops=dict(arrowstyle="-", lw=1))
         except IndexError as err:
             logger.debug(err)
 
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=max_y_val if max_used_y_val is None else max_used_y_val,
-                distance_between_label_axis=distance_between_label_axis,
-                font_size=font_size, show_y_label=show_y_label,
-                n_y_ticks=n_y_ticks, **kwargs)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=max_y_val if max_used_y_val is None else max_used_y_val,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+        n_y_ticks=n_y_ticks,
+        **kwargs,
+    )
 
 
 # ============================================================================
@@ -746,7 +1039,8 @@ def plot_igv_like(
                             width=graph_coords[e] - graph_coords[s],
                             height=exon_width * 2,
                             facecolor="k" if not exon_color else exon_color,
-                            lw=0.5, zorder=20,
+                            lw=0.5,
+                            zorder=20,
                         )
                     )
                     add_plot = add_plot | True
@@ -763,7 +1057,8 @@ def plot_igv_like(
                             width=graph_coords[e] - graph_coords[s],
                             height=0,
                             color="#4d4d4d" if not intron_color else intron_color,
-                            lw=0.2, rasterized=raster,
+                            lw=0.2,
+                            rasterized=raster,
                         )
                     )
 
@@ -787,8 +1082,12 @@ def plot_igv_like(
                                 (graph_coords[s], y_loc - exon_width * width_ratio),
                                 width=graph_coords[e] - graph_coords[s],
                                 height=exon_width * 2,
-                                facecolor="blue" if not feature_color else feature_color,
-                                lw=0.2, zorder=20, rasterized=raster,
+                                facecolor="blue"
+                                if not feature_color
+                                else feature_color,
+                                lw=0.2,
+                                zorder=20,
+                                rasterized=raster,
                             )
                         )
                         scatters_x.append(graph_coords[s])
@@ -800,20 +1099,35 @@ def plot_igv_like(
                                 width=graph_coords[e] - graph_coords[s],
                                 height=exon_width * 2,
                                 facecolor="red" if not feature_color else feature_color,
-                                lw=0.2, zorder=20, rasterized=raster,
+                                lw=0.2,
+                                zorder=20,
+                                rasterized=raster,
                             )
                         )
             if add_plot:
                 y_loc += 1
 
     ax.add_collection(PatchCollection(patches, match_original=True))
-    ax.scatter(scatters_x, scatters_y, rasterized=raster,
-               color="b" if not feature_color else feature_color, s=0.5, linewidths=(0,))
+    ax.scatter(
+        scatters_x,
+        scatters_y,
+        rasterized=raster,
+        color="b" if not feature_color else feature_color,
+        s=0.5,
+        linewidths=(0,),
+    )
 
-    set_y_ticks(ax, label=y_label, theme=theme, graph_coords=graph_coords,
-                max_used_y_val=y_loc, n_y_ticks=n_y_ticks,
-                distance_between_label_axis=distance_between_label_axis,
-                font_size=font_size, show_y_label=show_y_label)
+    set_y_ticks(
+        ax,
+        label=y_label,
+        theme=theme,
+        graph_coords=graph_coords,
+        max_used_y_val=y_loc,
+        n_y_ticks=n_y_ticks,
+        distance_between_label_axis=distance_between_label_axis,
+        font_size=font_size,
+        show_y_label=show_y_label,
+    )
 
 
 # ============================================================================
@@ -831,7 +1145,12 @@ def plot_links(
     for stroke in sorted(data):
         leftss, rightss = graph_coords[stroke.start], graph_coords[stroke.end]
         step = (rightss - leftss) / 4
-        pts = [(leftss, 0), (leftss + step, max_y), (rightss - step, max_y), (rightss, 0)]
+        pts = [
+            (leftss, 0),
+            (leftss + step, max_y),
+            (rightss - step, max_y),
+            (rightss, 0),
+        ]
         a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
         ax.add_patch(PathPatch(a, fc="none", ec=stroke.color, lw=1))
 
@@ -882,7 +1201,9 @@ def plot_motif(
         bbox_to_left = max(xmin / len(graph_coords) - axin_width - 0.1, 0)
         draw_left = True
 
-    axins = ax.inset_axes(bounds=[bbox_to_left, 0, axin_width, 1], transform=ax.transAxes)
+    axins = ax.inset_axes(
+        bounds=[bbox_to_left, 0, axin_width, 1], transform=ax.transAxes
+    )
 
     start_site = start_base
     site = 0
@@ -894,7 +1215,8 @@ def plot_motif(
                 text,
                 x=site + (1 - width) / 2,
                 y=init_height_neg if height < 0 else init_height_pos,
-                width=width, height=height,
+                width=width,
+                height=height,
                 color=colors.get(text, "blue"),
                 edgecolor=colors.get(text, "blue"),
             )
@@ -929,5 +1251,13 @@ def plot_motif(
         pos = len(graph_coords) * bbox_to_left
         x = xmax
 
-    ax.arrow(x, ymin + y_height * y_scale / 2, pos - x, y_center - (ymin + y_height * y_scale),
-             head_width=1, fc="k", ec="k", rasterized=True)
+    ax.arrow(
+        x,
+        ymin + y_height * y_scale / 2,
+        pos - x,
+        y_center - (ymin + y_height * y_scale),
+        head_width=1,
+        fc="k",
+        ec="k",
+        rasterized=True,
+    )

@@ -18,7 +18,6 @@ from trackplot.anno.theme import Theme
 from trackplot.base.GenomicLoci import GenomicLoci
 from trackplot.plot.utils import __merge_exons__
 
-
 # ============================================================================
 # Coordinate system
 # ============================================================================

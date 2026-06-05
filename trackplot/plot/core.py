@@ -35,13 +35,14 @@ from trackplot.file.HiCMatrixTrack import HiCTrack
 from trackplot.file.Junction import load_custom_junction
 from trackplot.file.Motif import Motif
 from trackplot.file.ReadSegments import ReadSegment
-from trackplot.plot.coord import init_graph_coords, set_focus, set_indicator_lines, set_x_ticks
+from trackplot.plot.coord import (init_graph_coords, set_focus,
+                                  set_indicator_lines, set_x_ticks)
 from trackplot.plot.info import PlotInfo, __load__
 from trackplot.plot.limits import precompute_y_limits
-from trackplot.plot.render import (
-    plot_annotation, plot_density, plot_heatmap, plot_hic,
-    plot_igv_like, plot_line, plot_links, plot_motif, plot_site_plot, plot_stroke,
-)
+from trackplot.plot.render import (plot_annotation, plot_density, plot_heatmap,
+                                   plot_hic, plot_igv_like, plot_line,
+                                   plot_links, plot_motif, plot_site_plot,
+                                   plot_stroke)
 
 logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
@@ -50,11 +51,13 @@ def _resolve_version():
     """Read version from installed package metadata, falling back to pyproject.toml."""
     try:
         from importlib.metadata import version
+
         return version("trackplot")
     except Exception:
         pass
     try:
         import tomllib
+
         _here = os.path.dirname(os.path.abspath(__file__))
         with open(os.path.join(_here, "..", "..", "pyproject.toml"), "rb") as f:
             return tomllib.load(f)["project"]["version"]
@@ -69,11 +72,13 @@ __email__ = "ygidtu@gmail.com"
 
 def add_object_error(func):
     """Decorator: catch and log errors from plot configuration methods."""
+
     def inner(*args, **kwargs):
         try:
             func(*args, **kwargs)
         except Exception as err:
             logger.debug(f"trackplot will ignore this object, {err}")
+
     return inner
 
 
@@ -84,9 +89,19 @@ class Plot(object):
     """
 
     __slots__ = [
-        "__n_objs__", "region", "sites", "focus", "stroke", "events",
-        "sequence", "annotation", "graph_coords", "plots", "params",
-        "junctions", "link",
+        "__n_objs__",
+        "region",
+        "sites",
+        "focus",
+        "stroke",
+        "events",
+        "sequence",
+        "annotation",
+        "graph_coords",
+        "plots",
+        "params",
+        "junctions",
+        "link",
     ]
 
     def __init__(
@@ -205,8 +220,14 @@ class Plot(object):
         return self
 
     @add_object_error
-    def add_stroke(self, stroke: Optional[str] = None, start: int = 0, end: int = 0,
-                   label: str = "", color: str = "black"):
+    def add_stroke(
+        self,
+        stroke: Optional[str] = None,
+        start: int = 0,
+        end: int = 0,
+        label: str = "",
+        color: str = "black",
+    ):
         assert self.region is not None, "please set plot region first."
         if stroke:
             logger.info(f"add stroke: {stroke}")
@@ -217,8 +238,14 @@ class Plot(object):
         return self
 
     @add_object_error
-    def add_links(self, link: Optional[str] = None, start: int = 0, end: int = 0,
-                  label: str = "", color: str = "blue"):
+    def add_links(
+        self,
+        link: Optional[str] = None,
+        start: int = 0,
+        end: int = 0,
+        label: str = "",
+        color: str = "blue",
+    ):
         assert self.region is not None, "please set plot region first."
         if link:
             logger.info(f"add link: {link}")
@@ -272,35 +299,69 @@ class Plot(object):
     # Input file initialization
     # ------------------------------------------------------------------
 
-    def __init_input_file__(self, path, category="bam", label="", title="",
-                            barcode="", barcode_groups=None, barcode_tag="BC",
-                            umi_tag="UB", library="fru", features=None,
-                            deletion_ignore=True, del_ratio_ignore=0.5,
-                            exon_focus=None, density_by_strand=False,
-                            depth=30000, tad=None, size_factor=None,
-                            log_trans=None, **kwargs):
+    def __init_input_file__(
+        self,
+        path,
+        category="bam",
+        label="",
+        title="",
+        barcode="",
+        barcode_groups=None,
+        barcode_tag="BC",
+        umi_tag="UB",
+        library="fru",
+        features=None,
+        deletion_ignore=True,
+        del_ratio_ignore=0.5,
+        exon_focus=None,
+        density_by_strand=False,
+        depth=30000,
+        tad=None,
+        size_factor=None,
+        log_trans=None,
+        **kwargs,
+    ):
         self.__n_objs__ += 1
         path = os.path.expanduser(path)
         logger.info(f"add {category} {label} {path}")
 
         if category == "bam":
             obj = Bam.create(
-                path, label=label, title=title,
+                path,
+                label=label,
+                title=title,
                 barcodes=barcode_groups.get(barcode) if barcode_groups else None,
-                barcode_tag=barcode_tag, umi_tag=umi_tag, library=library,
-                density_by_strand=density_by_strand, size_factor=size_factor,
+                barcode_tag=barcode_tag,
+                umi_tag=umi_tag,
+                library=library,
+                density_by_strand=density_by_strand,
+                size_factor=size_factor,
             )
         elif category == "atac":
             from trackplot.file.ATAC import ATAC
-            obj = ATAC.create(path, label=label, title=title, barcode=barcode,
-                              barcode_groups=barcode_groups, size_factors=size_factor)
+
+            obj = ATAC.create(
+                path,
+                label=label,
+                title=title,
+                barcode=barcode,
+                barcode_groups=barcode_groups,
+                size_factors=size_factor,
+            )
         elif category == "igv":
-            obj = ReadSegment.create(path=path, label=label, library=library,
-                                     features=features, deletion_ignore=deletion_ignore,
-                                     del_ratio_ignore=del_ratio_ignore, exon_focus=exon_focus)
+            obj = ReadSegment.create(
+                path=path,
+                label=label,
+                library=library,
+                features=features,
+                deletion_ignore=deletion_ignore,
+                del_ratio_ignore=del_ratio_ignore,
+                exon_focus=exon_focus,
+            )
         elif category in ("hic", "h5"):
-            obj = HiCTrack.create(path=path, label=label, log_trans=log_trans,
-                                  depth=depth, tad=tad)
+            obj = HiCTrack.create(
+                path=path, label=label, log_trans=log_trans, depth=depth, tad=tad
+            )
         elif category in ("bigwig", "bw"):
             category = "bw"
             obj = Bigwig.create(path, label=label, title=title)
@@ -327,16 +388,33 @@ class Plot(object):
             self.junctions = load_custom_junction(path)
 
     @add_object_error
-    def add_density(self, path, category="bam", label="", color="blue",
-                    font_size=8, show_junction_number=True,
-                    show_mean_jxn_number=False, junction_number_font_size=5,
-                    n_y_ticks=4, show_y_label=True, y_label="",
-                    theme="ticks_blank", show_site_plot=False,
-                    strand_choice=None, density_by_strand=False,
-                    only_customized_junction=False, **kwargs):
+    def add_density(
+        self,
+        path,
+        category="bam",
+        label="",
+        color="blue",
+        font_size=8,
+        show_junction_number=True,
+        show_mean_jxn_number=False,
+        junction_number_font_size=5,
+        n_y_ticks=4,
+        show_y_label=True,
+        y_label="",
+        theme="ticks_blank",
+        show_site_plot=False,
+        strand_choice=None,
+        density_by_strand=False,
+        only_customized_junction=False,
+        **kwargs,
+    ):
         obj, cat = self.__init_input_file__(
-            path=path, category=category, label=label,
-            density_by_strand=density_by_strand, **kwargs)
+            path=path,
+            category=category,
+            label=label,
+            density_by_strand=density_by_strand,
+            **kwargs,
+        )
         type_ = "site-plot" if show_site_plot and cat == "bam" else "density"
         if show_site_plot and cat != "bam":
             raise ValueError("show_site_plot only works with bam files")
@@ -361,8 +439,12 @@ class Plot(object):
                 "show_junction_number": show_junction_number,
                 "show_mean_jxn_number": show_mean_jxn_number,
                 "junction_number_font_size": junction_number_font_size,
-                "color": color, "font_size": font_size, "n_y_ticks": n_y_ticks,
-                "show_y_label": show_y_label, "y_label": y_label, "theme": theme,
+                "color": color,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "y_label": y_label,
+                "theme": theme,
                 "strand_choice": strand_choice,
                 "density_by_strand": density_by_strand,
                 "only_customized_junction": only_customized_junction,
@@ -370,12 +452,28 @@ class Plot(object):
         return self
 
     @add_object_error
-    def add_heatmap(self, path, group="", category="bam", label="",
-                    color="viridis", font_size=8, show_y_label=True,
-                    theme="ticks_blank", do_scale=False, clustering=False,
-                    clustering_method="ward", distance_metric="euclidean",
-                    show_row_names=False, vmin=None, vmax=None, **kwargs):
-        obj, cat = self.__init_input_file__(path=path, category=category, label=label, **kwargs)
+    def add_heatmap(
+        self,
+        path,
+        group="",
+        category="bam",
+        label="",
+        color="viridis",
+        font_size=8,
+        show_y_label=True,
+        theme="ticks_blank",
+        do_scale=False,
+        clustering=False,
+        clustering_method="ward",
+        distance_metric="euclidean",
+        show_row_names=False,
+        vmin=None,
+        vmax=None,
+        **kwargs,
+    ):
+        obj, cat = self.__init_input_file__(
+            path=path, category=category, label=label, **kwargs
+        )
         exists = False
         for p in self.plots:
             if p.group == group and p.type == "heatmap":
@@ -386,22 +484,41 @@ class Plot(object):
             info = PlotInfo(obj=obj, category=cat, type_="heatmap", group=group)
             self.plots.append(info)
             self.params[info] = {
-                "color": color, "font_size": font_size,
-                "show_y_label": show_y_label, "theme": theme,
-                "do_scale": do_scale, "clustering": clustering,
+                "color": color,
+                "font_size": font_size,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "do_scale": do_scale,
+                "clustering": clustering,
                 "clustering_method": clustering_method,
                 "distance_metric": distance_metric,
-                "show_row_names": show_row_names, "vmin": vmin, "vmax": vmax,
+                "show_row_names": show_row_names,
+                "vmin": vmin,
+                "vmax": vmax,
             }
         return self
 
     @add_object_error
-    def add_line(self, path, group="", category="bam", label="",
-                 color="blue", font_size=8, show_y_label=True,
-                 line_attrs=None, theme="ticks_blank", n_y_ticks=4,
-                 show_legend=False, legend_position="upper right",
-                 legend_ncol=0, **kwargs):
-        obj, cat = self.__init_input_file__(path=path, category=category, label=label, **kwargs)
+    def add_line(
+        self,
+        path,
+        group="",
+        category="bam",
+        label="",
+        color="blue",
+        font_size=8,
+        show_y_label=True,
+        line_attrs=None,
+        theme="ticks_blank",
+        n_y_ticks=4,
+        show_legend=False,
+        legend_position="upper right",
+        legend_ncol=0,
+        **kwargs,
+    ):
+        obj, cat = self.__init_input_file__(
+            path=path, category=category, label=label, **kwargs
+        )
         if line_attrs is None:
             line_attrs = {}
         line_attrs["color"] = color
@@ -420,52 +537,104 @@ class Plot(object):
             self.plots.append(info)
             self.params[info] = {
                 "line_attrs": {obj.label: line_attrs},
-                "show_legend": show_legend, "font_size": font_size,
-                "n_y_ticks": n_y_ticks, "show_y_label": show_y_label,
-                "theme": theme, "legend_position": legend_position,
+                "show_legend": show_legend,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "legend_position": legend_position,
                 "legend_ncol": legend_ncol,
             }
         return self
 
     @add_object_error
-    def add_hic(self, path, category="hic", label="", color="RdYlBu_r",
-                show_legend=True, font_size=8, n_y_ticks=4,
-                show_y_label=True, theme="ticks", **kwargs):
-        obj, cat = self.__init_input_file__(path=path, category=category, label=label, **kwargs)
+    def add_hic(
+        self,
+        path,
+        category="hic",
+        label="",
+        color="RdYlBu_r",
+        show_legend=True,
+        font_size=8,
+        n_y_ticks=4,
+        show_y_label=True,
+        theme="ticks",
+        **kwargs,
+    ):
+        obj, cat = self.__init_input_file__(
+            path=path, category=category, label=label, **kwargs
+        )
         info = PlotInfo(obj=obj, category=cat, type_="hic")
         self.plots.append(info)
         self.params[info] = {
-            "show_legend": show_legend, "color": color, "y_label": label,
-            "font_size": font_size, "n_y_ticks": n_y_ticks,
-            "show_y_label": show_y_label, "theme": theme,
+            "show_legend": show_legend,
+            "color": color,
+            "y_label": label,
+            "font_size": font_size,
+            "n_y_ticks": n_y_ticks,
+            "show_y_label": show_y_label,
+            "theme": theme,
         }
         return self
 
     @add_object_error
-    def add_igv(self, path, category="igv", label="", library="fru",
-                features=None, deletion_ignore=True, del_ratio_ignore=0.5,
-                exon_focus=None, exon_color=None, intron_color=None,
-                feature_color=None, exon_width=0.3, height_scale=None,
-                font_size=8, n_y_ticks=1, show_y_label=True,
-                theme="ticks_blank", **kwargs):
+    def add_igv(
+        self,
+        path,
+        category="igv",
+        label="",
+        library="fru",
+        features=None,
+        deletion_ignore=True,
+        del_ratio_ignore=0.5,
+        exon_focus=None,
+        exon_color=None,
+        intron_color=None,
+        feature_color=None,
+        exon_width=0.3,
+        height_scale=None,
+        font_size=8,
+        n_y_ticks=1,
+        show_y_label=True,
+        theme="ticks_blank",
+        **kwargs,
+    ):
         obj, cat = self.__init_input_file__(
-            path=path, category="igv", label=label, library=library,
-            features=features, deletion_ignore=deletion_ignore,
-            del_ratio_ignore=del_ratio_ignore, exon_focus=exon_focus)
+            path=path,
+            category="igv",
+            label=label,
+            library=library,
+            features=features,
+            deletion_ignore=deletion_ignore,
+            del_ratio_ignore=del_ratio_ignore,
+            exon_focus=exon_focus,
+        )
         info = PlotInfo(obj=obj, category=cat, type_="igv")
         info.height_scale = height_scale
         self.plots.append(info)
         self.params[info] = {
-            "y_label": label, "exon_color": exon_color,
-            "intron_color": intron_color, "feature_color": feature_color,
-            "exon_width": exon_width, "font_size": font_size,
-            "n_y_ticks": n_y_ticks, "show_y_label": show_y_label, "theme": theme,
+            "y_label": label,
+            "exon_color": exon_color,
+            "intron_color": intron_color,
+            "feature_color": feature_color,
+            "exon_width": exon_width,
+            "font_size": font_size,
+            "n_y_ticks": n_y_ticks,
+            "show_y_label": show_y_label,
+            "theme": theme,
         }
         return self
 
     @add_object_error
-    def add_motif(self, path, category="motif", motif_region=None,
-                  width=0.8, theme="blank", **kwargs):
+    def add_motif(
+        self,
+        path,
+        category="motif",
+        motif_region=None,
+        width=0.8,
+        theme="blank",
+        **kwargs,
+    ):
         if motif_region.start < self.region.start:
             motif_region.start = self.region.start
         if motif_region.end > self.region.end:
@@ -477,9 +646,19 @@ class Plot(object):
         return self
 
     @add_object_error
-    def add_manual(self, data, image_type="line", label="", group="",
-                   color="blue", font_size=8, n_y_ticks=1,
-                   show_y_label=True, theme="ticks_blank", **kwargs):
+    def add_manual(
+        self,
+        data,
+        image_type="line",
+        label="",
+        group="",
+        color="blue",
+        font_size=8,
+        n_y_ticks=1,
+        show_y_label=True,
+        theme="ticks_blank",
+        **kwargs,
+    ):
         obj = File("")
         obj.label = label
         obj.data = ReadDepth(data)
@@ -496,8 +675,11 @@ class Plot(object):
         if not exists:
             self.plots.append(info)
             self.params[info] = {
-                "font_size": font_size, "n_y_ticks": n_y_ticks,
-                "show_y_label": show_y_label, "theme": theme, "color": color,
+                "font_size": font_size,
+                "n_y_ticks": n_y_ticks,
+                "show_y_label": show_y_label,
+                "theme": theme,
+                "color": color,
                 "line_attrs": {obj.label: {"color": color}},
             }
             self.params[info].update(kwargs)
@@ -543,12 +725,18 @@ class Plot(object):
                         juncs.update(self.junctions.get(i, {}))
                     p.load(self.region, junctions=juncs, *args, **kwargs)
                 else:
-                    p.load(self.region, n_jobs,
-                           junctions=self.junctions.get(p.obj[0].label, {}),
-                           *args, **kwargs)
+                    p.load(
+                        self.region,
+                        n_jobs,
+                        junctions=self.junctions.get(p.obj[0].label, {}),
+                        *args,
+                        **kwargs,
+                    )
             elif n_jobs > 1:
                 temp = copy.deepcopy(kwargs)
-                temp["region"] = self.region if p.type != "motif" else self.params[p].get("region")
+                temp["region"] = (
+                    self.region if p.type != "motif" else self.params[p].get("region")
+                )
                 if isinstance(p.obj[0].label, list):
                     juncs = {}
                     for i in p.obj[0].label:
@@ -570,9 +758,12 @@ class Plot(object):
                         juncs.update(self.junctions.get(i, {}))
                     p.load(self.region, junctions=juncs, *args, **kwargs)
                 else:
-                    p.load(self.region,
-                           junctions=self.junctions.get(p.obj[0].label, {}),
-                           *args, **kwargs)
+                    p.load(
+                        self.region,
+                        junctions=self.junctions.get(p.obj[0].label, {}),
+                        *args,
+                        **kwargs,
+                    )
 
     def _build_layout(self, annotation_scale, sc_height_ratio, *args, **kwargs):
         """Phase 2: Compute figure layout dimensions."""
@@ -594,8 +785,11 @@ class Plot(object):
             self.sequence.load(self.region)
 
         for p in self.plots:
-            n_rows, n_height = p.len(annotation_scale, sc_height_ratio=sc_height_ratio,
-                                     igv_scale=igv_height_scale)
+            n_rows, n_height = p.len(
+                annotation_scale,
+                sc_height_ratio=sc_height_ratio,
+                igv_scale=igv_height_scale,
+            )
             plots_n_rows += n_rows
             height_ratio += n_height
             if p.type in ("heatmap", "hic"):
@@ -607,7 +801,9 @@ class Plot(object):
         logger.info("init graph_coords")
         return plots_n_rows, plots_n_cols, height_ratio
 
-    def _create_figure_and_grid(self, plots_n_rows, plots_n_cols, height_ratio, **kwargs):
+    def _create_figure_and_grid(
+        self, plots_n_rows, plots_n_cols, height_ratio, **kwargs
+    ):
         """Create matplotlib figure and GridSpec."""
         exon_scale = kwargs.get("exon_scale", 1)
         intron_scale = kwargs.get("intron_scale", 0.5)
@@ -620,18 +816,32 @@ class Plot(object):
             intron_scale = 1
 
         self.graph_coords = init_graph_coords(
-            self.region, self.exons, exon_scale=exon_scale, intron_scale=intron_scale)
+            self.region, self.exons, exon_scale=exon_scale, intron_scale=intron_scale
+        )
 
-        fig = plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi) if width and height else plt.figure(dpi=dpi)
+        fig = (
+            plt.figure(figsize=[width, height * sum(height_ratio)], dpi=dpi)
+            if width and height
+            else plt.figure(dpi=dpi)
+        )
 
         if plots_n_cols > 1:
             gs = gridspec.GridSpec(
-                plots_n_rows, plots_n_cols, height_ratios=height_ratio,
-                width_ratios=(0.99, 0.01), wspace=0.01, hspace=0.15)
+                plots_n_rows,
+                plots_n_cols,
+                height_ratios=height_ratio,
+                width_ratios=(0.99, 0.01),
+                wspace=0.01,
+                hspace=0.15,
+            )
         else:
             gs = gridspec.GridSpec(
-                plots_n_rows, plots_n_cols, height_ratios=height_ratio,
-                wspace=0.7, hspace=0.15)
+                plots_n_rows,
+                plots_n_cols,
+                height_ratios=height_ratio,
+                wspace=0.7,
+                hspace=0.15,
+            )
         return fig, gs
 
     @staticmethod
@@ -655,31 +865,58 @@ class Plot(object):
                         logger.warning(f"The y limit of {line[0]} is invalid: {err}")
         return default_y
 
-    def _precompute_plot_y_limits(self, p, max_used_y_dict, min_used_y_dict,
-                                  same_y_by_groups, default_y, **kwargs):
+    def _precompute_plot_y_limits(
+        self, p, max_used_y_dict, min_used_y_dict, same_y_by_groups, default_y, **kwargs
+    ):
         """Compute and store y-limits for all objects in a plot."""
         if p.type not in ("density", "site-plot", "line"):
             return
 
         for obj in p.obj:
-            _max, _min = precompute_y_limits(obj, data=obj.data, region=self.region, **kwargs)
-
+            _max, _min = precompute_y_limits(
+                obj,
+                data=obj.data,
+                region=self.region,
+                graph_coords=self.graph_coords,
+                **kwargs,
+            )
+            logger.info(f"{_max} {_min}")
             if obj.label in same_y_by_groups:
                 key = same_y_by_groups[obj.label]
                 max_used_y_dict[key] = max(_max, max_used_y_dict.get(key, 0))
                 min_used_y_dict[key] = min(
                     _min if obj.data.minus is not None else _min,
-                    min_used_y_dict.get(key, 0) if obj.data.minus is None else
-                    min_used_y_dict.get(obj.path, 0))
+                    min_used_y_dict.get(key, 0)
+                    if obj.data.minus is None
+                    else min_used_y_dict.get(obj.path, 0),
+                )
 
             if isinstance(obj.data, dict):
+                for key, readDepth in obj.data.items():
+                    _max, _min = precompute_y_limits(
+                        obj,
+                        data=readDepth,
+                        graph_coords=self.graph_coords,
+                        region=self.region,
+                        **kwargs,
+                    )
+                    max_used_y_dict[key] = max(_max, max_used_y_dict.get(key, 0))
+                    min_used_y_dict[key] = min(
+                        _min if readDepth.minus is not None else _min,
+                        min_used_y_dict.get(key, 0)
+                        if readDepth.minus is None
+                        else min_used_y_dict.get(obj.path, 0),
+                    )
+
                 continue
 
             max_used_y_dict[obj.path] = max(_max, max_used_y_dict.get(obj.path, 0))
             min_used_y_dict[obj.path] = min(
                 _min if obj.data.minus is not None else _min,
-                min_used_y_dict.get(obj.path, 0) if obj.data.minus is None else
-                min_used_y_dict.get(obj.path, 0))
+                min_used_y_dict.get(obj.path, 0)
+                if obj.data.minus is None
+                else min_used_y_dict.get(obj.path, 0),
+            )
 
             if obj.label in default_y:
                 max_used_y_dict[obj.path] = default_y[obj.label][0]
@@ -690,8 +927,9 @@ class Plot(object):
                     max_used_y_dict[key] = max_used_y_dict[obj.path]
                     min_used_y_dict[key] = min_used_y_dict[obj.path]
 
-    def _resolve_plot_y_limits(self, p, max_used_y_val, min_used_y_val,
-                               same_y_by_groups, default_y, **kwargs):
+    def _resolve_plot_y_limits(
+        self, p, max_used_y_val, min_used_y_val, same_y_by_groups, default_y, **kwargs
+    ):
         """Determine y-limits for a single plot based on same-y / default-y settings."""
         same_y_sc = kwargs.get("same_y_sc")
         same_y = kwargs.get("same_y")
@@ -710,7 +948,11 @@ class Plot(object):
             for obj in p.obj:
                 if obj.label in default_y:
                     max_y = default_y[obj.label][0]
-                    min_y = default_y[obj.label][1] if len(default_y[obj.label]) > 1 else None
+                    min_y = (
+                        default_y[obj.label][1]
+                        if len(default_y[obj.label]) > 1
+                        else None
+                    )
                     if same_y_by_groups and obj.label in same_y_by_groups:
                         max_y = max_used_y_val.get(obj.path, max_y)
                         min_y = min_used_y_val.get(obj.path, min_y)
@@ -721,10 +963,23 @@ class Plot(object):
     # Main plot method
     # ------------------------------------------------------------------
 
-    def plot(self, output=None, annotation_scale=0.25, stroke_scale=0.25,
-             dpi=300, width=0, height=0, raster=False, return_image=None,
-             sc_height_ratio=None, distance_between_label_axis=0.3,
-             n_jobs=1, fill_step="post", *args, **kwargs):
+    def plot(
+        self,
+        output=None,
+        annotation_scale=0.25,
+        stroke_scale=0.25,
+        dpi=300,
+        width=0,
+        height=0,
+        raster=False,
+        return_image=None,
+        sc_height_ratio=None,
+        distance_between_label_axis=0.3,
+        n_jobs=1,
+        fill_step="post",
+        *args,
+        **kwargs,
+    ):
         if sc_height_ratio is None:
             sc_height_ratio = {"density": 0.2, "heatmap": 0.2}
         assert self.region is not None, "please set the plotting region first."
@@ -736,13 +991,23 @@ class Plot(object):
 
         # ====== Phase 2: Build layout ======
         plots_n_rows, plots_n_cols, height_ratio = self._build_layout(
-            annotation_scale, sc_height_ratio, *args,
-            stroke_scale=stroke_scale, **kwargs)
+            annotation_scale,
+            sc_height_ratio,
+            *args,
+            stroke_scale=stroke_scale,
+            **kwargs,
+        )
 
         # ====== Phase 3: Create figure and grid ======
         fig, gs = self._create_figure_and_grid(
-            plots_n_rows, plots_n_cols, height_ratio,
-            dpi=dpi, width=width, height=height, **kwargs)
+            plots_n_rows,
+            plots_n_cols,
+            height_ratio,
+            dpi=dpi,
+            width=width,
+            height=height,
+            **kwargs,
+        )
 
         # ====== Phase 4: Precompute global y-limits ======
         max_used_y_val, min_used_y_val = {}, {}
@@ -752,24 +1017,34 @@ class Plot(object):
         if kwargs.get("same_y") or kwargs.get("same_y_sc"):
             logger.info("--same-y is enabled")
             if kwargs.get("same_y_groups") and os.path.exists(kwargs["same_y_groups"]):
-                logger.info("Reading the same y by groups from: %s" % kwargs["same_y_groups"])
+                logger.info(
+                    "Reading the same y by groups from: %s" % kwargs["same_y_groups"]
+                )
                 with open(kwargs["same_y_groups"]) as r:
                     for line in r:
                         if line.startswith("#"):
                             continue
                         line = line.split()
-                        same_y_by_groups[line[0]] = f"samy_y_groups_of_{line[1]} {datetime.now()}"
+                        same_y_by_groups[line[0]] = (
+                            f"samy_y_groups_of_{line[1]} {datetime.now()}"
+                        )
 
             for p in self.plots:
-                self._precompute_plot_y_limits(p, max_used_y_val, min_used_y_val,
-                                               same_y_by_groups, default_y, **kwargs)
+                self._precompute_plot_y_limits(
+                    p,
+                    max_used_y_val,
+                    min_used_y_val,
+                    same_y_by_groups,
+                    default_y,
+                    **kwargs,
+                )
 
         # ====== Phase 5: Draw all plots ======
         curr_idx = 0
         for p in self.plots:
             if p.type == "igv":
                 n_rows = p.len(annotation_scale, igv_scale=igv_height_scale)[0]
-                ax_var = plt.subplot(gs[curr_idx: curr_idx + n_rows, 0])
+                ax_var = plt.subplot(gs[curr_idx : curr_idx + n_rows, 0])
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
@@ -777,10 +1052,18 @@ class Plot(object):
                 ax_var.set_title(str(self.region), loc="left")
 
             max_y_val_, min_y_val_ = self._resolve_plot_y_limits(
-                p, max_used_y_val, min_used_y_val, same_y_by_groups, default_y,
-                same_y_sc=kwargs.get("same_y_sc"), same_y=kwargs.get("same_y"))
+                p,
+                max_used_y_val,
+                min_used_y_val,
+                same_y_by_groups,
+                default_y,
+                same_y_sc=kwargs.get("same_y_sc"),
+                same_y=kwargs.get("same_y"),
+            )
 
-            logger.info(f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}")
+            logger.info(
+                f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
+            )
 
             # Dispatch
             if p.type == "density":
@@ -789,87 +1072,152 @@ class Plot(object):
                         temp_params = self.params.get(p, {}).copy()
                         if "y_label" not in temp_params:
                             temp_params["y_label"] = key
-                        plot_density(ax=ax_var, data=readDepth, region=self.region,
-                                     graph_coords=self.graph_coords,
-                                     max_used_y_val=max_y_val_, min_used_y_val=min_y_val_,
-                                     distance_between_label_axis=distance_between_label_axis,
-                                     raster=raster, fill_step=fill_step, **temp_params)
+                        plot_density(
+                            ax=ax_var,
+                            data=readDepth,
+                            region=self.region,
+                            graph_coords=self.graph_coords,
+                            max_used_y_val=max_y_val_,
+                            min_used_y_val=min_y_val_,
+                            distance_between_label_axis=distance_between_label_axis,
+                            raster=raster,
+                            fill_step=fill_step,
+                            **temp_params,
+                        )
                         curr_idx += 1
                         ax_var = plt.subplot(gs[curr_idx, 0])
                     curr_idx -= 1
                 else:
-                    plot_density(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords,
-                                 max_used_y_val=max_y_val_, min_used_y_val=min_y_val_,
-                                 distance_between_label_axis=distance_between_label_axis,
-                                 raster=raster, fill_step=fill_step, **self.params.get(p, {}))
+                    plot_density(
+                        ax=ax_var,
+                        obj=p.obj[0],
+                        graph_coords=self.graph_coords,
+                        max_used_y_val=max_y_val_,
+                        min_used_y_val=min_y_val_,
+                        distance_between_label_axis=distance_between_label_axis,
+                        raster=raster,
+                        fill_step=fill_step,
+                        **self.params.get(p, {}),
+                    )
             elif p.type == "hic":
-                plot_hic(ax=ax_var, cbar_ax=plt.subplot(gs[curr_idx, 1]), obj=p.obj,
-                         distance_between_label_axis=distance_between_label_axis,
-                         raster=raster, **self.params.get(p, {}))
+                plot_hic(
+                    ax=ax_var,
+                    cbar_ax=plt.subplot(gs[curr_idx, 1]),
+                    obj=p.obj,
+                    distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
+                    **self.params.get(p, {}),
+                )
             elif p.type == "site-plot":
-                plot_density(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords,
-                             max_used_y_val=max_y_val_, min_used_y_val=min_y_val_,
-                             distance_between_label_axis=distance_between_label_axis,
-                             raster=raster, **self.params.get(p, {}))
+                plot_density(
+                    ax=ax_var,
+                    obj=p.obj[0],
+                    graph_coords=self.graph_coords,
+                    max_used_y_val=max_y_val_,
+                    min_used_y_val=min_y_val_,
+                    distance_between_label_axis=distance_between_label_axis,
+                    raster=raster,
+                    **self.params.get(p, {}),
+                )
                 curr_idx += 1
-                plot_site_plot(plt.subplot(gs[curr_idx, 0]), p.obj[0],
-                               graph_coords=self.graph_coords, raster=raster,
-                               distance_between_label_axis=distance_between_label_axis,
-                               **self.params.get(p, {}))
+                plot_site_plot(
+                    plt.subplot(gs[curr_idx, 0]),
+                    p.obj[0],
+                    graph_coords=self.graph_coords,
+                    raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
+                    **self.params.get(p, {}),
+                )
             elif p.type == "heatmap":
-                plot_heatmap(ax=ax_var, cbar_ax=plt.subplot(gs[curr_idx, 1]),
-                             data=p.data, y_label=p.group,
-                             graph_coords=self.graph_coords, raster=raster,
-                             distance_between_label_axis=distance_between_label_axis,
-                             **self.params.get(p, {}))
+                plot_heatmap(
+                    ax=ax_var,
+                    cbar_ax=plt.subplot(gs[curr_idx, 1]),
+                    data=p.data,
+                    y_label=p.group,
+                    graph_coords=self.graph_coords,
+                    raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
+                    **self.params.get(p, {}),
+                )
             elif p.type == "line":
-                plot_line(ax=ax_var, data=p.data, y_label=p.group,
-                          max_used_y_val=max_y_val_, min_used_y_val=min_y_val_,
-                          graph_coords=self.graph_coords,
-                          distance_between_label_axis=distance_between_label_axis,
-                          **self.params.get(p, {}))
+                plot_line(
+                    ax=ax_var,
+                    data=p.data,
+                    y_label=p.group,
+                    max_used_y_val=max_y_val_,
+                    min_used_y_val=min_y_val_,
+                    graph_coords=self.graph_coords,
+                    distance_between_label_axis=distance_between_label_axis,
+                    **self.params.get(p, {}),
+                )
             elif p.type == "igv":
-                plot_igv_like(ax=ax_var, obj=p.data, graph_coords=self.graph_coords,
-                              raster=raster,
-                              distance_between_label_axis=distance_between_label_axis,
-                              **self.params.get(p, {}))
+                plot_igv_like(
+                    ax=ax_var,
+                    obj=p.data,
+                    graph_coords=self.graph_coords,
+                    raster=raster,
+                    distance_between_label_axis=distance_between_label_axis,
+                    **self.params.get(p, {}),
+                )
             elif p.type == "motif":
-                plot_motif(ax=ax_var, obj=p.obj[0], graph_coords=self.graph_coords,
-                           **self.params[p])
+                plot_motif(
+                    ax=ax_var,
+                    obj=p.obj[0],
+                    graph_coords=self.graph_coords,
+                    **self.params[p],
+                )
             else:
                 raise ValueError(f"unknown plot type {p.type}")
 
-            set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
+            set_indicator_lines(
+                ax=ax_var, sites=self.sites, graph_coords=self.graph_coords
+            )
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
 
-            curr_idx += 1 if p.type != "igv" else p.len(annotation_scale, igv_scale=igv_height_scale)[0]
+            curr_idx += (
+                1
+                if p.type != "igv"
+                else p.len(annotation_scale, igv_scale=igv_height_scale)[0]
+            )
 
         # ====== Links ======
         if self.link:
             for link in self.link:
                 logger.info(f"plotting links at idx: {curr_idx}")
-                plot_links(ax=plt.subplot(gs[curr_idx: curr_idx + 1, 0]),
-                           data=link, graph_coords=self.graph_coords)
+                plot_links(
+                    ax=plt.subplot(gs[curr_idx : curr_idx + 1, 0]),
+                    data=link,
+                    graph_coords=self.graph_coords,
+                )
                 curr_idx += 1
 
         # ====== X-axis ticks ======
         logger.info(f"plotting x-axis ticks at idx: {curr_idx}")
-        set_x_ticks(ax=plt.subplot(gs[curr_idx, 0]), region=self.region,
-                    graph_coords=self.graph_coords,
-                    sequence=self.sequence.data if self.sequence else None, **kwargs)
+        set_x_ticks(
+            ax=plt.subplot(gs[curr_idx, 0]),
+            region=self.region,
+            graph_coords=self.graph_coords,
+            sequence=self.sequence.data if self.sequence else None,
+            **kwargs,
+        )
         curr_idx += 1
 
         # ====== Annotation ======
         if self.annotation is not None:
             n_anno_rows = self.annotation.len(scale=annotation_scale)
             logger.info(f"plotting annotation at idx: {curr_idx}")
-            ax_var = plt.subplot(gs[curr_idx: curr_idx + n_anno_rows, 0])
-            plot_annotation(ax=ax_var, obj=self.annotation,
-                            graph_coords=self.graph_coords,
-                            plot_domain=self.annotation.add_domain,
-                            distance_between_label_axis=distance_between_label_axis,
-                            **self.params["annotation"])
-            set_indicator_lines(ax=ax_var, sites=self.sites, graph_coords=self.graph_coords)
+            ax_var = plt.subplot(gs[curr_idx : curr_idx + n_anno_rows, 0])
+            plot_annotation(
+                ax=ax_var,
+                obj=self.annotation,
+                graph_coords=self.graph_coords,
+                plot_domain=self.annotation.add_domain,
+                distance_between_label_axis=distance_between_label_axis,
+                **self.params["annotation"],
+            )
+            set_indicator_lines(
+                ax=ax_var, sites=self.sites, graph_coords=self.graph_coords
+            )
             set_focus(ax=ax_var, focus=self.focus, graph_coords=self.graph_coords)
             curr_idx += n_anno_rows
 
@@ -877,7 +1225,9 @@ class Plot(object):
         if self.stroke:
             logger.info(f"plotting stroke at idx: {curr_idx}")
             ax_var = plt.subplot(gs[curr_idx:plots_n_rows, 0])
-            plot_stroke(ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, **kwargs)
+            plot_stroke(
+                ax=ax_var, data=self.stroke, graph_coords=self.graph_coords, **kwargs
+            )
 
         # ====== Output ======
         if output:

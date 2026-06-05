@@ -3,13 +3,14 @@
 """
 Web UI of sashimi
 """
+
 import os
 import pickle
 import re
 from glob import glob
 from typing import List, Optional
-from flask import Flask, jsonify, render_template, request, send_file
 
+from flask import Flask, jsonify, render_template, request, send_file
 from loguru import logger
 
 from trackplot.conf.ui import __COMMON_PARAMS__, __PARAMS__, __SUPPORT_FORMAT__

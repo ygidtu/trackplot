@@ -16,14 +16,8 @@ from click_option_group import optgroup
 from loguru import logger
 
 from trackplot.base.GenomicLoci import GenomicLoci
-from trackplot.conf.config import (
-    CLUSTERING_METHOD,
-    COLORMAP,
-    COLORS,
-    DISTANCE_METRIC,
-    IMAGE_TYPE,
-    NORMALIZATION,
-)
+from trackplot.conf.config import (CLUSTERING_METHOD, COLORMAP, COLORS,
+                                   DISTANCE_METRIC, IMAGE_TYPE, NORMALIZATION)
 from trackplot.plot import Plot, __version__
 from trackplot.plot_func import load_barcodes
 from trackplot.server import __PLOT__
