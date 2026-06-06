@@ -880,7 +880,7 @@ class Plot(object):
                 graph_coords=self.graph_coords,
                 **kwargs,
             )
-            logger.info(f"{_max} {_min}")
+
             if obj.label in same_y_by_groups:
                 key = same_y_by_groups[obj.label]
                 max_used_y_dict[key] = max(_max, max_used_y_dict.get(key, 0))

@@ -500,7 +500,6 @@ def plot_density(
         fill_step=fill_step,
         show_mean_jxn_number=show_mean_jxn_number,
     )
-    logger.info(f"precomputed y limits: {max_used_y_val} {min_used_y_val}")
 
     # Draw fill
     x, y1, y2 = [], [], []
@@ -530,6 +529,8 @@ def plot_density(
         max_junction_count = max(jxns.values()) if jxns else 0
         min_junction_count = min(jxns.values()) if jxns else 0
         junction_count_gap = max_junction_count - min_junction_count
+
+        text_objs = []
 
         for jxn_idx, jxn in enumerate(jxns_sorted_list):
             leftss, rightss = jxn.start, jxn.end
@@ -619,6 +620,17 @@ def plot_density(
                     backgroundcolor="w",
                 )
                 t.set_bbox(dict(alpha=0))
+                text_objs.append(t)
+
+        if show_junction_number and len(text_objs) > 1:
+            adjust_text(
+                text_objs,
+                ax=ax,
+                force_text=(0.5, 0.5),
+                expand=(1.2, 1.2),
+                arrowprops=None,
+                lim=100,
+            )
 
     if obj and obj.title:
         ax.text(
