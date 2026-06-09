@@ -474,7 +474,10 @@ def plot_density(
         _base_max += 1
 
     # Arc height reference: use the LARGER of (data baseline, incoming y-limit)
-    # so arcs look proportional to the visible axis range (especially in --same-y mode).
+    # so arcs look proportional to the visible axis range (especially in
+    # --same-y / --same-y-sc mode).  If we only used the data baseline, panels
+    # with small data would have tiny arcs hugging the x-axis when a large
+    # global y-limit is shared across panels.
     _arc_ref_max = (
         max(_base_max, max_used_y_val) if max_used_y_val is not None else _base_max
     )
@@ -500,7 +503,7 @@ def plot_density(
         fill_step=fill_step,
         show_mean_jxn_number=show_mean_jxn_number,
     )
-
+    
     # Draw fill
     x, y1, y2 = [], [], []
     for i in range(len(graph_coords)):
@@ -543,7 +546,7 @@ def plot_density(
                     f"junction {jxn} of {y_label} is out of plotting region, skip"
                 )
                 continue
-
+            
             ss1_idx, ss1_modified = get_limited_index(
                 leftss - region.start, len(graph_coords)
             )
@@ -573,6 +576,7 @@ def plot_density(
                     right_dens + current_height,
                     right_dens if not ss2_modified else right_dens + current_height,
                 ]
+
             else:
                 left_dens, right_dens = (
                     abs(data.curr_min(ss1_idx)),

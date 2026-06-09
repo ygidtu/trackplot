@@ -1060,6 +1060,12 @@ class Plot(object):
                 same_y_sc=kwargs.get("same_y_sc"),
                 same_y=kwargs.get("same_y"),
             )
+            
+            if max_y_val_ is not None:
+                max_y_val_ *= 1.1
+            
+            if min_y_val_ is not None:
+                min_y_val_ *= 1.1
 
             logger.info(
                 f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"

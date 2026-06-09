@@ -56,6 +56,13 @@ def _compute_y_limits(
     if base_max % 2 == 1:
         base_max += 1
 
+    # --- Track whether limits were explicitly provided (from precompute/user) ---
+    # When both are given, they already account for junction expansion, so we
+    # must NOT expand them again — doing so causes non-convergent arc growth
+    # (the arc height computed from the incoming limit is larger than the one
+    # used during precomputation, inflating the limit on every re-calculation).
+    _limits_explicitly_set = max_used_y_val is not None and min_used_y_val is not None
+
     # --- Set initial y-axis limits ---
     if max_used_y_val is None:
         max_used_y_val = base_max
@@ -143,8 +150,13 @@ def _compute_y_limits(
                     -right_dens if not ss2_modified else -right_dens - current_height,
                 ]
 
-            max_used_y_val = max(max_used_y_val, max(pts_y))
-            min_used_y_val = min(min_used_y_val, min(pts_y))
+            # Only expand y-limits for junctions when limits were NOT explicitly
+            # provided.  Explicit limits (from precompute / --same-y) already
+            # account for junction arcs; re-expanding would cause non-convergent
+            # growth because arc heights are recomputed from the incoming limit.
+            if not _limits_explicitly_set:
+                max_used_y_val = max(max_used_y_val, max(pts_y))
+                min_used_y_val = min(min_used_y_val, min(pts_y))
 
     # Strand-aware adjustment
     if not isinstance(data, dict) and data.strand_aware:
@@ -153,6 +165,11 @@ def _compute_y_limits(
             min_used_y_val = -max_used_y_val
     elif not density_by_strand and not jxns:
         min_used_y_val = 0
+
+    # Small expansion so the top / bottom arcs have visual breathing room
+    # and do not appear cramped against the axis edge.
+    max_used_y_val *= 1.1
+    min_used_y_val *= 1.1
 
     return max_used_y_val, min_used_y_val
 
