@@ -493,6 +493,8 @@ def plot_density(
     # Compute y limits using shared logic
     fixed_max_used_y = max_used_y_val is not None
 
+    junctions_on_top = kwargs.get("junctions_on_top", False)
+
     max_used_y_val, min_used_y_val = _compute_y_limits(
         data=data,
         region=region,
@@ -502,6 +504,7 @@ def plot_density(
         density_by_strand=kwargs.get("density_by_strand", False),
         fill_step=fill_step,
         show_mean_jxn_number=show_mean_jxn_number,
+        junctions_on_top=junctions_on_top,
     )
     
     # Draw fill
@@ -557,6 +560,8 @@ def plot_density(
 
             if kwargs.get("density_by_strand"):
                 jxn_on_top = jxn.strand == "+"
+            elif junctions_on_top:
+                jxn_on_top = True
             else:
                 jxn_on_top = jxn_idx % 2 == 0
                 if abs(min_used_y_val) < max_used_y_val:
@@ -659,7 +664,7 @@ def plot_density(
     ):
         max_used_y_val = max(abs(min_used_y_val), max_used_y_val)
         min_used_y_val = -max_used_y_val
-    elif not kwargs.get("density_by_strand") and not jxns:
+    elif not kwargs.get("density_by_strand") and (junctions_on_top or not jxns):
         min_used_y_val = 0
 
     set_y_ticks(

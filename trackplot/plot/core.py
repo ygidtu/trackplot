@@ -986,6 +986,11 @@ class Plot(object):
 
         igv_height_scale = kwargs.get("igv_height_scale")
 
+        # Extract / pop custom params before they flow into downstream **kwargs
+        title = kwargs.pop("title", None)
+        no_title = kwargs.pop("no_title", False)
+        junctions_on_top = kwargs.pop("junctions_on_top", False)
+
         # ====== Phase 1: Load data ======
         self._load_plot_data(n_jobs, *args, **kwargs)
 
@@ -1048,8 +1053,8 @@ class Plot(object):
             else:
                 ax_var = plt.subplot(gs[curr_idx, 0])
 
-            if curr_idx == 0:
-                ax_var.set_title(str(self.region), loc="left")
+            if curr_idx == 0 and not no_title:
+                ax_var.set_title(title or str(self.region), loc="left")
 
             max_y_val_, min_y_val_ = self._resolve_plot_y_limits(
                 p,
@@ -1088,6 +1093,7 @@ class Plot(object):
                             distance_between_label_axis=distance_between_label_axis,
                             raster=raster,
                             fill_step=fill_step,
+                            junctions_on_top=junctions_on_top,
                             **temp_params,
                         )
                         curr_idx += 1
@@ -1103,6 +1109,7 @@ class Plot(object):
                         distance_between_label_axis=distance_between_label_axis,
                         raster=raster,
                         fill_step=fill_step,
+                        junctions_on_top=junctions_on_top,
                         **self.params.get(p, {}),
                     )
             elif p.type == "hic":
@@ -1123,6 +1130,7 @@ class Plot(object):
                     min_used_y_val=min_y_val_,
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
+                    junctions_on_top=junctions_on_top,
                     **self.params.get(p, {}),
                 )
                 curr_idx += 1

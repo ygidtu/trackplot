@@ -134,14 +134,17 @@ def set_x_ticks(
         x_label = f"{x_label}, y axis is {log_trans} transformed"
 
     ax.hlines(y=0, xmin=0, xmax=max(graph_coords), color="black", lw=1)
-    ax.text(
-        x=graph_coords[len(graph_coords) // 2],
-        y=-2.8,
-        s=x_label,
-        fontsize=font_size,
-        ha="center",
-        va="top",
-    )
+
+    no_region_text = kwargs.pop("no_region_text", False)
+    if not no_region_text:
+        ax.text(
+            x=graph_coords[len(graph_coords) // 2],
+            y=-2.8,
+            s=x_label,
+            fontsize=font_size,
+            ha="center",
+            va="top",
+        )
 
     bk = 1
     if not sequence and nx_ticks > 1:

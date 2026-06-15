@@ -1215,6 +1215,30 @@ def _add_interval(p, f):
     "--title", type=click.STRING, default=None, help="Title", show_default=True
 )
 @optgroup.option(
+    "--no-title",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Disable the plot title entirely",
+    show_default=True,
+)
+@optgroup.option(
+    "--no-region-text",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Disable the --event region text on the x-axis ruler",
+    show_default=True,
+)
+@optgroup.option(
+    "--junctions-on-top",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Force all junction arcs to be drawn above the density plot (only effective when --density-by-strand is not set)",
+    show_default=True,
+)
+@optgroup.option(
     "--font", type=click.STRING, default=None, help="Fonts", show_default=True
 )
 @optgroup.group("Web settings")
@@ -1362,6 +1386,10 @@ def main(**kwargs):
         normalize_format=kwargs.get("normalize_format"),
         fill_step=kwargs.get("fill_step", "post"),
         smooth_bin=kwargs["smooth_bin"],
+        title=kwargs["title"],
+        no_title=kwargs["no_title"],
+        no_region_text=kwargs["no_region_text"],
+        junctions_on_top=kwargs["junctions_on_top"],
     )
 
 
