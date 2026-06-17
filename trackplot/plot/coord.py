@@ -40,31 +40,45 @@ def init_graph_coords(
 
     if exons:
         if intron_scale <= 1:
+            # 填充首个外显子前的内含子区域
             for i in range(0, exons[0][0] - region.start):
                 graph_coords[i] = (i - 0) * intron_scale
             exons = __merge_exons__(exons)
             for i in range(0, len(exons)):
                 exon = exons[i]
+
+                # 外显子间内含子（从上一个外显子结束的下一碱基开始，避免重叠）
                 if i > 0:
-                    intron = [exons[i - 1][1], exons[i][0]]
-                    for j in range(intron[0], intron[1]):
+                    intron_start = exons[i - 1][1] + 1
+                    intron_end = exons[i][0]
+                    for j in range(intron_start, intron_end):
                         if j >= region.start:
                             graph_coords[j - region.start] = (
-                                graph_coords[intron[0] - region.start - 1]
-                                + (j - intron[0] + 1) * intron_scale
+                                graph_coords[intron_start - region.start - 1]
+                                + (j - intron_start + 1) * intron_scale
                             )
+
+                # 填充外显子区域
                 for j in range(exon[0], exon[1] + 1):
                     if j >= region.start:
-                        graph_coords[j - region.start] = (
-                            graph_coords[exon[0] - region.start - 1]
-                            + (j - exon[0] + 1) * exon_scale
-                        )
-            intron = [exons[-1][-1], region.end]
-            for i in range(intron[0], intron[1]):
+                        base_idx = exon[0] - region.start - 1
+                        if base_idx < 0:
+                            # 外显子起始位置在区域起点之前或等于起点，从 0 开始
+                            graph_coords[j - region.start] = (j - region.start) * exon_scale
+                        else:
+                            graph_coords[j - region.start] = (
+                                graph_coords[base_idx]
+                                + (j - exon[0] + 1) * exon_scale
+                            )
+
+            # 填充最后一个外显子之后的内含子（从下一碱基开始，到 region.end 结束）
+            intron_start = exons[-1][-1] + 1
+            intron_end = region.end + 1  # +1 确保包含 region.end
+            for i in range(intron_start, intron_end):
                 if i >= region.start:
                     graph_coords[i - region.start] = (
-                        graph_coords[intron[0] - region.start - 1]
-                        + (i - intron[0] + 1) * intron_scale
+                        graph_coords[intron_start - region.start - 1]
+                        + (i - intron_start + 1) * intron_scale
                     )
         else:
             exons = __merge_exons__(exons)
@@ -85,14 +99,14 @@ def init_graph_coords(
                 for i in range(exons[0][0]):
                     steps[i] = step
             for e in range(1, len(exons)):
-                interval = exons[e][0] - exons[e - 1][1] - 2
+                interval = exons[e][0] - exons[e - 1][1] - 1
                 step = intron_scale / interval
-                for i in range(exons[e - 1][1], exons[e][0]):
+                for i in range(exons[e - 1][1] + 1, exons[e][0]):
                     steps[i] = step
 
             if last_interval := len(region) - exons[-1][1] - 1:
                 step = intron_scale / last_interval
-                for i in range(exons[1][1] + 1, len(region)):
+                for i in range(exons[-1][1] + 1, len(region)):
                     steps[i] = step
             graph_coords = list(map(int, itertools.accumulate(steps)))
     else:
