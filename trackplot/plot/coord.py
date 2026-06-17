@@ -160,25 +160,33 @@ def set_x_ticks(
             va="top",
         )
 
-    bk = 1
-    if not sequence and nx_ticks > 1:
-        bk = max(graph_coords) // (nx_ticks - 1)
-
-    reverse_graph_coords = {}
-    for i in range(1, len(graph_coords)):
-        for x, y in zip(
-            range(graph_coords[i - 1], graph_coords[i]),
-            np.linspace(i - 1, i, num=graph_coords[i] - graph_coords[i - 1]),
-        ):
-            reverse_graph_coords[x] = int(y)
-
-    for i in range(graph_coords[0]):
-        reverse_graph_coords[i] = graph_coords[0]
-
     line_space = {}
-    for i in range(nx_ticks - 1):
-        i = bk * i
-        line_space[i] = reverse_graph_coords[i] + region.start
+    if not sequence and nx_ticks > 1:
+        # 在基因组坐标空间均匀放置刻度，再映射到 graph 坐标
+        region_len = region.end - region.start
+        for i in range(nx_ticks - 1):
+            tick_genomic = region.start + round(region_len * i / (nx_ticks - 1))
+            tick_relative = tick_genomic - region.start
+            if 0 <= tick_relative < len(graph_coords):
+                line_space[int(graph_coords[tick_relative])] = tick_genomic
+    else:
+        # sequence 模式: 保持原有的 graph 空间刻度算法
+        bk = 1
+        if nx_ticks > 1:
+            bk = max(graph_coords) // (nx_ticks - 1)
+
+        reverse_graph_coords = {}
+        for i in range(1, len(graph_coords)):
+            for x, y in zip(
+                range(graph_coords[i - 1], graph_coords[i]),
+                np.linspace(i - 1, i, num=graph_coords[i] - graph_coords[i - 1]),
+            ):
+                reverse_graph_coords[x] = int(y)
+        for i in range(graph_coords[0]):
+            reverse_graph_coords[i] = graph_coords[0]
+        for i in range(nx_ticks - 1):
+            i = bk * i
+            line_space[i] = reverse_graph_coords[i] + region.start
     line_space[max(graph_coords)] = region.end
 
     if sequence:
