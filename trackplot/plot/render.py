@@ -406,6 +406,87 @@ def _plot_local_domain(
 # ============================================================================
 
 
+def _auto_adjust_horizontal(
+    text_objs: List,
+    ax,
+    padding_px: float = 4.0,
+    max_iter: int = 20,
+):
+    """
+    水平碰撞检测与自动调整 —— 替代 adjust_text 的 2D 随意移动。
+    将所有文本沿弧线水平排列，通过贪婪算法确保相邻标签互不重叠。
+
+    原理：
+      1. 获取每个文本在显示坐标中的包围盒，计算其数据坐标宽度。
+      2. 按 x 坐标排序，从左到右逐对检查。
+      3. 如果前一个的右边缘 + 间距 > 后一个的左边缘，则把后一个向右推。
+      4. 重复迭代直到没有标签需要移动为止。
+
+    :param text_objs: matplotlib.text.Text 对象列表
+    :param ax: matplotlib Axes
+    :param padding_px: 标签之间的最小间距（像素）
+    :param max_iter: 最大迭代次数
+    """
+    if len(text_objs) < 2:
+        return
+
+    try:
+        fig = ax.figure
+        fig.canvas.draw()
+    except Exception:
+        return  # 无法渲染时直接跳过调整
+
+    inv_trans = ax.transData.inverted()
+
+    # ---- 收集每个标签的数据坐标宽度 ----
+    items = []
+    for t in text_objs:
+        x_data, y_data = t.get_position()
+        bbox = t.get_window_extent()
+
+        # 像素 → 数据坐标
+        left_data = inv_trans.transform((bbox.x0, bbox.y0))[0]
+        right_data = inv_trans.transform((bbox.x1, bbox.y0))[0]
+        half_w = (right_data - left_data) / 2.0
+
+        # 间距（像素 → 数据坐标）
+        p0 = inv_trans.transform((0, 0))[0]
+        p1 = inv_trans.transform((padding_px, 0))[0]
+        pad = abs(p1 - p0)
+
+        items.append({
+            "obj": t,
+            "x": x_data,
+            "y": y_data,
+            "half": half_w,
+            "pad": pad,
+        })
+
+    # 按 x 排序
+    items.sort(key=lambda d: d["x"])
+
+    # ---- 贪婪水平调整 ----
+    for _ in range(max_iter):
+        any_adjusted = False
+
+        for i in range(len(items) - 1):
+            cur = items[i]
+            nxt = items[i + 1]
+
+            cur_right = cur["x"] + cur["half"]
+            nxt_left = nxt["x"] - nxt["half"]
+            min_gap = max(cur["pad"], nxt["pad"])
+
+            need = cur_right + min_gap - nxt_left
+            if need > 0:
+                nxt["x"] += need
+                nxt["obj"].set_position((nxt["x"], nxt["y"]))
+                any_adjusted = True
+
+        if not any_adjusted:
+            break
+
+
 def plot_density(
     ax,
     obj: Optional[File] = None,
@@ -628,17 +709,15 @@ def plot_density(
                     va="center",
                     backgroundcolor="w",
                 )
-                t.set_bbox(dict(alpha=0))
+                t.set_bbox(dict(alpha=0, pad=0.5))
                 text_objs.append(t)
 
         if show_junction_number and len(text_objs) > 1:
-            adjust_text(
+            _auto_adjust_horizontal(
                 text_objs,
                 ax=ax,
-                force_text=(0.5, 0.5),
-                expand=(1.2, 1.2),
-                arrowprops=None,
-                lim=100,
+                padding_px=4.0,
+                max_iter=20,
             )
 
     if obj and obj.title:
