@@ -27,14 +27,16 @@ def _compute_y_limits(
     fill_step: str = "post",
     show_mean_jxn_number: bool = False,
     junctions_on_top: bool = False,
-) -> Tuple[float, float]:
+) -> Tuple[float, float, float]:
     """
     Compute y-axis limits from ReadDepth data, including junction arc extents.
 
     This is the shared core used by both precompute_y_limits() and plot_density()
     to avoid code duplication.
 
-    Returns (max_used_y_val, min_used_y_val).
+    Returns (max_used_y_val, min_used_y_val, base_max).
+    base_max is the raw data maximum before junction arc expansion, used as
+    arc height reference for --same-y cross-panel consistency.
     """
     # --- Determine data-driven baseline values for arc height ---
     # These baselines capture the "true" data range before junction expansion.
@@ -70,19 +72,15 @@ def _compute_y_limits(
     if min_used_y_val is None:
         min_used_y_val = base_min
 
-    # --- Arc heights: use the LARGER of (data baseline, incoming y-limit) ---
-    # In --same-y mode, max_used_y_val may be the global limit (much larger than
-    # this panel's own baseline).  We want the arcs to look proportional to the
-    # visible axis range, so we take max(baseline, incoming_limit).
+    # --- Arc heights: always based on the data baseline ---
+    # Previously this used max(base_max, max_used_y_val) which caused
+    # arc height inflation when max_used_y_val was already expanded by
+    # the precompute step.  The inflated arc peak then exceeded the
+    # y-axis limit and overflowed the panel.
+    # Use base_max / base_min exclusively — the limit expansion logic
+    # below still ensures the axis range grows to accommodate the arcs.
     _arc_ref_max = base_max
-    if max_used_y_val is not None:
-        _arc_ref_max = max(base_max, max_used_y_val)
-
     _arc_ref_min = base_min
-    if min_used_y_val is not None:
-        _arc_ref_min = min(
-            base_min, min_used_y_val
-        )  # both negative → pick the more negative
 
     top_arc_height = abs(3 * _arc_ref_max / 4)
     bot_arc_height = abs(3 * _arc_ref_min / 4) if _arc_ref_min != 0 else top_arc_height
@@ -174,7 +172,7 @@ def _compute_y_limits(
     max_used_y_val *= 1.1
     min_used_y_val *= 1.1
 
-    return max_used_y_val, min_used_y_val
+    return max_used_y_val, min_used_y_val, base_max
 
 
 def precompute_y_limits(
@@ -201,7 +199,7 @@ def precompute_y_limits(
     if data is None:
         data = obj.data
 
-    return _compute_y_limits(
+    _max, _min, _base = _compute_y_limits(
         data=data,
         region=region,
         graph_coords=graph_coords,
@@ -212,3 +210,5 @@ def precompute_y_limits(
         show_mean_jxn_number=False,
         junctions_on_top=kwargs.get("junctions_on_top", False),
     )
+
+    return _max, _min, _base

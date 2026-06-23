@@ -541,6 +541,11 @@ def plot_density(
     # drawn junction arcs have exactly the same height that was used to expand
     # the y-axis limits.  Using the already-expanded max_used_y_val for arc
     # height causes non-convergent growth and truncated junction arcs.
+
+    # Determine whether y-limits were externally provided (e.g. from --same-y).
+    # Must be computed here BEFORE the arc-height block below uses it.
+    fixed_max_used_y = max_used_y_val is not None
+
     if isinstance(data, dict):
         _base_max = max(max(v.plus) if v.plus is not None else 0 for v in data.values())
         _minus_maxes = [
@@ -554,17 +559,20 @@ def plot_density(
     if _base_max % 2 == 1:
         _base_max += 1
 
-    # Arc height reference: use the LARGER of (data baseline, incoming y-limit)
-    # so arcs look proportional to the visible axis range (especially in
-    # --same-y / --same-y-sc mode).  If we only used the data baseline, panels
-    # with small data would have tiny arcs hugging the x-axis when a large
-    # global y-limit is shared across panels.
-    _arc_ref_max = (
-        max(_base_max, max_used_y_val) if max_used_y_val is not None else _base_max
-    )
-    _arc_ref_min = (
-        min(_base_min, min_used_y_val) if min_used_y_val is not None else _base_min
-    )
+    # Arc height reference: use global_arc_ref (from --same-y) when available
+    # and when y-limits were externally provided.  This ensures panels with
+    # small data ranges don't get tiny arcs flattened against the x-axis when
+    # the panel's y-range is scaled up to match a larger panel.
+    #
+    # NOTE: we only use global_arc_ref when fixed_max_used_y is True so that
+    # standalone panels (no --same-y) preserve their original behavior.
+    global_arc_ref = kwargs.get("global_arc_ref")
+    if fixed_max_used_y and global_arc_ref is not None:
+        _arc_ref_max = max(_base_max, global_arc_ref)
+        _arc_ref_min = max(abs(_base_min), global_arc_ref) if _base_min != 0 else _arc_ref_max
+    else:
+        _arc_ref_max = _base_max
+        _arc_ref_min = _base_min
 
     _top_arc_height = abs(3 * _arc_ref_max / 4)
     _bot_arc_height = (
@@ -572,11 +580,9 @@ def plot_density(
     )
 
     # Compute y limits using shared logic
-    fixed_max_used_y = max_used_y_val is not None
-
     junctions_on_top = kwargs.get("junctions_on_top", False)
 
-    max_used_y_val, min_used_y_val = _compute_y_limits(
+    max_used_y_val, min_used_y_val, _base = _compute_y_limits(
         data=data,
         region=region,
         graph_coords=graph_coords,

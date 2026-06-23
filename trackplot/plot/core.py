@@ -866,20 +866,25 @@ class Plot(object):
         return default_y
 
     def _precompute_plot_y_limits(
-        self, p, max_used_y_dict, min_used_y_dict, same_y_by_groups, default_y, **kwargs
+        self, p, max_used_y_dict, min_used_y_dict, base_max_dict, same_y_by_groups, default_y, **kwargs
     ):
-        """Compute and store y-limits for all objects in a plot."""
+        """Compute and store y-limits for all objects in a plot.
+
+        Also collects base_max (raw data maximum) per object path for use as
+        a global arc-height reference in --same-y mode.
+        """
         if p.type not in ("density", "site-plot", "line"):
             return
 
         for obj in p.obj:
-            _max, _min = precompute_y_limits(
+            _max, _min, _base = precompute_y_limits(
                 obj,
                 data=obj.data,
                 region=self.region,
                 graph_coords=self.graph_coords,
                 **kwargs,
             )
+            base_max_dict[obj.path] = max(_base, base_max_dict.get(obj.path, 0))
 
             if obj.label in same_y_by_groups:
                 key = same_y_by_groups[obj.label]
@@ -890,10 +895,11 @@ class Plot(object):
                     if obj.data.minus is None
                     else min_used_y_dict.get(obj.path, 0),
                 )
+                base_max_dict[key] = max(_base, base_max_dict.get(key, 0))
 
             if isinstance(obj.data, dict):
                 for key, readDepth in obj.data.items():
-                    _max, _min = precompute_y_limits(
+                    _max, _min, _base = precompute_y_limits(
                         obj,
                         data=readDepth,
                         graph_coords=self.graph_coords,
@@ -907,6 +913,7 @@ class Plot(object):
                         if readDepth.minus is None
                         else min_used_y_dict.get(obj.path, 0),
                     )
+                    base_max_dict[key] = max(_base, base_max_dict.get(key, 0))
 
                 continue
 
@@ -928,21 +935,29 @@ class Plot(object):
                     min_used_y_dict[key] = min_used_y_dict[obj.path]
 
     def _resolve_plot_y_limits(
-        self, p, max_used_y_val, min_used_y_val, same_y_by_groups, default_y, **kwargs
+        self, p, max_used_y_val, min_used_y_val, base_max_val, same_y_by_groups, default_y, **kwargs
     ):
-        """Determine y-limits for a single plot based on same-y / default-y settings."""
+        """Determine y-limits for a single plot based on same-y / default-y settings.
+
+        Returns (max_y, min_y, global_base_max).
+        global_base_max is the max of all base_max values (for --same-y mode),
+        used as the arc height reference so all panels share consistent arc heights.
+        """
         same_y_sc = kwargs.get("same_y_sc")
         same_y = kwargs.get("same_y")
 
         if same_y_sc and p.obj[0].is_single_cell:
-            return max_used_y_val.get(p.obj[0].path), min_used_y_val.get(p.obj[0].path)
+            _bm = base_max_val.get(p.obj[0].path) if base_max_val else None
+            return max_used_y_val.get(p.obj[0].path), min_used_y_val.get(p.obj[0].path), _bm
 
         if same_y_by_groups and p.obj[0].label in same_y_by_groups:
             key = same_y_by_groups[p.obj[0].label]
-            return max_used_y_val.get(key), min_used_y_val.get(key)
+            _bm = base_max_val.get(key) if base_max_val else None
+            return max_used_y_val.get(key), min_used_y_val.get(key), _bm
 
         if same_y and max_used_y_val:
-            return max(max_used_y_val.values()), min(min_used_y_val.values())
+            _bm = max(base_max_val.values()) if base_max_val else None
+            return max(max_used_y_val.values()), min(min_used_y_val.values()), _bm
 
         if default_y and p.type in ("density", "site-plot", "line"):
             for obj in p.obj:
@@ -956,8 +971,8 @@ class Plot(object):
                     if same_y_by_groups and obj.label in same_y_by_groups:
                         max_y = max_used_y_val.get(obj.path, max_y)
                         min_y = min_used_y_val.get(obj.path, min_y)
-                    return max_y, min_y
-        return None, None
+                    return max_y, min_y, None
+        return None, None, None
 
     # ------------------------------------------------------------------
     # Main plot method
@@ -1015,7 +1030,7 @@ class Plot(object):
         )
 
         # ====== Phase 4: Precompute global y-limits ======
-        max_used_y_val, min_used_y_val = {}, {}
+        max_used_y_val, min_used_y_val, base_max_val = {}, {}, {}
         same_y_by_groups = {}
         default_y = self._load_default_y(kwargs.get("y_limit"))
 
@@ -1039,6 +1054,7 @@ class Plot(object):
                     p,
                     max_used_y_val,
                     min_used_y_val,
+                    base_max_val,
                     same_y_by_groups,
                     default_y,
                     **kwargs,
@@ -1056,21 +1072,26 @@ class Plot(object):
             if curr_idx == 0 and not no_title:
                 ax_var.set_title(title or str(self.region), loc="left")
 
-            max_y_val_, min_y_val_ = self._resolve_plot_y_limits(
+            max_y_val_, min_y_val_, base_max_ = self._resolve_plot_y_limits(
                 p,
                 max_used_y_val,
                 min_used_y_val,
+                base_max_val,
                 same_y_by_groups,
                 default_y,
                 same_y_sc=kwargs.get("same_y_sc"),
                 same_y=kwargs.get("same_y"),
             )
-            
+
             if max_y_val_ is not None:
                 max_y_val_ *= 1.1
-            
+
             if min_y_val_ is not None:
                 min_y_val_ *= 1.1
+
+            # For --same-y mode: use global base_max as arc height reference
+            # so all panels draw junctions at a consistent scale.
+            global_arc_ref = base_max_
 
             logger.info(
                 f"plotting {p.type} at idx: {curr_idx} with height_ratio: {height_ratio[curr_idx]}"
@@ -1094,6 +1115,7 @@ class Plot(object):
                             raster=raster,
                             fill_step=fill_step,
                             junctions_on_top=junctions_on_top,
+                            global_arc_ref=global_arc_ref,
                             **temp_params,
                         )
                         curr_idx += 1
@@ -1110,6 +1132,7 @@ class Plot(object):
                         raster=raster,
                         fill_step=fill_step,
                         junctions_on_top=junctions_on_top,
+                        global_arc_ref=global_arc_ref,
                         **self.params.get(p, {}),
                     )
             elif p.type == "hic":
@@ -1131,6 +1154,7 @@ class Plot(object):
                     distance_between_label_axis=distance_between_label_axis,
                     raster=raster,
                     junctions_on_top=junctions_on_top,
+                    global_arc_ref=global_arc_ref,
                     **self.params.get(p, {}),
                 )
                 curr_idx += 1
