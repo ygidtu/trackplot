@@ -29,6 +29,9 @@ dependencies = [
 ]
 
 
+[project.scripts]
+trackplot = "trackplot.cli:main"  # 假设入口在 trackplot/cli.py 的 main 函数
+
 [build-system]
 requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
