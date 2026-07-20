@@ -263,11 +263,8 @@ class Bam(SingleCell):
                         ):
                             continue
 
-                        if len(umis[barcode]) == 0:
+                        if umi not in umis[barcode]:
                             umis[barcode][umi] = hash(read.query_name)
-                        # else:
-                        #     # There is no umi tag in atacdata, and we add it
-                        #     continue
 
                 start = read.reference_start
                 if required_strand and strand != required_strand:
