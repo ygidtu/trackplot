@@ -2,9 +2,9 @@
 
 [![PyPI version](https://badge.fury.io/py/trackplot.svg)](https://pypi.org/project/trackplot/)
 [![PyPI download](https://img.shields.io/pypi/dm/trackplot.svg)](https://pypi.org/project/trackplot/)
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/trackplot/README.html)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://bioconda.github.io/recipes/trackplot/README.html)
 [![Documentation Status](https://readthedocs.org/projects/trackplot/badge/?version=latest)](https://trackplot.readthedocs.io/en/latest/)
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%20v3-clause.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![DOI](https://img.shields.io/badge/DOI-10.1101%2F2022.11.02.514803%20-blue)](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011477)
 
 ---
@@ -13,11 +13,11 @@
 
 [Tutorials](https://trackplot.readthedocs.io/en/latest/)
 
-## what is trackplot
+## What is trackplot
 
-trackplot is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. 
+Trackplot is a tool for visualizing various next-generation sequencing (NGS) data, including DNA-seq, RNA-seq, single-cell RNA-seq and full-length sequencing datasets. 
 
-### Features of trackplot
+### Features
 
 1. Support various file formats as input
 2. Support strand-aware coverage plot
@@ -50,7 +50,7 @@ Trackplot is based on **Python3** `(python_requires='>=3.8')`,
 and we have simplified the installation process on the main page. 
 For a more comprehensive installation guide, please refer to [this link](./docs/installation.md).
 
-### For impatient
+### Quick start
 
 ```shell
 pip install trackplot
@@ -95,15 +95,23 @@ pip install trackplot
 
 ---
 
-2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
+2. [AppBundle](https://github.com/xplshn/pelf) (Linux/WSL x86_64 platform only)
 
 For a binary version of the tool and more comprehensive information, please visit [this link](./docs/installation.md).
 
 ```bash
-# example with version v0.3.5, please using your interested version according to your needs
-export VERSION=0.3.5
-chmod +x trackplot-${VERSION}-x86_64.AppImage
-./trackplot-${VERSION}-x86_64.AppImage --help
+# build the AppBundle from source (version auto-detected from pyproject.toml)
+sh build-appbundle.sh
+
+# the output filename and appbundle ID are printed at the end of the script
+# package with pelf (see https://github.com/xplshn/pelf)
+pelf \
+    --add-appdir "./trackplot.AppDir" \
+    --appbundle-id "$APPBUNDLE_ID" \
+    --output-to "$OUTPUT_FILE"
+
+chmod +x "$OUTPUT_FILE"
+./"$OUTPUT_FILE" --help
 ```
 
 ---
@@ -142,20 +150,20 @@ trackplot --help
 <p>
 
 
-1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
+1. AppBundle (Linux/WSL x86_64 only)
+
+Build the AppBundle following the [instructions above](#using-trackplot-by-a-command-line), then:
 
 ```bash
-# example with version v0.3.3, please using your interested version according to your needs
-export VERSION=0.3.3
-gunzip trackplot-${VERSION}-x86_64.AppImage
-chmod +x trackplot-${VERSION}-x86_64.AppImage
-./trackplot-${VERSION}-x86_64.AppImage --help
+# OUTPUT_FILE is printed by build-appbundle.sh
+chmod +x "$OUTPUT_FILE"
+./"$OUTPUT_FILE" --help
 
 # startup webserver
-./trackplot-${VERSION}-x86_64.AppImage --start-server --host 0.0.0.0 --port 5000 --plots ./plots
+./"$OUTPUT_FILE" --start-server --host 0.0.0.0 --port 5000 --plots ./plots
 ```
-    
-**Note:** the `--plots` were required while using appimages
+
+**Note:** the `--plots` were required while using appbundles
 
 ---
 
@@ -218,7 +226,7 @@ trackplot \
   -p 4
 ```
 
-if trackplot was installed by docker, here is the cmd
+If trackplot was installed via docker, here is the cmd:
 
 ```bash
 ## The absolute path is required in Docker env.
@@ -252,17 +260,17 @@ docker run -v $PWD:$PWD -w $PWD --rm ygidtu/trackplot \
 
 ```
 
-here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/main/example/example.png).
+Here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/main/example/example.png).
 
 
 ## Questions
 
-Visit [issues](https://github.com/ygidtu/trackplot/issues) or 
-contact [Yiming Zhang](https://github.com/ygidtu) or 
+Visit [issues](https://github.com/ygidtu/trackplot/issues) or
+contact [Yiming Zhang](https://github.com/ygidtu) or
 [Ran Zhou](https://github.com/zhou-ran)
 
 ## Citation
 
-If you use the tool in your publication, please cite by
+If you use trackplot in your publication, please cite:
 
-[Zhang Y, Zhou R, Liu L, et al. Trackplot: A flexible toolkit for combinatorial analysis of genomic data[J]. PLoS computational biology, 2023, 19(9): e1011477.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011477)
+Zhang Y, Zhou R, Liu L, et al. Trackplot: A flexible toolkit for combinatorial analysis of genomic data. *PLoS Computational Biology*, 2023, 19(9): e1011477.
