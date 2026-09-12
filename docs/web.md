@@ -8,21 +8,26 @@
 trackplot --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 ```
 
-### AppImage (Linux/WSL x86_64 users only)
+### AppBundle (Linux/WSL x86_64 users only)
 
-Download the trackplot appimage file from our [release](https://github.com/ygidtu/trackplot/releases)
+Build the AppBundle from source (version auto-detected from `pyproject.toml`):
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
-chmod +x trackplot-${VERSION}-x86_64.AppImage
-./trackplot-${VERSION}-x86_64.AppImage --help
+sh build-appbundle.sh
+# output filename and APPBUNDLE_ID are printed at the end of the script
+```
+
+Then run:
+
+```bash
+chmod +x "$OUTPUT_FILE"
+./"$OUTPUT_FILE" --help
 
 # startup webserver
-./trackplot-${VERSION}-x86_64.AppImage --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+./"$OUTPUT_FILE" --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 ```
-    
-**Note:** the `--plots` were required while using appimages
+
+**Note:** the `--plots` were required while using appbundles
 
 ---
 

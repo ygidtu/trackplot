@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 Generate object for processing HiC matrix information
 
 pre-process code was re-wrote based
@@ -21,21 +21,33 @@ from trackplot.file.File import File
 
 
 class HiCTrack(File):
+    __slots__ = (
+        "path",
+        "matrix",
+        "x",
+        "y",
+        "depth",
+        "log_trans",
+        "label",
+        "region",
+        "is_single_cell",
+        "tad",
+        "tad_list",
+    )
 
-    __slots__ = "path", "matrix", "x", "y", "depth", "log_trans", "label", "region", "is_single_cell", "tad", "tad_list"
-
-    def __init__(self,
-                 path: str,
-                 label: str = "",
-                 depth: int = 30000,
-                 log_trans: Optional[str] = None,
-                 tad: Optional[str] = None,
-                 matrix: Optional[np.ndarray] = None,
-                 x_coord: Optional[np.ndarray] = None,
-                 y_coord: Optional[np.ndarray] = None,
-                 region: Optional[GenomicLoci] = None,
-                 is_single_cell: bool = False
-                 ):
+    def __init__(
+        self,
+        path: str,
+        label: str = "",
+        depth: int = 30000,
+        log_trans: Optional[str] = None,
+        tad: Optional[str] = None,
+        matrix: Optional[np.ndarray] = None,
+        x_coord: Optional[np.ndarray] = None,
+        y_coord: Optional[np.ndarray] = None,
+        region: Optional[GenomicLoci] = None,
+        is_single_cell: bool = False,
+    ):
         super().__init__(path, region=region)
         self.matrix = matrix
         self.x = x_coord
@@ -48,13 +60,14 @@ class HiCTrack(File):
         self.tad_list = []
 
     @classmethod
-    def create(cls,
-               path: str,
-               label: str,
-               depth: int,
-               log_trans: Optional[str] = False,
-               tad: Optional[str] = None
-               ):
+    def create(
+        cls,
+        path: str,
+        label: str,
+        depth: int,
+        log_trans: Optional[str] = False,
+        tad: Optional[str] = None,
+    ):
         """
         Create a HiCTrack object for fetching interaction matrix
         :param path: the HiC file which could be one of [h5, cool / mcool / scool, hicpro, homer]
@@ -65,18 +78,9 @@ class HiCTrack(File):
         :return:
         """
 
-        return cls(
-            path=path,
-            label=label,
-            depth=depth,
-            log_trans=log_trans,
-            tad=tad
-        )
+        return cls(path=path, label=label, depth=depth, log_trans=log_trans, tad=tad)
 
-    def load(self,
-             region: GenomicLoci,
-             **kwargs
-             ):
+    def load(self, region: GenomicLoci, **kwargs):
         """
         Load data from the given region
         :param region: the GenomicLoci object of given region
@@ -91,9 +95,15 @@ class HiCTrack(File):
         except:
             logger.info("may be caused by the mismatch of chromosome")
             if chromosome_id.startswith("chr"):
-                chromosome_id = region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT"
+                chromosome_id = (
+                    region.chromosome.replace("chr", "")
+                    if region.chromosome != "chrM"
+                    else "MT"
+                )
             else:
-                chromosome_id = "chr" + region.chromosome if region.chromosome != "MT" else "chrM"
+                chromosome_id = (
+                    "chr" + region.chromosome if region.chromosome != "MT" else "chrM"
+                )
 
             chr_start_id, chr_end_id = hic.getChrBinRange(chromosome_id)
 
@@ -103,8 +113,11 @@ class HiCTrack(File):
         start_bp = max(chr_start, region_start - self.depth)
         end_bp = min(chr_end, region_end + self.depth)
 
-        idx = [idx for idx, x in enumerate(hic.cut_intervals)
-               if x[0] == chromosome_id and x[1] >= start_bp and x[2] <= end_bp]
+        idx = [
+            idx
+            for idx, x in enumerate(hic.cut_intervals)
+            if x[0] == chromosome_id and x[1] >= start_bp and x[2] <= end_bp
+        ]
 
         start_pos = [x[1] for i, x in enumerate(hic.cut_intervals) if i in idx]
         start_pos = tuple(list(start_pos) + [hic.cut_intervals[idx[-1]][2]])
@@ -116,19 +129,24 @@ class HiCTrack(File):
         depth_in_bins = max(1, int(1.5 * region_len / hic.getBinSize()))
 
         if current_depth < self.depth:
-            logger.debug(f"The depth was set to {self.depth} which is more than 125% "
-                           f"of the region plotted. The depth will be set "
-                           f"to {current_depth}.\n")
+            logger.debug(
+                f"The depth was set to {self.depth} which is more than 125% "
+                f"of the region plotted. The depth will be set "
+                f"to {current_depth}.\n"
+            )
             # remove from matrix all data points that are not visible.
-            matrix = matrix - sparse.triu(matrix, k=depth_in_bins, format='csr')
+            matrix = matrix - sparse.triu(matrix, k=depth_in_bins, format="csr")
 
         matrix = np.asarray(matrix.todense().astype(float))
 
         n = matrix.shape[0]
         t = np.array([[1, 0.5], [-1, 0.5]])
-        matrix_tmp = np.dot(np.array([(i[1], i[0])
-                                      for i in itertools.product(start_pos[::-1],
-                                                                 start_pos)]), t)
+        matrix_tmp = np.dot(
+            np.array(
+                [(i[1], i[0]) for i in itertools.product(start_pos[::-1], start_pos)]
+            ),
+            t,
+        )
 
         self.x = matrix_tmp[:, 1].reshape(n + 1, n + 1)
         self.y = matrix_tmp[:, 0].reshape(n + 1, n + 1)
@@ -148,7 +166,7 @@ class HiCTrack(File):
                         end=current_end,
                         strand=self.region.strand,
                         transcript_id=f"{self.region.chromosome}:{current_start}-{current_end}",
-                        exons=[]
+                        exons=[],
                     )
 
                     if read.start < self.region.start or read.end > self.region.end:
@@ -157,7 +175,7 @@ class HiCTrack(File):
                     self.tad_list.append(read)
 
             except IOError as err:
-                logger.error('There is no .bed file at {0}'.format(self.tad))
+                logger.error("There is no .bed file at {0}".format(self.tad))
                 logger.error(err)
             except ValueError as err:
                 logger.error(self.path)
@@ -171,5 +189,6 @@ class HiCTrack(File):
             matrix = funcs[log_trans](matrix + 1)
         return matrix
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pass

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-u"""
+"""
 Created by ygidtu@gmail.com at 2022.05.11
 
 The scripts contain the object to handle all the pysam, pybigwig related reading
 """
+
 import os
 import sys
 from typing import Optional
@@ -17,7 +18,7 @@ from trackplot.base.GenomicLoci import GenomicLoci
 
 
 def __opposite_strand__(strand: str) -> str:
-    u"""
+    """
     replace to opposite of current strand information
     :param strand: strand, one of ['+', '-', '*']
     :return: an opposite of strand
@@ -32,14 +33,16 @@ def __opposite_strand__(strand: str) -> str:
 
 
 def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
-    u"""
+    """
     Determine the strand of for each read.
     :param read: a pysam.AlignedSegment from the bam file.
     :param library: the method for preparing of the library,
         value should be one of [frf: "fr-firststrand", frs: "fr-secondstrand", fru: "fr-unstrand"]
     :return:
     """
-    assert library in ["frf", "frs", "fru"], "Can't recognize the definition of library."
+    assert library in ["frf", "frs", "fru"], (
+        "Can't recognize the definition of library."
+    )
 
     # return '+' strand for all unstrand library.
     if library == "fru":
@@ -69,7 +72,6 @@ def __get_strand__(read: pysam.AlignedSegment, library: str) -> str:
 
 
 class Reader(object):
-
     @classmethod
     def __modify_chrom__(cls, region: GenomicLoci, reader, parser=None):
         if not region.chromosome.startswith("chr"):
@@ -78,25 +80,35 @@ class Reader(object):
             if parser:
                 iter_ = reader.fetch(
                     "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
-                    region.start, region.end, parser=parser
+                    region.start,
+                    region.end,
+                    parser=parser,
                 )
             else:
                 iter_ = reader.fetch(
                     "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
-                    region.start, region.end
+                    region.start,
+                    region.end,
                 )
 
         else:
             logger.info("Guess 'chr' is redundant")
             if parser:
                 iter_ = reader.fetch(
-                    region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
-                    region.start, region.end, parser=parser
+                    region.chromosome.replace("chr", "")
+                    if region.chromosome != "chrM"
+                    else "MT",
+                    region.start,
+                    region.end,
+                    parser=parser,
                 )
             else:
                 iter_ = reader.fetch(
-                    region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
-                    region.start, region.end
+                    region.chromosome.replace("chr", "")
+                    if region.chromosome != "chrM"
+                    else "MT",
+                    region.start,
+                    region.end,
                 )
 
         return iter_
@@ -108,9 +120,11 @@ class Reader(object):
             logger.info(f"try to create index for {path}")
             pysam.index(path)
 
-        with pysam.AlignmentFile(path, 'rb') as bam_file:
+        with pysam.AlignmentFile(path, "rb") as bam_file:
             try:
-                relevant_reads = bam_file.fetch(reference=chrom, start=region.start, end=region.end)
+                relevant_reads = bam_file.fetch(
+                    reference=chrom, start=region.start, end=region.end
+                )
             except ValueError as err:
                 # logger.debug(err)
                 relevant_reads = cls.__modify_chrom__(region, bam_file)
@@ -129,10 +143,13 @@ class Reader(object):
                     region.chromosome,
                     region.start,
                     region.end,
-                    parser=pysam.asGTF() if not bed else pysam.asBed())
+                    parser=pysam.asGTF() if not bed else pysam.asBed(),
+                )
             except ValueError:
                 try:
-                    iter_ = cls.__modify_chrom__(region, r, parser=pysam.asGTF() if not bed else pysam.asBed())
+                    iter_ = cls.__modify_chrom__(
+                        region, r, parser=pysam.asGTF() if not bed else pysam.asBed()
+                    )
                 except ValueError as err:
                     logger.debug("please check the input region and gtf files")
                     logger.error(err)
@@ -146,7 +163,9 @@ class Reader(object):
         try:
             import pyBigWig
         except ImportError as err:
-            logger.error(f"Please install pyBigWig properly to enable bigWig support: {err}")
+            logger.error(
+                f"Please install pyBigWig properly to enable bigWig support: {err}"
+            )
             sys.exit(1)
 
         with pyBigWig.open(path) as r:
@@ -157,16 +176,24 @@ class Reader(object):
 
                 logger.info("may be caused by the mismatch of chromosome")
                 if region.chromosome.startswith("chr"):
-                    return r.values(region.chromosome.replace("chr", ""), region.start, region.end + 1)
+                    return r.values(
+                        region.chromosome.replace("chr", ""),
+                        region.start,
+                        region.end + 1,
+                    )
                 else:
-                    return r.values("chr" + region.chromosome, region.start, region.end + 1)
+                    return r.values(
+                        "chr" + region.chromosome, region.start, region.end + 1
+                    )
 
     @classmethod
     def read_bigbed(cls, path: str, region: GenomicLoci):
         try:
             import pyBigWig
         except ImportError as err:
-            logger.error(f"Please install pyBigWig properly to enable bigWig support: {err}")
+            logger.error(
+                f"Please install pyBigWig properly to enable bigWig support: {err}"
+            )
             sys.exit(1)
 
         with pyBigWig.open(path) as r:
@@ -182,15 +209,19 @@ class Reader(object):
                     logger.info("may be caused by the mismatch of chromosome")
                     if region.chromosome.startswith("chr"):
                         iter_ = r.entries(
-                            region.chromosome.replace("chr", "") if region.chromosome != "chrM" else "MT",
+                            region.chromosome.replace("chr", "")
+                            if region.chromosome != "chrM"
+                            else "MT",
                             region.start,
-                            region.end + 1
+                            region.end + 1,
                         )
                     else:
                         iter_ = r.entries(
-                            "chr" + region.chromosome if region.chromosome != "MT" else "chrM",
+                            "chr" + region.chromosome
+                            if region.chromosome != "MT"
+                            else "chrM",
                             region.start,
-                            region.end + 1
+                            region.end + 1,
                         )
                 if not iter_:
                     iter_ = []
@@ -201,9 +232,7 @@ class Reader(object):
         if not os.path.exists(path + ".tbi"):
             logger.info(f"create tbi index for {path}")
             pysam.tabix_index(
-                path, seq_col=0,
-                start_col=1, end_col=1,
-                force=True, keep_original=True
+                path, seq_col=0, start_col=1, end_col=1, force=True, keep_original=True
             )
 
         with pysam.TabixFile(path) as r:
@@ -211,7 +240,12 @@ class Reader(object):
                 iter_ = r.fetch()
             else:
                 try:
-                    iter_ = r.fetch(region.chromosome, region.start, region.end, parser=pysam.asTuple())
+                    iter_ = r.fetch(
+                        region.chromosome,
+                        region.start,
+                        region.end,
+                        parser=pysam.asTuple(),
+                    )
                 except ValueError:
                     try:
                         iter_ = cls.__modify_chrom__(region, r, parser=pysam.asTuple())
@@ -228,11 +262,13 @@ class Reader(object):
         try:
             from hicmatrix import HiCMatrix as hm
         except ImportError as err:
-            logger.error(f"Please install pyBigWig properly to enable HiC support: {err}")
+            logger.error(
+                f"Please install pyBigWig properly to enable HiC support: {err}"
+            )
             sys.exit(1)
 
-        os.environ['NUMEXPR_MAX_THREADS'] = '16'
-        os.environ['NUMEXPR_NUM_THREADS'] = '8'
+        os.environ["NUMEXPR_MAX_THREADS"] = "16"
+        os.environ["NUMEXPR_NUM_THREADS"] = "8"
         hic = hm.hiCMatrix(path, f"{region.chromosome}:{region.start}-{region.end}")
         return hic
 
@@ -243,11 +279,11 @@ class Reader(object):
             pysam.index(path)
 
         total = 0
-        with pysam.AlignmentFile(path, 'rb') as bam_file:
+        with pysam.AlignmentFile(path, "rb") as bam_file:
             for _ in bam_file:
                 total += 1
         return total
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

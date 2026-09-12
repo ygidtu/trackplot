@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-u"""
+""" """
 
-"""
 from trackplot.base.GenomicLoci import GenomicLoci
 
 
 class Stroke(object):
     __slots__ = ["start", "end", "color", "label", "origin"]
 
-    def __init__(self, start: int, end: int, color: str = "red", label: str = "", origin: str = ""):
+    def __init__(
+        self,
+        start: int,
+        end: int,
+        color: str = "red",
+        label: str = "",
+        origin: str = "",
+    ):
         self.start = start
         self.end = end
         self.color = color

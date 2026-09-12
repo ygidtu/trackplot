@@ -15,6 +15,9 @@ Dockerfile
 WebDockerfile
 
 *.AppImage
+*.AppBundle
+*.dwfs.AppBundle
+*.sqfs.AppBundle
 *.egg-info/
 *.sh
 *.tar.gz

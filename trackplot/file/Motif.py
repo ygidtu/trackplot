@@ -1,8 +1,7 @@
 #!/usr/bin/pyton3
 # -*- coding:utf-8 -*-
-u"""
+""" """
 
-"""
 import os
 
 from trackplot.base.GenomicLoci import GenomicLoci
@@ -11,14 +10,14 @@ from trackplot.file.File import File
 
 
 class Motif(File):
-
     __slots__ = "path", "region", "label", "data"
 
-    def __init__(self,
-                 path: str,
-                 region: GenomicLoci,
-                 ):
-        u"""
+    def __init__(
+        self,
+        path: str,
+        region: GenomicLoci,
+    ):
+        """
         the plot region
         """
         super().__init__(path, region=region)
@@ -38,5 +37,5 @@ class Motif(File):
         self.data = data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

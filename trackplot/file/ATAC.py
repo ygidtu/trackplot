@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 This file contains the object to handle bam file related issues.
 
 changelog:
     1. add library parameter for determining of read strand at 2022.4.28.
 
 """
+
 import os
 from copy import deepcopy
 from typing import Dict, Optional, Set
@@ -21,13 +22,18 @@ from trackplot.file.File import SingleCell
 
 
 class ATAC(SingleCell):
-
     __slots__ = "title", "label", "size_factor", "barcode_groups", "barcode"
 
-    def __init__(self,
-                 path: str, barcode_groups: Dict[str, Set[str]], barcode: str, size_factor,
-                 label: str = "", title: str = ""):
-        u"""
+    def __init__(
+        self,
+        path: str,
+        barcode_groups: Dict[str, Set[str]],
+        barcode: str,
+        size_factor,
+        label: str = "",
+        title: str = "",
+    ):
+        """
         init this object
         :param label: the left axis label
         :param title: the default title to show in the upper-right of density plot
@@ -70,14 +76,16 @@ class ATAC(SingleCell):
         return {x: y / median_size_factor for x, y in size_factors.items()}
 
     @classmethod
-    def create(cls,
-               path: str,
-               label: str = "",
-               title: str = "",
-               barcode_groups: Optional[Dict[str, Set[str]]] = None,
-               barcode: Optional[str] = None,
-               size_factors=None):
-        u"""
+    def create(
+        cls,
+        path: str,
+        label: str = "",
+        title: str = "",
+        barcode_groups: Optional[Dict[str, Set[str]]] = None,
+        barcode: Optional[str] = None,
+        size_factors=None,
+    ):
+        """
         :param path: the path to bam file
         :param label: the left axis label
         :param title: the default title to show in the upper-right of density plot
@@ -93,7 +101,7 @@ class ATAC(SingleCell):
             title=title,
             barcode=barcode,
             barcode_groups=barcode_groups,
-            size_factor=size_factors
+            size_factor=size_factors,
         )
 
     def __hash__(self):
@@ -110,12 +118,14 @@ class ATAC(SingleCell):
 
         return "\t".join(temp)
 
-    def load(self,
-             region: GenomicLoci,
-             threshold: int = 0,
-             required_strand: Optional[str] = None,
-             log_trans: Optional[str] = None,
-             **kwargs):
+    def load(
+        self,
+        region: GenomicLoci,
+        threshold: int = 0,
+        required_strand: Optional[str] = None,
+        log_trans: Optional[str] = None,
+        **kwargs,
+    ):
         """
             determine_depth determines the coverage at each base between start_coord and end_coord, inclusive.
 
@@ -146,7 +156,9 @@ class ATAC(SingleCell):
 
         depth_vector = np.zeros(len(region), dtype=int)
         try:
-            for _, start, end, barcode, count in Reader.read_depth(path=self.path, region=region):
+            for _, start, end, barcode, count in Reader.read_depth(
+                path=self.path, region=region
+            ):
                 # filter reads by 10x barcodes
                 start, end, count = int(start), int(end), int(count)
                 if not self.empty_barcode():
@@ -155,7 +167,7 @@ class ATAC(SingleCell):
                 depth_vector[max(start - region.start, 0)] += count
                 depth_vector[min(end - region.start, len(depth_vector) - 1)] += count
         except IOError as err:
-            logger.error('There is no .bam file at {0}'.format(self.path))
+            logger.error("There is no .bam file at {0}".format(self.path))
             logger.error(err)
         except ValueError as err:
             logger.error(self.path)
@@ -166,11 +178,11 @@ class ATAC(SingleCell):
 
         depth_vector = self.data.wiggle
         for i in range(half_bin, len(self.region)):
-            depth_vector[i] = np.mean(depth_vector[i-half_bin:i+half_bin])
-        depth_vector = depth_vector[half_bin:len(depth_vector) - half_bin]
+            depth_vector[i] = np.mean(depth_vector[i - half_bin : i + half_bin])
+        depth_vector = depth_vector[half_bin : len(depth_vector) - half_bin]
         self.data = ReadDepth(depth_vector)
         return self
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

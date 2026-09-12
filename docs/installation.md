@@ -18,33 +18,26 @@ pip install trackplot
 
 ---
 
-#### 2. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 platform only)
+#### 2. AppBundle (Linux/WSL x86_64 platform only)
 
-
-All the AppImage files were tested on the official pre-built GNU/Linux distributions docker images:
-- Arch: `appimagecrafters/tests-env:archlinux-latest`
-- Fedora: `appimagecrafters/tests-env:fedora-30`
-- Debian: `appimagecrafters/tests-env:debian-stable`
-- Ubuntu: `appimagecrafters/tests-env:ubuntu-bionic`
-- Centos: `appimagecrafters/tests-env:centos-7`
-
->Due to the limitation of AppImage technic itself, we only provide AppImage for Linux and Windows subsystem for Linux (x86_64 platform) users.
-Once you have installation issues and not familiar with docker, 
-please download the AppImage file from our releases.
-> 
-> Once the AppImage file couldn't work properly please open an issue in this repo, 
-and provide us the system platform and full error messages for us to debug.
-> 
-> **Notes:** 
-> 1. the AppImage will decompress all bundled files before execution, 
-> therefore it will a little bit slower than command line tools and source code
-> 2. please use absolute path instead of relative path.
+Build the AppBundle from source using the provided script (version auto-detected from `pyproject.toml`):
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
-chmod +x trackplot-${VERSION}-x86_64.AppImage
-./trackplot-${VERSION}-x86_64.AppImage --help
+sh build-appbundle.sh
+# output filename and APPBUNDLE_ID are printed at the end of the script
+```
+
+Then package and run:
+
+```bash
+# package with pelf (see https://github.com/xplshn/pelf)
+pelf \
+    --add-appdir "./trackplot.AppDir" \
+    --appbundle-id "$APPBUNDLE_ID" \
+    --output-to "$OUTPUT_FILE"
+
+chmod +x "$OUTPUT_FILE"
+./"$OUTPUT_FILE" --help
 ```
 
 ---
@@ -185,21 +178,21 @@ uv run main.py --help
 
 ### Using trackplot by a local webserver
 
-#### 1. [AppImage](https://github.com/ygidtu/trackplot/releases) (Linux/WSL x86_64 only)
+#### 1. AppBundle (Linux/WSL x86_64 only)
+
+Build the AppBundle following the [instructions above](#2-appbundle-linuxwsl-x86_64-platform-only), then:
 
 ```bash
-# example with version v0.3.2, please using your interested version according to your needs
-export VERSION=0.3.2
-gunzip trackplot-${VERSION}-x86_64.AppImage
-chmod +x trackplot-${VERSION}-x86_64.AppImage
-./trackplot-${VERSION}-x86_64.AppImage --help
+# OUTPUT_FILE is printed by build-appbundle.sh
+chmod +x "$OUTPUT_FILE"
+./"$OUTPUT_FILE" --help
 
 # startup webserver
-./trackplot-${VERSION}-x86_64.AppImage --start-server --host 127.0.0.1 --port 5000 --plots ./plots
+./"$OUTPUT_FILE" --start-server --host 127.0.0.1 --port 5000 --plots ./plots
 
 ```
-    
-**Note:** the `--plots` were required while using appimages
+
+**Note:** the `--plots` were required while using appbundles
 
 ---
 

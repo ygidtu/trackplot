@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-u"""
+"""
 This file contains the configuration of different themes
 """
+
 from matplotlib import axes
 
 
 class Theme(object):
     @classmethod
     def blank(cls, ax: axes.Axes):
-        u"""
+        """
 
         :param ax:
         :return:
@@ -23,15 +24,15 @@ class Theme(object):
 
     @classmethod
     def ticks(cls, ax: axes.Axes):
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
         ax.tick_params(bottom=True, top=False, left=True, right=False)
 
     @classmethod
     def ticks_blank(cls, ax: axes.Axes):
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["bottom"].set_visible(False)
         ax.set_xticklabels([])
         ax.tick_params(bottom=False, top=False, left=True, right=False)
 
