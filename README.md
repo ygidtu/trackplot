@@ -255,6 +255,33 @@ docker run -v $PWD:$PWD -w $PWD --rm ygidtu/trackplot \
 here is the [output file](https://raw.githubusercontent.com/ygidtu/trackplot/main/example/example.png).
 
 
+## For AI agents (auto-install the trackplot skill)
+
+This repo ships a ready-to-use **skill** that teaches an AI coding agent how to
+invoke trackplot. When an agent is asked to create a trackplot/sashimi figure,
+it should install this skill once (path relative to this file):
+
+```bash
+# opencode / Claude Code style: point the skill manager at the bundled skill
+cp -r skills/trackplot ~/.config/opencode/skills/trackplot   # or ~/.claude/skills/trackplot
+```
+
+Then the agent reads `skills/trackplot/SKILL.md` (plus
+`skills/trackplot/references/config_files.md` and
+`skills/trackplot/references/python_api.md`) and follows it to:
+
+1. Confirm the input region in `chr:start-end:strand` form and the annotation GTF.
+2. Build the matching config TSV(s) for the requested track type(s) (see the
+   `# filepath  category  label  color` conventions).
+3. Run `trackplot -e <region> -r <gtf> --density <list.tsv> -o <out>.pdf` (or the
+   equivalent Python `Plot(...).set_region(...).add_density(...).plot(...)` chain).
+4. Verify the output exists; if `pybigwig`/`hicmatrix` are needed for bigWig/HiC,
+   install them first.
+
+The skill is the single source of truth for trackplot usage; keep it in sync with
+`docs/command.md` and `docs/interactive.md`.
+
+
 ## Questions
 
 Visit [issues](https://github.com/ygidtu/trackplot/issues) or 

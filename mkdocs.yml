@@ -8,4 +8,5 @@ nav:
   - 'command.md'
   - 'interactive.md'
   - 'web.md'
+  - 'trackplot skill': 'skills/trackplot/SKILL.md'
 theme: 'readthedocs'
