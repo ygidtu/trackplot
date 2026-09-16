@@ -7,7 +7,7 @@ Changelog:
     1. remove attributes
 """
 
-from typing import List
+from typing import List, Optional
 
 from trackplot.base.GenomicLoci import GenomicLoci
 
@@ -30,6 +30,7 @@ class Transcript(GenomicLoci):
         "domain_type",
         "domain_description",
         "plot_intron",
+        "coding_intervals",
     ]
 
     def __init__(
@@ -47,6 +48,7 @@ class Transcript(GenomicLoci):
         domain_category: str = "",
         domain_type: str = "",
         domain_description: str = "",
+        coding_intervals: Optional[List] = None,
     ):
         """
         :param chromosome:
@@ -62,6 +64,7 @@ class Transcript(GenomicLoci):
         :param domain_category: category of domain
         :param domain_description: description of domain
         :param domain_type: if category is protein, the type information of the given domain
+        :param coding_intervals: list of (start, end) absolute genomic coordinates of the coding region (CDS), used to distinguish UTR from CDS in the annotation plot
         """
 
         super().__init__(chromosome=chromosome, start=start, end=end, strand=strand)
@@ -74,6 +77,7 @@ class Transcript(GenomicLoci):
         self.domain_category = domain_category
         self.domain_type = domain_type
         self.domain_description = domain_description
+        self.coding_intervals = coding_intervals if coding_intervals is not None else []
 
     @property
     def exon_list(self):

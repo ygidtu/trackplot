@@ -81,6 +81,49 @@ def plot_stroke(
 # ============================================================================
 
 
+def _merge_intervals(intervals: List[tuple]) -> List[tuple]:
+    """Merge overlapping or adjacent (start, end) intervals into sorted non-overlapping ones."""
+    cleaned = sorted((s, e) for s, e in intervals if e >= s)
+    merged = []
+    for start, end in cleaned:
+        if merged and start <= merged[-1][1] + 1:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _split_exon_into_cds_utr(
+    seg_start: int,
+    seg_end: int,
+    coding_intervals: List[tuple],
+) -> List[tuple]:
+    """
+    Split an exon segment [seg_start, seg_end] into alternating CDS/UTR sub-segments.
+
+    :param seg_start: start of the segment (inclusive), in the same coordinate system as coding_intervals
+    :param seg_end: end of the segment (inclusive), in the same coordinate system as coding_intervals
+    :param coding_intervals: list of (start, end) coding (CDS) intervals
+    :return: list of (start, end, is_coding) tuples covering [seg_start, seg_end]
+    """
+    merged = _merge_intervals(coding_intervals)
+    result: List[tuple] = []
+    cursor = seg_start
+    for coding_start, coding_end in merged:
+        coding_start = max(coding_start, seg_start)
+        coding_end = min(coding_end, seg_end)
+        if coding_start > coding_end:
+            continue
+        if cursor < coding_start:
+            result.append((cursor, coding_start - 1, False))
+        if cursor <= coding_end:
+            result.append((max(cursor, coding_start), coding_end, True))
+        cursor = max(cursor, coding_end + 1)
+    if cursor <= seg_end:
+        result.append((cursor, seg_end, False))
+    return result
+
+
 def plot_annotation(
     ax,
     obj: Annotation,
@@ -94,6 +137,8 @@ def plot_annotation(
     exon_width: float = 0.3,
     plot_domain: bool = False,
     show_exon_id: bool = False,
+    show_utr: bool = False,
+    utr_color: Optional[str] = None,
     raster: bool = True,
     **kwargs,
 ):
@@ -109,6 +154,7 @@ def plot_annotation(
         graph_coords = init_graph_coords(region)
 
     color = "k" if not color else color
+    utr_color = utr_color if utr_color else "#0099CC"
 
     patches, arrows = [], {}
     for transcript in data:
@@ -161,17 +207,28 @@ def plot_annotation(
             if s < 0 or e < 0:
                 continue
 
-            patches.append(
-                plt.Rectangle(
-                    (graph_coords[s], y_loc - exon_width / 2),
-                    width=graph_coords[e] - graph_coords[s],
-                    height=exon_width,
-                    lw=0.5,
-                    zorder=20,
-                    rasterized=raster,
-                    color=color,
-                )
+            exon_coding = [
+                (region.relative(cs), region.relative(ce))
+                for cs, ce in transcript.coding_intervals
+            ]
+            segments = (
+                _split_exon_into_cds_utr(s, e, exon_coding)
+                if show_utr and exon_coding
+                else [(s, e, True)]
             )
+            for seg_s, seg_e, is_cds in segments:
+                seg_color = color if is_cds else utr_color
+                patches.append(
+                    plt.Rectangle(
+                        (graph_coords[seg_s], y_loc - exon_width / 2),
+                        width=graph_coords[seg_e] - graph_coords[seg_s],
+                        height=exon_width,
+                        lw=0.5,
+                        zorder=20,
+                        rasterized=raster,
+                        color=seg_color,
+                    )
+                )
             if show_exon_id and exon.name:
                 y_loc_offset = 0.1 if ind % 2 == 0 else -0.2
                 ax.text(
@@ -1109,6 +1166,9 @@ def plot_igv_like(
     distance_between_label_axis: float = 0.1,
     show_y_label: bool = True,
     theme: str = "ticks_blank",
+    show_utr: bool = False,
+    utr_color: Optional[str] = None,
+    coding_intervals: Optional[List[tuple]] = None,
     raster: bool = False,
     **kwargs,
 ):
@@ -1123,6 +1183,7 @@ def plot_igv_like(
     if not y_label:
         y_label = obj.label
     y_loc = 0.5
+    utr_color = utr_color if utr_color else "#0099CC"
 
     patches, scatters_x, scatters_y = [], [], []
     if obj.meta is not None:
@@ -1139,16 +1200,30 @@ def plot_igv_like(
                         continue
                     s = 0 if s < 0 else s
                     e = len(region) - 1 if e >= len(region) else e
-                    patches.append(
-                        plt.Rectangle(
-                            (graph_coords[s], y_loc - exon_width),
-                            width=graph_coords[e] - graph_coords[s],
-                            height=exon_width * 2,
-                            facecolor="k" if not exon_color else exon_color,
-                            lw=0.5,
-                            zorder=20,
-                        )
+
+                    exon_coding = [
+                        (region.relative(cs), region.relative(ce))
+                        for cs, ce in (coding_intervals or [])
+                    ]
+                    segments = (
+                        _split_exon_into_cds_utr(s, e, exon_coding)
+                        if show_utr and exon_coding
+                        else [(s, e, True)]
                     )
+                    for seg_s, seg_e, is_cds in segments:
+                        seg_color = (
+                            "k" if not exon_color else exon_color
+                        ) if is_cds else utr_color
+                        patches.append(
+                            plt.Rectangle(
+                                (graph_coords[seg_s], y_loc - exon_width),
+                                width=graph_coords[seg_e] - graph_coords[seg_s],
+                                height=exon_width * 2,
+                                facecolor=seg_color,
+                                lw=0.5,
+                                zorder=20,
+                            )
+                        )
                     add_plot = add_plot | True
 
                 for intron in c_data.introns:

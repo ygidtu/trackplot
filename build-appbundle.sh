@@ -32,9 +32,18 @@ echo "=== Installing trackplot to AppDir ==="
 python3 -m venv "$APPDIR/.venv"
 source "$APPDIR/.venv/bin/activate"
 
-# Install trackplot and dependencies
+# Copy local source into AppDir so the bundle is self-contained and
+# includes the latest source changes (not the version published on PyPI).
+SRC="$APPDIR/.src"
+mkdir -p "$SRC"
+cp -r trackplot "$SRC/"
+cp pyproject.toml "$SRC/"
+cp requirements.txt "$SRC/" 2>/dev/null || true
+cp README.md "$SRC/" 2>/dev/null || true
+
+# Install trackplot and dependencies from local source
 pip install --upgrade pip
-pip install trackplot
+pip install "$SRC"
 
 # Deactivate venv
 deactivate

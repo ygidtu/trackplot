@@ -284,6 +284,8 @@ class Plot(object):
             "show_id": kwargs.get("show_id", False),
             "exon_width": kwargs.get("exon_width", 0.3),
             "show_exon_id": kwargs.get("show_exon_id", False),
+            "show_utr": kwargs.get("show_utr", False),
+            "utr_color": kwargs.get("utr_color", None),
             "theme": kwargs.get("theme", "blank"),
         }
         return self
@@ -592,6 +594,8 @@ class Plot(object):
         intron_color=None,
         feature_color=None,
         exon_width=0.3,
+        show_utr=False,
+        utr_color=None,
         height_scale=None,
         font_size=8,
         n_y_ticks=1,
@@ -621,6 +625,8 @@ class Plot(object):
             "font_size": font_size,
             "n_y_ticks": n_y_ticks,
             "show_y_label": show_y_label,
+            "show_utr": show_utr,
+            "utr_color": utr_color,
             "theme": theme,
         }
         return self
@@ -1189,12 +1195,16 @@ class Plot(object):
                     **self.params.get(p, {}),
                 )
             elif p.type == "igv":
+                coding_intervals = []
+                if self.params.get(p, {}).get("show_utr") and self.annotation is not None:
+                    coding_intervals = self.annotation.coding_intervals
                 plot_igv_like(
                     ax=ax_var,
                     obj=p.data,
                     graph_coords=self.graph_coords,
                     raster=raster,
                     distance_between_label_axis=distance_between_label_axis,
+                    coding_intervals=coding_intervals,
                     **self.params.get(p, {}),
                 )
             elif p.type == "motif":

@@ -489,6 +489,8 @@ def _handle_igv(p, path, kwargs):
             label=f.label,
             exon_color=f.color,
             intron_color=f.color,
+            show_utr=kwargs["show_utr"],
+            utr_color=kwargs["utr_color"],
             features=igv_features or None,
             font_size=kwargs["font_size"],
             n_y_ticks=kwargs["n_y_ticks"],
@@ -786,6 +788,22 @@ def _add_interval(p, f):
     default=1,
     help="The scale of exon",
     show_default=True,
+)
+@optgroup.option(
+    "--show-utr",
+    is_flag=True,
+    type=click.BOOL,
+    show_default=True,
+    help="Whether to distinguish untranslated regions (UTR) from coding regions (CDS) "
+    "inside exons. Requires a GTF/GFF with CDS features. UTR parts are drawn in "
+    "--utr-color while CDS parts keep --ref-color.",
+)
+@optgroup.option(
+    "--utr-color",
+    type=click.STRING,
+    default="#0099CC",
+    show_default=True,
+    help="The fill color of untranslated regions (UTR) in the annotation and IGV-like tracks.",
 )
 @optgroup.group("Density plot settings")
 @optgroup.option(
@@ -1342,6 +1360,8 @@ def main(**kwargs):
                     local_domain=kwargs["local_domain"],
                     domain_include=kwargs["domain_include"],
                     domain_exclude=kwargs["domain_exclude"],
+                    show_utr=kwargs["show_utr"],
+                    utr_color=kwargs["utr_color"],
                 )
             elif key in _CATEGORY_HANDLERS:
                 _CATEGORY_HANDLERS[key](

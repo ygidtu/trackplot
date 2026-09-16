@@ -305,6 +305,18 @@ __PARAMS__ = {
             "default": "0.3",
             "note": "The exon width of current track",
         },
+        {
+            "key": "show_utr",
+            "annotation": "bool",
+            "default": "false",
+            "note": "Whether to distinguish untranslated regions (UTR) from coding regions (CDS) inside exons. Requires an annotation with CDS features loaded in the same plot.",
+        },
+        {
+            "key": "utr_color",
+            "annotation": "color",
+            "default": "#0099CC",
+            "note": "The fill color of untranslated regions (UTR) in the IGV-like track.",
+        },
     ],
     "add_interval": [
         {
@@ -541,6 +553,18 @@ __PARAMS__ = {
             "annotation": "color",
             "default": "#000000",
             "note": "The color of exons",
+        },
+        {
+            "key": "show_utr",
+            "annotation": "bool",
+            "default": "false",
+            "note": "Whether to distinguish untranslated regions (UTR) from coding regions (CDS) inside exons. Requires a GTF/GFF with CDS features; UTR parts are drawn in --utr-color while CDS parts keep the exon color.",
+        },
+        {
+            "key": "utr_color",
+            "annotation": "color",
+            "default": "#0099CC",
+            "note": "The fill color of untranslated regions (UTR) in the annotation track.",
         },
         {
             "key": "font_size",

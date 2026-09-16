@@ -119,6 +119,17 @@ class Annotation(File):
                 res.append([exon.start, exon.end])
         return sorted(res, key=lambda x: [x[0], x[1]])
 
+    @property
+    def coding_intervals(self) -> List[tuple]:
+        """
+        Merge coding (CDS) intervals across all loaded transcripts for the region,
+        used to distinguish UTR from CDS in the IGV-like plot.
+        """
+        merged = []
+        for transcript in self.data:
+            merged.extend(transcript.coding_intervals)
+        return merged
+
     @classmethod
     def create(
         cls,
@@ -393,6 +404,7 @@ class Annotation(File):
         # AD - passing transcripts_to_show
         transcripts = {}
         exons = {}
+        coding = {}
         for rec in Reader.read_gtf(self.path, self.region):
             start = max(rec.start, self.region.start)
             end = min(rec.end, self.region.end)
@@ -428,6 +440,9 @@ class Annotation(File):
                         exons=[],
                     )
 
+                if re.search(r"(cds)", rec.feature, re.I):
+                    coding.setdefault(rec.transcript_id, []).append((start, end))
+
             elif re.search(r"(exon)", rec.feature, re.I):
                 if rec.transcript_id not in exons.keys():
                     exons[rec.transcript_id] = []
@@ -456,6 +471,8 @@ class Annotation(File):
         for key, trans in transcripts.items():
             if key in exons.keys():
                 trans.exons += exons[key]
+            if key in coding.keys():
+                trans.coding_intervals = coding[key]
 
         self.data += sorted(transcripts.values())
 
