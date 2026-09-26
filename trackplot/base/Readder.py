@@ -136,20 +136,30 @@ class Reader(object):
                 yield read, __get_strand__(read, library=library)
 
     @classmethod
-    def read_gtf(cls, path: str, region: GenomicLoci, bed: bool = False):
+    def read_gtf(
+        cls,
+        path: str,
+        region: GenomicLoci,
+        bed: bool = False,
+        fmt: Optional[str] = None,
+    ):
+        if bed:
+            parser = pysam.asBed()
+        elif fmt == "gff":
+            parser = pysam.asGFF3()
+        else:
+            parser = pysam.asGTF()
         with pysam.TabixFile(path) as r:
             try:
                 iter_ = r.fetch(
                     region.chromosome,
                     region.start,
                     region.end,
-                    parser=pysam.asGTF() if not bed else pysam.asBed(),
+                    parser=parser,
                 )
             except ValueError:
                 try:
-                    iter_ = cls.__modify_chrom__(
-                        region, r, parser=pysam.asGTF() if not bed else pysam.asBed()
-                    )
+                    iter_ = cls.__modify_chrom__(region, r, parser=parser)
                 except ValueError as err:
                     logger.debug("please check the input region and gtf files")
                     logger.error(err)

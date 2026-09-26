@@ -193,6 +193,7 @@ class Bam(SingleCell):
         :param normalize_format: None -> raw counts; others fpkm and cpm
         """
         self.region = region
+        self.normalize_format = normalize_format
 
         spanned_junctions = kwargs.get("junctions", {})
         included_junctions = kwargs.get("included_junctions", {})

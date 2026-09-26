@@ -33,6 +33,7 @@ class Annotation(File):
 
     __slots__ = (
         "category",
+        "annotation_format",
         "add_domain",
         "domain",
         "interval_file",
@@ -64,7 +65,11 @@ class Annotation(File):
             f"category should be one of {categories}, instead of {category}"
         )
 
-        super().__init__(path=self.index_gtf(path) if category == "gtf" else path)
+        self.annotation_format = None
+        if category == "gtf":
+            self.annotation_format = self._detect_format(path)
+            path = self.index_gtf(path)
+        super().__init__(path=path)
         self.category = category
         self.data = []
         self.add_domain = add_domain
@@ -270,42 +275,35 @@ class Annotation(File):
         return self
 
     @staticmethod
-    def is_gtf(infile):
-        """
-        check if input file is gtf
-        :param infile: path to input file
-        :return:
+    def _detect_format(infile):
+        """Detect annotation file format: 'gtf', 'gff' (GFF3) or None.
+
+        GTF uses double-quoted attribute values (``key "value";``) while GFF3
+        uses ``key=value``. Only the first non-comment data line is inspected.
         """
         if infile is None:
-            return False
-
-        is_gtf = 0
+            return None
         try:
             if filetype.guess_mime(infile) == "application/gzip":
-                is_gtf += 10
-                r = gzip.open(infile, "rt")
+                handle = gzip.open(infile, "rt")
             else:
-                r = open(infile)
-
-            for line in r:
-                if line.startswith("#"):
-                    continue
-
-                lines = re.split(r"\s+", line)
-
-                if len(lines) < 8:
-                    break
-
-                if re.search(r"([\w-]+ \"[\w.\s\-%,:]+\";? ?)+", " ".join(lines[8:])):
-                    is_gtf += 1
-
-                break
-
-            r.close()
-            return is_gtf
-        except TypeError as err:
-            logger.error("failed to open %s", infile)
-            exit(err)
+                handle = open(infile)
+            with handle:
+                for line in handle:
+                    if line.startswith("#"):
+                        continue
+                    columns = line.rstrip("\n").split("\t")
+                    if len(columns) < 9:
+                        return None
+                    attributes = columns[8]
+                    if '"' in attributes:
+                        return "gtf"
+                    if "=" in attributes:
+                        return "gff"
+                    return None
+        except (OSError, UnicodeDecodeError):
+            return None
+        return None
 
     @classmethod
     def sort_gtf(cls, input_gtf: str, output_gtf: str):
@@ -329,9 +327,9 @@ class Annotation(File):
                     w.write(line)
                     continue
 
-                lines = line.split()
+                lines = line.rstrip("\n").split("\t")
 
-                if len(lines) < 1:
+                if len(lines) < 7:
                     continue
 
                 data.append(
@@ -364,10 +362,10 @@ class Annotation(File):
         :param input_gtf: path to input gtf file
         :return path to compressed and indexed bgzipped gtf file
         """
-        gtf = cls.is_gtf(input_gtf)
-        assert gtf % 10 == 1, f"{input_gtf} seems not be gtf format"
+        fmt = cls._detect_format(input_gtf)
+        assert fmt in ("gtf", "gff"), f"{input_gtf} seems not be gtf/gff format"
 
-        if gtf // 10 > 0:
+        if filetype.guess_mime(input_gtf) == "application/gzip":
             output_gtf = input_gtf
         else:
             output_gtf = input_gtf + ".gz"
@@ -381,7 +379,10 @@ class Annotation(File):
             except OSError as err:
                 logger.debug(f"Guess gtf needs to be sorted: {err}")
 
-                sorted_gtf = re.sub(r"\.gtf(.gz)?$", "", input_gtf) + ".sorted.gtf.gz"
+                sorted_gtf = (
+                    re.sub(r"\.(gtf|gff3?)(\.gz)?$", "", input_gtf)
+                    + f".sorted.{fmt}.gz"
+                )
                 if os.path.exists(sorted_gtf) and os.path.exists(sorted_gtf + ".tbi"):
                     return sorted_gtf
 
@@ -390,10 +391,75 @@ class Annotation(File):
                     sorted_gtf, preset="gff", force=True, keep_original=True
                 )
                 return sorted_gtf
-        elif os.path.getctime(output_gtf) < os.path.getctime(output_gtf):
+        elif os.path.getctime(output_gtf + ".tbi") < os.path.getctime(output_gtf):
             logger.info("the tbi index is older than the gtf file")
 
         return output_gtf
+
+    @staticmethod
+    def _rec_attr(rec, *names, default=None):
+        """Fetch an attribute from a pysam GTF or GFF3 record, defensively.
+
+        ``asGTF`` exposes convenience properties (e.g. ``rec.gene_id``) and
+        ``rec.attributes`` as a string, whereas ``asGFF3`` only exposes
+        ``rec.asDict()`` and raises ``KeyError`` on convenience properties such
+        as ``rec.gene_id``. This helper tries, in order: convenience properties,
+        subscript access ``rec[name]``, then the parsed attributes dict,
+        returning the first truthy match.
+        """
+        for name in names:
+            try:
+                value = getattr(rec, name)
+            except Exception:
+                value = None
+            if value:
+                return value
+        for name in names:
+            try:
+                value = rec[name]
+            except Exception:
+                value = None
+            if value:
+                return value
+        try:
+            attrs = rec.asDict() if hasattr(rec, "asDict") else rec.attributes
+        except Exception:
+            attrs = None
+        if isinstance(attrs, dict):
+            for name in names:
+                value = attrs.get(name)
+                if value:
+                    return value
+        return default
+
+    @staticmethod
+    def _normalize_transcript_id(value):
+        """Strip GFF3 relationship prefixes (e.g. ``rna-``) from a transcript id.
+
+        GFF3 links a feature to its transcript through ``Parent=rna-XM_...``
+        while the transcript record exposes ``transcript_id=XM_...`` (and
+        ``ID=rna-XM_...``). Normalizing both sides to the bare identifier keeps
+        CDS/exon records attached to their transcript, which is required for
+        faithful UTR/CDS coloring.
+        """
+        if not value:
+            return value
+        for prefix in ("rna-", "rna:", "transcript-", "transcript:", "mrna-"):
+            if value.startswith(prefix):
+                return value[len(prefix):]
+        return value
+
+    def _transcript_key(self, rec):
+        """Resolve a stable transcript identifier for GTF and GFF3 records.
+
+        Child features (exon/CDS) reference the transcript via ``Parent`` in
+        GFF3, whereas the transcript record itself references it via ``ID``.
+        """
+        if re.search(r"(cds|exon)", rec.feature, re.I):
+            value = self._rec_attr(rec, "transcript_id", "Parent", default=None)
+        else:
+            value = self._rec_attr(rec, "transcript_id", "ID", default=None)
+        return self._normalize_transcript_id(value)
 
     def __load_gtf__(self, transcripts_to_show: list[str] | None = None):
         """
@@ -405,7 +471,11 @@ class Annotation(File):
         transcripts = {}
         exons = {}
         coding = {}
-        for rec in Reader.read_gtf(self.path, self.region):
+        for rec in Reader.read_gtf(
+            self.path,
+            self.region,
+            fmt=getattr(self, "annotation_format", None),
+        ):
             start = max(rec.start, self.region.start)
             end = min(rec.end, self.region.end)
 
@@ -414,59 +484,53 @@ class Annotation(File):
             if start + 1 >= self.region.end:
                 break
 
+            rec_id = self._transcript_key(rec)
+
             if re.search(r"(rna|transcript|cds)", rec.feature, re.I):
                 if transcripts_to_show:
-                    _name = (
-                        rec.transcript_name
-                        if "transcript_name" in rec.attributes
-                        else rec.transcript_id
-                    )
+                    _name = self._rec_attr(rec, "transcript_name", "Name") or rec_id
                     if _name not in transcripts_to_show:
                         logger.info(f"Skipping transcript {_name}")
                         continue
 
-                if rec.transcript_id not in transcripts.keys():
-                    transcripts[rec.transcript_id] = Transcript(
+                if rec_id and rec_id not in transcripts.keys():
+                    transcripts[rec_id] = Transcript(
                         chromosome=rec.contig,
                         start=start,
                         end=end,
                         strand=rec.strand,
-                        transcript_id=rec.transcript_id,
-                        gene_id=rec.gene_id,
-                        gene=rec.gene_name if "gene_name" in rec.attributes else "",
-                        transcript=rec.transcript_name
-                        if "transcript_name" in rec.attributes
-                        else "",
+                        transcript_id=rec_id,
+                        gene_id=self._rec_attr(
+                            rec, "gene_id", "gene", "ID", default=""
+                        ),
+                        gene=self._rec_attr(rec, "gene_name", default=""),
+                        transcript=self._rec_attr(
+                            rec, "transcript_name", "Name", default=""
+                        ),
                         exons=[],
                     )
 
                 if re.search(r"(cds)", rec.feature, re.I):
-                    coding.setdefault(rec.transcript_id, []).append((start, end))
+                    if rec_id:
+                        coding.setdefault(rec_id, []).append((start, end))
 
             elif re.search(r"(exon)", rec.feature, re.I):
-                if rec.transcript_id not in exons.keys():
-                    exons[rec.transcript_id] = []
+                if rec_id and rec_id not in exons.keys():
+                    exons[rec_id] = []
 
                 # fix exon_id error
-                exon_id = ""
-                if "exon_id" in rec.keys():
-                    exon_id = rec.exon_id
-                elif "ID" in rec.keys():
-                    exon_id = rec["ID"]
-                elif "id" in rec.keys():
-                    exon_id = rec["id"]
-                elif "_id" in rec.keys():
-                    exon_id = rec["_id"]
+                exon_id = self._rec_attr(rec, "exon_id", "ID", "id", "_id", default="")
 
-                exons[rec.transcript_id].append(
-                    GenomicLoci(
-                        chromosome=rec.contig,
-                        start=start,
-                        end=end,
-                        strand=rec.strand,
-                        name=exon_id,
+                if rec_id:
+                    exons[rec_id].append(
+                        GenomicLoci(
+                            chromosome=rec.contig,
+                            start=start,
+                            end=end,
+                            strand=rec.strand,
+                            name=exon_id,
+                        )
                     )
-                )
 
         for key, trans in transcripts.items():
             if key in exons.keys():

@@ -213,7 +213,7 @@ def plot_annotation(
             ]
             segments = (
                 _split_exon_into_cds_utr(s, e, exon_coding)
-                if show_utr and exon_coding
+                if show_utr
                 else [(s, e, True)]
             )
             for seg_s, seg_e, is_cds in segments:
@@ -592,6 +592,10 @@ def plot_density(
         denominator = np.log(int(obj.log_trans))
         for k, v in jxns.items():
             jxns[k] = np.log1p(v) / denominator
+
+    normalize_format = getattr(obj, "normalize_format", None)
+    if normalize_format and normalize_format != "count":
+        y_label += f" ({normalize_format})"
 
     # Compute data-driven baseline arc heights BEFORE calling _compute_y_limits.
     # These must match the internal computation in _compute_y_limits so that the
@@ -1207,7 +1211,7 @@ def plot_igv_like(
                     ]
                     segments = (
                         _split_exon_into_cds_utr(s, e, exon_coding)
-                        if show_utr and exon_coding
+                        if show_utr
                         else [(s, e, True)]
                     )
                     for seg_s, seg_e, is_cds in segments:
